@@ -1,8 +1,10 @@
 # AkuWM: one app for the Windows desk
 
-**Status**: plan v2, audited 2026-09-20. **M0 landed 2026-09-20** (see section
-10); M1 is next. The open points of section 15 were closed with their defaults
-when implementation started; everything else was already a decision.
+**Status**: plan v2, audited 2026-09-20. **M0 and M1 landed 2026-09-20** (see
+section 10); M2 is next. The open points of section 15 were closed with their
+defaults when implementation started. One decision changed as a result of
+measuring it -- AkuWM takes `uiAccess`, see section 2 -- and that is the only
+one.
 
 What changed in v2: every subsystem now has a defined interface, semantics
 and test; the licence section is a procedure instead of a sentence; the IPC
@@ -43,7 +45,7 @@ speaks the IPC the bar expects, and carries its own configuration UI.
 | Projects | `AkuWM.Core` (pure logic, no Win32, tested on Linux) · `AkuWM.Platform` (Win32/COM/DWM) · `AkuWM.App` (WM, IPC, tray, Avalonia GUI) · `AkuWM.Cli` (tiny client, also built into the main exe as `akuwm <cmd>`) · `AkuWM.Tests` |
 | Dependencies (all MIT/Apache-2.0) | Avalonia 11 (GUI + tray icon), CsWin32 (P/Invoke source generator), YamlDotNet (the one-time GlazeWM config import), xUnit, Avalonia.Headless for GUI tests. WebSocket server and named pipes from the BCL. **No** FluentAssertions (v8 is commercial), **no** komorebi/FancyWM/bug.n code (see section 3) |
 | Build | `dotnet publish -r win-x64` **from WSL**; unit tests run on Linux (`AkuWM.Core`); CI: GitHub Actions `ubuntu` (unit) + `windows` (build, unit, headless GUI) |
-| Elevation | the app runs **unprivileged**, no `uiAccess`. It cannot move or resize an elevated window (UIPI) but it can hide and show one through the shell's cloak, which is what makes Aion 2 work today. Elevated windows are tracked as *unmovable* and never positioned |
+| Elevation | the app runs as the user (`asInvoker`) with **`uiAccess`**, signed and installed in `%ProgramFiles%\AkuWM`, exactly as the `AutoHotkey64_UIA.exe` it replaces. **Changed in M1 after measuring it**: without `uiAccess` a low-level hook sees *nothing* typed into an elevated window -- 0 keys in 14 s, against 32 keys in 27 s with it -- so every chord would die the moment a game took the focus. It is not elevation: the process is still the user's, and `doctor` warns if it is ever run elevated. Elevated windows can now also be positioned, so the *unmovable* tracking stays only as a fallback for when `uiAccess` is not granted |
 | Configuration | **JSON in the dotfiles repo**, `templates/windows/DESK_W11/akuwm/{common,DESK_W11}.json`, layered like `sway-apps` (the machine file overrides by id); found through `AKUWM_STATE_DIR`. The GUI writes it, git versions it. Runtime state (the journal, logs) lives in `%LOCALAPPDATA%\akuwm\` |
 | Bar | Zebar stays. AkuWM listens on **127.0.0.1:6123** and speaks GlazeWM's IPC protocol (section 7), so the workspace pills keep working untouched, and a `glazewm` shim keeps every script and suite that calls `glazewm query/command` working |
 | Launcher | stays the PowerToys Command Palette (Hyper+Space sends its chord) |
@@ -313,7 +315,12 @@ A low-level keyboard hook feeds a chord engine: physical modifier state
 down, auto-repeat suppressed, unbound chords pass through. Hyper is
 Ctrl+Alt+Win; `RegisterHotKey` cannot take it because of the Office key
 (memory: `reference_w11_hyper_hotkeys_office_key`), which is why the hook
-exists. When a chord with Win is consumed, a dummy key is injected before
+exists. The hook only sees keys destined for a game because AkuWM has
+`uiAccess` (M1, spike S1); without it the chords stop the moment a game takes
+the focus. What the hook is and is not allowed to do with what it sees --
+observe always, swallow only chords and never over a game, fabricate input
+never over a game -- is a policy written down in the repository's
+`docs/input-and-anticheat.md`, so that it cannot drift quietly. When a chord with Win is consumed, a dummy key is injected before
 Win goes up so the Start menu does not open (the same trick as today's
 `~LWin` line, and PowerToys Keyboard Manager's). Injected input (`LLKHF_INJECTED`)
 is accepted by default because the suites press keys through AutoHotkey;
@@ -662,7 +669,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 | | lands | exit criteria | spikes | size |
 |---|---|---|---|---|
 | **M0** ✅ 2026-09-20 | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | **met**: 102 unit tests green on Linux; the import reproduces 21 rules, 20 workspaces, 13 apps (and 4 Startup entries the Python prototype could not find); `akuwm doctor` runs on the desk and sees the live stack | -- | M |
-| **M1** | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | `akuwm query windows` matches `glazewm query windows` (per hwnd: workspace, state, sticky) on the live desktop for an hour of normal use; the latency bench exists | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
+| **M1** ✅ 2026-09-20 | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | **met**: 270 samples over 45 minutes of real use, all 270 in agreement, nothing found; the bench reports a 0.19 ms hot path against a 5 ms budget. Workspace *names* were not compared and could not be — see 10.2 | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
 | **M2** | it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | `tests/fullscreen` green (no check fails twice) and `tests/wm` green with AHK on AkuWM; Zebar pills work (its requests captured); one day of normal use | S6 Zebar reconnect when the server restarts · S7 mixed-DPI rects | XL |
 | **M3** | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** | journal, repair, display changes, suspend/resume | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
@@ -721,6 +728,70 @@ Two deviations from this document, both deliberate and both temporary:
    `AkuWM.App/Compat/`, so the protocol AkuWM must imitate never shapes the
    model behind it.
 
+### 10.2 What M1 landed, and the five answers (2026-09-20)
+
+**The platform layer** (`AkuWM.Platform`, CsWin32 over Microsoft's own
+metadata): windows enumerated in z-order with the visible frame from
+`DWMWA_EXTENDED_FRAME_BOUNDS` rather than the outer rectangle and its invisible
+9 px border; the cloak flag read back; elevation answered as "can this process
+touch that window at all"; monitors identified by the EDID segment of the
+device path; the platform thread with its message loop and window-event hooks;
+the low-level keyboard hook; the shell's cloak through `IApplicationView`;
+batched positioning through `DeferWindowPos`; focus with its fallbacks. The two
+undocumented shell interfaces are declared by hand from the MIT sources
+LICENSING.md names.
+
+**The model** (`AkuWM.Core`): `ShadowModel`, a pure function from a
+configuration and a set of snapshots to what every window is -- managed or not
+and why, tiling/floating/fullscreen/minimised, sticky, on which monitor role.
+All of the decision-making, so all of it runs on Linux against a fake desk
+built from this one's measurements. 139 unit tests.
+
+**The verdict**: `shadow diff` puts that view next to GlazeWM's window by
+window; `shadow watch` does it repeatedly while the desk is used. 270 samples
+over 45 minutes, all in agreement, up to 16 windows managed at once.
+
+**The spikes.**
+
+| | question | answer |
+|---|---|---|
+| S1 | does a low-level hook see keys typed into an elevated window? | **no** without `uiAccess` (0 keys while an elevated window was in front for 14 s of 30), **yes** with it (32 keys in 27 s). The A/B that changed the elevation decision |
+| S2 | can the focus be moved to an elevated window? | **yes**, cold and from the hook alike, with a plain `SetForegroundWindow` |
+| S3 | can the shell cloak somebody else's window from .NET? | **yes**, and DWM confirms it both ways |
+| S4 | does the hot path fit the budget? | **yes**: 0.19 ms to read a window and rebuild the model, against 5 ms, where the old stack pays 47 ms for one CLI round trip |
+| S5 | do the hooks fire while the main thread is busy? | **yes**: 10 events while the main thread spun 2352 times without pumping a message |
+
+**Two things the desk taught that were not in the plan.**
+
+- **`SetCloak(Shell, 0)` returns success and does nothing.** Taking a cloak off
+  needs `SetCloak(Default, 0)` (found by trying all eight spellings, spike S7).
+  Nine real windows on this desk were invisible because of it -- left behind by
+  GlazeWM restarts during the testing weeks -- and came back. Nothing in this
+  area is documented, so every call now carries what it actually does.
+- **`IVirtualDesktopManager` cannot be trusted here**: it reports every window
+  as being on the current desktop, including ones that are not. Nothing depends
+  on it. What AkuWM trusts instead is what it knows it cloaked itself.
+
+**The cloak ledger**, which came out of the above: hiding a window is a promise
+to give it back, and if the process making the promise dies first the window is
+gone -- not minimised, not behind something, gone from the screen, the taskbar
+and Alt+Tab alike. The list of what AkuWM has hidden is written to disk
+*before* each cloak, and the daemon gives back whatever the last run did not,
+at startup, before touching anything else.
+
+**One thing the milestone could not do.** Workspace *names* are not compared by
+`shadow diff`: from outside, every hidden window looks the same -- cloaked --
+so which workspace one belongs to is knowable only to the manager in charge.
+That column becomes comparable at M2, when AkuWM is the one assigning them.
+
+**Deviations, both deliberate.** The command layer and the pipe moved from
+`AkuWM.App` to `AkuWM.Core`: none of it touches Win32, and App became
+Windows-targeted when it took the platform reference, so leaving them there
+would have made them untestable. And `akuwm <command> --out <file>` exists
+because a `uiAccess` process is launched through AppInfo and its output cannot
+be redirected by whoever starts it -- the driven suites will need it for the
+same reason.
+
 ## 11. Migration and rollback
 
 Between M1 and M4 both stacks are installed. Switching is one script,
@@ -733,11 +804,12 @@ journal format is new; the old `layout.tsv` is imported once by M4.
 
 | risk | what we do |
 |---|---|
-| UIPI surprises: something the AHK could do as `uiAccess` that AkuWM cannot | S1/S2 in M1 before any WM code; the known list (no SendInput to elevated windows, no positioning) is already the design |
+| ~~UIPI surprises: something the AHK could do as `uiAccess` that AkuWM cannot~~ | **Settled in M1.** S1 found the real one -- an unprivileged hook sees nothing typed into a game -- and AkuWM now takes `uiAccess` as the AHK does. S2 found the focus moves there regardless. `doctor` reports whether Windows granted it, and tells a build that never asked from an install that was refused |
 | the LL hook makes every keystroke pass through .NET | the callback only reads modifier state and enqueues; measured in the bench; the same design PowerToys ships |
 | a .NET GC pause in the middle of a redraw | workstation GC, no allocation on the hot path, `DeferWindowPos` batches; measured |
 | Avalonia and the hooks fighting for the main thread | S5; the platform thread is separate by design |
 | the compat layer drifts from what Zebar expects after a Zebar upgrade | the capture is versioned with the plan; `doctor` reports a subscriber that disconnects |
+| an anti-cheat treats AkuWM's hook as a macro tool | the policy in `docs/input-and-anticheat.md`: observe always, swallow only chords and never over a game, fabricate input never over a game, no memory access of any kind, and no macro primitives ever. Narrower in substance than the AutoHotkey it replaces, which is the most recognised tool of this class; no reputation with any vendor, which the document says out loud |
 | the clean room slips because the same person read GlazeWM this week | the procedure in section 3; the design differences in 5.2 and 5.5; the tripwire |
 
 ## 13. The `w11-apps` package: review
