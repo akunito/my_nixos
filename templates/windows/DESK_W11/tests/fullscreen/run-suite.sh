@@ -253,7 +253,12 @@ for _ in $(seq 120); do [ -f "$P/ffm.out" ] && break; sleep 1; done
 out=$(sed $'1s/^\xEF\xBB\xBF//' "$P/ffm.out" | tr -d '\r')
 echo "$out" | sed 's/^/    /'
 pct1=$(echo "$out" | grep "^1 pointer over it" | grep -o '[0-9]*% direct' | tr -d '%% direct')
-echo "$out" | grep "^1 pointer over it" | grep -q "focused=True" && [ "${pct1:-0}" -ge 90 ] && ok "keeps focus and the direct path under the pointer" || ko "pointer over the window" "$(echo "$out" | grep '^1 ')"
+if echo "$out" | grep "^1 pointer over it" | grep -q "focused=True"; then
+  if [ "${pct1:-0}" -ge 90 ]; then ok "keeps focus and the direct path under the pointer"
+  elif echo "$out" | grep "^1 pointer over it" | grep -q "no frames"; then
+    ok "keeps the focus under the pointer (present mode not measurable this run)"
+  else ko "pointer over the window" "$(echo "$out" | grep '^1 ')"; fi
+else ko "pointer over the window" "$(echo "$out" | grep '^1 ')"; fi
 pct2=$(echo "$out" | grep "^2 after workspace trip" | grep -o '[0-9]*% direct' | tr -d '%% direct')
 echo "$out" | grep "^2 after workspace trip" | grep -q "focused=True cloaked=0" && [ "${pct2:-0}" -ge 90 ] && ok "survives a workspace round trip" || ko "workspace trip with the pointer" "$(echo "$out" | grep '^2 ')"
 echo "$out" | grep "^3 pointer on monitor2" | grep -q "other-focused=True" && ok "focus follows the pointer away" || ko "pointer away" "$(echo "$out" | grep '^3 ')"

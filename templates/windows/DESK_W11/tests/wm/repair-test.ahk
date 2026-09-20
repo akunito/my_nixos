@@ -178,6 +178,36 @@ if (after != before) {
     Note("4 the workspace did not move (one monitor?), skipped")
 }
 
+; --- 5. the guards: what the repair must NOT do ---------------------------
+; A window that is simply small is not broken (a calculator is 320x500).
+Check("5 a small window with no history is left alone",
+    JournalIsBroken(100, 100, 250, 180, false) ? 1 : 0, 0)
+Check("5 the same size IS broken when it was much bigger",
+    JournalIsBroken(100, 100, 250, 180, true) ? 1 : 0, 1)
+Check("5 off the screen is broken for anybody",
+    JournalIsBroken(-31900, -31900, 1200, 900, false) ? 1 : 0, 1)
+
+; A fullscreen window (a game) never gets a rectangle from the repair.
+game := StartFlip("40 0 gamelike", &pg)
+Sleep 2500
+gameRec := Rec(game)                 ; not `rec`: Rec() is a function here
+Check("5 setup: the game is fullscreen", gameRec["state"], "fullscreen")
+gameRect := Rs(game)
+Check("5 the repair refuses to place a fullscreen window",
+    RepairPlaceWindow(gameRec, Map("x", 100, "y", 100, "w", 800, "h", 600)) ? 1 : 0, 0)
+Check("5 so the game is untouched", Rs(game), gameRect)
+; And it does not even run while one is in front.
+res := RepairLayout(true)
+Note("5 repair with the game in front: " res["workspaces"] " workspace(s), " res["windows"] " window(s)")
+Check("5 the whole repair is skipped with a game in front", res["windows"], 0)
+try ProcessClose(pg)
+Sleep 1500
+
+; --- 6. GlazeWM not answering must never look like "no windows" -----------
+Check("6 an answer is recognised", GlazeAnswered(GlazeQuery("workspaces")) ? 1 : 0, 1)
+Check("6 an empty answer is not", GlazeAnswered("") ? 1 : 0, 0)
+Check("6 nor is a truncated one", GlazeAnswered('{"data":{}}') ? 1 : 0, 0)
+
 KillFlips()
 out .= (fails ? fails " failed" : "all passed") "`n"
 try FileDelete(A_Temp "\perf\repair-test.txt")

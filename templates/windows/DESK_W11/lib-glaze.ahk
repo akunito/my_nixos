@@ -66,10 +66,15 @@ GlazeQuery(what) {
 ; costs ~200 ms, so a gesture takes ONE and passes the result around.
 GlazeSnapshot() {
     j := GlazeQuery("workspaces")
-    return Map("wins", GlazeWinsFrom(j), "wss", GlazeWssFrom(j))
+    return Map("wins", GlazeWinsFrom(j), "wss", GlazeWssFrom(j), "ok", GlazeAnswered(j))
 }
 
 GlazeWins() => GlazeWinsFrom(GlazeQuery("workspaces"))
+
+; Whether GlazeWM answered at all. A query that fails (the WM restarting, the
+; IPC server not up yet) comes back empty, and an empty window list reads
+; exactly like "this app is not running" -- which would launch a second copy.
+GlazeAnswered(j) => InStr(j, '"clientMessage"') > 0
 GlazeWss() => GlazeWssFrom(GlazeQuery("workspaces"))
 
 GlazeWinsFrom(j) {

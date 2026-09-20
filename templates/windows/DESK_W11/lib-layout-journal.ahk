@@ -102,9 +102,14 @@ WindowOnScreenFraction(x, y, w, h) {
     }
     return best
 }
-JournalIsBroken(x, y, w, h) {
+; Off the screen is broken for anybody. Being small is only broken when the
+; window is known to have been much bigger -- some windows are just small, and
+; resizing a calculator to 60% of the screen is not a repair.
+JournalIsBroken(x, y, w, h, wasBigger := true) {
     global JournalMinW, JournalMinH
-    return (w < JournalMinW || h < JournalMinH || WindowOnScreenFraction(x, y, w, h) < 0.1)
+    if (WindowOnScreenFraction(x, y, w, h) < 0.1)
+        return true
+    return wasBigger && (w < JournalMinW || h < JournalMinH)
 }
 
 ; --- taking a snapshot ------------------------------------------------------
@@ -128,12 +133,17 @@ JournalSnapshot(force := false) {
             WinGetPos(&x, &y, &ww, &wh, "ahk_id " w["hwnd"])
         } catch
             continue
-        if JournalIsBroken(x, y, ww, wh)
-            continue
         device := MonitorDeviceAt(x + ww // 2, y + wh // 2)
         if (device = "" || !MonitorWorkArea(device, &al, &at, &ar, &ab))
             continue
         key := JournalKey(w["proc"], w["class"])
+        ; Known to have been much bigger on this monitor? Then this size is
+        ; damage, not news, and the record is left alone. A window that was
+        ; always small is recorded as it is.
+        known := (entries.Has(key) && entries[key].Has(device)) ? entries[key][device] : 0
+        wasBigger := known && (known["w"] > ww * 1.5 || known["h"] > wh * 1.5)
+        if JournalIsBroken(x, y, ww, wh, wasBigger)
+            continue
         if !entries.Has(key)
             entries[key] := Map()
         entries[key][device] := Map("ws", w["ws"], "state", w["state"],

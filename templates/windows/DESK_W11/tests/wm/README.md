@@ -32,6 +32,11 @@ change `glazewm/config.yaml`, copy it over and `glazewm command wm-reload-config
 | `stacking` | `stacking-test.ahk` | Floating windows stay above the tiled ones (sway's layers), survive focus changes and workspace trips, go under a fullscreen game, and lose the always-on-top when they tile again |
 | `tiledrag` | `tiledrag-test.ahk` | Alt+drag on a tiled window: what a drop means, the gate that keeps a tiled window off the free-form path, and that the layout reflows with everything still tiled |
 
+`bench.ahk` is not part of the suite: run it on its own
+(`AutoHotkey64.exe bench.ahk` -> `%TEMP%\perf\bench.txt`) to time every
+primitive before and after an optimisation. The number that matters is the
+GlazeWM CLI round trip, 47 ms, paid by every command and every query.
+
 ## Things that bite when writing cases here
 
 - **AHK names are case-insensitive**: a function called `R()` cannot be used as

@@ -335,6 +335,55 @@ window shrunk to 219x30 comes back to its recorded size, one parked at -31900
 comes back on screen, a size from another monitor is scaled by work area rather
 than copied, and a misplaced workspace returns to its monitor.
 
+## 5f. What each gesture costs, and the audit (2026-09-20)
+
+`tests/wm/bench.ahk` times every primitive (best/median/worst over several
+runs; AutoHotkey's clock has ~15 ms granularity, so read them in steps of 16):
+
+| | cost |
+|---|---|
+| `glazewm` CLI round trip (any command or query) | **47 ms** |
+| the same through `cmd.exe` with a temp file | 47-63 ms |
+| parsing the tree (`GlazeWins`, `GlazeMonitors`) | in the noise |
+| `CurrentWs` cold / warm | 62 ms / **0 ms** |
+| enumerating every top-level window (Win32) | 0 ms |
+| the journal: read / snapshot | 0 ms / 62 ms |
+
+So the whole cost of a gesture is *how many times it talks to GlazeWM*, not the
+parsing or the Win32 work -- and rewriting the queries with a pipe instead of
+`cmd.exe` would buy nothing. What was done instead:
+
+- **Hiding a window takes no call at all** (31 ms measured end to end): the
+  fast path answers from Win32 alone.
+- **Showing one takes a single query plus the focus command** (~110 ms) --
+  down from three queries and a 250 ms sleep (687 ms measured on the first
+  version).
+- **Cycling workspaces is now one command** (47 ms): between our own switches
+  we know what each monitor is showing, so `CurrentWs` answers from a cache
+  that is authoritative for three seconds and refreshed from GlazeWM after
+  that (something else -- a click, a rule -- may have moved on).
+
+Four latent bugs found while auditing, each now guarded and tested
+(`tests/wm/run-suite.sh repair`, cases 5 and 6):
+
+1. **A failed query looked like "this app is not running"** -- GlazeWM
+   restarting would have made Hyper+&lt;letter&gt; launch a second copy of an app
+   that was already open. A query that does not come back with a
+   `clientMessage` is now treated as "no answer", and the gesture does nothing.
+2. **The repair could have resized a game.** It only ever places *floating*
+   windows now: a tiling one is sized by the layout, and a fullscreen one is
+   the thing the repair is supposed to protect.
+3. **The repair could have run mid-game**: a game changing resolution fires a
+   display change too. It is skipped entirely while a fullscreen window is in
+   front (Hyper+F5 still works once you are out).
+4. **A window that is simply small is not broken.** "Too small" only counts
+   when the journal knows that window was much bigger; a calculator stays a
+   calculator.
+
+And one of my own making, fixed: the pill trace walked every window a second
+time on **every focus change**, even with the debug marker off -- `Dbg`'s
+argument is built before `Dbg` can decide to ignore it.
+
 ## 6. Sway parity (2026-09-20)
 
 The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on

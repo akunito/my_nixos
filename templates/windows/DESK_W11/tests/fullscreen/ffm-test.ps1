@@ -7,9 +7,16 @@ $d = "$env:TEMP\perf"
 # One capture can come back empty right after another process with the same
 # name has exited (the trace session latches onto the dying one), so a blank
 # result is retried once before it is believed.
+# By pid: every stand-in here is another fliptest, and PresentMon's
+# --process_name would count their frames as this window's.
 function Capture($name) {
   Remove-Item "$d\$name.csv" -EA SilentlyContinue
-  & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\$name.csv" --v2_metrics --timed 4 --terminate_after_timed --stop_existing_session --session_name AkuFfm --no_console_stats *> $null
+  $target = if ($script:gamePid) { $script:gamePid } else { 0 }
+  if ($target) {
+    & "$d\PresentMon.exe" --process_id $target --output_file "$d\$name.csv" --v2_metrics --timed 4 --terminate_after_timed --stop_existing_session --session_name AkuFfm --no_console_stats *> $null
+  } else {
+    & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\$name.csv" --v2_metrics --timed 4 --terminate_after_timed --stop_existing_session --session_name AkuFfm --no_console_stats *> $null
+  }
   if (-not (Test-Path "$d\$name.csv")) { return @() }
   @(Import-Csv "$d\$name.csv")
 }
@@ -44,6 +51,7 @@ $primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x
 & $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null
 Start-Sleep 1
 $p = Start-Process "$d\fliptest.exe" -ArgumentList "75 0 gamelike" -PassThru
+$script:gamePid = $p.Id
 Start-Sleep 5
 $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Cls($x) -eq "FlipTestWnd") { $h = $x; break }; $x = [W]::GetWindow($x, 2) }

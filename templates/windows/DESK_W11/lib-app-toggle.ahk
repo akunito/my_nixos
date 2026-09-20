@@ -33,6 +33,12 @@ AppToggle(spec, cmd) {
         }
     }
     snap := GlazeSnapshot()
+    if (!snap["ok"]) {
+        ; GlazeWM did not answer. Doing nothing is the only safe move: an empty
+        ; window list looks like "not running" and would start a second copy.
+        Dbg("toggle " spec ": GlazeWM did not answer, doing nothing")
+        return
+    }
     wins := AppWindowsIn(snap["wins"], spec)
     if (!wins.Length) {
         ; Cloaked by the app itself = it went to the tray. Nothing outside the

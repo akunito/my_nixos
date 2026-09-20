@@ -55,14 +55,51 @@ CursorDevice() {
 ; main monitor and ws 11 on the vertical one), and trusting the name made the
 ; cycle jump from 12 straight to 17 -- every step in between was switching the
 ; other monitor.
+; Every call to the GlazeWM CLI costs about 47 ms (measured: the spawn and the
+; IPC round trip, with or without a shell around it), so the fewer the better.
+; Cycling workspaces is the gesture pressed in bursts, and between our own
+; switches we already KNOW what each monitor is showing -- that is what this
+; cache is: authoritative for a few seconds after we switched, refreshed from
+; GlazeWM after that, in case something else (a click, a rule) moved on.
+global WsCacheName := Map(), WsCacheAt := Map()
+WsCacheTtl := 3000
+
+WsCacheSet(group, name) {
+    global WsCacheName, WsCacheAt
+    WsCacheName[group] := name, WsCacheAt[group] := A_TickCount
+}
+WsCacheDrop(group) {
+    global WsCacheAt
+    if WsCacheAt.Has(group)
+        WsCacheAt.Delete(group)
+}
+; Switch a monitor's workspace and remember it. Asking for the workspace that
+; is already displayed toggles to the previous one (`toggle_workspace_on_refocus`),
+; and what that lands on is not ours to know: the cache is dropped instead.
+FocusWorkspace(name) {
+    group := SubStr(name, 1, 1) = "2" ? 2 : 1
+    global WsCacheName
+    same := WsCacheName.Has(group) && WsCacheName[group] = name
+    Glaze("focus --workspace " name)
+    if same
+        WsCacheDrop(group)
+    else
+        WsCacheSet(group, name)
+}
+
 CurrentWs(group, wss := 0) {
+    global WsCacheName, WsCacheAt, WsCacheTtl
+    if (WsCacheAt.Has(group) && A_TickCount - WsCacheAt[group] < WsCacheTtl)
+        return WsCacheName[group]
     device := CursorDevice()
     for mon in GlazeMonitors() {
         if (mon["device"] != device)
             continue
         for wsEntry in mon["wss"]
-            if (wsEntry["displayed"])
+            if (wsEntry["displayed"]) {
+                WsCacheSet(group, wsEntry["name"])
                 return wsEntry["name"]
+            }
     }
     ; Fall back to the naming convention if the monitor is not in the tree.
     if !wss
@@ -83,5 +120,5 @@ WsCycle(delta, move := false) {
     n := order[Mod(i - 1 + delta + 10, 10) + 1]
     if move
         Glaze("move --workspace " n)
-    Glaze("focus --workspace " n)
+    FocusWorkspace(n)
 }

@@ -13,6 +13,11 @@
 #Requires AutoHotkey v2.0
 #Include %A_LineFile%\..\lib-layout-journal.ahk
 
+AppFocusedIsFullscreenNow() {
+    j := GlazeQuery("focused")
+    return GlazeAnswered(j) && InStr(j, '"state":{"type":"fullscreen"') > 0
+}
+
 ; Workspace 1x belongs to the main monitor, 2x to the vertical one -- the same
 ; convention as the GlazeWM config's `bind_to_monitor`.
 RepairGroupDevice(group) {
@@ -71,7 +76,10 @@ GlazeWsId(name) {
 ; the layout decides it -- so only its workspace is restored, and GlazeWM
 ; redraws the rest.
 RepairPlaceWindow(w, place) {
-    if (w["state"] = "tiling")
+    ; Only floating windows have a rectangle of their own. A tiling window is
+    ; sized by the layout, and a fullscreen one is a game: giving either of
+    ; them a rectangle is how a repair would break what it is fixing.
+    if (w["state"] != "floating")
         return false
     ; `position` + `size`, not `set-floating --x-pos ...`: the state commands
     ; return early when the window is already in that state, so a floating
@@ -90,6 +98,13 @@ RepairPlaceWindow(w, place) {
 ;   full = true   also re-apply the recorded geometry to healthy windows
 RepairLayout(full := false) {
     t0 := A_TickCount
+    ; Never while a game is in front: a game changing resolution fires a
+    ; display change too, and moving windows around mid-game is worse than
+    ; whatever the repair would have fixed. Hyper+F5 still works afterwards.
+    if (AppFocusedIsFullscreenNow()) {
+        Dbg("repair: a fullscreen window is in front, skipped")
+        return Map("workspaces", 0, "windows", 0, "notes", [])
+    }
     entries := JournalRead()
     fixed := 0, notes := []
     moved := RepairWorkspaces()
@@ -104,15 +119,21 @@ RepairLayout(full := false) {
         } catch
             continue
         key := JournalKey(w["proc"], w["class"])
-        broken := JournalIsBroken(x, y, ww, wh)
-        ; Where does the journal say this window lives?
-        homeDevice := ""
+        ; Where does the journal say this window lives, and how big was it?
+        homeDevice := "", biggest := 0
         if entries.Has(key) {
             newest := 0
-            for d, r in entries[key]
+            for d, r in entries[key] {
                 if (!newest || r["stamp"] > newest["stamp"])
                     newest := r, homeDevice := d
+                if (!biggest || r["w"] * r["h"] > biggest["w"] * biggest["h"])
+                    biggest := r
+            }
         }
+        ; Small is only broken when this window is known to have been much
+        ; bigger: plenty of windows are simply small.
+        wasBigger := biggest && (biggest["w"] > ww * 1.5 || biggest["h"] > wh * 1.5)
+        broken := JournalIsBroken(x, y, ww, wh, wasBigger)
         ; A broken window has no meaningful monitor of its own (Windows parks
         ; it at -32000, or leaves it the size of its title bar), so it goes
         ; home; only when nothing was ever recorded does the pointer decide.

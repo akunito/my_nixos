@@ -151,9 +151,13 @@ PillSync(*) {
                 continue
             mon := MonitorAt(px + pw // 2, py + ph // 2)
             covered := MonitorIsCovered(mon, pill)
-            Dbg(Format("pill {1},{2} {3}x{4} -> monitor {5} [{6},{7} {8}x{9}] covered={10} by {11}",
-                px, py, pw, ph, mon.i, mon.l, mon.t, mon.r - mon.l, mon.b - mon.t,
-                covered, MonitorCoveredBy(mon, pill)))
+            ; Only when the trace is on: Dbg's argument is built before Dbg
+            ; can check the marker, and MonitorCoveredBy walks every window a
+            ; second time -- on every focus change.
+            if FileExist(A_Temp "\hyper-debug.on")
+                Dbg(Format("pill {1},{2} {3}x{4} -> monitor {5} [{6},{7} {8}x{9}] covered={10} by {11}",
+                    px, py, pw, ph, mon.i, mon.l, mon.t, mon.r - mon.l, mon.b - mon.t,
+                    covered, MonitorCoveredBy(mon, pill)))
             DetectHiddenWindows true          ; MonitorIsCovered turns it off, and
             shown := DllCall("IsWindowVisible", "Ptr", pill)   ; WinShow needs it
             if (covered && shown)
@@ -290,7 +294,7 @@ winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "P
 ; keys act on, like Sway's focused output.
 Loop 10 {
     k := Mod(A_Index, 10)
-    Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
+    Hotkey "^!#" k, ((n) => (*) => FocusWorkspace(Ws(n)))(k)
     Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " MoveWs(n)))(k)
 }
 ^!#q:: WsCycle(-1)
