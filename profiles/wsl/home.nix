@@ -16,7 +16,8 @@
     ../../user/app/git/git.nix
   ]
   ++ lib.optional (systemSettings.sshHostsManaged or false) ../../user/app/ssh-hosts.nix
-  ++ lib.optional (systemSettings.claudeCodeEnable or false) ../../user/app/claude-code/claude-code.nix;
+  ++ lib.optional (systemSettings.claudeCodeEnable or false) ../../user/app/claude-code/claude-code.nix
+  ++ lib.optional (systemSettings.dotnetDevEnable or false) ../../user/app/development/dotnet.nix; # .NET 8 SDK to build AkuWM for win-x64
 
   home.stateVersion = userSettings.homeStateVersion;
 

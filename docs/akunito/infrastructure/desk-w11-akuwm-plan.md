@@ -1,8 +1,8 @@
 # AkuWM: one app for the Windows desk
 
-**Status**: plan v2, audited 2026-09-20. Agreed in principle, **not started**.
-Nothing is implemented until this document is closed; the open points are in
-section 15 and everything else is a decision.
+**Status**: plan v2, audited 2026-09-20. **M0 landed 2026-09-20** (see section
+10); M1 is next. The open points of section 15 were closed with their defaults
+when implementation started; everything else was already a decision.
 
 What changed in v2: every subsystem now has a defined interface, semantics
 and test; the licence section is a procedure instead of a sentence; the IPC
@@ -661,19 +661,65 @@ a commit in the dotfiles repo that documents what changed on the desk.
 
 | | lands | exit criteria | spikes | size |
 |---|---|---|---|---|
-| **M0** | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | unit tests green on Linux; `akuwm config import glazewm` reproduces today's 21 rules, 20 workspaces, 13 apps; `akuwm doctor` runs on the desk | -- | M |
+| **M0** ✅ 2026-09-20 | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | **met**: 102 unit tests green on Linux; the import reproduces 21 rules, 20 workspaces, 13 apps (and 4 Startup entries the Python prototype could not find); `akuwm doctor` runs on the desk and sees the live stack | -- | M |
 | **M1** | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | `akuwm query windows` matches `glazewm query windows` (per hwnd: workspace, state, sticky) on the live desktop for an hour of normal use; the latency bench exists | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
 | **M2** | it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | `tests/fullscreen` green (no check fails twice) and `tests/wm` green with AHK on AkuWM; Zebar pills work (its requests captured); one day of normal use | S6 Zebar reconnect when the server restarts · S7 mixed-DPI rects | XL |
 | **M3** | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** | journal, repair, display changes, suspend/resume | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S` | headless tests green; the driven smoke opens every section; a rule edited in the GUI is live after Apply | -- | L |
 | **M6** | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported | -- | M |
-| **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, `w11-apps` and the AHK deleted from the repo | a clean install on this machine from the release; the runbook updated | -- | S |
+| **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, the AHK deleted from the repo (`w11-apps` went with M0) | a clean install on this machine from the release; the runbook updated | -- | S |
 
 M2 is the largest and the one that carries the risk; cutting it so that the
 existing AHK drives AkuWM means the 155-check suite guards the WM core
 **before** the input layer exists, and the two big rewrites (WM, input)
 never land in the same step.
+
+### 10.1 What M0 actually landed (2026-09-20)
+
+`github.com/akunito/AkuWM`, MIT, five projects building from WSL with the
+nixpkgs SDK (`dotnet-sdk_8` = 8.0.422, behind the new dotfiles flag
+`dotnetDevEnable`). 102 unit tests, green on Linux.
+
+- **Configuration** (`AkuWM.Core/Config`): the section 6 schema as C# with
+  every field nullable, three layers merged in order (built-in defaults →
+  `common.json` → `<profile>.json`), lists merged **by id** field by field,
+  atomic writes, snake_case JSON. A validator with 20-odd checks that never
+  touches the disk, so the GUI's Apply, `config validate` and the unit tests
+  all run the same code.
+- **Import** (`AkuWM.Core/Import`): `akuwm config import glazewm` read this
+  desk and wrote `templates/windows/DESK_W11/akuwm/common.json` — 21 rules, 20
+  workspaces, 13 apps, 4 Startup entries. Each GlazeWM alternative became a
+  rule of its own, so one can be switched off without touching the others;
+  workspaces are bound to roles instead of monitor indexes; the AutoHotkey
+  launch expressions were translated into plain `%ENV%` paths. Both bugs found
+  in the `w11-apps` review are fixed and covered by a test each.
+- **The chord parser and the rule matcher**: pure, so "test this rule against
+  the open windows" in the GUI will answer with the engine that runs it.
+- **CLI and pipe**: `akuwm daemon` serves `\\.\pipe\akuwm`, one line in, one
+  line out; `akuwm <command>` forwards to it, or answers locally when the
+  command needs no window manager — which is how `config import` and `doctor`
+  work from WSL. Proven on the desk: the daemon started, answered `version` and
+  `doctor` over the pipe, and stopped on `exit`.
+- **Logging and doctor**: one rolling file under `%LOCALAPPDATA%\akuwm\logs`,
+  debug behind a marker file. `doctor` on the desk reports the configuration,
+  the runtime directory, the pipe, and what else is running — it found GlazeWM,
+  the AutoHotkey script and Zebar alive, and 6123 listening.
+- **Licence hygiene**: `LICENSING.md` and `tools/licence-tripwire.sh` in CI
+  (it caught one comment on its first run, which is the point of it). Nothing
+  was read from GlazeWM, the fork, glazewm-js, Zebar or AutoHotkey's sources.
+- **CI**: ubuntu (tripwire, build, test, `dotnet format`, and a win-x64
+  publish) plus windows (build, test).
+
+Two deviations from this document, both deliberate and both temporary:
+
+1. `AkuWM.App` targets `net8.0`, not `net8.0-windows`, while it has no Win32
+   in it. That is what lets the import and `doctor` run from WSL. It moves to
+   `net8.0-windows` at M1, when it references `AkuWM.Platform`.
+2. The pipe speaks **AkuWM's own** reply envelope. The GlazeWM-compatible one
+   (section 7) arrives with the WebSocket server in M2, in
+   `AkuWM.App/Compat/`, so the protocol AkuWM must imitate never shapes the
+   model behind it.
 
 ## 11. Migration and rollback
 
@@ -727,8 +773,9 @@ What carries over, as design rather than code: the state shape (sections,
 `id`/`name`/`enabled`/`notes`/`updated_at`, `common` + machine layer merged
 by id, atomic sorted writes), monitor **roles** for workspaces, and the
 import job. All three are in section 6 and in M0 as C#. The package is
-**retired**: it gets a README pointing here now and is deleted in M0's first
-commit, once `akuwm config import glazewm` reproduces its output.
+**retired**: it was deleted with M0, once `akuwm config import glazewm`
+reproduced its output and fixed the two bugs found in this review (the Startup
+path, and ids derived from the content).
 
 ## 14. Out of scope
 
@@ -738,18 +785,27 @@ commit, once `akuwm config import glazewm` reproduces its output.
 - Sway's blur, shadows and corner radius (SwayFX) have no Windows
   counterpart worth building; the focused-window border is kept.
 
-## 15. Open points (the only ones)
+## 15. Open points, and how they were closed
 
-1. **Keymap gaps** (section 8, second table): which sway chords get a
-   Windows binding, and to what. Defaults if nothing is said: slots 1-0,
+Implementation started on 2026-09-20 without an answer to these four, so each
+took the default the plan had written down. None of them blocks M0, and each is
+one edit away from being changed.
+
+1. **Keymap gaps** (section 8, second table) -- taken as written: slots 1-0,
    `Hyper+S` for the GUI, `Hyper+M` Task Manager, `Hyper+Shift+A` SndVol,
    `Hyper+Shift+D` display settings, `Hyper+Shift+H` pill toggle, the rest
-   unbound.
-2. **Monitor roles**: `main` and `second` exist on Windows today; `tv` and
-   `left` are declared for when they are connected (they are the same EDIDs
-   as on the sway desk). Confirm the four names.
-3. **Startup ownership**: AkuWM launches Zebar and ShareX (and anything in
-   `startup`) instead of their own Startup-folder shortcuts. Default: yes.
-4. **`w11-apps` deletion**: at M0 (default) or now.
+   unbound. **Nothing is bound until M3**, so this is still free to change; it
+   only has to be settled before M3's exit criterion.
+2. **Monitor roles** -- `main`, `second`, `tv`, `left`, the four ids of
+   `user/wm/sway/apps/DESK.json`. The import declared the two that exist today
+   (`main`, `second`), both **without an identity**: the EDIDs are read off the
+   desk at M1, and until then `doctor` warns that a role matched by position is
+   a role a sleep cycle can move.
+3. **Startup ownership** -- yes. The four Startup-folder shortcuts were
+   imported into `startup`; GlazeWM's and the AutoHotkey one are imported
+   **disabled**, so that if AkuWM ever launches that list it cannot start its
+   own predecessor. The shortcuts themselves stay until M4.
+4. **`w11-apps` deletion** -- done with M0, once the C# import reproduced its
+   output.
 
 Everything else in this document is decided; say so if any of it is not.

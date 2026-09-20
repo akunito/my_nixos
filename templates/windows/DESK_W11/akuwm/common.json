@@ -1,0 +1,661 @@
+{
+  "version": 1,
+  "general": {
+    "toggle_workspace_on_refocus": true,
+    "focus_follows_mouse": true,
+    "cursor_jump": "off",
+    "show_all_in_taskbar": false,
+    "startup_fold_virtual_desktops": true
+  },
+  "gaps": {
+    "inner": 8,
+    "outer": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale_with_dpi": true
+  },
+  "effects": {
+    "focused_border": "#c4a7e7"
+  },
+  "layout": {
+    "default_direction": "auto"
+  },
+  "monitors": [
+    {
+      "id": "main",
+      "primary": true,
+      "enabled": true,
+      "notes": "role imported from the workspace bindings; identity still to be filled in",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "second",
+      "enabled": true,
+      "notes": "role imported from the workspace bindings; identity still to be filled in",
+      "updated_at": 1789922518
+    }
+  ],
+  "workspaces": [
+    {
+      "name": "11",
+      "monitor": "main"
+    },
+    {
+      "name": "12",
+      "monitor": "main"
+    },
+    {
+      "name": "13",
+      "monitor": "main"
+    },
+    {
+      "name": "14",
+      "monitor": "main"
+    },
+    {
+      "name": "15",
+      "monitor": "main"
+    },
+    {
+      "name": "16",
+      "monitor": "main"
+    },
+    {
+      "name": "17",
+      "monitor": "main"
+    },
+    {
+      "name": "18",
+      "monitor": "main"
+    },
+    {
+      "name": "19",
+      "monitor": "main"
+    },
+    {
+      "name": "10",
+      "monitor": "main"
+    },
+    {
+      "name": "21",
+      "monitor": "second"
+    },
+    {
+      "name": "22",
+      "monitor": "second"
+    },
+    {
+      "name": "23",
+      "monitor": "second"
+    },
+    {
+      "name": "24",
+      "monitor": "second"
+    },
+    {
+      "name": "25",
+      "monitor": "second"
+    },
+    {
+      "name": "26",
+      "monitor": "second"
+    },
+    {
+      "name": "27",
+      "monitor": "second"
+    },
+    {
+      "name": "28",
+      "monitor": "second"
+    },
+    {
+      "name": "29",
+      "monitor": "second"
+    },
+    {
+      "name": "20",
+      "monitor": "second"
+    }
+  ],
+  "rules": [
+    {
+      "id": "r-pb29pn",
+      "name": "zebar",
+      "match": [
+        {
+          "process": "zebar"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-mjt31t",
+      "name": "[Pp]icture.in.[Pp]icture",
+      "match": [
+        {
+          "class": "re:Chrome_WidgetWin_1|MozillaDialogClass",
+          "title": "re:[Pp]icture.in.[Pp]icture"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-qvlbf9",
+      "name": "PowerToys",
+      "match": [
+        {
+          "process": "PowerToys",
+          "class": "re:HwndWrapper\\[PowerToys\\.PowerAccent.*?\\]"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-v3xs4a",
+      "name": "Command Palette",
+      "match": [
+        {
+          "class": "WinUIDesktopWin32WindowClass",
+          "title": "Command Palette"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-r08fmj",
+      "name": "PowerToys",
+      "match": [
+        {
+          "process": "PowerToys",
+          "title": "re:.*? - Peek"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-uoxmtf",
+      "name": "ShareX",
+      "match": [
+        {
+          "process": "ShareX"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-294jji",
+      "name": "AutoHotkey64_UIA",
+      "match": [
+        {
+          "process": "AutoHotkey64_UIA"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-bq81eb",
+      "name": "WindowsTerminal",
+      "match": [
+        {
+          "process": "WindowsTerminal"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-ew0bm3",
+      "name": "alacritty",
+      "match": [
+        {
+          "process": "alacritty"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-lhgzpw",
+      "name": "Telegram",
+      "match": [
+        {
+          "process": "Telegram"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-vfrzuo",
+      "name": "Bitwarden",
+      "match": [
+        {
+          "process": "Bitwarden"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-xbuoqn",
+      "name": "Spotify",
+      "match": [
+        {
+          "process": "Spotify"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-d5sruw",
+      "name": "Element",
+      "match": [
+        {
+          "process": "Element"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-ozf3r9",
+      "name": "Taskmgr",
+      "match": [
+        {
+          "process": "Taskmgr"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-wssd8q",
+      "name": "Calculator",
+      "match": [
+        {
+          "class": "ApplicationFrameWindow",
+          "title": "Calculator"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-91gz1e",
+      "name": "tailscale-ipn",
+      "match": [
+        {
+          "process": "tailscale-ipn"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-m9uczt",
+      "name": "SystemSettings",
+      "match": [
+        {
+          "process": "SystemSettings"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-azps3m",
+      "name": "SndVol",
+      "match": [
+        {
+          "process": "SndVol"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-m4n1tc",
+      "name": "explorer",
+      "match": [
+        {
+          "process": "explorer",
+          "class": "CabinetWClass"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-fllq9l",
+      "name": "ApplicationFrameHost",
+      "match": [
+        {
+          "process": "ApplicationFrameHost"
+        }
+      ],
+      "actions": [
+        "float"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "r-z9p482",
+      "name": "#32770",
+      "match": [
+        {
+          "class": "#32770"
+        }
+      ],
+      "actions": [
+        "float"
+      ],
+      "enabled": true,
+      "notes": "imported from glazewm/config.yaml",
+      "updated_at": 1789922518
+    }
+  ],
+  "shortcuts": [
+    {
+      "id": "k-u4x1yq",
+      "keys": "Hyper+T",
+      "kind": "app",
+      "app": "WindowsTerminal.exe",
+      "command": "wt.exe",
+      "category": "Apps",
+      "name": "WindowsTerminal",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-q6frps",
+      "keys": "Hyper+R",
+      "kind": "app",
+      "app": "alacritty.exe",
+      "command": "%ProgramFiles%\\Alacritty\\alacritty.exe",
+      "category": "Apps",
+      "name": "alacritty",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-dzflb3",
+      "keys": "Hyper+Z",
+      "kind": "app",
+      "app": "zen.exe",
+      "command": "%ProgramFiles%\\Zen Browser\\zen.exe",
+      "category": "Apps",
+      "name": "zen",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-d2rjkt",
+      "keys": "Hyper+V",
+      "kind": "app",
+      "app": "vivaldi.exe",
+      "command": "%LOCALAPPDATA%\\Vivaldi\\Application\\vivaldi.exe",
+      "category": "Apps",
+      "name": "vivaldi",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-kb4ila",
+      "keys": "Hyper+L",
+      "kind": "app",
+      "app": "Telegram.exe",
+      "command": "%APPDATA%\\Telegram Desktop\\Telegram.exe",
+      "category": "Apps",
+      "name": "Telegram",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-l8p5dy",
+      "keys": "Hyper+D",
+      "kind": "app",
+      "app": "Obsidian.exe",
+      "command": "%LOCALAPPDATA%\\Programs\\Obsidian\\Obsidian.exe",
+      "category": "Apps",
+      "name": "Obsidian",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-5cju00",
+      "keys": "Hyper+C",
+      "kind": "app",
+      "app": "Code.exe",
+      "command": "code",
+      "category": "Apps",
+      "name": "Code",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-ecf2wv",
+      "keys": "Hyper+P",
+      "kind": "app",
+      "app": "Bitwarden.exe",
+      "command": "%LOCALAPPDATA%\\Programs\\Bitwarden\\Bitwarden.exe",
+      "category": "Apps",
+      "name": "Bitwarden",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-4hqvly",
+      "keys": "Hyper+O",
+      "kind": "app",
+      "app": "Element.exe",
+      "command": "%LOCALAPPDATA%\\element-desktop\\Element.exe",
+      "category": "Apps",
+      "name": "Element",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-b06gmb",
+      "keys": "Hyper+Y",
+      "kind": "app",
+      "app": "Spotify.exe",
+      "command": "%APPDATA%\\Spotify\\Spotify.exe",
+      "category": "Apps",
+      "name": "Spotify",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-0mhg1c",
+      "keys": "Hyper+X",
+      "kind": "app",
+      "app": "CalculatorApp.exe",
+      "command": "calc",
+      "category": "Apps",
+      "name": "CalculatorApp",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-cdjaao",
+      "keys": "Hyper+E",
+      "kind": "app",
+      "app": "explorer.exe",
+      "command": "explorer",
+      "category": "Apps",
+      "name": "explorer",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "k-y3lgr9",
+      "keys": "Hyper+U",
+      "kind": "app",
+      "app": "dbeaver.exe",
+      "command": "%LOCALAPPDATA%\\DBeaver\\dbeaver.exe",
+      "category": "Apps",
+      "name": "dbeaver",
+      "enabled": true,
+      "notes": "imported from hyper-desktops.ahk",
+      "updated_at": 1789922518
+    }
+  ],
+  "startup": [
+    {
+      "id": "u-4je07j",
+      "name": "GlazeWM",
+      "command": "C:\\Users\\diego\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\GlazeWM.lnk",
+      "after": "now",
+      "delay_ms": 0,
+      "enabled": false,
+      "notes": "found in the Windows Startup folder; off because AkuWM replaces it",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "u-1sxd3o",
+      "name": "ShareX",
+      "command": "C:\\Users\\diego\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ShareX.lnk",
+      "after": "now",
+      "delay_ms": 0,
+      "enabled": true,
+      "notes": "found in the Windows Startup folder",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "u-59wrl3",
+      "name": "Zebar",
+      "command": "C:\\Users\\diego\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Zebar.lnk",
+      "after": "ipc",
+      "delay_ms": 0,
+      "enabled": true,
+      "notes": "found in the Windows Startup folder",
+      "updated_at": 1789922518
+    },
+    {
+      "id": "u-7tbgq4",
+      "name": "hyper-desktops",
+      "command": "C:\\Users\\diego\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\hyper-desktops.lnk",
+      "after": "now",
+      "delay_ms": 0,
+      "enabled": false,
+      "notes": "found in the Windows Startup folder; off because AkuWM replaces it",
+      "updated_at": 1789922518
+    }
+  ],
+  "apps": {
+    "catalogue": "../winget-packages.json"
+  }
+}

@@ -595,6 +595,7 @@
     # Development tools feature flags
     developmentToolsEnable = false; # Enable development IDEs and cloud tools (Cursor, Claude Code, Azure CLI, etc.)
     developmentFullRuntimesEnable = false; # Enable full development runtimes (Node.js, Python, Go, Rust)
+    dotnetDevEnable = false; # .NET 8 SDK + dotnet-format for building AkuWM (DESK_W11) from WSL
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeGuiEnvEnable = false; # Put the MCP credentials in the SESSION env (environment.d + Plasma env), so a GUI-launched VS Code extension can expand them
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
