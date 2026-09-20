@@ -867,6 +867,67 @@ rest of the run and says so, and every workspace shows all of its windows. That
 is a bad desk, against a window nobody can see, find in Alt+Tab or click on the
 taskbar, which is a lost one.
 
+### 10.4 The audit, and what it cost the gesture (2026-09-21)
+
+Two adversarial passes over the whole of M2 -- one hunting correctness, one
+hunting latency -- then every finding fixed with the test that reproduced it.
+**410 tests.**
+
+**Fourteen real faults.** The two that could ruin a session: `TileGeometry`
+threw on a tile narrower than its gap (`Math.Clamp` with min above max; the
+portrait monitor reaches a 1 px tile at sixteen windows), the loop caught it,
+and the desk then redrew **nothing** for the rest of the run while the daemon
+stayed alive and logging. And a window AkuWM had hidden could be abandoned
+cloaked: one enumeration that left it out -- a title briefly empty, a splash
+becoming a main window -- and it went unmanaged, invisible, off the taskbar,
+with nothing left that would ever take the cloak off.
+
+The rest: the focus was recorded before the un-hide it depended on, so after a
+workspace switch the next chord acted on a window nobody could see; refusing
+the focus for a hidden window never took the keyboard off it; the patience
+clock that decides a window "refused" a move only ever started, so a window
+dragged an hour after it settled was never put back; `shell-exec` ate the
+separators of every path under Program Files; `toggle-minimized` could only
+minimise; a restore that crossed screens left a window sticky to two monitors;
+`wm-toggle-pause` and `wm-exit` set flags nothing read; a command that threw
+dropped the bar's connection; the subscription map was mutated outside its
+lock; the process cache was a plain static `Dictionary` written from two
+threads, which can wedge the wm thread; and **nothing ever told the desk the
+screens had changed** -- those arrive as messages, only to a window, and there
+was no window, so `SetMonitors` ran once at startup and every later layout was
+computed against a geometry that no longer existed.
+
+**The gesture path**, measured with `akuwm bench` on the desk, before and after:
+
+| | before | after |
+|---|---|---|
+| read one window | 0.126 ms | 0.063 ms |
+| build the model | 0.138 ms | 0.105 ms |
+| record one cloak | **0.576 ms** | **0.000 ms** |
+| **a workspace switch of 8** | **10.356 ms** | **0.615 ms** |
+| enumerate every window | 1.370 ms | 0.838 ms |
+
+From twice the 5 ms budget to a twelfth of it. The big one was the state
+records: rewriting a JSON file per record, once per window hidden and once per
+window shown, inside the gesture. They are **memory-mapped** now -- these
+records exist to survive the *process* dying, not the machine, and the dirty
+pages belong to the OS, so writing one is a few stores to memory. A periodic
+flush from the heap would have been the same idea with a lottery attached, the
+losing ticket being the window hidden just before the crash.
+
+Also: one COM call per window read instead of two, the applier reading from the
+model instead of re-asking Windows, a cheap gate so every tooltip on the
+machine stops costing a hundred-window enumeration, and the rule matcher
+hoisted out of the per-window path (it was recompiling every regex in the
+config, 57 % of `Adopt`).
+
+**Size and memory** were measured too, and the obvious lever is the wrong one:
+compressing the single file saves 50 MB of disk and costs 18 MB of *resident*
+RAM, because the mapped image is shared and file-backed while decompressed
+assemblies are private. ReadyToRun costs both and buys no startup. Numbers and
+the ten reflection sites that block trimming: `docs/trimming.md` in the AkuWM
+repo.
+
 Still to do in M2: the Zebar capture and the pill sync, the taskbar mark under
 a real game, `tests/wm` and `tests/fullscreen` driven by AutoHotkey through the
 shim, and a day of normal use.
