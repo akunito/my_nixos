@@ -4,7 +4,27 @@
 ; ASCII only, no BOM: AHK reads a BOM-less file as ANSI.
 #Requires AutoHotkey v2.0
 
-global glazeExe := A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+; Which window manager answers. AkuWM ships a drop-in CLI that speaks the same
+; words and returns the same JSON, so switching the desk over is a matter of
+; pointing this at it -- no gesture in this file changes.
+;
+; The path comes from a file rather than an environment variable because this
+; script is already running when the desk is switched: a variable set now would
+; not reach it, and akuwm-switch.ps1 restarts the script anyway. A file is one
+; less thing that can be half-applied.
+global glazeExe := WmCli()
+
+WmCli() {
+    marker := EnvGet("LOCALAPPDATA") "\akuwm\wm-cli.txt"
+    if FileExist(marker) {
+        try {
+            path := Trim(FileRead(marker, "UTF-8"), " `t`r`n")
+            if (path != "" && FileExist(path))
+                return path
+        }
+    }
+    return A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+}
 
 ; ---- Debug trace (opt-in) -------------------------------------------------
 ; %TEMP%\hyper-debug.on present -> every gesture and every GlazeWM command is
