@@ -38,6 +38,21 @@ WalkCursorTo(x, y) {
     DllCall("SetCursorPos", "Int", x, "Int", y)
     Sleep 400
 }
+; The vertical monitor lives at virtualised coordinates (AHK is system-DPI
+; aware), so reaching it needs MouseMove, not a raw SetCursorPos.
+MoveCursorTo(x, y) {
+    CoordMode "Mouse", "Screen"
+    MouseMove x, y, 10
+    Sleep 400
+}
+MonCenter(primary) {
+    Loop MonitorGetCount() {
+        MonitorGet(A_Index, &l, &t, &r, &b)
+        if ((MonitorGetPrimary() = A_Index) = primary)
+            return [(l + r) // 2, (t + b) // 2]
+    }
+    return [100, 100]
+}
 StartFlip(x, y, w, h) {
     global flip
     Run(flip " 300 0 " x " " y " " w " " h " now", , , &pid)
@@ -89,7 +104,11 @@ Park() {                            ; pointer on empty desktop, nothing focused
 ; Focus a workspace, but never ask for the one already focused: with
 ; toggle_workspace_on_refocus that jumps to the previous one instead.
 FocusWs(ws) {   ; not GoTo(): that is an AHK control-flow keyword
-    if (GlazeFocusedWs() != ws) {
+    ; Ask by "is it displayed", not by "is it focused": with nothing focused
+    ; (an empty workspace) the focused workspace reads empty, and asking for
+    ; the workspace you are already on toggles to the previous one.
+    wss := GlazeWss()
+    if (!wss.Has(ws) || !wss[ws]) {
         Glaze("focus --workspace " ws)
         Sleep 1200
     }
@@ -116,8 +135,14 @@ Check("1 launch: it is focused", WinActive("ahk_id " h) ? 1 : 0, 1)
 Check("1 launch: on the workspace we are on", WsOf(h), home)
 
 ; --- 2. one window, focused -> hide (minimise) -----------------------------
+WalkCursorTo(700, 700)              ; hover it: with focus following the mouse,
+Sleep 500                           ; a pointer on the desktop focuses the desktop
+t := A_TickCount
 AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
+hideMs := A_TickCount - t
 Sleep 1200
+Note("2 hide took " hideMs " ms")
+Check("2 hiding is instant (no query)", hideMs < 300 ? 1 : 0, 1)
 Check("2 focused -> minimised", WinGetMinMax("ahk_id " h), -1)
 Check("2 GlazeWM agrees", StateOf(h), "minimized")
 
@@ -125,8 +150,12 @@ Check("2 GlazeWM agrees", StateOf(h), "minimized")
 FocusWs(other)
 Park()
 FocusWs(other)
+t := A_TickCount
 AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
+showMs := A_TickCount - t
 Sleep 1500
+Note("3 show took " showMs " ms")
+Check("3 showing takes one query, not three", showMs < 900 ? 1 : 0, 1)
 Check("3 minimised window restored", WinGetMinMax("ahk_id " h) = -1 ? "minimised" : "restored", "restored")
 Check("3 it came to where we are", WsOf(h), other)
 Check("3 and it has the focus", WinActive("ahk_id " h) ? 1 : 0, 1)
@@ -236,6 +265,34 @@ if np {
     Check("8 came to the workspace we are on", rec ? rec["ws"] : "?", other)
     Check("8 and tiles again", rec ? rec["state"] : "?", "tiling")
     try RunWait(A_ComSpec ' /c taskkill /F /IM notepad.exe', , "Hide")
+}
+
+; --- 9. a hidden window comes back to the monitor the POINTER is on --------
+; Sway's focused output is the one under the pointer, so `scratchpad show`
+; puts the window there. Taking the focused window's workspace instead sent it
+; to the other monitor whenever something there still held the focus.
+KillFlips()
+Sleep 800
+FocusWs(home)
+main := MonCenter(true), vert := MonCenter(false)
+h3 := StartFlip(300, 300, 900, 700)
+if h3 {
+    WalkCursorTo(700, 700)              ; hover it, then hide it
+    Sleep 500
+    AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
+    Sleep 1200
+    Check("9 setup: minimised on the main monitor", WinGetMinMax("ahk_id " h3), -1)
+    MoveCursorTo(vert[1], vert[2])      ; now point at the other monitor
+    AppToggle("fliptest.exe", flip " 300 0 300 300 900 700 now")
+    Sleep 1800
+    rec := 0
+    for w in GlazeWins()
+        if (w["hwnd"] = h3)
+            rec := w
+    Note("9 came back to workspace " (rec ? rec["ws"] : "?"))
+    Check("9 it came to the monitor the pointer is on",
+        rec ? SubStr(rec["ws"], 1, 1) : "?", "2")
+    MoveCursorTo(main[1], main[2])
 }
 
 ; ---------------------------------------------------------------------------

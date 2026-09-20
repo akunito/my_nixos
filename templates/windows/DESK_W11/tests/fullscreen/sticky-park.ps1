@@ -10,7 +10,12 @@ $file = "$env:TEMP\perf\sticky-parked.txt"
 
 if ($mode -eq "off") {
   $ids = @((& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.sticky } | % { $_.id })
-  if ($ids.Count) { $ids | Set-Content $file } else { Remove-Item $file -EA SilentlyContinue }
+  # Never overwrite a list that is still parked: a second "off" would see
+  # nothing sticky (they are already parked) and wipe the only record of what
+  # to restore -- which is exactly how Telegram and the terminals lost the flag.
+  $prev = if (Test-Path $file) { @(Get-Content $file) } else { @() }
+  $all = @($prev + $ids | Select-Object -Unique | ? { $_ })
+  if ($all.Count) { $all | Set-Content $file }
   foreach ($id in $ids) { & $glaze command --id $id unset-sticky | Out-Null }
   "parked $($ids.Count) sticky window(s)"
 } else {

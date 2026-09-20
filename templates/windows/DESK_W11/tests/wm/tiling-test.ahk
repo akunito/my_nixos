@@ -124,13 +124,22 @@ Check("3 the two left fill the monitor again",
 ; --- focus and move by direction -------------------------------------------
 leftHwnd := WRect(a)["l"] < WRect(b)["l"] ? a : b
 rightHwnd := leftHwnd = a ? b : a
+FocusedProc() {
+    for w in GlazeWins()
+        if (w["focus"])
+            return w["proc"] " " w["hwnd"]
+    return "nothing"
+}
 Glaze("focus --container-id " WinRec(leftHwnd)["id"])
 Sleep 800
+Note("4 after focusing the left one: " FocusedProc() " (left=" leftHwnd " right=" rightHwnd ")")
 Glaze("focus --direction right")
 Sleep 800
+Note("4 after focus --direction right: " FocusedProc())
 Check("4 focus moves to the right neighbour", WinRec(rightHwnd)["focus"] ? 1 : 0, 1)
 Glaze("focus --direction left")
 Sleep 800
+Note("4 after focus --direction left: " FocusedProc())
 Check("4 and back to the left one", WinRec(leftHwnd)["focus"] ? 1 : 0, 1)
 
 beforeLeft := WRect(leftHwnd)["l"]

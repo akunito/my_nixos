@@ -96,6 +96,22 @@ if ex {
     WinClose("ahk_id " ex["hwnd"])
 }
 
+; --- the terminals: sway floats and sticks kitty and Alacritty -------------
+for term in [["WindowsTerminal", "wt.exe"], ["alacritty", A_ProgramFiles "\Alacritty\alacritty.exe"]] {
+    t := ByProc(term[1])
+    if !t {
+        try Run term[2]
+        t := WaitProc(term[1])
+        opened := true
+    }
+    Check("2b " term[1] " is managed", t ? 1 : 0, 1)
+    if t {
+        Note("2b " term[1] " state=" t["state"] " sticky=" (t["sticky"] ? 1 : 0))
+        Check("2b " term[1] " floats (sway: kitty/Alacritty)", t["state"], "floating")
+        Check("2b " term[1] " is sticky", t["sticky"] ? 1 : 0, 1)
+    }
+}
+
 ; --- an app with no rule tiles, like everything else in sway ---------------
 Kill("notepad.exe")
 Sleep 800

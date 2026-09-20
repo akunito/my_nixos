@@ -19,11 +19,13 @@ pass=0; fail=0
 ok() { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 ko() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
 
-# The user's own sticky windows (Telegram by rule) follow every workspace of
-# their monitor and would sit in the middle of the cases: park them for the run.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
-  'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' off 2>/dev/null | tr -d '\r' | sed 's/^/  /'
-trap "powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' on >/dev/null 2>&1" EXIT
+# The user's own sticky windows (Telegram, the terminals) follow every
+# workspace of their monitor and would sit in the middle of the cases that
+# measure the screen: park them, except for the suite that checks the rules
+# themselves -- that one needs them exactly as the config left them.
+sticky() { powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
+  'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' "$1" 2>/dev/null | tr -d '\r' | sed 's/^/  /'; }
+trap 'sticky on >/dev/null 2>&1' EXIT
 
 mkdir -p "$WT/tests/wm"
 cp "$SRC"/lib-*.ahk "$WT/"
@@ -61,15 +63,21 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="toggle sticky tiling rules";;
+  all)       suites="toggle wskeys sticky tiling tiledrag rules";;
   *)         suites="$*";;
 esac
 
 for s in $suites; do
   case "$s" in
+    rules) sticky on;;
+    *)     sticky off;;
+  esac
+  case "$s" in
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
+    wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;
     sticky) collect sticky-test.ahk    sticky-test.txt    180 "Sticky windows: shown on every workspace of their monitor";;
     tiling) collect tiling-test.ahk    tiling-test.txt    240 "Tiling: sway's layout, gaps and keymap";;
+    tiledrag) collect tiledrag-test.ahk tiledrag-test.txt 150 "Alt+drag keeps a tiled window tiled";;
     rules)  collect rules-test.ahk     rules-test.txt     120 "Window rules ported from sway";;
     *)      echo "unknown suite: $s" >&2; exit 2;;
   esac

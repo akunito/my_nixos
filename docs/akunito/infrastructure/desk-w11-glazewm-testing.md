@@ -235,6 +235,28 @@ bars on the shell's `ABN_FULLSCREENAPP` (inherits Explorer's misdetections).
   the focus** — no mouse movement needed. Any command that acts on "the focused window"
   after a layout change needs `--id`.
 
+## 5c. Bugs found by using it (2026-09-20), and what they were
+
+| Report | Cause, as measured |
+|---|---|
+| "Hyper+Q/W does nothing" | The keys took the monitor from the FOCUSED WINDOW, so with a terminal focused on the vertical monitor and the pointer on the main one, the chord switched the vertical monitor (traced: `glaze focus --workspace 22`). In sway the focused output is the one under the POINTER. `lib-workspaces.ahk` now follows the pointer for focusing, and the window's own monitor for moving a window. |
+| "Hyper+L is much slower than in sway" | 687 ms: three `glazewm query` calls (~200 ms each) plus a 250 ms sleep. Now one query per gesture, decided from a single snapshot, and hiding a window in front of you takes no query at all: **31 ms** to hide, ~340 ms to show. |
+| "the window came back on the other monitor" | `scratchpad show` targeted the workspace of the focused container. It now targets the workspace displayed on the monitor under the pointer. |
+| "the terminal is not floating and sticky like kitty" | The rules had been ported from `swayfx-config.nix`, which is the LEGACY copy: with `swayAppsEnable = true` the live rules are `user/wm/sway/apps/common.json`, where kitty and Alacritty are `floating enable, sticky enable`. |
+| "dragging a tiled window makes it floating" | GlazeWM reads a window moved while the mouse button is down as the user pulling it out of the layout. The gesture no longer touches a tiled window: an outline follows the cursor and the drop becomes `move --direction` / `resize --width/--height` (`lib-tiling-drag.ahk`). |
+| "Vesktop and Windhawk do not show up in the search" | The Command Palette builds its app list at startup and never picked up shortcuts created later: it had been running since the 15th, `Vesktop.lnk` is from the 18th. Restarting it brings them back (screenshot probe: `tests/wm/cmdpal-probe.ahk`); `bootstrap.ps1` now restarts it after a winget import, and `restart-launcher.ps1` does it on demand. |
+
+Two traps of my own making, both worth remembering:
+
+- **`WScript.Shell.Exec` cannot hide its console.** Using it instead of a hidden
+  `cmd.exe` for the queries flashed a console window on every gesture, which took
+  the focus -- and the focus assertions of the suites started failing for no
+  reason. The saving was imaginary anyway: the win came from one query per
+  gesture instead of three.
+- **A debug log written by several processes must tolerate a locked file.**
+  `FileAppend` threw a sharing violation as an error dialog and froze a suite
+  until it timed out.
+
 ## 6. Sway parity (2026-09-20)
 
 The goal stopped being "GlazeWM for workspaces only" and became "the Sway setup, on
