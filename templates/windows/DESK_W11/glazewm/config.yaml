@@ -103,11 +103,14 @@ window_rules:
       - window_process: { equals: 'AutoHotkey64_UIA' }
 
   # Floating + sticky, the same set as sway's `floating enable, sticky enable`
-  # (swayfx-config.nix): chat, password manager, music, the system panels and
-  # the file manager. Sticky = shown on every workspace of its monitor, so
-  # they follow you around instead of being parked on one workspace.
+  # -- taken from the LIVE rules, user/wm/sway/apps/common.json, which is what
+  # sway-apps applies on DESK (swayfx-config.nix only holds the legacy copy).
+  # Sticky = shown on every workspace of its monitor, so they follow you around
+  # instead of being parked on one workspace.
   - commands: ['set-floating', 'set-sticky']
     match:
+      - window_process: { equals: 'WindowsTerminal' } # sway: kitty
+      - window_process: { equals: 'alacritty' }       # sway: Alacritty
       - window_process: { equals: 'Telegram' }        # sway: org.telegram.desktop
       - window_process: { equals: 'Bitwarden' }       # sway: bitwarden
       - window_process: { equals: 'Spotify' }         # sway: spotify

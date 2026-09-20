@@ -11,6 +11,7 @@
 ;   Hyper+F             fullscreen toggle                     = fullscreen toggle
 ;   Hyper+Space         Start / PowerToys Run                 = rofi combi
 ;   Hyper+<letter>      raise-or-launch (lib-app-toggle.ahk)  = app-toggle.sh
+;   Hyper+T / Hyper+R   terminal / second terminal            = kitty / Alacritty
 ;   Hyper+H/J/K/?       focus left / down / up / right        = focus <dir>
 ;   Hyper+Shift+J/K/L/: move the window in that direction     = window-move.sh
 ;   Hyper+Shift+U/P/I/O narrower / wider / taller / shorter   = resize
@@ -42,6 +43,8 @@ CoordMode "Mouse", "Screen"
 #Include lib-window-state.ahk
 #Include lib-glaze.ahk
 #Include lib-app-toggle.ahk
+#Include lib-workspaces.ahk
+#Include lib-tiling-drag.ahk
 SetTitleMatchMode 2
 
 dll := A_ScriptDir "\VirtualDesktopAccessor.dll"
@@ -233,44 +236,13 @@ PillSync()                                  ; get the pills right on start/reloa
 winEvHooks := [DllCall("SetWinEventHook", "UInt", 0x3, "UInt", 0x3, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x800B, "UInt", 0x800B, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")
              , DllCall("SetWinEventHook", "UInt", 0x8017, "UInt", 0x8018, "Ptr", 0, "Ptr", winEvPtr, "UInt", 0, "UInt", 0, "UInt", 0x2, "Ptr")]
-PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
-FocusGroup() {  ; 1 = main monitor (1x), 2 = secondary (2x)
-    h := WinExist("A")
-    if h && WinGetClass("ahk_id " h) != "Progman" && WinGetClass("ahk_id " h) != "WorkerW"
-        mon := DllCall("MonitorFromWindow", "Ptr", h, "UInt", 2, "Ptr")
-    else {
-        MouseGetPos &mx, &my
-        mon := DllCall("MonitorFromPoint", "Int64", (my << 32) | (mx & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    }
-    return mon = PrimaryMon() ? 1 : 2
-}
-Ws(n) => FocusGroup() * 10 + Mod(n, 10)   ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
+; PrimaryMon(), CursorGroup(), WindowGroup(), Ws(), CurrentWs() and WsCycle()
+; live in lib-workspaces.ahk: the monitor under the POINTER is the one these
+; keys act on, like Sway's focused output.
 Loop 10 {
     k := Mod(A_Index, 10)
     Hotkey "^!#" k, ((n) => (*) => Glaze("focus --workspace " Ws(n)))(k)
-    Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " Ws(n)))(k)
-}
-; Hyper+Q/W: previous/next workspace inside the focused monitor's group, wrapping
-; (Sway's workspace-nav scripts). Shift moves the window there and follows it.
-CurrentWs(group) {
-    j := GlazeQuery("monitors"), pos := 1
-    while pos := RegExMatch(j, '"name":"(\d+)"[\s\S]*?"isDisplayed":(true|false)', &m, pos) {
-        if (m[2] = "true" && SubStr(m[1], 1, 1) = group)
-            return m[1]
-        pos += StrLen(m[0])
-    }
-    return group "1"
-}
-WsCycle(delta, move := false) {
-    g := FocusGroup(), cur := CurrentWs(g), i := 1
-    order := [g "1", g "2", g "3", g "4", g "5", g "6", g "7", g "8", g "9", g "0"]
-    for k, v in order
-        if (v = cur)
-            i := k
-    n := order[Mod(i - 1 + delta + 10, 10) + 1]
-    if move
-        Glaze("move --workspace " n)
-    Glaze("focus --workspace " n)
+    Hotkey "^!#+" k, ((n) => (*) => Glaze("move --workspace " MoveWs(n)))(k)
 }
 ^!#q:: WsCycle(-1)
 ^!#w:: WsCycle(+1)
@@ -372,7 +344,8 @@ WinSwitcher() {
 
 ; raise-or-launch = Sway's app-toggle.sh; the decision table and the reasons
 ; live in lib-app-toggle.ahk (AppToggle).
-^!#t:: AppToggle("WindowsTerminal.exe", "wt.exe")
+^!#t:: AppToggle("WindowsTerminal.exe", "wt.exe")           ; sway: kitty
+^!#r:: AppToggle("alacritty.exe", A_ProgramFiles "\Alacritty\alacritty.exe")   ; sway: Alacritty
 ^!#z:: AppToggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
 ^!#v:: AppToggle("vivaldi.exe", EnvGet("LOCALAPPDATA") "\Vivaldi\Application\vivaldi.exe")
 ^!#l:: AppToggle("Telegram.exe", A_AppData "\Telegram Desktop\Telegram.exe")
@@ -551,6 +524,7 @@ AltDrag(mode) {
     }
     altDragExp := "", altDragPhase := ""
 }
+; TilingDrag() and TilingDropCommand() live in lib-tiling-drag.ahk.
 AltDragCore(mode) {
     global altDragGhost, altDragHwnd, altDragExp, altDragT0, altDragPhase
     MouseGetPos &mx, &my, &hwnd
@@ -598,6 +572,18 @@ AltDragCore(mode) {
         }
     }
     tAct := A_TickCount - tAct
+    ; A TILED window is never dragged around by hand: GlazeWM turns a tiling
+    ; window that something repositions into a floating one, and it loses its
+    ; place in the layout. Outline the gesture instead and let GlazeWM do the
+    ; move or the resize on release, which is what the same gesture does in
+    ; sway (the layout reflows, the window stays tiled).
+    tileId := GlazeTilingIdOf(hwnd)
+    Dbg(Format("{1} target {2} hwnd {3}: {4}", mode, WinGetProcessName("ahk_id " hwnd), hwnd,
+        tileId ? "tiled, id " tileId : "not tiled"))
+    if (tileId) {
+        TilingDrag(mode, hwnd, tileId, mx, my, wx, wy, ww, wh)
+        return
+    }
     fromMax := (WinGetMinMax("ahk_id " hwnd) = 1)
     if fromMax {
         ; Maximised: restore first and keep the grab point at the same relative spot

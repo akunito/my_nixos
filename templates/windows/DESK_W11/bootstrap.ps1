@@ -35,6 +35,11 @@ if (-not $SkipApps) {
   winget import -i "$PSScriptRoot\winget-packages.json" --accept-package-agreements --accept-source-agreements --ignore-unavailable --disable-interactivity
   Step "Claude Code (native, for the PowerShell side only — the real one lives in WSL)"
   if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { irm https://claude.ai/install.ps1 | iex }
+  # The Command Palette builds its app list when it starts and does not pick up
+  # Start Menu shortcuts created later: after installing anything, restart it or
+  # the new app is simply not searchable (Vesktop and Brave were missing for
+  # days, diagnosed 2026-09-20 -- the palette had been running since the 15th).
+  Get-Process Microsoft.CmdPal.UI -EA SilentlyContinue | Stop-Process -Force
   Write-Host "  not on winget, install by hand: AMD Adrenalin driver, Aion 2 (NCSoft/Purple launcher), Lineage2Dex launcher, Equalizer APO (EasyEffects stand-in)"
   Write-Warning "Spotify is elevationProhibited: winget import ALWAYS fails on it from this elevated shell. Install it afterwards from a NORMAL (non-elevated) PowerShell: winget install --id Spotify.Spotify --exact --source winget"
 }

@@ -11,51 +11,129 @@
         "Type": "Microsoft.PreIndexed.Package"
       },
       "Packages": [
-        { "PackageIdentifier": "Microsoft.WindowsTerminal" },
-        { "PackageIdentifier": "Microsoft.PowerShell" },
-        { "PackageIdentifier": "Git.Git" },
-        { "PackageIdentifier": "Microsoft.VisualStudioCode" },
-        { "PackageIdentifier": "Microsoft.PowerToys" },
-        { "PackageIdentifier": "AutoHotkey.AutoHotkey" },
-        { "PackageIdentifier": "RamenSoftware.Windhawk" },
-        { "PackageIdentifier": "DEVCOM.JetBrainsMonoNerdFont" },
-        { "PackageIdentifier": "7zip.7zip" },
-        { "PackageIdentifier": "voidtools.Everything" },
-        { "PackageIdentifier": "ShareX.ShareX" },
-        { "PackageIdentifier": "WinDirStat.WinDirStat" },
-        { "PackageIdentifier": "Notepad++.Notepad++" },
-        { "PackageIdentifier": "Microsoft.VCRedist.2015+.x64" },
-
-        { "PackageIdentifier": "Tailscale.Tailscale" },
-        { "PackageIdentifier": "Nextcloud.NextcloudDesktop" },
-        { "PackageIdentifier": "Bitwarden.Bitwarden" },
-
-        { "PackageIdentifier": "Zen-Team.Zen-Browser" },
-        { "PackageIdentifier": "Vivaldi.Vivaldi" },
-        { "PackageIdentifier": "Brave.Brave" },
-
-        { "PackageIdentifier": "Obsidian.Obsidian" },
-        { "PackageIdentifier": "Telegram.TelegramDesktop" },
-        { "PackageIdentifier": "Element.Element" },
-        { "PackageIdentifier": "Discord.Discord" },
-        { "PackageIdentifier": "Vencord.Vesktop" },
-        { "PackageIdentifier": "Microsoft.Teams" },
-        { "PackageIdentifier": "TheDocumentFoundation.LibreOffice" },
-        { "PackageIdentifier": "calibre.calibre" },
-        { "PackageIdentifier": "DBeaver.DBeaver.Community" },
-
-        { "PackageIdentifier": "Spotify.Spotify" },
-        { "PackageIdentifier": "VideoLAN.VLC" },
-        { "PackageIdentifier": "qBittorrent.qBittorrent" },
-        { "PackageIdentifier": "OBSProject.OBSStudio" },
-
-        { "PackageIdentifier": "Valve.Steam" },
-        { "PackageIdentifier": "GOG.Galaxy" },
-        { "PackageIdentifier": "PrismLauncher.PrismLauncher" },
-        { "PackageIdentifier": "NexusMods.Vortex" },
-        { "PackageIdentifier": "EclipseAdoptium.Temurin.21.JRE" },
-        { "PackageIdentifier": "LizardByte.Sunshine" },
-        { "PackageIdentifier": "MoonlightGameStreamingProject.Moonlight" }
+        {
+          "PackageIdentifier": "7zip.7zip"
+        },
+        {
+          "PackageIdentifier": "Alacritty.Alacritty"
+        },
+        {
+          "PackageIdentifier": "AutoHotkey.AutoHotkey"
+        },
+        {
+          "PackageIdentifier": "Bitwarden.Bitwarden"
+        },
+        {
+          "PackageIdentifier": "Brave.Brave"
+        },
+        {
+          "PackageIdentifier": "calibre.calibre"
+        },
+        {
+          "PackageIdentifier": "DBeaver.DBeaver.Community"
+        },
+        {
+          "PackageIdentifier": "DEVCOM.JetBrainsMonoNerdFont"
+        },
+        {
+          "PackageIdentifier": "Discord.Discord"
+        },
+        {
+          "PackageIdentifier": "EclipseAdoptium.Temurin.21.JRE"
+        },
+        {
+          "PackageIdentifier": "Element.Element"
+        },
+        {
+          "PackageIdentifier": "Git.Git"
+        },
+        {
+          "PackageIdentifier": "GOG.Galaxy"
+        },
+        {
+          "PackageIdentifier": "LizardByte.Sunshine"
+        },
+        {
+          "PackageIdentifier": "Microsoft.PowerShell"
+        },
+        {
+          "PackageIdentifier": "Microsoft.PowerToys"
+        },
+        {
+          "PackageIdentifier": "Microsoft.Teams"
+        },
+        {
+          "PackageIdentifier": "Microsoft.VCRedist.2015+.x64"
+        },
+        {
+          "PackageIdentifier": "Microsoft.VisualStudioCode"
+        },
+        {
+          "PackageIdentifier": "Microsoft.WindowsTerminal"
+        },
+        {
+          "PackageIdentifier": "MoonlightGameStreamingProject.Moonlight"
+        },
+        {
+          "PackageIdentifier": "Nextcloud.NextcloudDesktop"
+        },
+        {
+          "PackageIdentifier": "NexusMods.Vortex"
+        },
+        {
+          "PackageIdentifier": "Notepad++.Notepad++"
+        },
+        {
+          "PackageIdentifier": "Obsidian.Obsidian"
+        },
+        {
+          "PackageIdentifier": "OBSProject.OBSStudio"
+        },
+        {
+          "PackageIdentifier": "PrismLauncher.PrismLauncher"
+        },
+        {
+          "PackageIdentifier": "qBittorrent.qBittorrent"
+        },
+        {
+          "PackageIdentifier": "RamenSoftware.Windhawk"
+        },
+        {
+          "PackageIdentifier": "ShareX.ShareX"
+        },
+        {
+          "PackageIdentifier": "Spotify.Spotify"
+        },
+        {
+          "PackageIdentifier": "Tailscale.Tailscale"
+        },
+        {
+          "PackageIdentifier": "Telegram.TelegramDesktop"
+        },
+        {
+          "PackageIdentifier": "TheDocumentFoundation.LibreOffice"
+        },
+        {
+          "PackageIdentifier": "Valve.Steam"
+        },
+        {
+          "PackageIdentifier": "Vencord.Vesktop"
+        },
+        {
+          "PackageIdentifier": "VideoLAN.VLC"
+        },
+        {
+          "PackageIdentifier": "Vivaldi.Vivaldi"
+        },
+        {
+          "PackageIdentifier": "voidtools.Everything"
+        },
+        {
+          "PackageIdentifier": "WinDirStat.WinDirStat"
+        },
+        {
+          "PackageIdentifier": "Zen-Team.Zen-Browser"
+        }
       ]
     }
   ]
