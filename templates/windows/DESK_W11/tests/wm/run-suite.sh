@@ -41,9 +41,14 @@ run_ahk() { # run_ahk <script.ahk> <result-file> <timeout-s>
     return 1
   fi
   rm -f "$P/$result"
+  # Waited for, not fired and forgotten. Launched from WSL the parent
+  # powershell.exe is in an interop job: when it exits, the AutoHotkey it
+  # started goes with it, and the case dies silently a moment after it begins
+  # (measured 2026-09-21 -- every suite reported "no result after Ns").
   powershell.exe -NoProfile -Command \
-    "Start-Process '$AHK' -ArgumentList 'C:\\Users\\diego\\AppData\\Local\\Temp\\wmtest\\tests\\wm\\$script'" >/dev/null 2>&1
-  for _ in $(seq "$timeout"); do [ -f "$P/$result" ] && break; sleep 1; done
+    "\$p = Start-Process '$AHK' -ArgumentList 'C:\\Users\\diego\\AppData\\Local\\Temp\\wmtest\\tests\\wm\\$script' -PassThru; \
+     if (-not \$p.WaitForExit($(( (timeout + 10) * 1000 )))) { \$p.Kill() }" >/dev/null 2>&1
+  for _ in $(seq 5); do [ -f "$P/$result" ] && break; sleep 1; done
   [ -f "$P/$result" ] || { echo "    (no result after ${timeout}s)"; return 1; }
   tr -d '\r' < "$P/$result"
 }

@@ -37,7 +37,8 @@ Rec(hwnd) {
     for w in GlazeWins()
         if (w["hwnd"] = hwnd)
             return w
-    return Map("id", "", "state", "unmanaged", "ws", "?", "sticky", false)
+    return Map("id", "", "state", "unmanaged", "ws", "?", "sticky", false,
+               "focus", false, "display", "-", "proc", "-", "class", "-", "hwnd", 0, "title", "-")
 }
 Topmost(hwnd) => (DllCall("GetWindowLong", "Ptr", hwnd, "Int", -20) & 0x8) ? 1 : 0   ; WS_EX_TOPMOST
 StartFlip(args, &pid) {

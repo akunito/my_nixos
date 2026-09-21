@@ -52,7 +52,12 @@ WinRec(hwnd) {
     for w in GlazeWins()
         if (w["hwnd"] = hwnd)
             return w
-    return Map("id", "", "ws", "unmanaged", "state", "-", "display", "-", "sticky", false)
+    ; Every key a case reads, so a window the window manager has lost FAILS
+    ; the check with a readable value instead of throwing "Item has no value"
+    ; and stopping the run at a dialog (2026-09-21).
+    return Map("id", "", "ws", "unmanaged", "state", "-", "display", "-",
+               "sticky", false, "focus", false, "hwnd", 0, "proc", "-",
+               "class", "-", "title", "-")
 }
 Overlap(a, b) {
     ra := WRect(a), rb := WRect(b)

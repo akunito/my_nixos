@@ -44,7 +44,8 @@ Rec(hwnd) {
     for w in GlazeWins()
         if (w["hwnd"] = hwnd)
             return w
-    return Map("id", "", "state", "unmanaged", "ws", "?")
+    return Map("id", "", "state", "unmanaged", "ws", "?",
+               "focus", false, "display", "-", "sticky", false, "proc", "-", "class", "-", "hwnd", 0, "title", "-")
 }
 StartFlip(args, &pid) {
     global flip

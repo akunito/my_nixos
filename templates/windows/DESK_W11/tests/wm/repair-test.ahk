@@ -35,7 +35,8 @@ Rec(hwnd) {
     for w in GlazeWins()
         if (w["hwnd"] = hwnd)
             return w
-    return Map("id", "", "state", "unmanaged", "ws", "?", "proc", "", "class", "")
+    return Map("id", "", "state", "unmanaged", "ws", "?", "proc", "", "class", "",
+               "focus", false, "display", "-", "sticky", false, "hwnd", 0, "title", "-")
 }
 WRect(hwnd) {                            ; plain rect, as the journal sees it
     WinGetPos(&x, &y, &w, &h, "ahk_id " hwnd)

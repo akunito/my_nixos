@@ -26,7 +26,8 @@ WinRec(hwnd) {
     for w in GlazeWins()
         if (w["hwnd"] = hwnd)
             return w
-    return Map("id", "", "ws", "unmanaged", "state", "-", "display", "-", "sticky", false)
+    return Map("id", "", "ws", "unmanaged", "state", "-", "display", "-", "sticky", false,
+               "focus", false, "proc", "-", "class", "-", "hwnd", 0, "title", "-")
 }
 RectOf(hwnd) {
     r := Buffer(16, 0)
