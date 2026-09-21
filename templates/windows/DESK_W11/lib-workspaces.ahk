@@ -14,12 +14,31 @@
 
 PrimaryMon() => DllCall("MonitorFromPoint", "Int64", 0, "UInt", 1, "Ptr")
 
-; The monitor under the pointer = Sway's focused output.
-CursorGroup() {
-    MouseGetPos &mx, &my
-    mon := DllCall("MonitorFromPoint", "Int64", (my << 32) | (mx & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    return mon = PrimaryMon() ? 1 : 2
+; The group of workspaces belonging to a monitor, asked of the window manager
+; rather than guessed.
+;
+; This used to be "primary ? 1 : 2", which is right for exactly two screens and
+; silently wrong for any other number: with a third monitor plugged in
+; (2026-09-21) every key pressed over it went to the vertical monitor's
+; workspaces. The manager already knows which workspace it shows on which
+; device, and the name carries the group, so there is nothing to guess.
+GroupOfDevice(device) {
+    for mon in GlazeMonitorsCached() {
+        if (mon["device"] != device)
+            continue
+        for wsEntry in mon["wss"]
+            if (wsEntry["displayed"])
+                return WsGroup(wsEntry["name"])
+        if (mon["wss"].Length)
+            return WsGroup(mon["wss"][1]["name"])
+    }
+    ; A screen the manager's configuration does not name: it has no workspaces
+    ; at all, so the main monitor's group is the only sensible answer.
+    return 1
 }
+
+; The monitor under the pointer = Sway's focused output.
+CursorGroup() => GroupOfDevice(CursorDevice())
 
 ; The monitor of a window, for the commands that act on a window instead of on
 ; a place: moving a window to "workspace 3" means its own monitor's third
@@ -29,7 +48,11 @@ WindowGroup(hwnd := 0) {
         hwnd := WinExist("A")
     if (!hwnd || WinGetClass("ahk_id " hwnd) = "Progman" || WinGetClass("ahk_id " hwnd) = "WorkerW")
         return CursorGroup()
-    return DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr") = PrimaryMon() ? 1 : 2
+    mi := Buffer(104, 0), NumPut("UInt", 104, mi)
+    mon := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+    if !DllCall("GetMonitorInfoW", "Ptr", mon, "Ptr", mi)
+        return CursorGroup()
+    return GroupOfDevice(StrGet(mi.Ptr + 40, 32, "UTF-16"))
 }
 
 FocusGroup() => CursorGroup()             ; kept: the old name, the new rule
@@ -106,15 +129,19 @@ CurrentWs(group, wss := 0) {
     global WsCacheName, WsCacheAt, WsCacheTtl
     if (WsCacheAt.Has(group) && A_TickCount - WsCacheAt[group] < WsCacheTtl)
         return WsCacheName[group]
-    device := CursorDevice()
-    for mon in GlazeMonitors() {
-        if (mon["device"] != device)
-            continue
-        for wsEntry in mon["wss"]
-            if (wsEntry["displayed"]) {
+    ; The displayed workspace whose NAME belongs to this group. It used to be
+    ; the displayed workspace of the monitor under the POINTER, which answers
+    ; for the pointer's monitor whatever group is asked for: CurrentWs(2) with
+    ; the pointer on the main screen returned 11. Every caller that asks about
+    ; the pointer's own group got the right answer by luck, and WsCycle, which
+    ; asks about a group on purpose, did not.
+    for mon in GlazeMonitorsCached() {
+        for wsEntry in mon["wss"] {
+            if (wsEntry["displayed"] && WsGroup(wsEntry["name"]) = group) {
                 WsCacheSet(group, wsEntry["name"])
                 return wsEntry["name"]
             }
+        }
     }
     ; Fall back to the naming convention if the monitor is not in the tree.
     if !wss

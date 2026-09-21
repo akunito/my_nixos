@@ -690,12 +690,26 @@ AltDragCore(mode) {
     Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
     ghost := "", topZone := false, unstable := false, outlined := "", clamped := false, snapped := false
-    ; The side of the origin monitor that faces the other monitor. Measured
-    ; 2026-09-15 (7 of 7 storms): a per-monitor-DPI window whose edge enters the
-    ; virtual gap between the monitors (3840..4608 here) gets its DPI re-evaluated
-    ; by Windows and rescales (x1.2 height, up to x1.74 width) although the cursor
-    ; never left the monitor. Live moves and resizes stop at that edge; crossing
-    ; is what the outline + one jump on release are for.
+    ; A live move stays on the monitor it started on, BOTH sides of it.
+    ; Crossing is what the outline and the one jump on release are for.
+    ;
+    ; Measured 2026-09-15 (7 of 7 storms): a window whose edge entered the gap
+    ; between where this script thought a monitor was and where it physically
+    ; started got its DPI re-evaluated by Windows and rescaled (x1.2 height, up
+    ; to x1.74 width) although the cursor never left the monitor. That gap was
+    ; the script being system-DPI aware; it is gone since lib-glaze.ahk asks for
+    ; PER_MONITOR_AWARE_V2. The clamp stays anyway, because a window dragged
+    ; halfway onto another screen and moved again from there is a DPI change per
+    ; tick either way, and an outline is a nicer answer than a window that
+    ; breathes.
+    ;
+    ; One side used to be clamped, chosen by whether the window was on the
+    ; primary: it assumed the only other screen was to the RIGHT of the main
+    ; one. With a third monitor on the LEFT (2026-09-21) that clamp held the
+    ; wrong edge -- on the new screen it stopped the drag going further left,
+    ; into nothing, and let it run right into the gap it was meant to prevent.
+    ; Both edges, from this monitor's own rectangle, works for any arrangement.
+    ;
     ; GetMonitorInfo on the handle itself: MonitorFromPoint on a monitor's own
     ; top-left corner answered the OTHER monitor here (measured), so no points.
     ; (edgeL/edgeR: AutoHotkey names are case-insensitive, so a capitalised
@@ -703,9 +717,9 @@ AltDragCore(mode) {
     ; WorkAreaAt clobbered it every tick — measured 2026-09-15.)
     mi := Buffer(40, 0), NumPut("UInt", 40, mi)
     DllCall("GetMonitorInfo", "Ptr", mon0, "Ptr", mi)
-    edgeL := NumGet(mi, 4, "Int"), edgeR := NumGet(mi, 12, "Int"), onMain := (mon0 = PrimaryMon())
-    EdgeClampX(x, w) => onMain ? Min(x, edgeR - w) : Max(x, edgeL)
-    Dbg(Format("edges {1}: live moves keep x {2} {3}", onMain ? "main" : "vertical", onMain ? "<=" : ">=", onMain ? edgeR " - width" : edgeL))
+    edgeL := NumGet(mi, 4, "Int"), edgeR := NumGet(mi, 12, "Int")
+    EdgeClampX(x, w) => Min(Max(x, edgeL), Max(edgeL, edgeR - w))
+    Dbg(Format("edges: live moves keep x within {1}..{2}", edgeL, edgeR))
     altDragPhase := "drag"
     WorkAreaAt(px, py, &l, &t, &r, &b) {
         Loop MonitorGetCount() {
@@ -743,7 +757,7 @@ AltDragCore(mode) {
                 ghost.Hide()
                 nx := EdgeClampX(wx + dx, ww)
                 if (nx != wx + dx && !clamped)
-                    Dbg(Format("edge-clamp {1}: kept x {2} {3} (window would be at {4})", ExeOf(hwnd), onMain ? "<=" : ">=", onMain ? edgeR - ww : edgeL, wx + dx)), clamped := true
+                    Dbg(Format("edge-clamp {1}: kept x within {2}..{3} (window would be at {4})", ExeOf(hwnd), edgeL, edgeR - ww, wx + dx)), clamped := true
                 WinMove nx, wy + dy, , , "ahk_id " hwnd
                 ; Storm guard: if the app answered a plain move with a rescale (stale
                 ; DPI context, seen on the vertical monitor), stop touching it and
@@ -772,10 +786,11 @@ AltDragCore(mode) {
             ny := top ? wy + dy : wy
             nw := left ? ww - dx : ww + dx
             nh := top ? wh - dy : wh + dy
-            if onMain
-                nw := Min(nw, edgeR - nx)               ; right edge stays off the gap
-            else if (left && nx < edgeL)
-                nw := nw - (edgeL - nx), nx := edgeL    ; left edge stays off the gap
+            ; Both edges of the monitor it started on, whichever side the
+            ; next screen happens to be (three of them here since 2026-09-21).
+            if (left && nx < edgeL)
+                nw := nw - (edgeL - nx), nx := edgeL
+            nw := Min(nw, edgeR - nx)
             if (nw > 150 && nh > 100) {
                 WinMove nx, ny, nw, nh, "ahk_id " hwnd
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd

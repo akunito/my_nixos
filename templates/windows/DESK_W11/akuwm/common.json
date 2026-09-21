@@ -39,6 +39,12 @@
       "enabled": true,
       "notes": "role imported from the workspace bindings; identity still to be filled in",
       "updated_at": 1789922518
+    },
+    {
+      "id": "third",
+      "enabled": true,
+      "notes": "added 2026-09-21 when the ZOWIE was plugged in on the left; identity pinned by `monitors identify`",
+      "updated_at": 1789930000
     }
   ],
   "workspaces": [
@@ -121,6 +127,46 @@
     {
       "name": "30",
       "monitor": "second"
+    },
+    {
+      "name": "31",
+      "monitor": "third"
+    },
+    {
+      "name": "32",
+      "monitor": "third"
+    },
+    {
+      "name": "33",
+      "monitor": "third"
+    },
+    {
+      "name": "34",
+      "monitor": "third"
+    },
+    {
+      "name": "35",
+      "monitor": "third"
+    },
+    {
+      "name": "36",
+      "monitor": "third"
+    },
+    {
+      "name": "37",
+      "monitor": "third"
+    },
+    {
+      "name": "38",
+      "monitor": "third"
+    },
+    {
+      "name": "39",
+      "monitor": "third"
+    },
+    {
+      "name": "40",
+      "monitor": "third"
     }
   ],
   "rules": [

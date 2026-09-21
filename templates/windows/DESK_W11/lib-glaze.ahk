@@ -341,6 +341,18 @@ GlazeMonitors() {
     return out
 }
 
+; The monitors and which workspace each is showing. Cached the same way and for
+; the same reason as the window list: a workspace key pressed in a burst asks
+; for this on every press.
+GlazeMonitorsCached(maxAgeMs := 1000) {
+    static at := 0, cached := []
+    if (A_TickCount - at > maxAgeMs) {
+        cached := GlazeMonitors()
+        at := A_TickCount
+    }
+    return cached
+}
+
 ; Windows change state rarely between two gestures, and a query costs ~200 ms:
 ; a short cache keeps Alt+drag from stalling before it starts.
 GlazeWinsCached(maxAgeMs := 1000) {

@@ -18,6 +18,9 @@
           "PackageIdentifier": "Alacritty.Alacritty"
         },
         {
+          "PackageIdentifier": "albertony.npiperelay"
+        },
+        {
           "PackageIdentifier": "AutoHotkey.AutoHotkey"
         },
         {
