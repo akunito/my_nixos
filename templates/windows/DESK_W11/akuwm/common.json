@@ -24,7 +24,8 @@
   "layout": {
     "default_direction": "auto",
     "float_centered": false,
-    "drag_to_top": "fullscreen"
+    "drag_to_top": "fullscreen",
+    "across_monitors": "hybrid"
   },
   "monitors": [
     {

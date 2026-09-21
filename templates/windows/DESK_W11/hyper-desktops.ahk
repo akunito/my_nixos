@@ -685,41 +685,30 @@ AltDragCore(mode) {
     }
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
-    mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     altDragExp := mode = "resize" ? "(resize)" : ww "x" wh
-    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
-    MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
-    ghost := "", topZone := false, unstable := false, outlined := "", clamped := false, snapped := false
-    ; A live move stays on the monitor it started on, BOTH sides of it.
-    ; Crossing is what the outline and the one jump on release are for.
+    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, MonitorDeviceAt(mx, my), A_TickCount - altDragT0, tAct))
+    ghost := "", topZone := false, outlined := ""
+    ; The window itself is the preview.
     ;
-    ; Measured 2026-09-15 (7 of 7 storms): a window whose edge entered the gap
-    ; between where this script thought a monitor was and where it physically
-    ; started got its DPI re-evaluated by Windows and rescaled (x1.2 height, up
-    ; to x1.74 width) although the cursor never left the monitor. That gap was
-    ; the script being system-DPI aware; it is gone since lib-glaze.ahk asks for
-    ; PER_MONITOR_AWARE_V2. The clamp stays anyway, because a window dragged
-    ; halfway onto another screen and moved again from there is a DPI change per
-    ; tick either way, and an outline is a nicer answer than a window that
-    ; breathes.
+    ; It used to live-move only inside the monitor it started on, and cross as
+    ; a translucent outline that jumped once on release. The reason was real:
+    ; measured 2026-09-15, seven times out of seven, a window whose edge entered
+    ; the gap between where this script thought a monitor was and where it
+    ; physically started got its DPI re-evaluated and rescaled, up to x1.74,
+    ; without the cursor ever leaving the monitor. That gap was this script
+    ; being system-DPI aware. It has not existed since lib-glaze.ahk asked for
+    ; PER_MONITOR_AWARE_V2, so the outline, the edge clamp and the storm guard
+    ; are gone with it and the real window crosses.
     ;
-    ; One side used to be clamped, chosen by whether the window was on the
-    ; primary: it assumed the only other screen was to the RIGHT of the main
-    ; one. With a third monitor on the LEFT (2026-09-21) that clamp held the
-    ; wrong edge -- on the new screen it stopped the drag going further left,
-    ; into nothing, and let it run right into the gap it was meant to prevent.
-    ; Both edges, from this monitor's own rectangle, works for any arrangement.
-    ;
-    ; GetMonitorInfo on the handle itself: MonitorFromPoint on a monitor's own
-    ; top-left corner answered the OTHER monitor here (measured), so no points.
-    ; (edgeL/edgeR: AutoHotkey names are case-insensitive, so a capitalised
-    ; variant was the same variable as the MonitorGet loops' lower-case one, and
-    ; WorkAreaAt clobbered it every tick — measured 2026-09-15.)
-    mi := Buffer(40, 0), NumPut("UInt", 40, mi)
-    DllCall("GetMonitorInfo", "Ptr", mon0, "Ptr", mi)
-    edgeL := NumGet(mi, 4, "Int"), edgeR := NumGet(mi, 12, "Int")
-    EdgeClampX(x, w) => Min(Max(x, edgeL), Max(edgeL, edgeR - w))
-    Dbg(Format("edges: live moves keep x within {1}..{2}", edgeL, edgeR))
+    ; The hand keeps its place on the window: grabbed a third of the way along
+    ; the title bar, still a third of the way along after the new screen
+    ; resizes it. Every tick reads the size the window HAS -- Windows rescales
+    ; it for the new DPI and AkuWM applies layout.across_monitors, both behind
+    ; our back -- and puts that point back under the cursor. Nothing here needs
+    ; to know either happened.
+    fx := ww > 0 ? (mx - wx) / ww : 0.5
+    fy := wh > 0 ? (my - wy) / wh : 0.5
+    Dbg(Format("grab at {1}%, {2}% of the window", Round(fx * 100), Round(fy * 100)))
     altDragPhase := "drag"
     WorkAreaAt(px, py, &l, &t, &r, &b) {
         Loop MonitorGetCount() {
@@ -735,12 +724,6 @@ AltDragCore(mode) {
         MouseGetPos &cx, &cy
         dx := cx - mx, dy := cy - my
         if (mode = "move") {
-            ; Live-move only inside the starting monitor. Measured 2026-09-15: once the
-            ; window is on the other monitor, EVERY position-only WinMove makes a
-            ; per-monitor-DPI app (Discord/Electron) rescale again, cumulatively
-            ; (1656x1216 -> 3199x28131 in 60 steps). So across the boundary a
-            ; translucent outline follows the cursor instead, and the real window
-            ; jumps once on release.
             if !ghost {
                 altDragGhost := ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")   ; click-through, layered; -DPIScale = raw pixels (measured: default is x1.5)
                 ghost.BackColor := "c4a7e7"
@@ -748,49 +731,31 @@ AltDragCore(mode) {
             }
             ; Top zone (<= 6 px under the top of the work area): the outline becomes
             ; the whole work area and the release maximises there (sway/Windows snap).
+            ; The only outline left, because it shows something the window is not.
             topZone := WorkAreaAt(cx, cy, &al, &at, &ar, &ab) && (cy - at) <= 6
             if topZone {
                 if (outlined != "top-zone")
                     Dbg(Format("outline top-zone: cursor {1},{2} {3} ms into the gesture", cx, cy, A_TickCount - altDragT0)), outlined := "top-zone"
                 ghost.Show("NA x" al " y" at " w" (ar - al) " h" (ab - at))
-            } else if (MonAt(cx, cy) = mon0 && !unstable) {
+            } else {
                 ghost.Hide()
-                nx := EdgeClampX(wx + dx, ww)
-                if (nx != wx + dx && !clamped)
-                    Dbg(Format("edge-clamp {1}: kept x within {2}..{3} (window would be at {4})", ExeOf(hwnd), edgeL, edgeR - ww, wx + dx)), clamped := true
-                WinMove nx, wy + dy, , , "ahk_id " hwnd
-                ; Storm guard: if the app answered a plain move with a rescale (stale
-                ; DPI context, seen on the vertical monitor), stop touching it and
-                ; finish the drag as an outline; placement happens once on release.
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd
                 if (gw != ww || gh != wh) {
-                    if SmallDelta(gw, gh, ww, wh) {
-                        ; The app snapped to its own grid (Windows Terminal: 1 px per
-                        ; move, measured): that is its answer, adopt it. Real storms
-                        ; are +19 % to +73 % (log 2026-09-15).
-                        if !snapped
-                            Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted (further 1-px flips not logged)", ExeOf(hwnd), ww, wh, gw, gh)), snapped := true
-                        ww := gw, wh := gh, altDragExp := ww "x" wh
-                    } else {
-                        unstable := true
-                        FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, ExeOf(hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
-                    }
+                    Dbg(Format("resized under the drag: {1}x{2} -> {3}x{4}", ww, wh, gw, gh))
+                    ww := gw, wh := gh, altDragExp := ww "x" wh
                 }
-            } else {
-                if (outlined != (unstable ? "storm" : "other-monitor"))
-                    Dbg(Format("outline {1}: cursor {2},{3} {4} ms into the gesture", unstable ? "storm" : "other-monitor", cx, cy, A_TickCount - altDragT0)), outlined := unstable ? "storm" : "other-monitor"
-                ghost.Show("NA x" (cx - (mx - wx)) " y" (cy - (my - wy)) " w" ww " h" wh)
+                WinMove Round(cx - fx * ww), Round(cy - fy * wh), , , "ahk_id " hwnd
             }
         } else {
             nx := left ? wx + dx : wx
             ny := top ? wy + dy : wy
             nw := left ? ww - dx : ww + dx
             nh := top ? wh - dy : wh + dy
-            ; Both edges of the monitor it started on, whichever side the
-            ; next screen happens to be (three of them here since 2026-09-21).
-            if (left && nx < edgeL)
-                nw := nw - (edgeL - nx), nx := edgeL
-            nw := Min(nw, edgeR - nx)
+            ; No clamp to the monitor's edges. It was there to keep an edge
+            ; out of the gap between where this script thought a screen was
+            ; and where it physically started, and that gap went with the
+            ; system-DPI awareness (2026-09-21). A window resized across the
+            ; boundary is Windows' business, as it is for every other app.
             if (nw > 150 && nh > 100) {
                 WinMove nx, ny, nw, nh, "ahk_id " hwnd
                 WinGetPos , , &gw, &gh, "ahk_id " hwnd
@@ -808,66 +773,20 @@ AltDragCore(mode) {
         Sleep 8
     }
     altDragPhase := "release"
-    ; Crossing to a monitor with another DPI (main 150 %, vertical 125 %) makes the
-    ; app rescale itself, usually huge. Put the pre-drag physical size back.
     if (mode = "move") {
         if ghost
             ghost.Destroy(), altDragGhost := ""
         MouseGetPos &cx, &cy
-        if (topZone && MonAt(cx, cy) = mon0) {
+        ; Nothing to place: the window has been where the cursor is for the
+        ; whole gesture. Everything that used to live here -- the jump across
+        ; the boundary, the poll for the DPI rescale, putting the pre-drag size
+        ; back, the watchdog that kept putting it back -- existed to undo the
+        ; damage of a crossing this script could not watch. It can now.
+        if topZone
             WinMaximize "ahk_id " hwnd
-            return
-        }
-        if (MonAt(cx, cy) = mon0) {
-            if unstable {
-                ; Outline-finished drag on the same monitor: place once, like a jump.
-                WinGetPos , , &cw0, &ch0, "ahk_id " hwnd
-                WinMove cx - (mx - wx), cy - (my - wy), , , "ahk_id " hwnd
-                Loop 40 {
-                    Sleep 5
-                    WinGetPos , , &nw, &nh, "ahk_id " hwnd
-                    if (nw != cw0 || nh != ch0)
-                        break
-                }
-                Sleep 15
-                WinMove , , ww, wh, "ahk_id " hwnd
-                Watchdog(hwnd, ww, wh)
-                return
-            }
-            ; Same monitor: the size must be exactly what we dragged; if the app
-            ; rescaled itself on the way (seen once after a restore), fix it once.
-            WinGetPos , , &ew, &eh, "ahk_id " hwnd
-            if (ew != ww || eh != wh) {
-                WinMove , , ww, wh, "ahk_id " hwnd
-                FileAppend Format("{1} release-fix {2}: {3}x{4} -> {5}x{6}{7}`n", A_Now, ExeOf(hwnd), ew, eh, ww, wh, fromMax ? " (from maximised)" : ""), A_Temp "\altdrag.log"
-                Watchdog(hwnd, ww, wh)
-            }
-        }
-        if (MonAt(cx, cy) != mon0) {
-            ; Measured 2026-09-15: ONE WinMove across the boundary makes the app rescale
-            ; once (x1.2 / x0.83) and then it is stable; one WinMove of the size by
-            ; handle afterwards sticks. GlazeWM picks the new monitor up by itself.
-            ; Never `glazewm command size` here: it acts on the *focused* window,
-            ; which after a monitor change was another one (Zen/Terminal got resized).
-            WinMove cx - (mx - wx), cy - (my - wy), , , "ahk_id " hwnd
-            ; The rescale lands 125-156 ms after the move (measured x6); poll for it
-            ; instead of sleeping a fixed 400 ms, then put the size back once.
-            Loop 60 {
-                Sleep 5
-                WinGetPos , , &nw, &nh, "ahk_id " hwnd
-                if (nw != ww || nh != wh)
-                    break
-            }
-            Sleep 15
-            WinMove , , ww, wh, "ahk_id " hwnd
-            if topZone {
-                Sleep 100
-                WinMaximize "ahk_id " hwnd
-            } else
-                Watchdog(hwnd, ww, wh)
-        }
     }
 }
+
 #MaxThreadsPerHotkey 2   ; so a press during a running gesture reaches AltDrag (which logs and drops it)
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
