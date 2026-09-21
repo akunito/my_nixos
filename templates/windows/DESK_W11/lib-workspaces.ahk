@@ -128,7 +128,13 @@ CurrentWs(group, wss := 0) {
 WsCycle(delta, move := false) {
     g := move ? WindowGroup() : CursorGroup()
     cur := CurrentWs(g), i := 1
-    order := [g "1", g "2", g "3", g "4", g "5", g "6", g "7", g "8", g "9", g "0"]
+    ; g*10 + 1..10, which is the same run WsGroup() reads back: 11..20 and
+    ; 21..30. Spelled out as g "1" ... g "0" it was 11..19 then 10, and after
+    ; the renumbering the last step of a cycle asked for a workspace that no
+    ; longer exists.
+    order := []
+    loop 10
+        order.Push(g * 10 + A_Index)
     for k, v in order
         if (v = cur)
             i := k
