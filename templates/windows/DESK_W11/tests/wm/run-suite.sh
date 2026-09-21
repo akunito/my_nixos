@@ -15,6 +15,18 @@ SRC="$(cd "$HERE/../.." && pwd)"                      # templates/windows/DESK_W
 WT=/mnt/c/Users/diego/AppData/Local/Temp/wmtest
 P=/mnt/c/Users/diego/AppData/Local/Temp/perf
 AHK='C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
+# The window manager's CLI, seen from WSL. reset_desk needs it and had no
+# definition at all: with `set -u` that aborted the function on its first line,
+# silently, so the reset this suite relies on between cases never ran (added
+# 2026-09-21 and broken the same day). Read the same way tests/fullscreen does,
+# BOM and all.
+G="/mnt/c/Program Files/glzr.io/GlazeWM/cli/glazewm.exe"
+marker=/mnt/c/Users/diego/AppData/Local/akuwm/wm-cli.txt
+if [ -f "$marker" ]; then
+  wmcli=$(sed '1s/^\xEF\xBB\xBF//' "$marker" | tr -d '\r\n' |
+          sed 's|\\|/|g; s|^C:|/mnt/c|; s|^c:|/mnt/c|')
+  [ -n "$wmcli" ] && [ -x "$wmcli" ] && G="$wmcli"
+fi
 pass=0; fail=0
 ok() { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 ko() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
