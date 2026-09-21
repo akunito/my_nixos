@@ -84,11 +84,6 @@ EmptyWs(prefix) {
 }
 
 ; --- 1. what a drop means, as a plain function ----------------------------
-Check("1 a drag to the right moves right", TilingDropCommand("move", 300, 20, false, false), "move --direction right")
-Check("1 a drag to the left moves left", TilingDropCommand("move", -300, 20, false, false), "move --direction left")
-Check("1 a drag downwards moves down", TilingDropCommand("move", 30, 400, false, false), "move --direction down")
-Check("1 a drag upwards moves up", TilingDropCommand("move", 30, -400, false, false), "move --direction up")
-Check("1 a twitch means nothing", TilingDropCommand("move", 12, -8, false, false), "")
 Check("1 the right edge pulled right widens", TilingDropCommand("resize", 240, 0, false, false), "resize --width 240px")
 Check("1 the left edge pulled left widens", TilingDropCommand("resize", -240, 0, true, false), "resize --width 240px")
 Check("1 the top edge pulled up heightens", TilingDropCommand("resize", 0, -180, false, true), "resize --height 180px")
@@ -118,11 +113,33 @@ Sleep 1200
 Check("2 tiled again", Rec(a)["state"], "tiling")
 
 ; --- 3. the effect: the drop keeps both windows tiled ---------------------
+; A move is no longer a direction: the drop reports the POINT the pointer is
+; on and the window manager reads it as a place in the layout (2026-09-21).
+; What is checked here is the outline -- it has to be the rectangle the drop
+; will produce, or the shadow is lying about where the window lands, which is
+; the whole complaint this replaced.
+ra1 := WRect(a), rb1 := WRect(b)
+leftOutline := ra1["l"] < rb1["l"] ? a : b
+rightOutline := leftOutline = a ? b : a
+rr := WRect(rightOutline)
+Check("3 the outline for the left half of a tile is its left half",
+    TilingDropTarget(Rec(leftOutline)["id"], rr["l"] + rr["w"] // 4, rr["t"] + rr["h"] // 2),
+    rr["l"] "," rr["t"] "," (rr["w"] // 2) "," rr["h"])
+Check("3 and for the right half, its right half",
+    TilingDropTarget(Rec(leftOutline)["id"], rr["l"] + (rr["w"] * 3) // 4, rr["t"] + rr["h"] // 2),
+    (rr["l"] + rr["w"] // 2) "," rr["t"] "," (rr["w"] - rr["w"] // 2) "," rr["h"])
+Check("3 the window's own tile is not a target",
+    TilingDropTarget(Rec(leftOutline)["id"], WRect(leftOutline)["l"] + 40, WRect(leftOutline)["t"] + 40) = "" ? 1 : 0, 1)
 ra := WRect(a), rb := WRect(b)
 leftHwnd := ra["l"] < rb["l"] ? a : b
 rightHwnd := leftHwnd = a ? b : a
 beforeLeft := WRect(leftHwnd)["l"]
-GlazeOn(Rec(leftHwnd)["id"], TilingDropCommand("move", 900, 10, false, false))
+; Dropped on the RIGHT half of the other tile: with two windows that is a
+; swap, and it is the point under the pointer that says so, not the direction
+; the hand travelled.
+rr3 := WRect(rightHwnd)
+GlazeOn(Rec(leftHwnd)["id"],
+    "drag-tile --x " (rr3["l"] + (rr3["w"] * 3) // 4) " --y " (rr3["t"] + rr3["h"] // 2))
 Sleep 1500
 Note("3 left window " beforeLeft " -> " WRect(leftHwnd)["l"])
 Check("3 the dropped window swapped places", WRect(leftHwnd)["l"] > beforeLeft ? 1 : 0, 1)

@@ -34,9 +34,16 @@ TilingDrag(mode, hwnd, id, mx, my, wx, wy, ww, wh) {
             if (A_TickCount - asked > 60 && (Abs(cx - lastX) > 8 || Abs(cy - lastY) > 8)) {
                 asked := A_TickCount, lastX := cx, lastY := cy
                 r := TilingDropTarget(id, cx, cy)
-                if (r && r != shown) {
-                    p := StrSplit(r, ",")
-                    ghost.Show("NA x" p[1] " y" p[2] " w" p[3] " h" p[4])
+                if (r != shown) {
+                    ; Empty means the manager would refuse this point -- the
+                    ; window's own tile, the gap between two. Show nothing
+                    ; rather than promise a rectangle that will not happen.
+                    if (r = "")
+                        ghost.Hide()
+                    else {
+                        p := StrSplit(r, ",")
+                        ghost.Show("NA x" p[1] " y" p[2] " w" p[3] " h" p[4])
+                    }
                     shown := r
                 }
             }

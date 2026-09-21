@@ -686,7 +686,8 @@ AltDragCore(mode) {
     btn := mode = "move" ? "LButton" : "RButton"
     SetWinDelay -1
     altDragExp := mode = "resize" ? "(resize)" : ww "x" wh
-    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, MonitorDeviceAt(mx, my), A_TickCount - altDragT0, tAct))
+    startDevice := MonitorDeviceAt(mx, my)
+    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, startDevice, A_TickCount - altDragT0, tAct))
     ghost := "", topZone := false, outlined := ""
     ; The window itself is the preview.
     ;
@@ -782,8 +783,19 @@ AltDragCore(mode) {
         ; the boundary, the poll for the DPI rescale, putting the pre-drag size
         ; back, the watchdog that kept putting it back -- existed to undo the
         ; damage of a crossing this script could not watch. It can now.
-        if topZone
+        if topZone {
             WinMaximize "ahk_id " hwnd
+            return
+        }
+        ; It was maximised when the drag began and it has landed on ANOTHER
+        ; screen: maximise it there. Diego chose that over arriving restored.
+        ; Only across screens -- dragging a maximised window down on its own
+        ; monitor is how everybody un-maximises one, and taking that away would
+        ; be worse than the feature is worth.
+        if (fromMax && MonitorDeviceAt(cx, cy) != startDevice) {
+            Dbg("was maximised and crossed: maximising on the new screen")
+            WinMaximize "ahk_id " hwnd
+        }
     }
 }
 
