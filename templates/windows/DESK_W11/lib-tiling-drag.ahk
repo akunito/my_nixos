@@ -12,7 +12,7 @@
 TilingDrag(mode, hwnd, id, mx, my, wx, wy, ww, wh) {
     global altDragGhost, altDragPhase, altDragExp
     altDragPhase := "drag", altDragExp := "(tiling " mode ")"
-    Dbg(Format("tiling {1} {2} hwnd {3} id {4}", mode, WinGetProcessName("ahk_id " hwnd), hwnd, id))
+    Dbg(Format("tiling {1} {2} hwnd {3} id {4}", mode, ExeOf(hwnd), hwnd, id))
     btn := mode = "move" ? "LButton" : "RButton"
     left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
     altDragGhost := ghost := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +E0x80000 -DPIScale")

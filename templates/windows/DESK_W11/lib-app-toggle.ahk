@@ -300,7 +300,7 @@ AppMatchRaw(hwnd, spec) {
             return RegExMatch(WinGetTitle("ahk_id " hwnd), "i)" SubStr(spec, 7)) > 0
         if (SubStr(spec, 1, 6) = "class:")
             return RegExMatch(WinGetClass("ahk_id " hwnd), "i)" SubStr(spec, 7)) > 0
-        return StrLower(WinGetProcessName("ahk_id " hwnd)) = StrLower(AppSpecExe(spec))
+        return StrLower(ExeOf(hwnd)) = StrLower(AppSpecExe(spec))
     }
     return false
 }

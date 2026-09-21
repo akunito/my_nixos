@@ -29,6 +29,20 @@ WmCli() {
     return A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
 }
 
+; ---- The process behind a window, without ever throwing -------------------
+; WinGetProcessName raises "(5) Access is denied" for a window owned by an
+; ELEVATED process, and this script is not elevated (uiAccess is a separate
+; build). It was called straight inside Dbg() and Format() arguments, so the
+; LOG LINE killed the thread: Alt+dragging the Razer installer ended the
+; gesture with an error dialog and a stack trace (2026-09-21). Nothing here
+; needs the name badly enough to fail over it -- a comparison against "" is
+; simply false, which is the right answer for a window we cannot inspect.
+ExeOf(hwnd) {
+    try return WinGetProcessName("ahk_id " hwnd)
+    catch
+        return ""
+}
+
 ; ---- Debug trace (opt-in) -------------------------------------------------
 ; %TEMP%\hyper-debug.on present -> every gesture and every GlazeWM command is
 ; appended to %TEMP%\altdrag.log with timings.

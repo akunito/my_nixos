@@ -109,7 +109,7 @@ ZOrderLine(focusHwnd) {
             DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", cur, "UInt", 14, "Ptr", buf, "UInt", 4)
             if NumGet(buf, 0, "UInt")                                    ; DWMWA_CLOAKED
                 continue
-            zexe := WinGetProcessName("ahk_id " cur)
+            zexe := ExeOf(cur)
             if (zexe = "AutoHotkey64_UIA.exe" || zexe = "zebar.exe")
                 continue
             if (zexe = "explorer.exe") {
@@ -188,7 +188,7 @@ MonitorCoveredBy(mon, pill) {
         if (hwnd = pill)
             continue
         try {
-            exe := WinGetProcessName("ahk_id " hwnd)
+            exe := ExeOf(hwnd)
             if (exe = "zebar.exe" || exe = "explorer.exe")
                 continue
             if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)
@@ -212,7 +212,7 @@ MonitorIsCovered(mon, pill) {
         if (hwnd = pill)
             continue
         try {
-            exe := WinGetProcessName("ahk_id " hwnd)
+            exe := ExeOf(hwnd)
             if (exe = "zebar.exe" || exe = "explorer.exe")   ; the taskbar covers the pill too
                 continue
             if (DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr") != hwnd)
@@ -251,7 +251,7 @@ WinEvCb(hook, ev, hwnd, idObj, idChild, thread, time) {
         return
     DetectHiddenWindows true
     try {
-        exe := WinGetProcessName("ahk_id " hwnd)
+        exe := ExeOf(hwnd)
         if (exe = "AutoHotkey64_UIA.exe" || exe = "zebar.exe" || WinGetClass("ahk_id " hwnd) = "tooltips_class32")
             return
         if (ev = 0x3) {
@@ -346,7 +346,7 @@ WinSwitcher() {
 ^#Right:: return
 ^#F4:: return
 ^!#Escape:: {
-    Dbg("close " WinGetProcessName("A"))
+    Dbg("close " ExeOf(WinExist("A")))
     WinClose "A"
 }
 ; Put the desktop back together: workspaces to the monitor their number says,
@@ -520,14 +520,14 @@ Watchdog(hwnd, ww, wh) {
                 WinGetPos , , &w, &h, "ahk_id " hwnd
                 if (w != ww || h != wh) {
                     if SmallDelta(w, h, ww, wh) {
-                        Dbg(Format("watchdog {1}: accepted {2}x{3} for {4}x{5} (grid snap)", WinGetProcessName("ahk_id " hwnd), w, h, ww, wh))
+                        Dbg(Format("watchdog {1}: accepted {2}x{3} for {4}x{5} (grid snap)", ExeOf(hwnd), w, h, ww, wh))
                         n := 999
                     } else if (++fixes > 3) {
-                        FileAppend Format("{1} watchdog {2}: giving up at {3}x{4}`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h), A_Temp "\altdrag.log"
+                        FileAppend Format("{1} watchdog {2}: giving up at {3}x{4}`n", A_Now, ExeOf(hwnd), w, h), A_Temp "\altdrag.log"
                         n := 999
                     } else {
                         WinMove , , ww, wh, "ahk_id " hwnd
-                        FileAppend Format("{1} watchdog {2}: {3}x{4} -> {5}x{6} (fix {7})`n", A_Now, WinGetProcessName("ahk_id " hwnd), w, h, ww, wh, fixes), A_Temp "\altdrag.log"
+                        FileAppend Format("{1} watchdog {2}: {3}x{4} -> {5}x{6} (fix {7})`n", A_Now, ExeOf(hwnd), w, h, ww, wh, fixes), A_Temp "\altdrag.log"
                     }
                 }
             }
@@ -578,7 +578,7 @@ AltDrag(mode) {
             MouseGetPos &cx, &cy
             mm := DllCall("MonitorFromPoint", "Int64", (cy << 32) | (cx & 0xFFFFFFFF), "UInt", 2, "Ptr")
             mw := DllCall("MonitorFromWindow", "Ptr", altDragHwnd, "UInt", 2, "Ptr")
-            Dbg(Format("gesture-end {1} {2}: final {3},{4} {5}x{6} expected {7} minmax={8} win-on-cursor-monitor={9} {10} ms", mode, WinGetProcessName("ahk_id " altDragHwnd), fx, fy, fw, fh, altDragExp, WinGetMinMax("ahk_id " altDragHwnd), mm = mw ? "yes" : "NO", A_TickCount - altDragT0))
+            Dbg(Format("gesture-end {1} {2}: final {3},{4} {5}x{6} expected {7} minmax={8} win-on-cursor-monitor={9} {10} ms", mode, ExeOf(altDragHwnd), fx, fy, fw, fh, altDragExp, WinGetMinMax("ahk_id " altDragHwnd), mm = mw ? "yes" : "NO", A_TickCount - altDragT0))
         }
     }
     altDragExp := "", altDragPhase := ""
@@ -606,7 +606,7 @@ AltDragCore(mode) {
         ; Drag its owner instead, or leave it alone.
         owner := DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr")
         if !owner {
-            Dbg(Format("ignored {1}: tiny window {2} '{3}' {4}x{5} with no owner", mode, WinGetProcessName("ahk_id " hwnd), cls, ww, wh))
+            Dbg(Format("ignored {1}: tiny window {2} '{3}' {4}x{5} with no owner", mode, ExeOf(hwnd), cls, ww, wh))
             return
         }
         Dbg(Format("tiny window {1} {2}x{3} -> dragging its owner", cls, ww, wh))
@@ -637,7 +637,7 @@ AltDragCore(mode) {
     ; move or the resize on release, which is what the same gesture does in
     ; sway (the layout reflows, the window stays tiled).
     tileId := GlazeTilingIdOf(hwnd)
-    Dbg(Format("{1} target {2} hwnd {3}: {4}", mode, WinGetProcessName("ahk_id " hwnd), hwnd,
+    Dbg(Format("{1} target {2} hwnd {3}: {4}", mode, ExeOf(hwnd), hwnd,
         tileId ? "tiled, id " tileId : "not tiled"))
     if (tileId) {
         TilingDrag(mode, hwnd, tileId, mx, my, wx, wy, ww, wh)
@@ -687,7 +687,7 @@ AltDragCore(mode) {
         ; ONE SetWindowPos with position AND size: measured, two separate calls let
         ; the app rescale between them (3072x1694 came out 2708x1744), one call sticks.
         WinMove wx, wy, ww, wh, "ahk_id " hwnd
-        FileAppend Format("{1} max-restore {2}: normal={3}x{4} came-out={5}x{6} -> {7}x{8}`n", A_Now, WinGetProcessName("ahk_id " hwnd), nw, nh, rw, rh, ww, wh), A_Temp "\altdrag.log"
+        FileAppend Format("{1} max-restore {2}: normal={3}x{4} came-out={5}x{6} -> {7}x{8}`n", A_Now, ExeOf(hwnd), nw, nh, rw, rh, ww, wh), A_Temp "\altdrag.log"
     }
     if (mode = "resize") {
         left := (mx - wx) < (ww / 2), top := (my - wy) < (wh / 2)
@@ -696,7 +696,7 @@ AltDragCore(mode) {
     SetWinDelay -1
     mon0 := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
     altDragExp := mode = "resize" ? "(resize)" : ww "x" wh
-    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, WinGetProcessName("ahk_id " hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
+    Dbg(Format("gesture-start {1} {2} hwnd {3} at {4},{5} {6}x{7}{8} cursor {9},{10} monitor={11} prep {12} ms (activate {13} ms)", mode, ExeOf(hwnd), hwnd, wx, wy, ww, wh, fromMax ? " (from maximised)" : "", mx, my, mon0 = PrimaryMon() ? "main" : "vertical", A_TickCount - altDragT0, tAct))
     MonAt(px, py) => DllCall("MonitorFromPoint", "Int64", (py << 32) | (px & 0xFFFFFFFF), "UInt", 2, "Ptr")
     ghost := "", topZone := false, unstable := false, outlined := "", clamped := false, snapped := false
     ; The side of the origin monitor that faces the other monitor. Measured
@@ -752,7 +752,7 @@ AltDragCore(mode) {
                 ghost.Hide()
                 nx := EdgeClampX(wx + dx, ww)
                 if (nx != wx + dx && !clamped)
-                    Dbg(Format("edge-clamp {1}: kept x {2} {3} (window would be at {4})", WinGetProcessName("ahk_id " hwnd), onMain ? "<=" : ">=", onMain ? edgeR - ww : edgeL, wx + dx)), clamped := true
+                    Dbg(Format("edge-clamp {1}: kept x {2} {3} (window would be at {4})", ExeOf(hwnd), onMain ? "<=" : ">=", onMain ? edgeR - ww : edgeL, wx + dx)), clamped := true
                 WinMove nx, wy + dy, , , "ahk_id " hwnd
                 ; Storm guard: if the app answered a plain move with a rescale (stale
                 ; DPI context, seen on the vertical monitor), stop touching it and
@@ -764,11 +764,11 @@ AltDragCore(mode) {
                         ; move, measured): that is its answer, adopt it. Real storms
                         ; are +19 % to +73 % (log 2026-09-15).
                         if !snapped
-                            Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted (further 1-px flips not logged)", WinGetProcessName("ahk_id " hwnd), ww, wh, gw, gh)), snapped := true
+                            Dbg(Format("grid-snap {1}: {2}x{3} -> {4}x{5} adopted (further 1-px flips not logged)", ExeOf(hwnd), ww, wh, gw, gh)), snapped := true
                         ww := gw, wh := gh, altDragExp := ww "x" wh
                     } else {
                         unstable := true
-                        FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
+                        FileAppend Format("{1} storm-guard {2}: rescaled to {3}x{4} during move (expected {5}x{6})`n", A_Now, ExeOf(hwnd), gw, gh, ww, wh), A_Temp "\altdrag.log"
                     }
                 }
             } else {
@@ -791,7 +791,7 @@ AltDragCore(mode) {
                 if ((Abs(gw - nw) > 4 || Abs(gh - nh) > 4) && !SmallDelta(gw, gh, nw, nh)) {
                     ; Storm guard for resizes: the app is rescaling behind our back
                     ; (a grid snap of a few cells is not that: keep resizing live).
-                    FileAppend Format("{1} storm-guard {2}: resize answered {3}x{4} for {5}x{6}, aborting live resize`n", A_Now, WinGetProcessName("ahk_id " hwnd), gw, gh, nw, nh), A_Temp "\altdrag.log"
+                    FileAppend Format("{1} storm-guard {2}: resize answered {3}x{4} for {5}x{6}, aborting live resize`n", A_Now, ExeOf(hwnd), gw, gh, nw, nh), A_Temp "\altdrag.log"
                     KeyWait btn
                     WinMove , , nw, nh, "ahk_id " hwnd
                     Watchdog(hwnd, nw, nh)
@@ -833,7 +833,7 @@ AltDragCore(mode) {
             WinGetPos , , &ew, &eh, "ahk_id " hwnd
             if (ew != ww || eh != wh) {
                 WinMove , , ww, wh, "ahk_id " hwnd
-                FileAppend Format("{1} release-fix {2}: {3}x{4} -> {5}x{6}{7}`n", A_Now, WinGetProcessName("ahk_id " hwnd), ew, eh, ww, wh, fromMax ? " (from maximised)" : ""), A_Temp "\altdrag.log"
+                FileAppend Format("{1} release-fix {2}: {3}x{4} -> {5}x{6}{7}`n", A_Now, ExeOf(hwnd), ew, eh, ww, wh, fromMax ? " (from maximised)" : ""), A_Temp "\altdrag.log"
                 Watchdog(hwnd, ww, wh)
             }
         }
