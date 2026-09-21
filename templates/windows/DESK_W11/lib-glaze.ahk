@@ -243,6 +243,57 @@ GlazeMonitors() {
     return out
 }
 
+; ---- AHK's coordinates are not AkuWM's --------------------------------------
+; This script is system-DPI aware: every rectangle it sees is expressed as if
+; the whole desktop ran at the PRIMARY monitor's scale. AkuWM is per-monitor
+; aware and speaks physical pixels. On the main monitor (150%, the primary)
+; the two agree exactly; on the vertical one (125%) they differ by 150/125 =
+; 1.2, which is why ahk-space.ahk measured that monitor at 4608..6336 where it
+; physically starts at 3840.
+;
+; So a number crossing from here into a `position` or `size` command has to be
+; divided by that ratio, and one coming back multiplied by it. Measured
+; 2026-09-21 by tests/wm: the repair asked for 1440x1080 and the window came
+; back 1728x1296, which is exactly 1.2.
+;
+; Only when AkuWM is the one listening. GlazeWM was written to whatever space
+; it uses, and this script was built against it.
+; The ratio for the monitor a point is on: this process's system DPI over that
+; monitor's real DPI. 144/144 = 1 on the primary, 144/120 = 1.2 on the
+; vertical one, which is exactly the error tests/wm measured.
+WmScaleOf(x, y) {
+    global wmPipe
+    if (!wmPipe)
+        return 1.0
+
+    mon := DllCall("MonitorFromPoint", "Int64", (y << 32) | (x & 0xFFFFFFFF), "UInt", 2, "Ptr")
+
+    ; Asked with per-monitor awareness and put straight back. To a process that
+    ; only understands the system DPI -- this one -- Windows answers with the
+    ; system DPI for EVERY monitor, so the plain call returns 144 on both
+    ; screens of this desk and the ratio comes out 1 (measured 2026-09-21,
+    ; which is why the first version of this changed nothing). -4 is
+    ; PER_MONITOR_AWARE_V2.
+    previous := DllCall("SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")
+    dpiX := 0, dpiY := 0
+    hr := DllCall("Shcore\GetDpiForMonitor", "Ptr", mon, "Int", 0, "UInt*", &dpiX, "UInt*", &dpiY)
+    if (previous)
+        DllCall("SetThreadDpiAwarenessContext", "Ptr", previous, "Ptr")
+
+    if (hr != 0 || !dpiX)
+        return 1.0
+
+    return A_ScreenDPI / dpiX
+}
+
+; An AHK rectangle in the physical pixels AkuWM works in.
+WmPhysical(x, y, w, h) {
+    s := WmScaleOf(x, y)
+    if (s = 1.0)
+        return Map("x", x, "y", y, "w", w, "h", h)
+    return Map("x", Round(x / s), "y", Round(y / s), "w", Round(w / s), "h", Round(h / s))
+}
+
 ; Windows change state rarely between two gestures, and a query costs ~200 ms:
 ; a short cache keeps Alt+drag from stalling before it starts.
 GlazeWinsCached(maxAgeMs := 1000) {

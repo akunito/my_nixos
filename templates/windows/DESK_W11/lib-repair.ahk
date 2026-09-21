@@ -85,9 +85,15 @@ RepairPlaceWindow(w, place) {
     ; return early when the window is already in that state, so a floating
     ; window simply ignored them (measured -- the "damage" of the test never
     ; even happened).
-    GlazeOn(w["id"], Format("position --x-pos {1} --y-pos {2}", place["x"], place["y"]))
+    ; Into AkuWM's coordinates. This script is system-DPI aware and AkuWM is
+    ; per-monitor aware, so on any screen whose scale differs from the primary
+    ; the same window has two sets of numbers -- measured at exactly 1.2 on the
+    ; vertical monitor, which is why a repair there asked for 1440x1080 and got
+    ; 1728x1296 back.
+    it := WmPhysical(place["x"], place["y"], place["w"], place["h"])
+    GlazeOn(w["id"], Format("position --x-pos {1} --y-pos {2}", it["x"], it["y"]))
     Sleep 150
-    GlazeOn(w["id"], Format("size --width {1}px --height {2}px", place["w"], place["h"]))
+    GlazeOn(w["id"], Format("size --width {1}px --height {2}px", it["w"], it["h"]))
     Sleep 250
     return true
 }
