@@ -22,7 +22,8 @@
     "corners": "round"
   },
   "layout": {
-    "default_direction": "auto"
+    "default_direction": "auto",
+    "float_centered": false
   },
   "monitors": [
     {
