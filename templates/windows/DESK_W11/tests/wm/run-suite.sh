@@ -72,7 +72,23 @@ case "${1:-all}" in
   *)         suites="$*";;
 esac
 
+# Each suite starts from the same desk. Without this a suite inherits whatever
+# workspace the last one finished on, its `home` is computed from a stale
+# answer, and every workspace assertion is off by one -- which is what happened
+# running them back to back on 2026-09-21, and it made two suites look like
+# regressions they were not.
+reset_desk() {
+  for ws in 11 21; do
+    powershell.exe -NoProfile -Command \
+      "\$p = Start-Process '$(printf %s "$G" | sed 's|^/mnt/c|C:|; s|/|\\|g')' \
+        -ArgumentList 'command','focus','--workspace','$ws' -PassThru -WindowStyle Hidden; \
+       [void]\$p.WaitForExit(8000)" >/dev/null 2>&1
+    sleep 1
+  done
+}
+
 for s in $suites; do
+  reset_desk
   case "$s" in
     rules) sticky on;;
     *)     sticky off;;
