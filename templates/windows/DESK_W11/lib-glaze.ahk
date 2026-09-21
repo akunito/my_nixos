@@ -47,9 +47,64 @@ Dbg(msg) {
     }
 }
 
+; ---- AkuWM's pipe ---------------------------------------------------------
+; The shim works, and it is the compatibility path for anything that shells
+; out. A gesture must not use it: it is a 68 MB self-contained .NET process per
+; call, measured at 109 ms on this desk against GlazeWM's CLI at 47 ms, and
+; essentially ALL of it is runtime startup -- loose files instead of single
+; file saved 3 ms and ReadyToRun made it worse (2026-09-21). So when AkuWM is
+; the one running, talk to its pipe and spawn nothing at all.
+global wmPipe := InStr(glazeExe, "akuwm") || InStr(glazeExe, "AkuWM")
+
+WmPipeAsk(request) {
+    static RW := 0xC0000000, OPEN_EXISTING := 3, PIPE_BUSY := 231
+    name := "\\.\pipe\akuwm"
+    h := -1
+
+    Loop 3 {
+        h := DllCall("CreateFileW", "Str", name, "UInt", RW, "UInt", 0, "Ptr", 0,
+                     "UInt", OPEN_EXISTING, "UInt", 0, "Ptr", 0, "Ptr")
+        if (h != -1 && h != 0)
+            break
+        ; Every instance is answering somebody else; anything else is fatal.
+        if (A_LastError != PIPE_BUSY)
+            return ""
+        DllCall("WaitNamedPipeW", "Str", name, "UInt", 200)
+    }
+    if (h = -1 || h = 0)
+        return ""
+
+    try {
+        line := request "`n"
+        size := StrPut(line, "UTF-8") - 1
+        out := Buffer(size)
+        StrPut(line, out, size, "UTF-8")
+        if !DllCall("WriteFile", "Ptr", h, "Ptr", out, "UInt", size, "UInt*", &wrote := 0, "Ptr", 0)
+            return ""
+
+        answer := "", chunk := Buffer(65536)
+        Loop 64 {
+            if !DllCall("ReadFile", "Ptr", h, "Ptr", chunk, "UInt", chunk.Size, "UInt*", &read := 0, "Ptr", 0)
+                break
+            if (read = 0)
+                break
+            answer .= StrGet(chunk, read, "UTF-8")
+            if InStr(answer, "`n")
+                break
+        }
+        return answer
+    } finally {
+        DllCall("CloseHandle", "Ptr", h)
+    }
+}
+
 Glaze(args) {
-    global glazeExe
+    global glazeExe, wmPipe
     t := A_TickCount
+    if (wmPipe && WmPipeAsk("compat command " args) != "") {
+        Dbg(Format("glaze {1} ({2} ms, pipe)", args, A_TickCount - t))
+        return
+    }
     RunWait('"' glazeExe '" command ' args, , "Hide")
     Dbg(Format("glaze {1} ({2} ms)", args, A_TickCount - t))
 }
@@ -70,6 +125,18 @@ GlazeQuery(what) {
     ; focus -- which GlazeWM then followed, and the focus assertions of the
     ; suites started failing for no reason (measured 2026-09-20). The cost is
     ; the same; the win came from taking ONE query per gesture instead of three.
+    ; The pipe first when AkuWM is running: no process, no temp file, no cmd.
+    ; The answer carries the same envelope inside an outer one, and every
+    ; pattern below scans the raw text, so they match either way.
+    global wmPipe
+    if (wmPipe) {
+        j := WmPipeAsk("compat query " what)
+        if (j != "") {
+            Dbg(Format("query {1} ({2} ms, pipe, {3} bytes)", what, A_TickCount - t, StrLen(j)))
+            return j
+        }
+    }
+
     tmp := A_Temp "\glazewm-query-" DllCall("GetCurrentProcessId") "-" (seq += 1) ".json"
     RunWait(A_ComSpec ' /c ""' glazeExe '" query ' what ' > "' tmp '""', , "Hide")
     j := ""
