@@ -16,6 +16,7 @@ in
     ../../system/hardware/systemd.nix # journald limits
     ../../system/security/sudo.nix
     ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-qt as a WSLg window via gpgPinentryWslg)
+    ../../system/security/ssh-agent-windows.nix # sshAgentWindowsBridge: SSH_AUTH_SOCK -> Windows OpenSSH agent (survives a PC restart)
     ../../system/security/firewall.nix
     ../../system/security/nix-access-token.nix # GitHub PAT → per-user nix.conf
     ../../system/security/restic.nix # restic wrapper + home_backup timer (self-gated on homeBackupEnable)

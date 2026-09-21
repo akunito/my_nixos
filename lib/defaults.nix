@@ -625,6 +625,7 @@
     gpgCacheTtlSeconds = 28800; # gpg-agent default-cache-ttl(-ssh): seconds since last use before the passphrase is asked again
     gpgMaxCacheTtlSeconds = 86400; # gpg-agent max-cache-ttl(-ssh): hard cap; 34560000 (400 d) = once per agent lifetime
     gpgPinentryWslg = false; # pinentry-qt as a WSLg window (DISPLAY=:0 pinned; curses fallback when WSLg is absent) — the prompt must never draw into a TTY Claude Code is rendering
+    sshAgentWindowsBridge = false; # SSH_AUTH_SOCK -> the Windows OpenSSH agent via npiperelay: DPAPI-sealed on disk, so it survives a PC restart (gpg-agent's cache is RAM-only = one prompt per WSL boot). Trade-off: no prompt at all, see system/security/ssh-agent-windows.nix
     nextcloudSyncFolder = ""; # Path to Nextcloud sync folder (e.g., "/home/user/Nextcloud")
     githubAccessToken = ""; # GitHub PAT to lift github.com anon rate limit on flake-input fetches (set from secrets/domains.nix in profiles; empty = anonymous, no secrets needed)
     jellyseerrApiKey = ""; # Jellyseerr API key for MCP server (set from secrets/domains.nix in profiles)
