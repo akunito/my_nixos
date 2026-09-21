@@ -22,9 +22,11 @@
   `-Distro Nope -Test` exercises the fallback path, `-Timeout 0 -Test` the hang path.
 #>
 param(
-    [string]$Distro  = 'NixOS',
-    [string]$Dir     = '/home/akunito/.dotfiles',
-    [int]   $Timeout = 45,
+    [string]$Distro   = 'NixOS',
+    [string]$Dir      = '/home/akunito/.dotfiles',
+    [int]   $Timeout  = 45,
+    [int]   $Attempts = 3,
+    [int]   $Pause    = 5,
     [switch]$Test
 )
 
@@ -51,7 +53,20 @@ function Test-WslDistro {
     }
 }
 
-$r = Test-WslDistro
+# Retried, because the first tab after a COLD BOOT is the one that loses. The
+# WSL service and the distro take a few seconds to come up, the probe fails
+# fast while they do, and the fallback fired -- so a reboot handed Diego a
+# PowerShell prompt instead of his shell in ~/.dotfiles (2026-09-21). A hang is
+# already covered by $Timeout, so only a quick refusal is worth retrying.
+$r = $null
+foreach ($attempt in 1..$Attempts) {
+    $r = Test-WslDistro
+    if ($r.ok -or $attempt -eq $Attempts) { break }
+    if (-not $Test) {
+        Write-Host "  WSL '$Distro' is not up yet ($($r.why)); retrying in $Pause s..." -ForegroundColor DarkGray
+    }
+    Start-Sleep -Seconds $Pause
+}
 
 if ($Test) {
     if ($r.ok) { "OK: would run  wsl.exe -d $Distro --cd $Dir" } else { "FALLBACK: $($r.why)" }
