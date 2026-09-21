@@ -43,7 +43,7 @@ MonCenter(primary) {
 }
 Displayed(group) {
     for name, shown in GlazeWss()
-        if (shown && SubStr(name, 1, 1) = group)
+        if (shown && WsGroup(name) = group)
             return name
     return "?"
 }

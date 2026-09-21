@@ -77,7 +77,7 @@
       "monitor": "main"
     },
     {
-      "name": "10",
+      "name": "20",
       "monitor": "main"
     },
     {
@@ -117,7 +117,7 @@
       "monitor": "second"
     },
     {
-      "name": "20",
+      "name": "30",
       "monitor": "second"
     }
   ],

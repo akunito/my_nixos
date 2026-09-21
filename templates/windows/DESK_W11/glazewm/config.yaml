@@ -79,7 +79,7 @@ workspaces:
   - { name: '17', bind_to_monitor: 0 }
   - { name: '18', bind_to_monitor: 0 }
   - { name: '19', bind_to_monitor: 0 }
-  - { name: '10', bind_to_monitor: 0 }
+  - { name: '20', bind_to_monitor: 0 }
   - { name: '21', bind_to_monitor: 1 }
   - { name: '22', bind_to_monitor: 1 }
   - { name: '23', bind_to_monitor: 1 }
@@ -89,7 +89,7 @@ workspaces:
   - { name: '27', bind_to_monitor: 1 }
   - { name: '28', bind_to_monitor: 1 }
   - { name: '29', bind_to_monitor: 1 }
-  - { name: '20', bind_to_monitor: 1 }
+  - { name: '30', bind_to_monitor: 1 }
 
 window_rules:
   # Never managed: overlays, launchers, popups, the tools that must stay put.

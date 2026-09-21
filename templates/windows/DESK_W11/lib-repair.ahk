@@ -38,7 +38,7 @@ RepairWorkspaces() {
         if (mon["device"] = "")
             continue
         for wsEntry in mon["wss"] {
-            group := SubStr(wsEntry["name"], 1, 1) = "2" ? 2 : 1
+            group := WsGroup(wsEntry["name"])
             want := RepairGroupDevice(group)
             if (want = "" || want = mon["device"])
                 continue

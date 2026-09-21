@@ -291,7 +291,7 @@ if h3 {
             rec := w
     Note("9 came back to workspace " (rec ? rec["ws"] : "?"))
     Check("9 it came to the monitor the pointer is on",
-        rec ? SubStr(rec["ws"], 1, 1) : "?", "2")
+        rec ? String(WsGroup(rec["ws"])) : "?", "2")
     MoveCursorTo(main[1], main[2])
 }
 

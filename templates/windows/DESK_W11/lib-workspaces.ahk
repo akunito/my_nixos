@@ -33,8 +33,23 @@ WindowGroup(hwnd := 0) {
 }
 
 FocusGroup() => CursorGroup()             ; kept: the old name, the new rule
-Ws(n) => CursorGroup() * 10 + Mod(n, 10)  ; Hyper+1..9 -> x1..x9, Hyper+0 -> x0
-MoveWs(n) => WindowGroup() * 10 + Mod(n, 10)
+
+; Each monitor owns a run of ten, in the order the number row is laid out:
+; group 1 is 11..20, group 2 is 21..30. Hyper+1..9 reach x1..x9 and Hyper+0
+; reaches the tenth, which is the NEXT decade's zero -- so the pills read
+; 11,12,...,19,20 rather than 11,...,19,10, and the last key on the row is the
+; last pill on the bar.
+Ws(n) => CursorGroup() * 10 + (n = 0 ? 10 : n)
+MoveWs(n) => WindowGroup() * 10 + (n = 0 ? 10 : n)
+
+; Which monitor a workspace belongs to, from its name. The one place that
+; knows: five different files used to take the first character, which stops
+; working the moment a group ends in a zero that belongs to the group before
+; it (20 is group 1, 30 is group 2).
+WsGroup(name) {
+    number := Integer(name)
+    return (number - 1) // 10
+}
 
 ; The device name ("\\.\DISPLAY2") of the monitor under a point.
 MonitorDeviceAt(x, y) {
@@ -77,7 +92,7 @@ WsCacheDrop(group) {
 ; is already displayed toggles to the previous one (`toggle_workspace_on_refocus`),
 ; and what that lands on is not ours to know: the cache is dropped instead.
 FocusWorkspace(name) {
-    group := SubStr(name, 1, 1) = "2" ? 2 : 1
+    group := WsGroup(name)
     global WsCacheName
     same := WsCacheName.Has(group) && WsCacheName[group] = name
     Glaze("focus --workspace " name)
@@ -105,7 +120,7 @@ CurrentWs(group, wss := 0) {
     if !wss
         wss := GlazeWss()
     for name, shown in wss
-        if (shown && SubStr(name, 1, 1) = group)
+        if (shown && WsGroup(name) = group)
             return name
     return group "1"
 }
