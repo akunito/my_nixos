@@ -89,8 +89,13 @@ esac
 # answer, and every workspace assertion is off by one -- which is what happened
 # running them back to back on 2026-09-21, and it made two suites look like
 # regressions they were not.
+# Back to the EMPTY workspaces this suite works in, never to 11/21 -- those are
+# the ones the person actually uses. Sending the desk there put the cases'
+# windows in among his, so the tiling checks measured a layout shared with
+# Zen and NordVPN and read "they fill the monitor" as false five times
+# (2026-09-21). The function did nothing at all before that, which hid it.
 reset_desk() {
-  for ws in 11 21; do
+  for ws in 12 22; do
     powershell.exe -NoProfile -Command \
       "\$p = Start-Process '$(printf %s "$G" | sed 's|^/mnt/c|C:|; s|/|\\|g')' \
         -ArgumentList 'command','focus','--workspace','$ws' -PassThru -WindowStyle Hidden; \

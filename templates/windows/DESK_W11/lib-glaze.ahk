@@ -4,6 +4,34 @@
 ; ASCII only, no BOM: AHK reads a BOM-less file as ANSI.
 #Requires AutoHotkey v2.0
 
+; ---- one coordinate space, shared with the window manager -------------------
+; Everything below -- and every script that includes this file -- reads and
+; writes PHYSICAL pixels, the same ones AkuWM works in.
+;
+; It is not the default. AutoHotkey is system-DPI aware, which means Windows
+; hands it every rectangle as if the whole desktop ran at the PRIMARY monitor's
+; scale. This desk runs the main monitor at 150% and the vertical one at 125%,
+; so that second screen was reported to the scripts at 4608,-490..6336,2582
+; where it physically is at 3840,-408..5280,2152 -- every number on it 1.2x too
+; big, which is 150/125.
+;
+; That was poisoning far more than a command argument. MonitorDeviceAt is a raw
+; MonitorFromPoint and answers in PHYSICAL pixels, while WinGetPos next to it
+; answered in the virtual ones: the layout journal recorded windows under the
+; wrong monitor with the wrong work area, the Alt+drag outline was drawn where
+; the window would NOT land, and a window hidden and shown again came back on
+; the other screen or straddling both (reported on the desk 2026-09-21).
+;
+; -4 is PER_MONITOR_AWARE_V2. Measured the same day, before and after: AHK
+; reported DISPLAY2 at 4608,-490..6336,2582 and now reports 3840,-408..5280,2152,
+; which is exactly what `query monitors` says. tests/wm asserts the two agree.
+;
+; Per THREAD rather than per process: the process's awareness is fixed by
+; AutoHotkey's manifest and cannot be raised afterwards. AHK's own threads are
+; pseudo-threads on this one OS thread, so this single call covers every hotkey
+; and every timer.
+DllCall("SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")
+
 ; Which window manager answers. AkuWM ships a drop-in CLI that speaks the same
 ; words and returns the same JSON, so switching the desk over is a matter of
 ; pointing this at it -- no gesture in this file changes.
@@ -311,57 +339,6 @@ GlazeMonitors() {
         pos += StrLen(m[0])
     }
     return out
-}
-
-; ---- AHK's coordinates are not AkuWM's --------------------------------------
-; This script is system-DPI aware: every rectangle it sees is expressed as if
-; the whole desktop ran at the PRIMARY monitor's scale. AkuWM is per-monitor
-; aware and speaks physical pixels. On the main monitor (150%, the primary)
-; the two agree exactly; on the vertical one (125%) they differ by 150/125 =
-; 1.2, which is why ahk-space.ahk measured that monitor at 4608..6336 where it
-; physically starts at 3840.
-;
-; So a number crossing from here into a `position` or `size` command has to be
-; divided by that ratio, and one coming back multiplied by it. Measured
-; 2026-09-21 by tests/wm: the repair asked for 1440x1080 and the window came
-; back 1728x1296, which is exactly 1.2.
-;
-; Only when AkuWM is the one listening. GlazeWM was written to whatever space
-; it uses, and this script was built against it.
-; The ratio for the monitor a point is on: this process's system DPI over that
-; monitor's real DPI. 144/144 = 1 on the primary, 144/120 = 1.2 on the
-; vertical one, which is exactly the error tests/wm measured.
-WmScaleOf(x, y) {
-    global wmPipe
-    if (!wmPipe)
-        return 1.0
-
-    mon := DllCall("MonitorFromPoint", "Int64", (y << 32) | (x & 0xFFFFFFFF), "UInt", 2, "Ptr")
-
-    ; Asked with per-monitor awareness and put straight back. To a process that
-    ; only understands the system DPI -- this one -- Windows answers with the
-    ; system DPI for EVERY monitor, so the plain call returns 144 on both
-    ; screens of this desk and the ratio comes out 1 (measured 2026-09-21,
-    ; which is why the first version of this changed nothing). -4 is
-    ; PER_MONITOR_AWARE_V2.
-    previous := DllCall("SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")
-    dpiX := 0, dpiY := 0
-    hr := DllCall("Shcore\GetDpiForMonitor", "Ptr", mon, "Int", 0, "UInt*", &dpiX, "UInt*", &dpiY)
-    if (previous)
-        DllCall("SetThreadDpiAwarenessContext", "Ptr", previous, "Ptr")
-
-    if (hr != 0 || !dpiX)
-        return 1.0
-
-    return A_ScreenDPI / dpiX
-}
-
-; An AHK rectangle in the physical pixels AkuWM works in.
-WmPhysical(x, y, w, h) {
-    s := WmScaleOf(x, y)
-    if (s = 1.0)
-        return Map("x", x, "y", y, "w", w, "h", h)
-    return Map("x", Round(x / s), "y", Round(y / s), "w", Round(w / s), "h", Round(h / s))
 }
 
 ; Windows change state rarely between two gestures, and a query costs ~200 ms:

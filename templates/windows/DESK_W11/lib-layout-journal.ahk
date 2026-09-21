@@ -167,8 +167,19 @@ JournalPlacement(entries, key, device) {
     byDevice := entries[key]
     if byDevice.Has(device) {
         r := byDevice[device]
-        return Map("x", r["x"], "y", r["y"], "w", r["w"], "h", r["h"],
-            "ws", r["ws"], "state", r["state"], "exact", true)
+        ; Only if the monitor still has the work area the record was written
+        ; against. A record whose area no longer matches is from another screen
+        ; in all but name -- a resolution change, or, on this desk, every row
+        ; written before the scripts and the window manager shared one
+        ; coordinate space (the vertical monitor was recorded 1.2x too big
+        ; until 2026-09-21). Putting those pixels back verbatim is what sent a
+        ; window to the other monitor or halfway between the two, so they go
+        ; down the scaling path below instead, which is self-healing: the next
+        ; snapshot records the window where it actually is.
+        if (r["areaL"] = al && r["areaT"] = at
+            && r["areaW"] = ar - al && r["areaH"] = ab - at)
+            return Map("x", r["x"], "y", r["y"], "w", r["w"], "h", r["h"],
+                "ws", r["ws"], "state", r["state"], "exact", true)
     }
     best := 0
     for other, r in byDevice

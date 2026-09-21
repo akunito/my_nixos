@@ -32,10 +32,10 @@
 ;   "C:\Program Files\AutoHotkey\v2\AutoHotkey64_UIA.exe" hyper-desktops.ahk
 ; bootstrap.ps1 creates the Startup shortcut with that binary.
 #Requires AutoHotkey v2.0
-; AHK is system-DPI aware (150 % here): monitor 1 is 0..3840 in real pixels, the
-; vertical monitor is virtualised to 4608..6336 x -490..2582 (1440 px x 1.2). Mouse,
-; WinGetPos and WinMove all share that space, so they stay consistent; only raw
-; physical numbers typed by hand are wrong there (see tests/ahk-space.ahk).
+; Coordinates here are PHYSICAL pixels, the window manager's own: lib-glaze.ahk
+; puts this thread in PER_MONITOR_AWARE_V2 at load. Without that AHK is
+; system-DPI aware and the vertical monitor reads 1.2x too big (see the note
+; there, and tests/ahk-space.ahk, which measured the old space).
 ; v2 defaults Mouse coords to the active window's CLIENT area; WinGetPos/WinMove
 ; are screen coords. Mixing them made Alt+drag feed the window's own motion back
 ; into the delta (flicker/jumps). Everything below assumes screen coords.

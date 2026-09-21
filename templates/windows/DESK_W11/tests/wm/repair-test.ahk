@@ -209,6 +209,32 @@ Check("6 an answer is recognised", GlazeAnswered(GlazeQuery("workspaces")) ? 1 :
 Check("6 an empty answer is not", GlazeAnswered("") ? 1 : 0, 0)
 Check("6 nor is a truncated one", GlazeAnswered('{"data":{}}') ? 1 : 0, 0)
 
+; --- 7. one coordinate space ----------------------------------------------
+; Everything above measures rectangles. If AutoHotkey and the window manager
+; disagree about where a monitor IS, every one of those measurements is taken
+; in the wrong units and the suite still passes -- which is what happened until
+; 2026-09-21, when the scripts were system-DPI aware and read the 125% monitor
+; 1.2x too big. The journal then recorded windows under the wrong monitor, and
+; hiding a window and showing it again brought it back on the other screen.
+; So: the same monitor, the same work area, on both sides.
+j := GlazeQuery("monitors")
+seen := 0, pos := 1
+pat := '"deviceName":"((?:[^"\\]|\\.)*)".*?"workingRect":\{"left":(-?\d+),"top":(-?\d+),"right":(-?\d+),"bottom":(-?\d+)'
+while pos := RegExMatch(j, pat, &m, pos) {
+    device := StrReplace(m[1], "\\", "\")
+    seen++
+    if !MonitorWorkArea(device, &al, &at, &ar, &ab) {
+        Check("7 AutoHotkey knows " device, 0, 1)
+    } else {
+        Note(Format("7 {1} wm={2},{3},{4},{5} ahk={6},{7},{8},{9}",
+            device, m[2], m[3], m[4], m[5], al, at, ar, ab))
+        Check("7 " device " same work area",
+            al "," at "," ar "," ab, m[2] "," m[3] "," m[4] "," m[5])
+    }
+    pos += StrLen(m[0])
+}
+Check("7 every monitor the manager reports was checked", seen, MonitorGetCount())
+
 KillFlips()
 out .= (fails ? fails " failed" : "all passed") "`n"
 try FileDelete(A_Temp "\perf\repair-test.txt")
