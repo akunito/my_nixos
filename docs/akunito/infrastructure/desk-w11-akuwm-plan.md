@@ -991,6 +991,58 @@ Also guarded: the `monitors` query against the regular expression
 workspace's `isDisplayed` after its own, the three workspace keys adjacent.
 420 tests.
 
+### 10.6 The bar, captured — and what running it cost (2026-09-21)
+
+Zebar 3.3.1 was recorded off the socket
+(`tests/AkuWM.Tests/Fixtures/zebar-requests.txt`, replayed in the tests). It
+opens with six queries — `focused`, `binding-modes`, `tiling-direction`,
+`paused`, `monitors`, `windows` — then `sub --events all`. **It reads no event
+payload at all**: it answers every event by asking for the monitors and the
+windows again. Two consequences.
+
+The first is that payload shapes for the events we had never seen stop being
+a risk, so `monitor_added`, `monitor_removed`, `monitor_updated`,
+`pause_changed` and `application_exiting` could all be added. The monitor ones
+matter here: the Samsung naps, the bar refreshes only when an event arrives,
+and a display change produced none — it would have gone on drawing pills for a
+screen that was not there.
+
+The second is that an event the bar did not need is expensive: two full
+serialisations of the desk on the wm thread, per widget, and there are two.
+Which made a quiet bug costly. `Publish()` returned early when nobody was
+connected, **including its own bookkeeping**, so the first change after a bar
+connected reported every window as newly managed and every displayed workspace
+as newly activated — ten events and twenty queries for a desk nobody had
+touched. The diff now runs always and only the payloads are skipped. It also
+moved into Core as `GlazeEvents`, because it lived in `AkuWM.App`, which does
+not run on Linux, so none of it had ever been tested. 437 tests.
+
+### 10.7 The one that was found by doing it
+
+`tools/zebar-capture.ps1` restarted GlazeWM with `Start-Process glazewm.exe
+start` from a PowerShell launched through WSL interop. **The process came up
+wedged**: running, holding port 6123, accepting every connection and answering
+none, with its own startup commands never run — so Zebar never came back
+either. The script checked that a process existed, which it did, and reported
+"GlazeWM is running again". This desk had no working window manager for eight
+hours, and four AutoHotkey gestures were still hanging on that socket when it
+was found. Started through `explorer.exe` with the Startup shortcut, the same
+binary answers in under four seconds.
+
+It is the same family as the uiAccess finding in M1: **WSL interop is not a
+neutral way to start a Windows program on this machine.** Three rules came out
+of it, applied to all three scripts:
+
+- Start GlazeWM and Zebar through the shell, with their Startup shortcuts.
+- Prove the window manager **answers**; a wedged one is a running one, and
+  every hotkey on this desk goes through that socket.
+- Bound every call into that CLI. An unbounded `wm-exit` against a wedged
+  manager is what hung the capture before it reached the line that restores.
+
+The third one matters most in `akuwm-switch.ps1`, where that code is the way
+**back**. A rollback that leaves a running, wedged GlazeWM behind is worse than
+no rollback, because everything looks fine.
+
 **What is left needs the desk**, in this order: run the capture (~1 min off
 GlazeWM, nothing moves), switch with `tools\akuwm-switch.ps1`, run both
 suites, and use it for a day. `tools/publish-dev.sh` puts the three
