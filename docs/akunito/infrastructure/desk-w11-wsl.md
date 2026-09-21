@@ -201,6 +201,7 @@ and is the native package manager (Chocolatey adds nothing here). DESK → W11:
 | steam, GOG (Heroic), FreesmLauncher + Java 21 | Valve.Steam, GOG.Galaxy, PrismLauncher.PrismLauncher + EclipseAdoptium.Temurin.21.JRE | AkuCraft: new instance + AutoModpack, never copy jars (see memory) |
 | sunshine, moonlight | LizardByte.Sunshine, MoonlightGameStreamingProject.Moonlight | Sunshine host for DESK_A/X13 — **on demand only** (2026-09-15): `SunshineService` set to Manual and stopped; start it from the Start menu (Sunshine) or `Start-Service SunshineService` elevated; not paired with any client yet |
 | easyeffects | — | Equalizer APO declined 2026-09-14 (manual install + per-device setup); revisit only if an EQ is actually missed |
+| — | NordSecurity.NordVPN | own account; the Windows client brings its own kill-switch and TAP adapter (nothing to configure in WSL) |
 | mission-center | Task Manager | |
 | ollama / llama.cpp | none | decided: no LLM on W11 |
 | AMD driver | AMD Adrenalin (manual) | winget id unreliable |
