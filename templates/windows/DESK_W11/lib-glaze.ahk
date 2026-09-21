@@ -12,7 +12,50 @@
 ; script is already running when the desk is switched: a variable set now would
 ; not reach it, and akuwm-switch.ps1 restarts the script anyway. A file is one
 ; less thing that can be half-applied.
-global glazeExe := WmCli()
+global glazeExe := "", wmPipe := false, wmCheckedAt := 0
+
+; Which window manager is ACTUALLY ANSWERING, re-checked at most every few
+; seconds.
+;
+; Reading the marker alone was not enough. A reboot comes up on GlazeWM while
+; the marker still names AkuWM -- the switch never got to run, and the shim it
+; names is still sitting on disk -- so WmCli() happily returned it and every
+; hotkey spoke into a pipe nobody was listening on. The desk came up mute after
+; the first reboot since the switch (2026-09-21). It is the same lesson the
+; restore script learned about GlazeWM: CHECK THAT IT ANSWERS, never that a
+; file exists.
+;
+; Re-checked rather than decided once, because at boot the order is not fixed:
+; this script can be running before AkuWM has opened its pipe, and must pick it
+; up when it does.
+WmResolve() {
+    global glazeExe, wmPipe, wmCheckedAt
+    if (glazeExe != "" && A_TickCount - wmCheckedAt < 3000)
+        return
+    wmCheckedAt := A_TickCount
+    path := WmCli()
+    akuwm := InStr(path, "akuwm") || InStr(path, "AkuWM")
+    if (akuwm && !WmPipeAlive()) {
+        ; Named by the marker and not there: fall back to the other one rather
+        ; than shout down a dead pipe.
+        glazeExe := GlazeWmCli(), wmPipe := false
+        return
+    }
+    glazeExe := path, wmPipe := akuwm
+}
+
+; Is anybody listening on AkuWM's pipe? Opening it is the only honest test.
+WmPipeAlive() {
+    static RW := 0xC0000000, OPEN_EXISTING := 3, PIPE_BUSY := 231
+    h := DllCall("CreateFileW", "Str", "\\.\pipe\akuwm", "UInt", RW, "UInt", 0, "Ptr", 0,
+                 "UInt", OPEN_EXISTING, "UInt", 0, "Ptr", 0, "Ptr")
+    if (h = -1 || h = 0)
+        return A_LastError = PIPE_BUSY   ; every instance busy still means it is up
+    DllCall("CloseHandle", "Ptr", h)
+    return true
+}
+
+GlazeWmCli() => A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
 
 WmCli() {
     marker := EnvGet("LOCALAPPDATA") "\akuwm\wm-cli.txt"
@@ -26,7 +69,7 @@ WmCli() {
                 return path
         }
     }
-    return A_ProgramFiles "\glzr.io\GlazeWM\cli\glazewm.exe"
+    return GlazeWmCli()
 }
 
 ; ---- The process behind a window, without ever throwing -------------------
@@ -81,8 +124,6 @@ Dbg(msg) {
 ; essentially ALL of it is runtime startup -- loose files instead of single
 ; file saved 3 ms and ReadyToRun made it worse (2026-09-21). So when AkuWM is
 ; the one running, talk to its pipe and spawn nothing at all.
-global wmPipe := InStr(glazeExe, "akuwm") || InStr(glazeExe, "AkuWM")
-
 WmPipeAsk(request) {
     static RW := 0xC0000000, OPEN_EXISTING := 3, PIPE_BUSY := 231
     name := "\\.\pipe\akuwm"
@@ -127,6 +168,7 @@ WmPipeAsk(request) {
 
 Glaze(args) {
     global glazeExe, wmPipe
+    WmResolve()
     t := A_TickCount
     if (wmPipe && WmPipeAsk("compat command " args) != "") {
         Dbg(Format("glaze {1} ({2} ms, pipe)", args, A_TickCount - t))
@@ -145,6 +187,7 @@ GlazeOn(id, args) => Glaze('--id ' id ' ' args)
 ; same time, and a shared name truncates one read while the other writes.
 GlazeQuery(what) {
     global glazeExe
+    WmResolve()
     static seq := 0
     t := A_TickCount
     ; Through a hidden cmd.exe, NOT WScript.Shell.Exec: Exec cannot hide the
