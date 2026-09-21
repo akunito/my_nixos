@@ -168,15 +168,6 @@ PillSync(*) {
     }
 }
 
-MonitorAt(x, y) {
-    loop MonitorGetCount() {
-        MonitorGet(A_Index, &l, &t, &r, &b)
-        if (x >= l && x < r && y >= t && y < b)
-            return {i: A_Index, l: l, t: t, r: r, b: b}
-    }
-    MonitorGet(1, &l, &t, &r, &b)
-    return {i: 1, l: l, t: t, r: r, b: b}
-}
 
 ; Is some window covering this whole monitor (a game, a video at full screen)?
 ; The pill is checked against the monitor, not against the focused window: with

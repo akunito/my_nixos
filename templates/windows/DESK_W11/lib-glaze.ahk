@@ -43,6 +43,19 @@ ExeOf(hwnd) {
         return ""
 }
 
+; ---- Which monitor a point is on ------------------------------------------
+; Lived in hyper-desktops.ahk, which the gesture libraries do not include --
+; they include this file. Same function, reachable from both.
+MonitorAt(x, y) {
+    loop MonitorGetCount() {
+        MonitorGet(A_Index, &l, &t, &r, &b)
+        if (x >= l && x < r && y >= t && y < b)
+            return {i: A_Index, l: l, t: t, r: r, b: b}
+    }
+    MonitorGet(1, &l, &t, &r, &b)
+    return {i: 1, l: l, t: t, r: r, b: b}
+}
+
 ; ---- Debug trace (opt-in) -------------------------------------------------
 ; %TEMP%\hyper-debug.on present -> every gesture and every GlazeWM command is
 ; appended to %TEMP%\altdrag.log with timings.

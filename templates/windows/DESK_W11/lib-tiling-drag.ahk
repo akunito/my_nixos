@@ -36,6 +36,17 @@ TilingDrag(mode, hwnd, id, mx, my, wx, wy, ww, wh) {
     altDragGhost := ""
     MouseGetPos &cx, &cy
     dx := cx - mx, dy := cy - my
+    ; Dropped against the top edge of the screen. Windows snaps a FLOATING
+    ; window here by itself; a tiled one it cannot, because AkuWM puts it
+    ; straight back in its tile -- so the gesture did nothing at all. AkuWM
+    ; owns what it means (layout.drag_to_top), so this only reports the
+    ; gesture and the setting decides, which is what lets the GUI change it
+    ; without touching this file.
+    if (mode = "move" && TouchesTopEdge(cx, cy)) {
+        Dbg(Format("tiling move -> drag-to-top at {1},{2}", cx, cy))
+        GlazeOn(id, "drag-to-top")
+        return
+    }
     cmd := TilingDropCommand(mode, dx, dy, left, top)
     if (cmd = "") {
         Dbg(Format("tiling {1}: too short ({2},{3}), left alone", mode, dx, dy))
@@ -65,3 +76,11 @@ TilingDropCommand(mode, dx, dy, left, top) {
     return args = "" ? "" : "resize" args
 }
 
+
+; The top edge of whatever screen the cursor is on. A band rather than the
+; exact row: a pointer flung upwards stops a pixel or two short, and the
+; monitors here start at different y (the vertical one at -408).
+TouchesTopEdge(x, y, band := 10) {
+    mon := MonitorAt(x, y)
+    return y - mon.t <= band
+}
