@@ -59,7 +59,7 @@ Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($mon.children | ? isDisplayed).name | Out-Null
 Start-Sleep 1
-$p = Start-Process "$d\fliptest.exe" -ArgumentList "75 0 $Mode" -PassThru
+$p = StartAsUser "$d\fliptest.exe" "75 0 $Mode"
 Start-Sleep 4
 $h = GameWin
 if ($h -eq [IntPtr]::Zero) { "no game window"; exit 1 }
@@ -84,7 +84,7 @@ $smallState = State
 Start-Sleep 3
 "3 windowed+max    windowed=$smallState state=$(State) rect=$(Rect2) pills=$(Pills2) $(Modes cyc3)"
 
-$cm = Start-Process charmap.exe -PassThru
+$cm = StartAsUser "$env:SystemRoot\system32\charmap.exe" ""
 Start-Sleep 3
 $ch = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $cm.Id -and [W]::IsWindowVisible($x)) { $ch = $x; break }; $x = [W]::GetWindow($x, 2) }

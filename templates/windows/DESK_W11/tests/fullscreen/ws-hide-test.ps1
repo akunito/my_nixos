@@ -46,7 +46,7 @@ Start-Sleep 1
 $args = if ($env:WSTEST_MAXFULL -eq "1") { "30 $Monitor maxfull" }
         elseif ($env:WSTEST_GAMELIKE -eq "1") { "30 $Monitor gamelike" }
         else { "30 $Monitor" }
-$p = Start-Process "$env:TEMP\perf\fliptest.exe" -ArgumentList $args -PassThru
+$p = StartAsUser "$env:TEMP\perf\fliptest.exe" ($args -join " ")
 Start-Sleep 3
 $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $p.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $h = $x; break }; $x = [W]::GetWindow($x, 2) }

@@ -51,7 +51,7 @@ Start-Sleep 1
 # is elevated (PresentMon needs it) and GlazeWM, which is not, cannot set the
 # z-order of an elevated window at all -- the stand-in would never be topmost,
 # unlike the real Telegram.
-Start-Process explorer.exe -ArgumentList "$d\fliptest.exe"
+[void](StartAsUser "$d\fliptest.exe" "")
 Start-Sleep 4
 $chatWin = [IntPtr]::Zero
 $x = [W]::GetTopWindow([IntPtr]::Zero)
@@ -65,8 +65,15 @@ $chatId = IdOf $chatWin
 Start-Sleep 1
 "chat floating+sticky topmost=$((([W]::GetWindowLong($chatWin, -20)) -band 0x8) -ne 0)"
 
-# The game starts afterwards, on the same workspace.
-$game = Start-Process "$d\fliptest.exe" -ArgumentList "60 0 gamelike" -PassThru
+# The game starts afterwards, on the same workspace -- THROUGH EXPLORER, for
+# the same reason as the chat window above. Started from this elevated script
+# it ran elevated, and a window manager running as the user cannot set the
+# z-order of an elevated window at all: SetWindowPos silently did nothing, the
+# game never entered the always-on-top band, and the case read
+# game-topmost=False with the chat above it (2026-09-21). Diego's games run as
+# the user, so elevated was never the thing to measure.
+$game = StartAsUser "$d\fliptest.exe" "60 0 gamelike"
+if (-not $game) { "FAIL: the game did not start"; return }
 # Let the reordering settle before measuring: the first seconds after a
 # fullscreen window appears are composed while the windows around it are being
 # pushed under, and a capture started too early reads about half direct.
@@ -75,7 +82,7 @@ $gameWin = WinOfPid $game.Id
 ParkCursorOnPrimary
 Start-Sleep 2
 $state = ((& $glaze query windows | ConvertFrom-Json).data.windows | ? { $_.handle -eq [int64]$gameWin }).state.type
-"game state=$state chat-above-game=$(Above $chatWin $gameWin) chat-topmost=$((([W]::GetWindowLong($chatWin, -20)) -band 0x8) -ne 0)"
+"game state=$state chat-above-game=$(Above $chatWin $gameWin) chat-topmost=$((([W]::GetWindowLong($chatWin, -20)) -band 0x8) -ne 0) game-topmost=$((([W]::GetWindowLong($gameWin, -20)) -band 0x8) -ne 0)"
 "present modes with the chat window on the same workspace: $(Modes stickygame $game.Id)"
 
 Stop-Process -Id $game.Id -Force -EA SilentlyContinue

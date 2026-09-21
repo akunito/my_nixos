@@ -73,3 +73,38 @@ function WaitForFocus($hwnd, $timeoutMs = 3000) {
   }
   $false
 }
+
+# Starts a program the way the person does: through Explorer, with the normal
+# user token, so the window BECOMES THE FOREGROUND ONE.
+#
+# Two measured reasons, both 2026-09-21, both of which make a case measure
+# something the desk never does:
+#  - a window started by a WSL-interop PowerShell never takes the foreground.
+#    The shell then keeps the taskbar above it however often the window
+#    manager calls MarkFullscreenWindow (accepted, ignored): 0% direct with
+#    only the 42 px bar above the game, and every pointer-focus case reads
+#    focused=False.
+#  - a window started by an ELEVATED script is elevated, and a window manager
+#    running as the user cannot set an elevated window's z-order at all.
+#
+# explorer.exe cannot forward arguments, so they go into a one-line launcher.
+# `start` returns at once and cmd closes with it, so the console is gone before
+# anything is measured. Returns the new process, or $null.
+function StartAsUser([string] $exe, [string] $arguments, [int] $waitMs = 20000) {
+  $name = [IO.Path]::GetFileNameWithoutExtension($exe)
+  $before = @(Get-Process $name -EA SilentlyContinue | % { $_.Id })
+  $launcher = Join-Path $env:TEMP ("perf\start-" + $name + ".cmd")
+  Set-Content -Path $launcher -Encoding ASCII -Value "@start `"`" `"$exe`" $arguments"
+  # Explorer opens the user's Documents folder when it cannot resolve what it
+  # was handed, and the case then measures a File Explorer window instead of a
+  # game (seen 2026-09-21). Quoted, and only once the file is really there.
+  if (-not (Test-Path $launcher)) { return $null }
+  Start-Process explorer.exe -ArgumentList ('"' + $launcher + '"')
+  $deadline = (Get-Date).AddMilliseconds($waitMs)
+  while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Milliseconds 300
+    $p = Get-Process $name -EA SilentlyContinue | ? { $before -notcontains $_.Id } | Select-Object -First 1
+    if ($p) { return $p }
+  }
+  $null
+}

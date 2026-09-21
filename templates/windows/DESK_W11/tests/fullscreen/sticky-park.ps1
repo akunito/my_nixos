@@ -34,13 +34,26 @@ if ($mode -eq "off") {
 } else {
   if (-not (Test-Path $file)) { "nothing parked"; return }
   $ids = @(Get-Content $file)
-  $live = @((& $glaze query windows | ConvertFrom-Json).data.windows | % { $_.id })
+  $windows = @((& $glaze query windows | ConvertFrom-Json).data.windows)
+  $done = 0
   foreach ($id in $ids) {
-    if ($live -contains $id) {
-      & $glaze command --id $id set-floating | Out-Null
-      & $glaze command --id $id set-sticky | Out-Null
-    }
+    $w = $windows | ? { $_.id -eq $id } | Select-Object -First 1
+    if (-not $w) { continue }
+    # toggle-minimized, not set-floating: a window on the taskbar has to come
+    # OFF it first. AkuWM ignored set-floating on a minimised window until
+    # 2026-09-21 and this script deleted the record anyway, so three windows
+    # stayed parked for hours with nothing left saying they had been.
+    if ($w.state.type -eq "minimized") { & $glaze command --id $id toggle-minimized | Out-Null }
+    & $glaze command --id $id set-sticky | Out-Null
+    $done++
   }
-  Remove-Item $file -EA SilentlyContinue
-  "restored $($ids.Count) sticky window(s)"
+  # Only once every one of them is off the taskbar: the record of what was
+  # parked is the only way back, so it outlives a restore that did not take.
+  $after = @((& $glaze query windows | ConvertFrom-Json).data.windows | ? { $ids -contains $_.id -and $_.state.type -eq "minimized" })
+  if ($after.Count) {
+    "WARNING: $($after.Count) still minimised ($($after.processName -join ', ')); $file kept"
+  } else {
+    Remove-Item $file -EA SilentlyContinue
+  }
+  "restored $done sticky window(s)"
 }

@@ -15,7 +15,7 @@ Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
 $mon = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($mon.children | ? isDisplayed).name | Out-Null
 Start-Sleep 1
-$p = Start-Process "$d\fliptest.exe" -ArgumentList "16 0 gamelike" -PassThru
+$p = StartAsUser "$d\fliptest.exe" "16 0 gamelike"
 Start-Sleep 5
 $w = @((& $glaze query windows | ConvertFrom-Json).data.windows | ? processName -eq "fliptest" | Sort-Object width -Descending)[0]
 "state=$($w.state.type) rect=$($w.x),$($w.y) $($w.width)x$($w.height) monitor=$($mon.width)x$($mon.height)"

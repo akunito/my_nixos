@@ -40,7 +40,7 @@ Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force
 
 # 0. The feature itself, with two ordinary windows GlazeWM manages (charmap is a
 # dialog and GlazeWM leaves it alone, so it proves nothing).
-$a = Start-Process "$d\fliptest.exe" -ArgumentList "22 0 300 200 900 700" -PassThru
+$a = StartAsUser "$d\fliptest.exe" "22 0 300 200 900 700"
 Start-Sleep 3
 $app = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $a.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $app = $x; break }; $x = [W]::GetWindow($x, 2) }
@@ -56,7 +56,7 @@ Start-Sleep 2
 $primary = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
 & $glaze command focus --workspace ($primary.children | ? isDisplayed).name | Out-Null
 Start-Sleep 1
-$p = Start-Process "$d\fliptest.exe" -ArgumentList "75 0 gamelike" -PassThru
+$p = StartAsUser "$d\fliptest.exe" "75 0 gamelike"
 $script:gamePid = $p.Id
 Start-Sleep 5
 $h = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
@@ -92,7 +92,7 @@ Start-Sleep 2
 # pointer -- with a window actually there. Parking on an empty desktop proves
 # nothing: Windows leaves the focus where it was, so the case used to pass or
 # fail depending on what happened to be open on that monitor.
-$s = Start-Process "$d\fliptest.exe" -ArgumentList "25 1 now" -PassThru
+$s = StartAsUser "$d\fliptest.exe" "25 1 now"
 Start-Sleep 3
 $side = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
 while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $s.Id -and [W]::Cls($x) -eq "FlipTestWnd") { $side = $x; break }; $x = [W]::GetWindow($x, 2) }

@@ -56,8 +56,17 @@ print([c["name"] for c in m["children"] if c["isDisplayed"]][0])')
   $W 'C:\Users\diego\AppData\Local\Temp\perf\park-primary.ps1' >/dev/null 2>&1
   sleep 1
   rm -f "$P/$n.done" "$P/$n.csv"
+  # Through explorer, never `Start-Process` from here. A window started by a
+  # WSL-interop PowerShell never becomes the FOREGROUND window: the shell then
+  # keeps the taskbar above it (MarkFullscreenWindow is accepted and ignored,
+  # measured 2026-09-21 -- 0% direct with only the 42 px bar above the game)
+  # and the pointer-focus cases read focused=False. Diego's games come from
+  # Steam and Explorer, so that is what the suite has to imitate. explorer.exe
+  # cannot forward arguments, so they go into a one-line launcher.
+  printf '@start "" "%s" %s\r\n' 'C:\Users\diego\AppData\Local\Temp\perf\fliptest.exe' "$*" \
+    > "$P/fliptest-run.cmd"
   powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \
-    "Start-Process 'C:\Users\diego\AppData\Local\Temp\perf\fliptest.exe' -ArgumentList '$*'" >/dev/null 2>&1
+    "Start-Process explorer.exe -ArgumentList 'C:\Users\diego\AppData\Local\Temp\perf\fliptest-run.cmd'" >/dev/null 2>&1
   sleep 5
   echo 5 > "$P/$n.req"
   for _ in $(seq 60); do [ -f "$P/$n.done" ] && break; sleep 0.5; done
