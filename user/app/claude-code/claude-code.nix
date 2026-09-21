@@ -236,6 +236,9 @@ let
         "Read(~/.docker/config.json)"
         "Read(~/.git-crypt/**)"
         "Read(~/.claude/.credentials.json)"
+        # gh keeps its GitHub token in plain text here. Claude uses the `gh`
+        # COMMAND, which reads the file itself; it never needs to see it.
+        "Read(~/.config/gh/hosts.yml)"
 
         # === Bash variants for credential files ===
         "Bash(cat ~/.ssh/id_*)"
@@ -245,6 +248,8 @@ let
         "Bash(cat ~/.aws/credentials*)"
         "Bash(cat ~/.git-crypt/*)"
         "Bash(cat ~/.claude/.credentials.json*)"
+        "Bash(cat ~/.config/gh/hosts.yml*)"
+        "Bash(gh auth token*)"
         "Bash(*base64*~/.ssh/*)"
 
         # === Destructive git operations ===
@@ -391,6 +396,11 @@ in
     pkgs.nodejs_22                 # Node.js for npx (required by the postgres and n8n MCPs)
     pkgs-unstable.uv               # Python package runner (uvx, required by Plane MCP)
     pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable to dedupe across modules)
+    # Reading a CI failure needs auth: unauthenticated api.github.com allows 60
+    # requests an hour, artifacts need a token even on a public repo, and job
+    # logs need admin rights. Diagnosing one windows-only test failure burned
+    # the whole hourly budget (2026-09-21).
+    pkgs.gh
   ];
 
   # Generate settings JSON as a base reference file (for the activation script to copy from)
