@@ -18,7 +18,8 @@
     "scale_with_dpi": true
   },
   "effects": {
-    "focused_border": "#c4a7e7"
+    "focused_border": "#c4a7e7",
+    "corners": "round"
   },
   "layout": {
     "default_direction": "auto"
