@@ -1660,6 +1660,46 @@ which is right. Diego's "main window jumped to the vertical screen" is not in
 the traces of 16:00-16:26; to be reproduced with a time.
 
 
+### 10.21 Floating windows stay over the tiles, and the wheel (2026-09-22 17:00)
+
+Diego: a click on a tile buried the floating windows. Asked whether tiles
+should always sit behind floating ones or the wheel should re-order; chosen:
+both -- floating in front by default, `lower` / `raise` on Hyper+wheel.
+
+Why the band was not enough, measured on the vertical screen with the two
+floating terminals and Brave tiled: `SetWindowPos(HWND_TOPMOST)` on a
+Windows Terminal window returns true and the bit is gone 300 ms later, and
+again after every activation (WT enforces its own "always on top" = off).
+AkuWM recorded the band it asked for, never read it back, and re-asked
+nothing. The stripping is not even deterministic: after one restart the same
+window kept the band.
+
+Built in `6f5e11f` and `84d5a5e`, `FloatingOverTilesTests` (12), 913 tests:
+
+- the band is read back after the call; a window that does not keep it is
+  `BandRefused` (logged once, never asked again);
+- when a tile takes the focus, every floating and sticky window of that
+  workspace is raised over it -- after `RaiseDelayMs` (300 ms): sent inside
+  the foreground event, the raise was undone by the tile's own button-down;
+- the platform skips the ones a fresh `GetWindowLong` still shows in the
+  band (the model's band is stale the moment the app strips it);
+- `HWND_TOP` from a process without the foreground right lands directly
+  BELOW the foreground window (the same call from an interactive PowerShell
+  went on top); so when the window is still under the foreground tile
+  afterwards, the tile is moved behind it -- lowering needs no right;
+- a redraw whose only work is a raise counts as work (it was "nothing to do"
+  and the first build never sent it);
+- `lower` = band off + `HWND_BOTTOM` once, kept there through tile clicks;
+  `raise` or focusing the window brings it back (band again if kept).
+  Hyper+WheelDown / Hyper+WheelUp in `hyper-desktops.ahk`, listed as `wm`
+  shortcuts in `common.json` for the GUI; `Chord` knows the wheel keys.
+
+Verified on the desk, each step by z-order listing: band kept → terminal over
+Brave after the click; band stripped from outside → terminal under Brave for
+300 ms, then over it, foreground still Brave; lower → under Brave and stays
+after a click; focus → forward again.
+
+
 ## 12. Risks
 
 | risk | what we do |
