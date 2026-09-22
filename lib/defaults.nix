@@ -1145,6 +1145,8 @@
     headscaleDomain = ""; # Public domain for Headscale (e.g., "headscale.example.com")
     headscalePort = 8080; # Internal port (nginx handles TLS on 443)
     headscaleExtraDnsRecords = [ ]; # Extra MagicDNS A records pushed to all clients: [{ name, type, value }] — resolved locally, works even for ACL-restricted guest nodes
+    # === Plane regression suite + plane-deploy (system/app/plane-tests.nix) ===
+    planeTestsEnable = false; # Install `plane-deploy` + `plane-tests` (VPS only; needs the plane + plane-dev stacks)
     # === Plane Telegram bot (system/app/plane-bot.nix) ===
     planeBotEnable = false; # Run the Plane Telegram bot daemon (VPS only; needs planeBotToken/Chats/Users from secrets)
     planeBotToken = ""; # @BotFather token of the Plane bot (secrets/domains.nix)

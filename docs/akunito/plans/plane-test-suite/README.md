@@ -86,18 +86,25 @@ L3/L4/L7, seeds and the Telegram reporter live in dotfiles (`system/app/plane-te
 ## 4. `plane-deploy` flow
 
 ```
-plane-deploy [--ref <commit>]
-  0. rule check: fork code changed without tests → stop (override flag, logged)
-  1. build images from the fork @ref (api, web, AIO)            → L0
-  2. L1 + L2 inside the build
-  3. deploy to dev (compose, tagged by commit)
-  4. L3-00 dev safety → L3 → L4 → L5 → VR on dev                  any red → STOP, Telegram
-  5. snapshot prod (image tags, compose, pg_dump)
-  6. deploy to prod
-  7. L7 smoke                                                     red → ROLLBACK to 5, Telegram
-  8. Telegram green; record deployed commit + image digests
-  9. frontend changed → list the M checks for Diego
+plane-deploy [--ref REF] [--dev-only] [--config-only] [--rollback prod|dev] [--no-test-check] [--yes]
+  0. rule check: fork code changed without tests → stop (--no-test-check overrides, logged + reported)
+  1. L0 build gate + L1 unit from a clean checkout of REF        (L2 joins in P8)
+  2. bundle → dev (previous kept), L3-00 → L3 → L4 → L5 + VR      any red → dev restored, STOP, Telegram
+  3. bundle → prod (previous kept)
+  4. L7 smoke                                                     red → ROLLBACK, Telegram
+  5. Telegram green; record the deployed commit in <stack>/.deployed-ref
+  6. print the manual checks Diego still owns
 ```
+
+**Built 2026-09-22 (P7)** as `system/app/plane-tests/remote/deploy.sh`, installed by
+`system/app/plane-tests.nix` (`planeTestsEnable`) as `plane-deploy` + `plane-tests` on the VPS, and
+written into CLAUDE.md as an absolute rule. Until P8 it deploys the **frontend bundle only** — the
+backend is still the AIO image + `start-override.sh`, so no migration runs and the rollback is a
+directory swap (last 3 kept per stack). The swap never restarts the container: hashed assets first,
+then `index.html`/`sw.js`, then the sweep, then every asset the shell references is re-fetched and
+its content type checked (Caddy's SPA fallback answers a missing asset with index.html and 200).
+Telegram goes through the infra-bot relay (`POST /deploy`), identified by tailnet IP — no token on
+this path, unlike `infra-notify`, which reads a root-only secret.
 
 Instance-config changes (god-mode/shell) also go through `plane-deploy --config-only` (runs L3 + L7).
 
@@ -150,6 +157,16 @@ error boundary / console error.
 | APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
 | APLANE-23 | L3-15 **D06 compares dev's web bundle against prod's** | Since P6, dev runs a fork build prod does not have, so D06 is red by design while a change is in flight. `plane-deploy` (P7) should compare each side against the bundle built from the ref it deployed, not against the other side |
+
+## 8a. P7 findings (2026-09-22)
+
+| # | Finding | Where it lands |
+|---|---|---|
+| P7-1 | `fork-suite.sh` re-checks the tree out and `git clean -fdx`s it on **every** command, so running `unit` after `build` deleted the bundle that was about to be deployed | the pipeline runs L1 first and builds last; caught by the first real `--dev-only` run |
+| P7-2 | Without a tty (systemd-run, a hook) the prod confirmation prompt was simply skipped — an unattended run would have walked into prod | `--yes` is now mandatory when there is no terminal |
+| P7-3 | `run.sh` passed arguments to the VPS as one unquoted string, so `-g "QA Locked"` arrived as two words and Playwright found no tests | each argument is `printf '%q'`-quoted now |
+| P7-4 | A locked global view rendered nothing once in ~600 test runs and turned a deploy red; it passed 3/3 immediately after | Playwright retries once, and the deploy prints + reports anything that only passed on the retry |
+| P7-5 | `infra-notify` needs a root-only secret, but the infra-bot's relay accepts `POST /deploy` from any tailnet peer — including the VPS itself | that is the transport; no token on this path |
 
 ## 8b. P6 findings (2026-09-17)
 

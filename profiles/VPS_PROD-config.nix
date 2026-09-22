@@ -103,6 +103,9 @@ in
     planeBotWebhookSecret = secrets.planeBotWebhookSecret or ""; # instant events; polling stays as reconciliation
     planeBotWebhookDebug = false; # payload samples verified 2026-09-11; flip on to capture new shapes
     planeBotKumaPushUrl = secrets.planeBotKumaPushUrl or ""; # Kuma push heartbeat after every sync pass
+
+    # Plane regression suite: `plane-deploy` is the only way Plane changes (APLANE-14).
+    planeTestsEnable = true;
     # /ask - private LLM support in Discord, through the LiteLLM gateway below.
     akucraftAskEnable = true;
     akucraftAskDailyQuota = 25;

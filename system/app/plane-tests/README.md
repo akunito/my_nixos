@@ -1,8 +1,13 @@
 # plane-tests — Plane regression suite (APLANE-7)
 
 Plan and full test catalogue: `docs/akunito/plans/plane-test-suite/`.
-Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one over `ssh -A`
-(nix packaging comes with P4).
+Scripts in `remote/` run on VPS_PROD. Two ways in:
+
+- **`plane-deploy`** on the VPS (nix-packaged, `planeTestsEnable`) — the real thing, and the ONLY
+  way Plane changes. Runs the committed copy from the nix store, never an rsync.
+- **`run.sh <command>`** from a workstation — rsyncs `remote/` to `~/.cache/plane-tests` and runs
+  one script over `ssh -A`. The iteration loop while a script is being written; `run.sh deploy`
+  drives the same `plane-deploy` from the working copy.
 
 | Command | What | Ticket |
 |---|---|---|
@@ -19,6 +24,34 @@ Scripts in `remote/` run on VPS_PROD; `run.sh` copies them there and runs one ov
 | `run.sh config prod\|dev` | L3 config contract, read-only | APLANE-11 |
 | `run.sh smoke prod\|dev` | L7 smoke: L3 + SPA shell + authenticated read-only crawl as `qa-smoke` | APLANE-11 |
 | `run.sh smoke-user prod\|dev add\|remove` | Creates / removes `qa-smoke` (Guest) + empty secret project `QA Smoke` (QSMK) in `akuworkspace` | APLANE-11 |
+| `run.sh deploy [args]` / `plane-deploy` | The deploy pipeline below | APLANE-14 |
+
+## plane-deploy
+
+```
+plane-deploy [--ref REF] [--dev-only] [--config-only] [--rollback prod|dev] [--no-test-check] [--yes]
+```
+
+0. **The rule**: every commit between what prod serves and `REF` that touches `apps/web/{core,app,ce,helpers,lib,styles}`
+   or `packages/` must also touch `apps/web/tests/`. A commit that does not stops the deploy before
+   anything moves. `--no-test-check` overrides it, says so on the terminal and in the Telegram report.
+1. L0 build gate + L1 unit from a clean checkout of `REF`.
+2. Bundle → dev (previous kept), then L3-00 safety, L3 config, L4 API, L5 E2E + VR. Any red restores
+   dev's previous bundle and stops.
+3. Bundle → prod, then L7 read-only smoke. A red smoke **rolls prod back** and reports.
+4. Telegram through the infra-bot relay (`POST /deploy`, identified by tailnet IP — no token here),
+   plus the manual checks the suite cannot do.
+
+Until P8 gives us our own images this deploys the **frontend bundle only**; the backend still comes
+from the AIO image + `start-override.sh`, so no migration ever runs here. The swap does not restart
+the container: hashed assets land first, then `index.html`/`sw.js`, then the sweep — Caddy serves the
+mount from disk, so a restart would only buy a minute of downtime. `verify_served` then fetches every
+asset the shell references and checks its content type, because Caddy's SPA fallback answers a missing
+asset with index.html and 200.
+
+Each stack keeps its last `KEEP_BACKUPS=3` bundles as `<mount>.bak-<stamp>`, and the deployed commit
+is recorded in `<stack>/.deployed-ref` — that file is what the rule check compares against, so never
+hand-edit a bundle without updating it.
 
 ## refresh
 

@@ -62,6 +62,7 @@
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix
   ++ lib.optional (systemSettings.headscaleEnable or false) ../../system/app/headscale.nix
   ++ lib.optional (systemSettings.planeBotEnable or false) ../../system/app/plane-bot.nix # Plane Telegram bot: /status, /new, mirror sync
+  ++ lib.optional (systemSettings.planeTestsEnable or false) ../../system/app/plane-tests.nix # plane-deploy: the only way Plane changes (APLANE-14)
   ++ lib.optional (systemSettings.akucraftStatusBotEnable or false) ../../system/app/akucraft-status-bot.nix
   ++ lib.optional (systemSettings.nginxLocalEnable or false) ../../system/app/nginx-local.nix
   ++ lib.optional (systemSettings.vaultwardenEnable or false) ../../system/app/vaultwarden.nix
