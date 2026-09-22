@@ -44,6 +44,16 @@
       init.defaultBranch = "main";
       pull.rebase = true;
       color.ui = "auto";
+      # install.sh's harden.sh chowns ~/.dotfiles to root:root for the whole
+      # nixos-rebuild (install.sh:1213 -> soften at 1374). Without this, a
+      # concurrent `git fetch` as the user dies with "dubious ownership" and
+      # the deploy's `&&` chain stops — bit VPS_PROD on 2026-09-22 when two
+      # sessions deployed at once. user/app/git/git.nix has the same list,
+      # which is why the desktops never see this race.
+      safe.directory = [
+        ("/home/" + userSettings.username + "/.dotfiles")
+        ("/home/" + userSettings.username + "/.dotfiles/.git")
+      ];
     };
   };
 
