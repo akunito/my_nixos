@@ -1774,6 +1774,40 @@ Fullscreen never gets one (Diego: "en fullscreen no nos hace falta"). Nine
 tests, 929. Verified: the purple frame around Purple in a screenshot.
 
 
+### 10.24 The outline, anti-aliased, and the effects the GUI will offer (2026-09-22 18:45)
+
+Diego, in order: the corners must round like the windows; rounded, they
+look pixelated; the elevated PowerShell shows no border, only Purple; the
+GUI must offer border width, colour, window shadow, border glow, rounded
+vs sharp corners and a separate colour for elevated windows; and what is the
+white line at the top of File Explorer.
+
+`3fee419`, 936 tests:
+
+- the outline is four layered strips per target (top, bottom, left, right),
+  per-pixel alpha from a signed-distance rounded rectangle, so the corners
+  are smooth; the strips only cover the band, and a move that keeps the
+  size just moves them. Corner radius follows `effects.corners` as Windows
+  11 rounds the window itself (8 px round, 4 small, 0 square, scaled).
+- `effects.border_width` (1-8 px at 100 %, the outline only: the shell's
+  border is one pixel and not negotiable), `effects.elevated_border` (the
+  focused colour of an elevated window), `effects.shadow` and
+  `effects.glow` read and validated, with the "not acted on" warning until
+  the renderer draws them (both are a wider band with an alpha falloff on
+  the same strips). `corners` already covers rounded vs sharp.
+- the elevated console had no outline because `Caption()` stripped
+  WS_CAPTION with SetWindowLongPtr, UIPI refused it silently, and the
+  decoration counted as applied; the style is read back now.
+- Explorer's white line: 1 px at the top only, present with `title_bar`
+  keep or hide, still there INSIDE a red unfocused border, gone when
+  focused. It is Explorer's own inactive top highlight (Windows 11 draws it
+  on Mica windows), not AkuWM's border and not the caption strip. Left.
+
+Pending: the signed uiAccess install (10.14) -- with it, elevated windows
+tile, move and take the DWM border like any other; the outline stays for
+windows nobody should touch. The monitor-sleep retest (10.22).
+
+
 ## 12. Risks
 
 | risk | what we do |
