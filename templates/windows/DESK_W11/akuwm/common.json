@@ -5,7 +5,11 @@
     "focus_follows_mouse": true,
     "cursor_jump": "off",
     "show_all_in_taskbar": false,
-    "startup_fold_virtual_desktops": true
+    "startup_fold_virtual_desktops": true,
+    "hotkey_host": {
+      "process": "AutoHotkey64_UIA",
+      "command": "C:\\Users\\diego\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\hyper-desktops.lnk"
+    }
   },
   "gaps": {
     "inner": 8,
@@ -504,6 +508,21 @@
       "enabled": true,
       "notes": "imported from glazewm/config.yaml",
       "updated_at": 1789922518
+    },
+    {
+      "id": "r-dnnfes",
+      "name": "aion2",
+      "match": [
+        {
+          "process": "AION2"
+        }
+      ],
+      "actions": [
+        "anticheat"
+      ],
+      "enabled": true,
+      "notes": "NCGuard/VIOLET: the hotkey process is stopped while the game runs (plan 10.27)",
+      "updated_at": 1790106284
     }
   ],
   "shortcuts": [

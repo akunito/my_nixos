@@ -245,6 +245,20 @@ while (A_TickCount < deadline && !np) {
             np := w
     Sleep 300
 }
+; Windows 11 Notepad brings back every window it had when it was killed:
+; after a taskkill it can come up as four. The case is about ONE window of a
+; tiled app, so the extras go, and the last one standing is the subject.
+extra := 0
+if np
+    for w in GlazeWins()
+        if (StrLower(w["proc"]) = "notepad" && w["hwnd"] != np["hwnd"]) {
+            try WinClose("ahk_id " w["hwnd"])
+            extra++
+        }
+if extra {
+    Sleep 1500
+    Note("8 closed " extra " extra Notepad window(s) the app restored")
+}
 Check("8 setup: notepad tiles", np ? np["state"] : "missing", "tiling")
 if np {
     WalkCursorTo(1200, 900)         ; hover it so it is really focused

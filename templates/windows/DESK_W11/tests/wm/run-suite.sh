@@ -94,7 +94,23 @@ esac
 # windows in among his, so the tiling checks measured a layout shared with
 # Zen and NordVPN and read "they fill the monitor" as false five times
 # (2026-09-21). The function did nothing at all before that, which hid it.
+# AkuWM's own CLI (the pipe), for what the GlazeWM-shaped shim cannot say.
+A=""
+for c in /mnt/c/Users/diego/AppData/Local/Programs/AkuWM/akuwm.exe /mnt/c/Users/diego/AppData/Local/Temp/akuwm-m2/akuwm-cli.exe; do
+  [ -x "$c" ] && { A="$c"; break; }
+done
+
 reset_desk() {
+  # AkuWM remembers how the last window of an application was closed and
+  # opens the next one the same way (plan 10.26). A case that floats fliptest
+  # and closes it would hand the next case a floating fliptest: the memory of
+  # the windows the suite drives is cleared before every case, so each one
+  # meets them as sway would, as strangers.
+  if [ -n "$A" ]; then
+    for app in fliptest notepad charmap calc; do
+      "$A" forget-app "$app" >/dev/null 2>&1
+    done
+  fi
   for ws in 12 22; do
     powershell.exe -NoProfile -Command \
       "\$p = Start-Process '$(printf %s "$G" | sed 's|^/mnt/c|C:|; s|/|\\|g')' \
