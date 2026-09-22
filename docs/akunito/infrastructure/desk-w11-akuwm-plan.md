@@ -1567,6 +1567,40 @@ not see (`2f0f9f5`-era fix, 883 tests):
   asking", the layout-minimum leftover from 10.14.
 
 
+### 10.18 Monitors dragged around in Settings (2026-09-22 16:10)
+
+Diego moved all three monitors, several times, and put them back somewhere
+else. Compared against a snapshot of every window's offset inside its
+monitor's work area (`Temp\akuwm-diag\snap.ps1`): tiles fill their work
+areas wherever the screen went; the two floating terminals on the vertical
+screen kept their offsets to the pixel (25,842 and 11,69); hidden workspaces
+untouched. What the traces showed and Diego did not see, fixed in `14d2e84`,
+888 tests:
+
+- A display change is a BURST: five `WM_SETTINGCHANGE`/`WM_DISPLAYCHANGE`
+  notifications over ~1 s per drag, and the main screen's work area reads
+  0,0 3840x2118 for the first ~600 ms of each while the taskbar re-reserves
+  its strip. Every window on the main screen was placed twice per change
+  (500 ms + 300 ms of SetWindowPos while Windows was busy) and jumped 42 px
+  up and back. Now the model takes every list as it comes, but placements
+  wait until the last change is `ScreenSettleMs` (600) old; the settle
+  timer looks again. Measured after: app bar registered → tiles placed in
+  790 ms, once, instead of 7 ms and twice. 400 would not do: the gap between
+  the first two notifications was 511 ms.
+- Windows moves CLOAKED windows during a display change (the hidden NordVPN
+  went from 2421,913 to 214,382); the floating-window learn treated that as
+  the person's drag. Not while hidden, now.
+- `_screensChangedAt = 0` read as "changed at tick zero" on the fixture's
+  clock; the flag-and-time pair is the same trap MovedAt has, written down
+  in the code.
+
+Seen and left: NordVPN's floating window refuses the rectangle it is given
+and centres itself (the other session's handoff, `docs/handoffs/akunito/
+2026-09-22-akuwm-nordvpn-modal.md`); the two lone tiles on hidden workspaces
+that landed 1 px inside their rectangle (1,43 3838x2116), within the 4 px
+origin rule.
+
+
 ## 12. Risks
 
 | risk | what we do |
