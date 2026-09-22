@@ -18,6 +18,8 @@ in
     ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-qt as a WSLg window via gpgPinentryWslg)
     ../../system/security/ssh-agent-windows.nix # sshAgentWindowsBridge: SSH_AUTH_SOCK -> Windows OpenSSH agent (survives a PC restart)
     ../../system/security/firewall.nix
+    ../../system/app/nix-binary-cache.nix # Local binary cache server (self-gates on nixBinaryCacheServeEnable)
+    ../../system/app/nix-binary-cache-client.nix # Consume a local binary cache (self-gates on nixBinaryCacheSubstituters)
     ../../system/security/nix-access-token.nix # GitHub PAT → per-user nix.conf
     ../../system/security/restic.nix # restic wrapper + home_backup timer (self-gated on homeBackupEnable)
     ../../system/hardware/nfs_client.nix # NAS mounts (nfsMounts/nfsAutoMounts) + stale-mount reaper

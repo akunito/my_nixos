@@ -126,7 +126,14 @@ in
     xboxControllerEnable = false;
     starCitizenModules = false;
     nfsServerEnable = false;
-    nixBinaryCacheServeEnable = false;
+    # Same hardware as DESK, so this is the fleet's second harmonia: the fallback
+    # when DESK is booted into Windows, and the builder of every profile's closure
+    # after a flake.lock update (scripts/build-fleet-closures.sh). WSL runs in NAT
+    # mode: the port is reached through a Windows portproxy on 100.64.0.15:5000
+    # (Windows' own Tailscale node), which arrives on eth0 from the NAT gateway —
+    # there is no tailscale0 inside WSL to open.
+    nixBinaryCacheServeEnable = true;
+    nixBinaryCacheLanInterfaces = [ "eth0" ];
     infraNotifyEnable = false;
     prometheusWorkstationExporterEnable = false;
 
