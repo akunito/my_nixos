@@ -5,9 +5,8 @@
 #
 #   D01  same image
 #   D02  same set of mount destinations
-#   D03  start-override.sh identical          (content of the mounted files)
 #   D04  OIDC adapter identical
-#   D05  Caddyfile identical once plane-dev-minio → plane-minio
+#   D05  Caddyfile identical                    (one file for both stacks now)
 #   D06  served /app/web tree identical        (sha256 over every file, inside each container)
 #   D07  both stacks run the same image tag   (the image IS the customisation now)
 #   D08  container env: same keys, same values — except DEV_ONLY_ENV / PER_STACK_ENV
@@ -37,17 +36,21 @@ same D01-image "$(docker inspect -f '{{.Image}}' "$PROD_AIO")" "$(docker inspect
 
 # D02
 mounts() { docker inspect -f '{{range .Mounts}}{{println .Destination}}{{end}}' "$1" | grep -v '^$' | sort; }
-[ "$(mounts "$PROD_AIO" | grep -c .)" -ge 6 ] || fail "D02-mount-destinations prod has fewer than 6 mounts"
+# Since APLANE-15 only the data and log volumes are mounted — code and config live in the
+# image. Fewer than two means the stack lost a volume, not that a bind mount went missing.
+[ "$(mounts "$PROD_AIO" | grep -c .)" -ge 2 ] || fail "D02-mount-destinations prod has fewer than 2 mounts"
 same D02-mount-destinations "$(mounts "$PROD_AIO")" "$(mounts "$DEV_AIO")" \
   "prod: $(mounts "$PROD_AIO" | tr '\n' ' ') dev: $(mounts "$DEV_AIO" | tr '\n' ' ')"
 
-# D03/D04/D05 — hash what the containers actually see, not what the host dirs contain
+# D04/D05 — hash what the containers actually see, not what the host dirs contain.
+# (D03 hashed start-override.sh, which our image does not have and does not need: nothing is
+# patched at boot any more, and D07 comparing image tags covers the same ground.)
 chash() { docker exec "$1" sh -c "$2" | sha256sum | cut -c1-16; }
-same D03-start-override "$(chash "$PROD_AIO" 'cat /app/start-override.sh')" "$(chash "$DEV_AIO" 'cat /app/start-override.sh')"
 adapter=/app/backend/plane/authentication/provider/oauth/gitea.py
 same D04-oidc-adapter "$(chash "$PROD_AIO" "cat $adapter")" "$(chash "$DEV_AIO" "cat $adapter")"
-same D05-caddyfile "$(chash "$PROD_AIO" 'cat /app/proxy/Caddyfile')" \
-  "$(chash "$DEV_AIO" 'sed s/plane-dev-minio/plane-minio/g /app/proxy/Caddyfile')"
+# No per-stack substitution any more: the MinIO upstream is AWS_S3_ENDPOINT_URL, so both
+# stacks ship the identical file.
+same D05-caddyfile "$(chash "$PROD_AIO" 'cat /app/proxy/Caddyfile')" "$(chash "$DEV_AIO" 'cat /app/proxy/Caddyfile')"
 
 # D06
 webtree='cd /app/web && find . -type f | sort | xargs sha256sum'
