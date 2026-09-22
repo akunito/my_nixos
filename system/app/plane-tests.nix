@@ -2,7 +2,7 @@
 #
 # Installs two commands for the user who owns the Plane stacks:
 #   plane-deploy [--ref REF] [--dev-only] [--config-only] [--rollback prod|dev] [--no-test-check]
-#   plane-tests  refresh|safety|drift|seed|seed-check|api|config|smoke|unit|build|e2e [args]
+#   plane-tests  refresh|safety|drift|seed|seed-check|l2|api|config|smoke|unit|build|e2e [args]
 #
 # `plane-deploy` is the ONLY way Plane changes, the way install.sh is for NixOS: it builds the
 # bundle from the fork, runs the whole suite on dev, deploys to prod, smokes it read-only and
@@ -61,13 +61,14 @@ let
         seed)       script=seed-qa.sh ;;
         seed-check) script=seed_check.sh ;;
         api)        script=l4-api.sh ;;
+        l2)         script=l2_pytest.sh ;;
         config)     script=l3_config.sh ;;
         smoke)      script=l7_smoke.sh ;;
         smoke-user) script=smoke-user.sh ;;
         setup-dev)  script=setup-dev.sh ;;
         unit|build|e2e) set -- "$cmd" "$@"; script=fork-suite.sh ;;
         deploy)     exec ${planeDeploy}/bin/plane-deploy "$@" ;;
-        *) echo "usage: plane-tests refresh|safety|drift|seed|seed-check|api|config prod|dev|smoke prod|dev|unit|build|e2e|deploy" >&2; exit 2 ;;
+        *) echo "usage: plane-tests refresh|safety|drift|seed|seed-check|l2|api|config prod|dev|smoke prod|dev|unit|build|e2e|deploy" >&2; exit 2 ;;
       esac
       exec ${pkgs.bash}/bin/bash "$dir/$script" "$@"
     '';

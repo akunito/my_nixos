@@ -2,7 +2,7 @@
 # L3 config contract (APLANE-11). Read-only. Usage: l3_config.sh prod|dev
 # (L3-00 dev safety and L3-15 drift are separate scripts.)
 #
-#   L3-01  container healthy + every start-override patch applied in this run
+#   L3-01  container healthy + the customisations are in the running code (image or patch)
 #   L3-02  served /api/instances/ flags (prod Pocket-ID-only; dev adds password login)   [A-07/A-08]
 #   L3-03  instance_configurations rows agree with what is served (no stale 2 h cache)
 #   L3-04  api + worker process env: USE_MINIO=1, MINIO_ENDPOINT_SSL=1, WEBHOOK_ALLOWED_HOSTS   [A-02/A-03/A-10]
@@ -41,15 +41,19 @@ running "$aio" || die "$aio is not running"
 echo "# L3 config contract — $target ($aio, $base)"
 
 # L3-01
+# Checks the customisations are IN the running container, not that a patch script said so:
+# our own image (APLANE-15) bakes them in and has no patch step, while the upstream image
+# still gets them from start-override.sh — this passes on both, and fails if either loses them.
 l3_01() {
-  local health since n
+  local health key notif oidc
   health=$(docker inspect -f '{{.State.Health.Status}}' "$aio")
-  since=$(docker inspect -f '{{.State.StartedAt}}' "$aio")
-  n=$(docker logs --since "$since" "$aio" 2>&1 | grep -c 'All patches applied and verified' || true)
-  detail="health=$health patches-line=$n"
-  [ "$health" = healthy ] && [ "$n" -ge 1 ]
+  key=$(docker exec "$aio" grep -c 'APIKeyAuthentication' /app/backend/plane/app/views/base.py || true)
+  notif=$(docker exec "$aio" grep -c 'set(issue_assignees)' /app/backend/plane/bgtasks/notification_task.py || true)
+  oidc=$(docker exec "$aio" grep -c '/api/oidc/' /app/backend/plane/authentication/provider/oauth/gitea.py || true)
+  detail="health=$health api-key-auth=$key assignee-notify=$notif pocket-id=$oidc"
+  [ "$health" = healthy ] && [ "$key" -ge 2 ] && [ "$notif" -ge 1 ] && [ "$oidc" -ge 1 ]
 }
-check L3-01-healthy-patched l3_01
+check L3-01-customisations-live l3_01
 
 # L3-02 / L3-03
 instances=$(curl -fsS "$base/api/instances/")

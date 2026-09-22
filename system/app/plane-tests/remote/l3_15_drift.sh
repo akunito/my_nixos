@@ -9,7 +9,7 @@
 #   D04  OIDC adapter identical
 #   D05  Caddyfile identical once plane-dev-minio → plane-minio
 #   D06  served /app/web tree identical        (sha256 over every file, inside each container)
-#   D07  patches applied since the last start  (start-override log line)
+#   D07  both stacks run the same image tag   (the image IS the customisation now)
 #   D08  container env: same keys, same values — except DEV_ONLY_ENV / PER_STACK_ENV
 #   D09  instance_configurations (non-encrypted) identical — except DEV_ONLY_CONFIG
 #   D10  same latest applied migration
@@ -58,14 +58,12 @@ else
   same D06-web-bundle "$(chash "$PROD_AIO" "$webtree")" "$(chash "$DEV_AIO" "$webtree")"
 fi
 
-# D07 — the log of the current container run only
-patched() {
-  local since
-  since=$(docker inspect -f '{{.State.StartedAt}}' "$1")
-  docker logs --since "$since" "$1" 2>&1 | grep -c 'All patches applied and verified' || true
-}
-p=$(patched "$PROD_AIO"); d=$(patched "$DEV_AIO")
-if [ "$p" -ge 1 ] && [ "$d" -ge 1 ]; then pass D07-patches-applied; else fail "D07-patches-applied prod=$p dev=$d"; fi
+# D07 — both stacks run the same image. Since APLANE-15 that is the whole customisation
+# story: the image carries the code, so a tag difference IS the drift (it replaces counting
+# start-override's "All patches applied" line, which our image never prints).
+image_of() { docker inspect -f '{{.Config.Image}}' "$1"; }
+p=$(image_of "$PROD_AIO"); d=$(image_of "$DEV_AIO")
+if [ "$p" = "$d" ]; then pass "D07-same-image $p"; else fail "D07-same-image prod=$p dev=$d"; fi
 
 # D08 — env of the running containers (values never printed)
 envdump() { docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$1" | grep -v '^$' | sort; }
