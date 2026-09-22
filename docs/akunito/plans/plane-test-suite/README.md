@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P6 done 2026-09-17. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P7 (`plane-deploy`). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P7 done (P7 2026-09-22). **`plane-deploy` on the VPS is now the only way Plane changes**, and prod runs the fork's `798bc5cf3` deployed through it. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P8 (own images from the fork). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -118,7 +118,7 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 | **P4** (APLANE-11) ✅ | L3 + L7 (API half) against the current system; `qa-smoke` Guest + empty QA Smoke project on prod. Nix packaging moves to P7, where `plane-deploy` consumes it | Green on dev + prod |
 | **P5** (APLANE-12) ✅ | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
 | **P6** (APLANE-13) ✅ | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
-| **P7** (APLANE-14) | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
+| **P7** (APLANE-14) ✅ | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
 | **P8** (APLANE-15) | Own images from the fork: port Fix 1/2/2b/3/4, Caddyfile, OIDC adapter, session env into code; L2 pytest | Same suite green on the new images, dev then prod |
 | **P9** (APLANE-16) | Replace `/plane-upgrade` with a security-review procedure; update `plane-customizations.md` (A-11, F7, F8, decisions) | Docs + skill merged |
 
@@ -167,6 +167,7 @@ error boundary / console error.
 | P7-3 | `run.sh` passed arguments to the VPS as one unquoted string, so `-g "QA Locked"` arrived as two words and Playwright found no tests | each argument is `printf '%q'`-quoted now |
 | P7-4 | A locked global view rendered nothing once in ~600 test runs and turned a deploy red; it passed 3/3 immediately after | Playwright retries once, and the deploy prints + reports anything that only passed on the retry |
 | P7-5 | `infra-notify` needs a root-only secret, but the infra-bot's relay accepts `POST /deploy` from any tailnet peer — including the VPS itself | that is the transport; no token on this path |
+| P7-7 | The E2E step checks the tree out again too, so it deleted the built bundle *after* dev went green: the first prod attempt died with "is not a built bundle" on the way to prod (prod untouched — `deploy_bundle` refuses before copying) | the bundle is staged in `~/.cache/plane-tests/bundle` right after the build |
 | P7-6 | Running `install.sh` on the VPS re-locked `flake.lock` in its working tree, so nixpkgs jumped to Playwright 1.63 (browsers 1243) under a suite pinned to 1.61.1 (1228). The first prod deploy died 5 min in with "Executable doesn't exist" — a message that says nothing about the cause | the runner now builds the browsers from the dotfiles flake at its **committed** revision, and asserts `@playwright/test` == `playwright-driver.version` in seconds before starting |
 
 ## 8b. P6 findings (2026-09-17)
