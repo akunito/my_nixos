@@ -121,12 +121,18 @@ PYEOF
     fi
 fi
 
-# Warm DESK's harmonia path before nix opens its first connection. This is the
-# path that produced the 2026-08-22 compile storm: a cold Tailscale relay lost
-# the 5s connect-timeout race, nix wrote the cache off for the whole run, and
-# all 664 paths came from cache.nixos.org. See scripts/warm-binary-caches.sh.
-# Unquoted on purpose: the output is either empty or three plain words.
-NIX_CACHE_OPTS=$(sh "$SCRIPT_DIR/scripts/warm-binary-caches.sh")
+# Probe DESK's harmonia cache before nix opens its first connection. This is
+# the path that produced the 2026-08-22 compile storm: a cold Tailscale relay
+# lost the 5s connect-timeout race, nix wrote the cache off for the whole run,
+# and all 664 paths came from cache.nixos.org. A cache that is down is dropped
+# from `substituters` for the run instead (~20s of retries per nix invocation
+# otherwise). nix.conf lines, exported: this runs as root, every nix process
+# below inherits them. See scripts/warm-binary-caches.sh.
+NIX_CONFIG_PREFLIGHT=$(sh "$SCRIPT_DIR/scripts/warm-binary-caches.sh")
+if [ -n "$NIX_CONFIG_PREFLIGHT" ]; then
+    export NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG
+}$NIX_CONFIG_PREFLIGHT"
+fi
 
 # --- Infra Alerts deploy announcement (AINF-368): same hook as install.sh ---
 current_generation() { ls /nix/var/nix/profiles/system-*-link 2>/dev/null | sort -V | tail -1 | grep -oP 'system-\K\d+' || echo ""; }
@@ -144,7 +150,7 @@ notify_deploy() {
 }
 
 echo -e "Rebuilding system"
-if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure $NIX_CACHE_OPTS; then
+if nixos-rebuild switch --flake $SCRIPT_DIR#$ACTIVE_PROFILE --show-trace --impure; then
     echo -e "Rebuild successful"
 
     # Restart docker containers if requested (non-interactive)
