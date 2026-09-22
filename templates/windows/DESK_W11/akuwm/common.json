@@ -684,6 +684,28 @@
       "enabled": true,
       "notes": "ShareX workflow of the same name (Documents\\\\ShareX\\\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
       "updated_at": 1790082834
+    },
+    {
+      "id": "k-wm-lower",
+      "keys": "Hyper+WheelDown",
+      "kind": "wm",
+      "command": "lower",
+      "category": "Windows",
+      "name": "Send the focused floating window behind the tiles",
+      "enabled": true,
+      "notes": "bound in hyper-desktops.ahk until M3",
+      "updated_at": 1790089522
+    },
+    {
+      "id": "k-wm-raise",
+      "keys": "Hyper+WheelUp",
+      "kind": "wm",
+      "command": "raise",
+      "category": "Windows",
+      "name": "Bring the focused floating window back over the tiles",
+      "enabled": true,
+      "notes": "bound in hyper-desktops.ahk until M3",
+      "updated_at": 1790089522
     }
   ],
   "startup": [

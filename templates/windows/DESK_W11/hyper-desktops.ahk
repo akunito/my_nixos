@@ -361,6 +361,10 @@ WinSwitcher() {
     r := WmPipeAsk("compat command fetch-windows")
     TrayTip(InStr(r, '"fetched":true') ? "Windows fetched here" : "Windows sent back", "Hyper+Shift+F5 again to undo")
 }
+; Floating windows stay over the tiles; the wheel sends the focused one behind
+; them (down) and brings it back (up). Focusing it brings it back too.
+^!#WheelDown:: Glaze("lower")
+^!#WheelUp:: Glaze("raise")
 ^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
 ^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
 ^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
