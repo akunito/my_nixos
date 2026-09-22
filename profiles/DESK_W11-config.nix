@@ -134,6 +134,11 @@ in
     # there is no tailscale0 inside WSL to open.
     nixBinaryCacheServeEnable = true;
     nixBinaryCacheLanInterfaces = [ "eth0" ];
+    # IPv4 wildcard on purpose: WSL's localhost relay (the portproxy's
+    # 127.0.0.1 hop) only tracks IPv4 listeners — measured 2026-09-22 with two
+    # python http.servers: 0.0.0.0:5001 answered from Windows, [::]:5002 did not.
+    # The module default "[::]" left every peer at HTTP 000.
+    nixBinaryCacheBindAddress = "0.0.0.0";
     infraNotifyEnable = false;
     prometheusWorkstationExporterEnable = false;
 
