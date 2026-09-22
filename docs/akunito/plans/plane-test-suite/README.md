@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P8 done (P7–P8 2026-09-22). **`plane-deploy` on the VPS is now the only way Plane changes**, and since P8 **prod runs our own image built from the fork** (`plane-aku/aio-community:6547899b9`) — nothing is patched at container start and no code is bind-mounted. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, **L2 352 backend tests**, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P9 (docs + the security-review procedure that replaces `/plane-upgrade`). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P9 done (P7–P9 2026-09-22). **`plane-deploy` on the VPS is now the only way Plane changes**, and since P8 **prod runs our own image built from the fork** (`plane-aku/aio-community:6547899b9`) — nothing is patched at container start and no code is bind-mounted. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, **L2 352 backend tests**, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). All nine phases done; the suite is now the standing safety net and `/plane-security-review` the standing upstream duty. Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -120,7 +120,7 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 | **P6** (APLANE-13) ✅ | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
 | **P7** (APLANE-14) ✅ | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
 | **P8** (APLANE-15) ✅ | Own images from the fork: port Fix 1/2/2b/3/4, Caddyfile, OIDC adapter into code; L2 pytest | Same suite green on the new images, dev then prod |
-| **P9** (APLANE-16) | Replace `/plane-upgrade` with a security-review procedure; update `plane-customizations.md` (A-11, F7, F8, decisions) | Docs + skill merged |
+| **P9** (APLANE-16) ✅ | `/plane-security-review` replaces `/plane-upgrade`; register updated (A-11, F7, F8); first review ported three upstream security fixes | Docs + procedure merged |
 
 P4–P5 come **before** P8 on purpose: the suite is the safety net for the image migration, the
 riskiest change in this plan.
@@ -157,6 +157,31 @@ error boundary / console error.
 | APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
 | APLANE-23 | L3-15 **D06 compares dev's web bundle against prod's** | Since P6, dev runs a fork build prod does not have, so D06 is red by design while a change is in flight. `plane-deploy` (P7) should compare each side against the bundle built from the ref it deployed, not against the other side |
+
+## 8-00. P9: watching upstream instead of upgrading (2026-09-22)
+
+`/plane-upgrade` is retired (the file is a tombstone pointing here) and `/plane-security-review`
+replaces it: read upstream, judge each change against **our** deployment, prove it applies by
+running upstream's own test against our unpatched code, then cherry-pick it with that test and
+ship through `plane-deploy`. Monthly-ish, plus whenever a Plane CVE appears.
+
+**The first run was not a formality.** Upstream's `preview` was 64 commits past `v1.4.2`, six of
+them security-relevant. Three had contract tests, and all three **failed against our code**:
+
+| Upstream | What it fixes | Our exposure |
+|---|---|---|
+| #9382 | webhook HMAC `secret_key` returned on list/retrieve/patch | we run webhooks for the Telegram bot and n8n; any member who could read them saw the signing secret |
+| #9387 | page list `order_by` taken raw from the query string | ordering by arbitrary fields, `password` among them |
+| #9466 | `SubIssuesEndpoint` not scoped to the URL project | sub-issues readable and re-parentable across projects — and we have Guests |
+
+All three cherry-picked cleanly, carry upstream's tests, and went out through `plane-deploy`.
+Still open: the dependabot/Trivy sweeps (#9839, #9806) and the `sanitize-html` bump (#9736),
+which need our lockfile checked rather than a cherry-pick.
+
+Two gaps this exposed in our own machinery: `plane-deploy`'s rule check only looked at
+`apps/web` and `packages/`, so a backend change could have reached prod untested (apps/api is
+ours since P8); and L2 defaulted to `plane/tests/unit`, which would have skipped exactly the
+contract tests these fixes ship with.
 
 ## 8-0. P8: what our image is (2026-09-22)
 

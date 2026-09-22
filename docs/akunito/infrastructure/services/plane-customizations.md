@@ -28,51 +28,62 @@ Companion skill: `/plane-upgrade` (`.claude/commands/plane-upgrade.md`).
 
 ## How the customisations are layered
 
-Plane ships as a sealed all-in-one image. Nothing is forked at the image level; everything is
-either a **bind-mount** over a path inside the container or a **`sed` patch** applied at start.
+Since **APLANE-15 (2026-09-22) we build our own image from the fork.** There is no patching at
+container start and no code or config is bind-mounted: what runs is exactly what the commit
+builds. `plane-deploy` builds the six service images from `akunito/plane-up`, assembles the
+all-in-one on top and swaps the tag in the stack's compose file.
 
 ```
 docker-compose.yml
-  entrypoint: ["/app/start-override.sh"]     ← runs our patches, then execs /app/start.sh
+  image: plane-aku/aio-community:<fork sha>   ← built by plane-deploy from the fork
   volumes:
-    ./Caddyfile          -> /app/proxy/Caddyfile                                  :ro
-    ./start-override.sh  -> /app/start-override.sh                                :ro
-    (since APLANE-15 nothing is bind-mounted but /app/data and /app/logs — the frontend,
-     the Pocket ID adapter, the Caddyfile and the two API patches are all in our image)
-    ./gitea-pocketid.py  -> .../authentication/provider/oauth/gitea.py            :ro
+    plane_data -> /app/data       ← uploads/instance state, the only persistent data
+    plane_logs -> /app/logs
 ```
 
-**Consequence:** the backend patches survive image upgrades as long as their `sed` anchors still
-match. The frontend does **not** — it is a compiled bundle and must be rebuilt from the fork.
+**Consequence:** an image is a commit. To change anything — backend, frontend, proxy config,
+the OIDC adapter — you change the fork and run `plane-deploy`; there is no other path, and the
+rule that a fork change ships with its tests in the same commit is enforced by the deploy itself.
+
+The table below keeps the historic A-/B- ids because the tests, the plan and the tickets all
+reference them; the "Where" column now points at the **source in the fork**.
 
 ---
 
-## A. Backend & infra (bind-mounts + `sed`) — survive image upgrades
+## A. Backend & infra — source in the fork, baked into our image
 
 | ID | What | Where | How to verify |
 |---|---|---|---|
-| A-01 | **Pocket ID SSO** via the repurposed Gitea OAuth slot | `gitea-pocketid.py` | Log in with Pocket ID |
-| A-02 | `USE_MINIO=1` — presigned URLs use the public host, not `plane-minio:9000` | `start-override.sh` Fix 1 | Upload an attachment, check the URL host |
-| A-03 | `MINIO_ENDPOINT_SSL=1` — presigned URLs are `https://` | Fix 2 | Attachment URL scheme |
-| A-04 | API-key auth on the **internal** `/api/` (enables Pages API etc.) | Fix 3 | `curl -H "x-api-key: …" …/api/workspaces/<slug>/members/` → JSON |
+| A-01 | **Pocket ID SSO** via the repurposed Gitea OAuth slot (the slot name is load-bearing: routes, instance config rows and every user's `provider_id` key off `gitea`) | `apps/api/plane/authentication/provider/oauth/gitea.py` + L2 `test_pocketid_provider.py` | Log in with Pocket ID |
+| A-02 | `USE_MINIO=1` — presigned URLs use the public host, not `plane-minio:9000` | compose env; honoured by `deployments/aio/community/start.sh` | Upload an attachment, check the URL host |
+| A-03 | `MINIO_ENDPOINT_SSL=1` — presigned URLs are `https://` | compose env; same `start.sh` | Attachment URL scheme |
+| A-04 | API-key auth on the **internal** `/api/` (enables Pages API etc.) | `apps/api/plane/app/views/base.py` + L2 `test_internal_api_key_auth.py` | `curl -H "x-api-key: …" …/api/workspaces/<slug>/members/` → JSON |
 | A-05 | ~~Sidebar pin scoping~~ | *removed 2026-08-13* | Upstream adopted it in v1.4.0 |
-| A-06 | Custom `Caddyfile` — MinIO `/uploads`, `/god-mode`, SPA fallback | `Caddyfile` | god-mode + attachments load |
+| A-06 | Custom Caddyfile — MinIO under `{$BUCKET_NAME}` (upstream `{$AWS_S3_ENDPOINT_URL}`, **never a container name**: prod is `plane-minio`, dev `plane-dev-minio`), `/god-mode`, SPA fallback | `apps/proxy/Caddyfile.aio.ce` | god-mode + attachments load |
 | A-07 | **Pocket-ID-only login** (`ENABLE_EMAIL_PASSWORD=0`) | DB `instance_configurations` | Login page shows **no** password form |
 | A-08 | `ENABLE_MAGIC_LINK_LOGIN=0`, `ENABLE_SIGNUP=0`, `IS_INTERCOM_ENABLED=0` | DB | `/api/instances/` reports all false |
-| A-10 | **Bot webhook target allowed** — `WEBHOOK_ALLOWED_HOSTS=host.docker.internal` in `/app/plane.env`. The image ships it empty and loads services from that file, so the compose `environment:` value is overridden and the SSRF guard rejects the Telegram bot's `http://host.docker.internal:8766/plane` (AINF-380) | `start-override.sh` Fix 2b (+ the same key in `docker-compose.yml` for intent) | `docker exec plane-aio sh -c 'tr "\0" "\n" < /proc/$(pgrep -f celery \| head -1)/environ \| grep WEBHOOK_ALLOWED_HOSTS'` → `host.docker.internal`; a Plane edit shows `webhook issue:` in `journalctl -u plane-bot` within a second |
-| A-09 | **Notify assignees, not just subscribers** — `notification_task` builds recipients purely from `IssueSubscriber`; `issue_assignees` was computed but only used to pick the wording. Fix 4 unions assignees in | `start-override.sh` Fix 4 | Change a field on an item assigned to someone who is *not* subscribed → they get an in-app notification |
+| A-10 | **Bot webhook target allowed** — `WEBHOOK_ALLOWED_HOSTS=host.docker.internal`. `plane.env` wins over the container environment (start.sh exports it last), which is why the compose value alone was not enough and the SSRF guard rejected the Telegram bot's `http://host.docker.internal:8766/plane` (AINF-380) | compose env; written into `plane.env` by `deployments/aio/community/start.sh` | `docker exec plane-aio sh -c 'tr "\0" "\n" < /proc/$(pgrep -f celery \| head -1)/environ \| grep WEBHOOK_ALLOWED_HOSTS'` → `host.docker.internal`; a Plane edit shows `webhook issue:` in `journalctl -u plane-bot` within a second |
+| A-09 | **Notify assignees, not just subscribers** — `notification_task` builds recipients purely from `IssueSubscriber`; `issue_assignees` was computed but only used to pick the wording. We union assignees in. v1.4.1 auto-subscribes on assignment, so this only shows for an assignee who unsubscribed | `apps/api/plane/bgtasks/notification_task.py` + L2 `test_notification_assignees.py` | Change a field on an item assigned to someone who is *not* subscribed → they get an in-app notification |
+
+| A-11 | **90-day rolling session** — `SESSION_COOKIE_AGE=7776000` + `SESSION_SAVE_EVERY_REQUEST=1`, so the cookie expiry moves forward on every request instead of forcing a re-login every two weeks | compose env, both stacks | L3-05 / L4-12: the `Set-Cookie` expiry moves between two requests and sits ~90 days out |
 
 > **A-07/A-08 live in the database, not env or the image.** `SKIP_ENV_VAR=1` means
 > `instance_configurations` wins and silently overrides env. They survive upgrades — but
 > **re-verify after every cutover**, and bust the Redis cache after changing them:
 > `cache.delete_pattern("*instances*")`.
 
-`start-override.sh` **asserts** every patch since 2026-08-13 and exits non-zero if an anchor
-breaks, so a failed patch stops the container instead of silently degrading.
+Nothing is patched at boot any more (APLANE-15). What used to be a `sed` anchor assertion is
+now a test: L2 covers A-01/A-04/A-09, L3-01 checks the three are present in the **running**
+container, and L3-04/L3-05 check A-02/A-03/A-10/A-11 in the live process environment.
 
-## B. Frontend fork — lost on every image upgrade, must be rebuilt
+## B. Frontend fork — baked into our image by `apps/web/Dockerfile.web`
 
-28 commits on top of upstream. Grouped by feature with a concrete test.
+Grouped by feature with a concrete test. Until APLANE-15 this was a bundle bind-mounted over
+`/app/web` (prod mounted `web-override-v141`, dev `web-override-fork` — those directories are
+still on the VPS, unused, as the pre-image rollback path).
+
+**Not in the list below but ours (F8):** the fork removed the sidebar's "More" buttons, so
+projects past the visible limit are reachable only through the pin dialog. Covered by L5-15.
 
 ### B.1 Sidebar & navigation
 | ID | Feature | Test |

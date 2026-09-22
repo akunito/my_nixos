@@ -16,6 +16,9 @@ prefix=plane-aku/plane
 aio_image=plane-aku/aio-community
 
 mkdir -p "$(dirname "$repo")"
+# shared with l2_pytest.sh: both check this tree out, so they must not overlap
+exec 9>"$HOME/.cache/plane-build/.checkout.lock"
+flock 9 || die "another build or L2 run holds the checkout"
 [ -d "$repo/.git" ] || git clone -q https://github.com/akunito/plane-up.git "$repo"
 git -C "$repo" fetch -q origin "+refs/heads/*:refs/remotes/origin/*"
 git -C "$repo" checkout -q --force "$(git -C "$repo" rev-parse --verify -q "origin/$ref^{commit}" \
