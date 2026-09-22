@@ -1414,6 +1414,51 @@ replacing the input layer is gone; what remains of M3 is the drag plumbing
 and the chords as configuration, which are worth doing only for the GUI's
 sake, not for speed.
 
+### 10.15 The afternoon of 2026-09-22: a desk driven from WSL, and monitors that sleep
+
+Everything below was verified on the live desk, not only in tests: the daemon
+is stopped by `akuwm exit`, replaced by `akuwm-autostart.ps1`, started through
+`explorer.exe <Startup\AkuWM.lnk>` (a process explorer spawns, so none of the
+WSL-interop traps), and driven through the pipe with `compat command ...`,
+reading `query windows` after each step. Container ids change per run.
+Commits `838c005..f889207`, 858 tests.
+
+- **Notepad++ beside Brave.** Four faults, all in the trace: a maximised
+  window ignores a move (un-maximised before any placement now,
+  `Redraw.Unmaximize`); a maximised application alone on a workspace covered
+  the newcomer (it makes room, `layout.unmaximize_to_share`); the pulled-in
+  placement of a system-DPI window was compared against the wanted rectangle
+  and re-sent every pass; `set-tiling` on a fullscreen window answered "nothing
+  changed". The applier logs every placement and band change at DBG, and every
+  change of a managed window's rectangle with whether AkuWM put it there.
+- **The Zen window with 178 tabs** was closed by Hyper+Escape at 11:47:37
+  because AkuWM had handed it the focus while hidden on workspace 12 --
+  `SetForegroundWindow` takes a cloaked window. The focus a redraw asks for is
+  checked against what will be on screen after it. Zen's session store keeps
+  closed windows (Ctrl+Shift+N).
+- **A drag across the seam.** Windows blows a system-DPI window up the moment
+  its border touches a screen of another scale, and AkuWM trimmed it mid-drag,
+  five rounds in 120 ms. A floating window still moving is left alone until it
+  has rested for `SettleMs` (a timer asks for the next look, armed even when
+  the deferred placement was the only thing to do); the size before the
+  blow-up is kept (a jump of more than 200 px in ONE observation, growing,
+  across two screens); a window against the top edge is moved inside before
+  it is shrunk; only the arrival at a placement is AkuWM's, and after it a
+  size-only shift within the slack is an application rounding itself.
+- **Monitors that sleep** (`Desk.Loans.cs`). Switching the vertical monitor
+  off does not take it away: Windows dropped it for two seconds and listed it
+  again, dark. So `layout.when_monitor_leaves` defaults to `leave` (nothing
+  changes place by itself, Diego's choice) with `move_windows` and
+  `move_workspaces` as the GUI's other options, `layout.when_monitor_returns`
+  is `restore` (the copy of every workspace's tree, floating rectangles,
+  layers, displayed flag and the sticky set taken at the moment of loss is
+  put back; a window moved on purpose or closed meanwhile is left alone) or
+  `keep`, and **Hyper+Shift+F5** (`fetch-windows`) borrows every other
+  screen's windows onto the workspace on screen and, pressed again or when a
+  screen is replugged, sends them back exactly. Every window a loan moves
+  across screens is stamped as having crossed, so the DPI rescale that
+  follows is undone: the terminals came back 645x481, not 581x400.
+
 ## 12. Risks
 
 | risk | what we do |
