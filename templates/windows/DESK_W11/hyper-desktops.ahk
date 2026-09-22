@@ -19,6 +19,7 @@
 ;   Hyper+Shift+S       sticky toggle (all workspaces)        = sticky toggle
 ;   Hyper+Shift+- / -   hide the window / bring the last one back = scratchpad
 ;   Hyper+F5            put the layout back together (after a monitor nap)
+;   Hyper+Shift+F5      fetch every other screen's windows here / send them back
 ;   Alt+LeftDrag        move window                            = floating_modifier Mod1
 ;   Alt+RightDrag       resize window (nearest corner)
 ;   Hyper+Shift+Escape  suspend/resume all hotkeys (games)
@@ -345,6 +346,14 @@ WinSwitcher() {
 ^!#F5:: {
     r := RepairLayout(true)
     TrayTip("Layout repaired", r["workspaces"] " workspace(s), " r["windows"] " window(s)")
+}
+; Something is on a screen that is dark: borrow every other monitor's windows
+; onto this one, and press again to send them back where they were. A switched
+; off monitor is not gone to Windows (it drops out for two seconds and is
+; listed again, dark), so nothing automatic can know -- the person does.
+^!#+F5:: {
+    r := WmPipeAsk("compat command fetch-windows")
+    TrayTip(InStr(r, '"fetched":true') ? "Windows fetched here" : "Windows sent back", "Hyper+Shift+F5 again to undo")
 }
 ^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
 ^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
