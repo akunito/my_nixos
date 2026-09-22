@@ -20,6 +20,7 @@
 ;   Hyper+Shift+- / -   hide the window / bring the last one back = scratchpad
 ;   Hyper+F5            put the layout back together (after a monitor nap)
 ;   Hyper+Shift+F5      fetch every other screen's windows here / send them back
+;   Hyper+Shift+X / Z   screenshot of the monitor under the pointer: editor / file (ShareX)
 ;   Alt+LeftDrag        move window                            = floating_modifier Mod1
 ;   Alt+RightDrag       resize window (nearest corner)
 ;   Hyper+Shift+Escape  suspend/resume all hotkeys (games)
@@ -419,6 +420,11 @@ WinSwitcher() {
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
 ^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
+; The monitor under the pointer, whole: to the clipboard and the editor (X),
+; or to the clipboard and a file (Z). ShareX's ActiveMonitor job is the
+; monitor with the cursor. Also listed in akuwm/common.json for the GUI.
+^!#+x:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+X"'
+^!#+z:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+Z"'
 ; ---- Ctrl+Alt+C in Windows Terminal: last Claude Code answer -> Notepad++ ----
 ; Claude Code has no keybinding action for /copy, so this types the slash command,
 ; waits for the clipboard to change (the fullscreen picker may ask which block:

@@ -19,7 +19,8 @@
   },
   "effects": {
     "focused_border": "#c4a7e7",
-    "corners": "round"
+    "corners": "round",
+    "title_bar": "hide"
   },
   "layout": {
     "default_direction": "auto",
@@ -661,6 +662,28 @@
       "enabled": true,
       "notes": "imported from hyper-desktops.ahk",
       "updated_at": 1789922518
+    },
+    {
+      "id": "k-sx-mon-edit",
+      "keys": "Hyper+Shift+X",
+      "kind": "exec",
+      "command": "\"%ProgramFiles%\\\\ShareX\\\\ShareX.exe\" -workflow \"Hyper+Shift+X\"",
+      "category": "Screenshots",
+      "name": "Screenshot of the monitor under the pointer, to the clipboard and the editor",
+      "enabled": true,
+      "notes": "ShareX workflow of the same name (Documents\\\\ShareX\\\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
+      "updated_at": 1790082834
+    },
+    {
+      "id": "k-sx-mon-save",
+      "keys": "Hyper+Shift+Z",
+      "kind": "exec",
+      "command": "\"%ProgramFiles%\\\\ShareX\\\\ShareX.exe\" -workflow \"Hyper+Shift+Z\"",
+      "category": "Screenshots",
+      "name": "Screenshot of the monitor under the pointer, to the clipboard and a file",
+      "enabled": true,
+      "notes": "ShareX workflow of the same name (Documents\\\\ShareX\\\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
+      "updated_at": 1790082834
     }
   ],
   "startup": [
