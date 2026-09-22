@@ -1624,6 +1624,42 @@ itself (tray) is left alone; App and Shell cloaks together wait for both.
 enumeration listed the window as manageable while the daemon's did not.
 
 
+### 10.20 NordVPN's "Add apps" dialog, frozen on "Loading..." (2026-09-22 16:27)
+
+Diego reopened NordVPN, went to Settings > Split tunneling > Add apps, and
+the dialog sat on "Loading..." for ever, unusable. The other session's
+handoff had blamed the one-way cloak and NordVPN's own list race; both were
+real once, neither was this. Isolated on the desk, mouse and keyboard left
+alone, with clicks from PowerShell and screenshots:
+
+| run | AkuWM | result |
+|---|---|---|
+| reopen | running | Loading... for ever |
+| reopen | paused (`wm-toggle-pause`) | list in < 9 s, repaints |
+| reopen, paused, TOPMOST band applied from PowerShell at +62 ms | paused | loads |
+| reopen, paused, DWM border + corner applied at +47 ms | paused | loads |
+| resume over the loaded dialog | running | `GetLayeredWindowAttributes` goes from absent to alpha 255 / LWA_ALPHA; a checkbox click draws nothing |
+
+The dialog is a WPF window with AllowsTransparency: WS_EX_LAYERED by its own
+doing, painted with UpdateLayeredWindow. `Win32Decorations.Opacity` called
+`SetLayeredWindowAttributes(alpha 255)` on every window that already had the
+layered bit, to say "solid" -- and that switches such a window to the other
+layered mode: its own painting fails from then on, the last frame stays on
+screen, hit-testing still works. The same mechanism explains the handoff's
+"translucent / invisible but hit-testable" runs, and probably Age of
+Empires II's freeze. Fixed in `38c1d69`: `Layering.ShouldSetAlpha` (Core, tested)
+allows the alpha only on a window AkuWM itself made layered; the platform
+keeps that set. Verified: the dialog loads and repaints under the running
+daemon, no LWA on it. 897 tests.
+
+Also seen: the shell taskbar's own Settings app (`SystemSettings`,
+`CloakedElsewhere`, every thread suspended) is Windows' UWP lifecycle after
+the app is closed, not AkuWM. The dialog has an owner but no WS_POPUP, so
+GA_ROOTOWNER returns itself and it is a candidate of its own; it floats,
+which is right. Diego's "main window jumped to the vertical screen" is not in
+the traces of 16:00-16:26; to be reproduced with a time.
+
+
 ## 12. Risks
 
 | risk | what we do |
