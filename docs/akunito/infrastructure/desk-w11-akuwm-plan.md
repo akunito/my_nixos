@@ -1808,6 +1808,31 @@ tile, move and take the DWM border like any other; the outline stays for
 windows nobody should touch. The monitor-sleep retest (10.22).
 
 
+### 10.25 The sleep, reproduced and fixed (2026-09-22 19:10)
+
+Reproducing it: a suspend does not (Diego tried); `SC_MONITORPOWER` by
+broadcast did once and not again; `powercfg /change monitor-timeout-ac 1`,
+78 s without input, a mouse jiggle, and the timeout back to 25 does, every
+time -- the DP monitors drop off the bus when they sleep and come back in the
+same three-step burst as 18:06 (vertical landscape and primary, then the
+main screen without its EDID, then the real list).
+
+The first reproduction (19:02) showed what 10.22 had missed: Windows keeps
+moving windows for seconds after the change -- NordVPN dropped onto the
+vertical screen, a terminal onto the main one, another clamped to the
+landscape height -- and the floating-window learn took every one of those as
+the person's drag and rehomed the window. The elevated console stayed parked
+because nothing brought the desk back once the burst was over.
+
+`7b75807`, 939 tests: for `ParkWindowMs` (5 s) after a screen change no
+floating move is learned and a placement Windows undid is asked afresh once
+the screens settle; parked windows set `Unsettled` during the burst so the
+settle timer returns to restore them. Second reproduction (19:10, real idle
+sleep): every window in its workspace and rectangle, within 2 px. The
+elevated console stays parked -- UIPI refuses the restore, the uiAccess item
+again -- and comes back with a taskbar click.
+
+
 ## 12. Risks
 
 | risk | what we do |
