@@ -680,7 +680,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 | **M0** ✅ 2026-09-20 | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | **met**: 102 unit tests green on Linux; the import reproduces 21 rules, 20 workspaces, 13 apps (and 4 Startup entries the Python prototype could not find); `akuwm doctor` runs on the desk and sees the live stack | -- | M |
 | **M1** ✅ 2026-09-20 | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | **met**: 270 samples over 45 minutes of real use, all 270 in agreement, nothing found; the bench reports a 0.19 ms hot path against a 5 ms budget. Workspace *names* were not compared and could not be — see 10.2 | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
 | **M2** ⬛ 2026-09-21, one check short | the safety net first (11.1, landed), then it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | **it has the desk since 2026-09-21** and GlazeWM is out of Startup. `tests/fullscreen` **47/48** (the last is flaky). `tests/wm` **144/156** -- the twelve are 10.13, and only the four z-order-around-a-game ones are a fault. Zebar pills work; the bar cannot connect only because a dead GlazeWM's watcher still holds 6123 (10.8), which a reboot frees. **S7 mixed-DPI rects turned out to be the largest thing in the milestone** -- see 10.9 | S6 done · **S7 done, and it was not small** | XL |
-| **M3** (partly landed early) | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off. **Alt+drag's POLICY already moved into AkuWM ahead of this** (10.11, 10.12): the script reports a point or a gesture and the layout decides, so `drag-tile`, `drop-target`, `drag-to-top` and `across_monitors` are AkuWM's already and only the input plumbing is left | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
+| **M3** (partly landed early; **reduced 2026-09-22, see 10.27: the AutoHotkey stays**) | bindings as data pushed live into the AHK, game mode (the AHK killed around a game with an anti-cheat), the drag plumbing. ~~input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off.~~ **Alt+drag's POLICY already moved into AkuWM ahead of this** (10.11, 10.12): the script reports a point or a gesture and the layout decides, so `drag-tile`, `drop-target`, `drag-to-top` and `across_monitors` are AkuWM's already and only the input plumbing is left | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** (partly landed early) | journal, repair, display changes, suspend/resume. **Display changes and Startup landed in M2**: they had to, because the listener never worked (10.10) and because a desk with no GlazeWM to fall back on needs `akuwm-boot.ps1` (10.8). Windows following a screen that moves landed with them (10.11) | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S` | headless tests green; the driven smoke opens every section; a rule edited in the GUI is live after Apply | -- | L |
 | **M6** | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported | -- | M |
@@ -1868,6 +1868,75 @@ every window in its workspace and rectangle, the Zen tiles in their order;
 the one difference a hidden tile 1 px inside its rectangle. Two of five
 idle runs produced no burst at all (the displays slept without dropping off
 the bus); a run with zero "screens changed" lines proves nothing.
+
+### 10.27 AutoHotkey stays, and the signed install (2026-09-22 20:30)
+
+Diego asked what M3's rewrite of the AutoHotkey is worth now that the
+latency reason is gone (10.14), and which of the two is safer against a
+ban. Two research agents, one on anti-cheat, one on how an AHK takes its
+bindings from data; the findings that decided it:
+
+- **Bans follow behaviour, not presence.** Riot and BattlEye say so in
+  writing (no ban for AutoHotkey unless it drives the game; "no one is
+  banned for passive non-cheating activity"). `LLMHF_INJECTED`, the flag
+  that breaks Sunshine on Aion 2, is set per injected event, never because
+  a hook exists. No documented ban anywhere for a hotkey daemon that did
+  not macro.
+- **Login blocks by process name are real and coming.** NCSoft blocked
+  Aion 2 with Logitech G Hub, Razer Synapse and Corsair iCUE running
+  (2025-12-09, "close the process in Task Manager"), withdrew it after
+  three hours, and said it will reapply and extend the list. Detection is
+  by process name and PE metadata (a renamed AutoHotkey is still found);
+  no vendor enumerates hooks. Expected outcome for AHK: no login, not a ban.
+- **Lineage2Dex / Active Anticheat**: "bots, drivers, automation tools";
+  an admin asked about AutoHotkey answered "dont use it"; kernel driver,
+  no published list. And AAC refuses Hyper-V, which WSL2 needs, so L2Dex
+  cannot run on this box at all -- it belongs on DESK_A as planned.
+- **A binary of our own** removes the name match and nothing else: an
+  unknown signed binary with a global hook has no reputation, and under
+  NCSoft's wording ("circumventing technical protection") a binary built
+  to dodge a list reads worse than the named tool.
+- **The only mitigation with an official source**: the process does not
+  exist while the game runs. A pause or an unhooked hook hides nothing from
+  a process scan.
+
+**Decided: the AutoHotkey stays.** For bans the two are equal; for login
+blocks the protection is killing the hotkey process around the game, which
+a separate process allows and a hook inside the window manager does not
+(AkuWM cannot leave without leaving the desk). M3 is therefore reduced to:
+
+1. **Bindings as data, live.** The GUI writes `bindings.tsv` (chord, tab,
+   command); AkuWM sends `WM_APP+1` to the script's hidden window after the
+   write; the script's `OnMessage` handler re-reads the file and re-binds
+   with `Hotkey()`, which the AHK v2 docs recommend exactly for bindings
+   read from a file. No `Reload`, no gesture lost. Chords with logic of
+   their own (switcher, power menu) stay static; app-scoped ones use
+   `HotIf()`. Neither whkd nor GlazeWM reloads on its own, so the push is
+   already ahead of both. Embedding AHK in .NET is out: `AutoHotkey.Interop`
+   archived 2025-09, GPL.
+2. **Game mode.** A rule marks an application as a game with an anti-cheat;
+   AkuWM terminates the AHK when that process appears and relaunches it
+   when it is gone. No chords during play, which is what NCSoft asks for.
+3. The rest of the script stays as it is.
+
+**The signed uiAccess install is done** (20:31, from an elevated
+PowerShell, `install-uiaccess.ps1` with the September certificate).
+`akuwm-autostart.ps1 -InPlace` points Startup at Program Files without
+copying the binary: a copy in a user-writable directory is one Windows
+grants no uiAccess to. `doctor`: uiAccess granted, running as the user.
+Measured at once: the elevated PowerShell that had stayed parked after
+every sleep tiles (0,42 3840x2118) and floats back to the pixel through the
+pipe; DWM still refuses its border and corners (0x80070006 is UIPI on the
+attribute, uiAccess or not), so the outline stays the border for elevated
+windows. And one thing the traces showed: a refused decoration with
+`RedecorateAsked` set was asked again on every redraw, two refused DWM
+calls per pass; the refusal now spends the re-ask too, with its test.
+
+The dev loop changed with it: a uiAccess binary cannot be started from a
+shell with its output redirected (AppInfo launches it), so CLI calls go
+through `glazewm.exe`, `akuwm-cli.exe` or the unsigned copy in
+`%LOCALAPPDATA%\Programs\AkuWM`; installing a new build is `dotnet publish
+-p:UiAccess=true` plus the installer, elevated, every time.
 
 
 ## 12. Risks
