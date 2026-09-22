@@ -2007,6 +2007,82 @@ the NordVPN window under the pointer. Environment, all of it, once the
 memory fix is in.
 
 
+### 10.29 A window born maximised, and the four things that kept it out of the desk (2026-09-22 23:45)
+
+The fullscreen suite's `8-startmax` case -- a window created
+`WS_MAXIMIZE | WS_VISIBLE`, the way Age of Empires II DE opens -- failed
+in every run tonight, each time with a different face ("tiled",
+"unmanaged", "minimized"), and the plan called two of them environment.
+None was. Reproduced by hand on the dev daemon with a 5 ms probe, four
+separate faults, every one of them AkuWM's:
+
+1. **The shell says "not on this virtual desktop" for a window it has
+   not registered yet**, and the platform cached that answer. The new
+   `refused ... OtherVirtualDesktop cloak=None onDesktop=False` line at
+   birth (every refusal is logged now, with its reason) showed it;
+   `WindowsPlatform.Window(handle)` then handed the cached `false` back to
+   every re-read of the window -- the birth clock of 10.28, its own
+   events -- until the next full enumeration, which for a window born
+   maximised (it never moves, so it sends nothing) was whatever other
+   window happened to open: 40 s in the 22:58 run, never in the 23:31
+   one. The cache keeps only a `true` now; a `false` is asked again, and
+   the birth clock (`Desk.BirthCloaked`) covers every reason that can
+   pass, not only self-cloaked. A foreground change from a window the
+   desk has never seen also re-reads the desk: a birth whose show event
+   the cheap gate dropped has no other event left.
+2. **AkuWM's tile placement landed on a window that had maximised itself
+   meanwhile, and the window took it.** Measured: shown un-maximised at
+   84 ms, maximised at 93 ms, and at 153 ms `IsZoomed` true at
+   `1290x2127` inside the tile; the `DeferWindowPos` batch had taken
+   145 ms. The note in Compute that "a maximised window ignores a move"
+   was Zen's behaviour, not a rule. `SW_MAXIMIZE` on a zoomed window
+   re-places nothing (measured). The platform now skips a placement whose
+   window is zoomed by the time it is applied (`MaximisedSinceRead`), and
+   the model asks a maximised window that does not cover its work area to
+   be un-maximised and maximised again (`Redraw.Remaximize`, once, with
+   the placement patience; the un-maximised rectangle on the way is not
+   read as leaving fullscreen).
+3. **Restoring the caption wrote the whole saved style back**, `WS_MINIMIZE`
+   and `WS_MAXIMIZE` bits included. A maximised fliptest minimised and
+   restored came back `IsIconic` true at `-10,-10 3860x2180`, for good,
+   in every run since 22:19 (`state=minimized` for steps 2-5), and
+   restored cleanly with no window manager running: the decoration sent
+   on the restore (the model changes it for a window coming off the
+   taskbar) put the style saved while it was minimised. Only the caption
+   bits come from the saved style now, on the style the window has at
+   that moment.
+4. **The decoration re-assert (three forced sends after every focus
+   change, 10.14) was going to fullscreen windows too**: three DWM
+   attribute calls on the game after every focus, the calls the
+   fullscreen rule exists to keep off a game. `Redecorate` skips a
+   fullscreen window. The applier logs each decoration with its window,
+   which is how the "1 to decorate" on every redraw of the evening was
+   finally read.
+
+Also from the probe: with no window manager running, the same window
+restores in 31 ms, zoomed, to `-11,31 3862x2140` -- the number to compare
+against. The `.ps1` probes are in `Temp\akuwm-diag\` (`birthprobe`,
+`restoreprobe`, `maxprobe`).
+
+The dev loop that made this possible: stop the signed daemon with
+`akuwm-cli.exe exit`, publish the unsigned build into
+`%LOCALAPPDATA%\Programs\AkuWM` and start it with `akuwm-boot.ps1 -Build
+<that dir> -Shim "C:\Program Files\AkuWM"`; no UAC, the shim and the
+Startup shortcut untouched. Its only blind spot is elevated windows.
+
+**Where it stands** (AkuWM `57a1def`, 966 tests): `tests/fullscreen` on the
+unsigned dev build **43/48** with `8-startmax` 4/4 and cases 3, 4 and 4b
+passing again; the five left are the four checks of case 10 (its
+application is elevated, which this build cannot touch) and `13/4` with
+the NordVPN window under the pointer on the vertical screen. The refusal
+line now reads `refused ... OtherVirtualDesktop` followed 150 ms later by
+`adopting ... now that it is no longer OtherVirtualDesktop`, for every
+fliptest, charmap and terminal the suite opened: the shell's registration
+lag is real and short, and it was never the window's fault. The signed
+build is published to `Temp\akuwm-uia` and waits for the installer; both
+suites go again on it for the record.
+
+
 ## 12. Risks
 
 | risk | what we do |
