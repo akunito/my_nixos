@@ -194,6 +194,13 @@
       Unit = {
         PartOf = [ "sway-session.target" ];
         After = [ "sway-session.target" ];
+        # The caffeine toggle (scripts/idle-inhibit-toggle.sh) works by stopping
+        # this unit, and Home Manager's activation starts every wanted unit that
+        # is not running — "Starting units: swayidle.service" on every deploy
+        # (X13, 2026-09-22), gamemode's end hook likewise. The toggle leaves this
+        # marker while inhibited; a start then reports "condition failed" and
+        # the unit stays inactive instead of undoing the user's choice.
+        ConditionPathExists = "!%t/idle-inhibit.on";
       };
       Service = {
         EnvironmentFile = [ "-%t/sway-session.env" ];

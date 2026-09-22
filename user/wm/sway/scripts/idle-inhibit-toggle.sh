@@ -50,9 +50,18 @@ if [[ -z "$SYSTEMCTL_BIN" ]]; then
   exit 0
 fi
 
+# The marker is what makes the toggle survive a deploy: Home Manager's
+# activation starts every unit wanted by an active target that is not running
+# ("Starting units: swayidle.service ..." on every install.sh, X13 2026-09-22),
+# and gamemode's end hook does a plain `start` too. swayidle.service carries
+# `ConditionPathExists=!%t/idle-inhibit.on`, so those starts are skipped while
+# the marker exists. %t = XDG_RUNTIME_DIR: gone at logout, like the intent.
+MARKER="${runtime_dir}/idle-inhibit.on"
+
 # IMPORTANT: do not use `set -e` here; `is-active` returns non-zero when inactive.
 state="$("$SYSTEMCTL_BIN" --user is-active "$SERVICE" 2>/dev/null || true)"
 if [[ "$state" == "active" ]]; then
+  : > "$MARKER"
   "$SYSTEMCTL_BIN" --user stop "$SERVICE" >/dev/null 2>&1 || true
   msg="Idle Inhibit: ON (Swayidle Stopped)"
 else
@@ -61,6 +70,7 @@ else
   if [[ "$load_state" != "loaded" ]]; then
     msg="Idle Inhibit: ERROR (${SERVICE} not loaded)"
   else
+    rm -f "$MARKER"
     # If the unit previously failed, this unblocks restart.
     "$SYSTEMCTL_BIN" --user reset-failed "$SERVICE" >/dev/null 2>&1 || true
     "$SYSTEMCTL_BIN" --user start "$SERVICE" >/dev/null 2>&1 || true
