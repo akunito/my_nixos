@@ -154,8 +154,10 @@ if $test_check && ! $config_only; then
     offenders=""
     for c in $(git -C "$REPO" rev-list --no-merges "$from..$to"); do
       files=$(git -C "$REPO" show --name-only --format= "$c")
-      grep -qE '^(apps/web/(core|app|ce|helpers|lib|styles)/|packages/)' <<<"$files" || continue
-      if grep -qE '^apps/web/tests/' <<<"$files"; then continue; fi
+      # the backend is ours too since APLANE-15, so apps/api/plane counts as fork code and
+      # apps/api/plane/tests as its tests (a tests-only commit matches both and is fine)
+      grep -qE '^(apps/web/(core|app|ce|helpers|lib|styles)/|apps/api/plane/|packages/)' <<<"$files" || continue
+      if grep -qE '^(apps/web/tests/|apps/api/plane/tests/)' <<<"$files"; then continue; fi
       offenders="$offenders  $(git -C "$REPO" log --format='%h %s' -1 "$c")
 "
     done
