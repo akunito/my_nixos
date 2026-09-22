@@ -1833,6 +1833,37 @@ elevated console stays parked -- UIPI refuses the restore, the uiAccess item
 again -- and comes back with a taskbar click.
 
 
+### 10.26 Two levels of rules, and the third sleep (2026-09-22 19:13 → 19:20)
+
+Diego: a window with no explicit rule should reopen as he closed it
+(floating or tiled, size, place), open on the screen the pointer is on, and
+elevated windows are out of it. Built in `daa2194`, 951 tests:
+
+- `general.remember_apps` (default true): on close, a managed window with
+  no rule that fired, not sticky, not elevated, not fullscreen, writes down
+  floating/tiled, its frame size and its offset from the work area of its
+  screen, keyed by process + window class (`apps.tsv` in the runtime dir,
+  one small text file rewritten whole). On adoption -- not during the first
+  sync -- a window with no rule opens that way on the target screen, the
+  rectangle pulled inside the work area where it does not fit.
+- `general.open_under_pointer` (default true): the screen under the pointer
+  before the one with the focus; a rule that names a workspace or a monitor
+  still wins. The test fixture keeps it OFF (its pointer sits at 0,0).
+- the order: explicit rule → placement journal (same handle, a restart) →
+  application memory → pointer's screen → focused screen.
+
+The third sleep test (19:13, the build before this one) showed two more
+things: the two Zen tiles came back swapped (parked = removed from the tree,
+restored = appended), and Explorer moved to the vertical screen's workspace
+-- Windows had moved it BEFORE it reported the display change, so the 5 s
+guard had not started. So: a parked tile keeps its slot in the tree and
+Compute skips a minimised tile; and a floating move is the person's only
+with the pointer on the window (64 px of slack), which is what a drag or an
+Alt+drag has and what no move of Windows' or of the application's own has.
+An application that moves itself is put back; the patience clock ends the
+argument as before.
+
+
 ## 12. Risks
 
 | risk | what we do |
