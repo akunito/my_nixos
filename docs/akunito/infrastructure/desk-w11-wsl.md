@@ -533,6 +533,38 @@ quit the game and wait for the library cloud icon to settle before rebooting, lo
 the other OS. Steam maps the Windows save path into the Proton prefix by itself.
 Empty leftovers: `D:\Steam\SteamLibrary`, `C:\Games\steamapps`.
 
+## Binary cache and fleet builder (2026-09-22)
+
+DESK and DESK_W11 are one box, so W11 is the fleet's **second harmonia** (DESK's twin
+when the machine is booted into Windows) and the place to **build every profile's
+closure** after a `flake.lock` update, so the laptops download instead of compiling.
+
+- Profile: `nixBinaryCacheServeEnable = true`, `nixBinaryCacheLanInterfaces = [ "eth0" ]`,
+  `nixBinaryCacheBindAddress = "0.0.0.0"`. Key printed by `nix-cache-pubkey`
+  (`nixosw11aku-1:AvlQ…`); clients list `http://100.64.0.15:5000` after DESK's
+  `http://100.64.0.5:5000`, and `scripts/warm-binary-caches.sh` drops whichever is down.
+- **Windows side, by hand, elevated** (WSL is NAT, so harmonia is not on the tailnet by
+  itself):
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=100.64.0.15 listenport=5000 connectaddress=127.0.0.1 connectport=5000
+  New-NetFirewallRule -DisplayName "WSL harmonia 5000 (Tailscale only)" -Direction Inbound -Protocol TCP -LocalPort 5000 -InterfaceAlias Tailscale -Action Allow
+  ```
+  Two traps, both measured: `listenaddress=0.0.0.0` includes 127.0.0.1 and the proxy
+  forwards to itself (peers connect, get nothing); and WSL's localhost relay only relays
+  **IPv4** listeners — `0.0.0.0:5001` answered from Windows, `[::]:5002` did not — which is
+  why harmonia must not keep the module default `[::]`. After a Windows reboot check
+  `netsh interface portproxy show v4tov4` still lists the rule; `Test-NetConnection
+  127.0.0.1 -Port 5000` must succeed from PowerShell.
+- **Builder:** `scripts/build-fleet-closures.sh [filter…]` — toplevel + Home Manager
+  `activationPackage` of every evaluable profile (skips KOMI_*, MACBOOK-KOMI, LAPTOP_YOGA,
+  DESK_VMDESK). It copies the tree to a temp dir and swaps in the newest committed
+  `hardware-configuration.nix` that is not WSL's, because the checkout's copy is WSL's regen
+  and no NixOS profile evaluates against it. Workflow:
+  `./update.sh` → `scripts/build-fleet-closures.sh` → commit and push `flake.lock` → nodes
+  deploy. First run for LAPTOP_X13: 909 s, 628 packages built, store 22 → 60 GB; a cached
+  re-run 37 s. Verified from X13: `nix-store -r <W11's X13 toplevel>` pulled 22 paths from
+  `http://100.64.0.15:5000`, none from cache.nixos.org.
+
 ## Known limits
 
 - **`RegisterHotKey` refuses Ctrl+Alt+Shift+Win+<letter>** (Windows keeps that modifier
