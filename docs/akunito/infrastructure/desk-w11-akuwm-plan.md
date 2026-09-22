@@ -409,8 +409,17 @@ re-centring), then arm the repair. A game changing resolution also fires
 first. `WM_POWERBROADCAST`: suspend → journal snapshot; resume → wait for the
 displays to settle, then repair.
 
+These arrive as **broadcasts**, and a broadcast reaches top-level windows
+only: the listener is an invisible 0x0 `WS_EX_TOOLWINDOW` window, never a
+message-only one, which gets none of them. That mistake cost the whole
+mechanism for the life of the class -- see 10.10. A second path reads the
+monitor list every few seconds and compares, because a broadcast is the one
+kind of message that can simply not arrive.
+
 Proven by: `tests/wm` display (`display-change-test.ps1`, a real mode
-change on the second monitor), repair; a real suspend as the M4 acceptance.
+change on the second monitor), repair; a real suspend as the M4 acceptance;
+`ScreenWatchTests` for the comparison, including the two shapes that are not a
+change of SET -- a monitor that moved, and a taskbar that did.
 
 ### 5.12 IPC (GlazeWM-compatible) and events
 
@@ -651,9 +660,9 @@ bind; the engine supports all of them):
 
 | level | where | runs on | what |
 |---|---|---|---|
-| unit | `AkuWM.Tests` (xUnit) | Linux (WSL, CI ubuntu) | layout rects, rule matcher, chord parser and engine, journal placement and broken rule, config load/merge/validate, compat serialisers (against the captured envelopes), command grammar |
+| unit | `AkuWM.Tests` (xUnit, **751**) | Linux (WSL, CI ubuntu) | layout rects, rule matcher, chord parser and engine, journal placement and broken rule, config load/merge/validate, compat serialisers (against the captured envelopes), command grammar, and since 2026-09-21 a **geometry matrix**: four rules over six monitor arrangements this desk does not have (a screen to the LEFT, one ABOVE, 100 % beside 200 %, three screens, and this desk's own three) times the three `across_monitors` modes. The driven suite can only ever test the screens that are plugged in |
 | platform | `AkuWM.Tests.Windows` | the desk, CI windows (no desktop → skipped) | cloak/uncloak read-back, frame bounds, EDID identity, hooks install and heartbeat, against a fliptest-like helper window |
-| driven | `tests/wm` (155 checks) and `tests/fullscreen` (48) | the desk, `run-suite.sh` | unchanged: they talk to the `glazewm` shim and press keys; they are the spec |
+| driven | `tests/wm` (156 checks, **144 green**) and `tests/fullscreen` (48, **47 green**) | the desk, `run-suite.sh` | they talk to the `glazewm` shim -- over the **pipe** since the takeover -- and press keys; they are the spec. One of them now asserts that AutoHotkey and AkuWM agree about every monitor, because every rectangle the rest of them measure is meaningless if they do not (10.9) |
 | GUI | Avalonia.Headless + one driven smoke | CI windows + the desk | every section opens, the rule tester matches the same as the engine |
 | bench | `akuwm bench` | the desk | hotkey-to-SetWindowPos, workspace switch, app show; the 5 ms budget |
 
@@ -670,9 +679,9 @@ a commit in the dotfiles repo that documents what changed on the desk.
 |---|---|---|---|---|
 | **M0** ✅ 2026-09-20 | repo skeleton (the five projects), config schema + loader + validator + `import glazewm`, logging, named-pipe CLI with `doctor`/`config`, CI, `LICENSING.md` and the tripwire | **met**: 102 unit tests green on Linux; the import reproduces 21 rules, 20 workspaces, 13 apps (and 4 Startup entries the Python prototype could not find); `akuwm doctor` runs on the desk and sees the live stack | -- | M |
 | **M1** ✅ 2026-09-20 | the platform layer and the model in **shadow mode**: hooks, EDID monitors, rules, the tree; it watches and changes nothing; `query` answers on the pipe | **met**: 270 samples over 45 minutes of real use, all 270 in agreement, nothing found; the bench reports a 0.19 ms hot path against a 5 ms budget. Workspace *names* were not compared and could not be — see 10.2 | S1 the LL hook sees keys while an elevated window (fliptest-elev) is focused · S2 `SetForegroundWindow` on an elevated target from the hook context · S3 `SetCloak` from .NET COM · S4 hotkey → SetWindowPos under 5 ms · S5 hooks on the platform thread with Avalonia on main | L |
-| **M2** | the safety net first (11.1, landed), then it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | `tests/fullscreen` green (no check fails twice) and `tests/wm` green with AHK on AkuWM; Zebar pills work (its requests captured); one day of normal use | S6 Zebar reconnect when the server restarts · S7 mixed-DPI rects | XL |
-| **M3** | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
-| **M4** | journal, repair, display changes, suspend/resume | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
+| **M2** ⬛ 2026-09-21, one check short | the safety net first (11.1, landed), then it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | **it has the desk since 2026-09-21** and GlazeWM is out of Startup. `tests/fullscreen` **47/48** (the last is flaky). `tests/wm` **144/156** -- the twelve are 10.13, and only the four z-order-around-a-game ones are a fault. Zebar pills work; the bar cannot connect only because a dead GlazeWM's watcher still holds 6123 (10.8), which a reboot frees. **S7 mixed-DPI rects turned out to be the largest thing in the milestone** -- see 10.9 | S6 done · **S7 done, and it was not small** | XL |
+| **M3** (partly landed early) | input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off. **Alt+drag's POLICY already moved into AkuWM ahead of this** (10.11, 10.12): the script reports a point or a gesture and the layout decides, so `drag-tile`, `drop-target`, `drag-to-top` and `across_monitors` are AkuWM's already and only the input plumbing is left | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
+| **M4** (partly landed early) | journal, repair, display changes, suspend/resume. **Display changes and Startup landed in M2**: they had to, because the listener never worked (10.10) and because a desk with no GlazeWM to fall back on needs `akuwm-boot.ps1` (10.8). Windows following a screen that moves landed with them (10.11) | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S` | headless tests green; the driven smoke opens every section; a rule edited in the GUI is live after Apply | -- | L |
 | **M6** | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported | -- | M |
 | **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, the AHK deleted from the repo (`w11-apps` went with M0) | a clean install on this machine from the release; the runbook updated | -- | S |
@@ -1048,6 +1057,254 @@ GlazeWM, nothing moves), switch with `tools\akuwm-switch.ps1`, run both
 suites, and use it for a day. `tools/publish-dev.sh` puts the three
 executables where the scripts look; the signed copy in Program Files needs
 `tools\install-uiaccess.ps1` as administrator to catch up.
+
+### 10.8 It took the desk, and then the desk answered back (2026-09-21)
+
+AkuWM has been the only window manager on this machine since the evening of
+2026-09-21. GlazeWM is out of the Startup folder (`GlazeWM.lnk.off`, one rename
+back) and `tools/akuwm-autostart.ps1` put `AkuWM.lnk` there instead, pointing at
+`akuwm-boot.ps1`: it starts the daemon, waits for the **pipe to answer** — never
+for a process to exist, which is 10.7's lesson — and only then writes the marker
+the hotkeys read. If the pipe never answers it runs `akuwm rescue --forgive`,
+gives every window back and clears the marker, so the desk is usable by hand.
+
+The build lives in `%LOCALAPPDATA%\Programs\AkuWM`, deliberately not
+`%LOCALAPPDATA%\AkuWM`: Windows does not distinguish case, and the second is
+AkuWM's own runtime state — geometry.bin, the cloak ledger, the logs. A build
+dropped in among them mixes what a rescue may clear with what it needs to run.
+
+Debug tracing is **on by default** (Diego's call): every real fault of this
+milestone was found by reading the trace. It costs megabytes an hour, so the log
+now rotates **while running** at 4 MB, counting bytes rather than asking the
+filesystem on every line — before this it rotated only at daemon start, which is
+no rotation at all for a manager that runs for days.
+
+**tests/fullscreen went 40/8 → 47 of 48** (§10 already carries the decoration
+fact that did most of it). The one still failing is flaky, not real.
+
+**Port 6123 is still held, and it is not ours.** A GlazeWM that died at 18:52
+left `glazewm-watcher.exe` behind; the watcher inherited the listening socket and
+**has itself exited** — `HasExited` is true — yet is stuck in termination with
+187 handles open, so `taskkill` answers "there is no running instance" while the
+port stays bound. Zebar's connection attempts sit in the backlog of an orphaned
+socket, get accepted by the kernel, are never `accept()`ed, and Zebar reports
+"failed to connect to GlazeWM IPC server". Nothing in user space frees it; a
+reboot does. AkuWM now retries the bind in the background for two minutes and
+says which port and why, and the next boot takes it before anything else.
+
+### 10.9 The scripts and the manager were not in the same coordinate space
+
+This one poisoned everything geometric and had been doing it quietly for as long
+as the scripts existed.
+
+**AutoHotkey is system-DPI aware.** Windows hands such a process every rectangle
+as if the whole desktop ran at the PRIMARY monitor's scale. This desk runs the
+main monitor at 150 % and the vertical one at 125 %, so the second screen was
+reported to the scripts at `4608,-490..6336,2582` where it physically is at
+`3840,-408..5280,2152` — every number on it 1.2x too big, which is 150/125.
+
+Next to that, `MonitorDeviceAt` is a raw `MonitorFromPoint` and always answered
+in PHYSICAL pixels. **One line asked which monitor a window was on in one space
+and its work area in the other.** `layout.tsv` shows the damage: rows filed under
+DISPLAY2 carrying DISPLAY1's work area, and a window plainly on the main monitor
+recorded as being on the vertical one.
+
+The first fix converted rectangles at one call site and was the wrong shape — the
+journal, the raise-or-launch table, the drag outline and `MonitorDeviceAt` all
+still mixed the two. **One call at load** (`SetThreadDpiAwarenessContext(-4)`, per
+thread, because the process's awareness is fixed by AutoHotkey's manifest) puts
+the whole script and every test that includes `lib-glaze.ahk` in the manager's own
+pixels. Measured before and after: AHK reported DISPLAY2 at `4608,-490..6336,2582`
+and now reports exactly what `query monitors` reports.
+
+The journal heals itself: a record whose work area no longer matches the monitor
+it names is scaled rather than replayed verbatim, which covers every row written
+in the old space and a resolution change besides. **tests/wm asserts the two sides
+agree about every monitor** — every rectangle the suite measures is meaningless if
+they do not, and it passed for months while they did not.
+
+A whole layer of AHK scaffolding existed only because of this bug and went with
+it: the Alt+drag edge clamp, the translucent outline that crossed the boundary,
+the storm guard and the watchdog that kept putting sizes back. Their measured
+justification — "seven times out of seven, a window whose edge entered the gap
+between the monitors got its DPI re-evaluated and rescaled up to x1.74 without
+the cursor leaving the monitor" — was the virtual gap, and there is no gap.
+
+### 10.10 Display changes are broadcasts, and a message-only window never gets one
+
+§5.11 and the earlier note in this plan said the platform thread needs an
+`HWND_MESSAGE` window to hear display changes. **That is wrong, and it meant
+AkuWM had never heard one.** A message-only window does not receive broadcasts,
+and `WM_DISPLAYCHANGE` and `WM_SETTINGCHANGE` are both broadcasts — so display
+changes, DPI changes and the taskbar moving were never noticed at runtime, for
+the whole life of the class. Measured when Diego plugged in a third monitor:
+AutoHotkey saw all three at once, `query monitors` went on answering with the two
+from startup at their old rectangles, and not one display event reached the log.
+
+It is a real top-level window now: invisible, 0x0, `WS_EX_TOOLWINDOW`, nothing to
+click, and a window as far as Windows is concerned, which is the whole
+requirement. AkuWM does not adopt it — it is never visible, which is the first
+thing the window filter asks.
+
+A missed broadcast must not cost that again, so `ScreenWatch` reads the monitor
+list every four seconds and compares — handle, bounds, work area, DPI, primary,
+hardware id. The cost is a handful of structs; what it buys is a manager that
+cannot be quietly wrong about where the screens are. In practice it is the one
+that fires: the broadcast still does not arrive, and the watch notices three
+seconds later.
+
+**Three monitors since 2026-09-21**: a ZOWIE XL on the left at `-1920,-706`. Role
+`third`, workspaces 31–40, and `monitors identify` run with all three present so
+every role is now pinned to its EDID — they had been falling back to enumeration
+order, which a new monitor can change, and the whole desk could have moved screen
+at the next boot.
+
+Three things in the scripts were written for exactly two screens and are not any
+more: `CursorGroup` was `primary ? 1 : 2`, so every workspace key pressed over the
+new monitor went to the vertical monitor's workspaces; `CurrentWs` took a group
+and then answered for the monitor under the POINTER (`CurrentWs(2)` with the mouse
+on the main screen returned `11`); and the Alt+drag clamp held one edge, chosen by
+whether the window was on the primary, which assumes the only other screen is to
+the right.
+
+### 10.11 Moving a window between screens
+
+Four faults, each of which made a window impossible to move somewhere, and none
+of which any test could have caught because the fake desk kept the old monitor on
+a window it had just moved or placed. That is fixed first: the monitor travels
+with the rectangle, as it does when Windows is the one answering.
+
+- **A floating window dragged to another screen snapped back.** Nothing was
+  pulling it: it kept the rectangle the person gave it, but its WORKSPACE still
+  belonged to the monitor it left, and a placement is clamped into the work area
+  of the workspace's monitor. 3082 asked for, 3832 arrived at — that monitor's
+  left edge less the border. A window the person moves onto another monitor now
+  joins the workspace displayed there, which GlazeWM did by itself and AkuWM did
+  not.
+- **A STICKY window could not be dragged anywhere at all.** Sticky was skipped by
+  the re-homing for fear of un-sticking it, so it was clamped straight back onto
+  the screen it was stuck to, every time. Sticky means "on every workspace of ITS
+  monitor": dropped on another screen, that screen is the one it follows.
+- **A window BIGGER than the target screen always went home.** Windows says a
+  window is on the screen it covers most of, and a window bigger than a screen can
+  never win that comparison for it. The area rule cannot express what the person
+  did, so when the window does not fit where Windows says it is, the corner they
+  dragged decides. The placement trims it to the work area too — a window that
+  does not fit cannot be put inside the screen at all, so it hung off the edge for
+  ever and Windows went on reporting it as being on the big one.
+- **Windows did not follow a screen that MOVED.** A tiled window did, for free;
+  a floating one's rectangle is absolute, so a screen moved 312 px up in the
+  display settings left every floating window on it 312 px below where it was.
+  The place is kept as a fraction of the work area, which makes one formula cover
+  both cases: only the origin moved and the ratio is exactly one, a plain
+  translation to the pixel; the resolution changed too and a window a third of the
+  way across is still a third of the way across.
+
+**`layout.across_monitors`** is the setting that came out of it, four values
+because Diego asked for floating and tiling apart and for dragging and commanding
+apart: `float_drag`, `float_move`, `tile_drag`, `tile_move`, written either as one
+word for all four or as an object naming the ones that differ (one word is what a
+person writes; the object is what the GUI will write back). Each is `absolute`,
+`proportional` or `hybrid`.
+
+- **absolute** — the pixels are the pixels. 1200x800 from the main monitor at
+  150 % arrives on the BenQ at 100 % as 1200x800. **Diego's choice, and what the
+  desk runs.**
+- **proportional** — the screen is the unit: 990x990 of a 1000x1000 screen arrives
+  on a 2000x2000 one as 1980x1980.
+- **hybrid** — absolute until the window would not fit, proportional then.
+
+For a TILED window the size on screen belongs to the layout whatever the setting
+says; what it decides there is the rectangle the window remembers for when it
+floats again. A window the person DRAGGED keeps the corner it was dropped at in
+every mode — the position is the one thing about that move they chose.
+
+Two measured details that make it work at all. Windows rescales a window that
+crosses between screens of different scaling **125–156 ms after the move**; that
+arrived as "the person resized it" and overwrote the size the crossing had just
+decided, so the setting had no effect past the first instant. And the window is
+re-anchored on the POINTER, not its corner: grabbed a third of the way along the
+title bar, still a third of the way along after it shrinks, so the hand never ends
+up outside the window it is dragging.
+
+### 10.12 The drag, rewritten around what the pointer is on
+
+Diego was interviewed before any of this was built (eleven decisions), which is
+why it is one shape rather than an accretion.
+
+**A floating window is dragged live, across screens.** The window itself is the
+preview; there is no outline. Every tick reads the size the window HAS — Windows
+rescales it for the new DPI and AkuWM applies `across_monitors`, both behind the
+script's back — and puts the grabbed point back under the cursor. The release does
+nothing but the top-edge maximise. This is four lines where there were ninety, and
+it is only possible because of 10.9.
+
+**A tiled window goes where the pointer says**, on its own monitor or any other.
+The half of the tile under the cursor decides: whichever of across and down the
+pointer is further from the middle in picks the axis, which side of the middle
+picks the side, so a drop near a corner still means something definite. Two new
+verbs, both AkuWM's own — `drag-tile --x --y` commits and the `drop-target` query
+answers with the rectangle — so the gesture script reports a point and knows
+nothing about layouts, and **the outline asks for the same answer the drop will
+use, from the same place**. It asks at most every 60 ms and only after 8 px of
+movement, against a loop that runs every 8 ms.
+
+The real window never moves during a tiled drag and the layout it came from does
+not close the gap until the drop, so a drag thought better of leaves the desk
+exactly as it was. Two drops are refused rather than guessed — onto the window's
+own tile, and onto the gap between two — and the outline shows nothing there
+rather than promising the whole work area, which is what "beside nobody" means to
+the tree.
+
+A floating window dropped on a tile stays floating: dragging never changes what a
+window is, which is the rule that makes this safe to do with any window under the
+pointer. A maximised window dropped on ANOTHER screen is maximised there; dropped
+on its own it stays restored, because that is how everybody un-maximises one.
+
+Measured on the desk, three tiles, the leftmost dropped on the left half of the
+rightmost: `0(1574966) 1284(2558556) 2568(1575566)` → outline `2568,42 636x2118`
+→ `0(2558556) 1284(1574966) 2568(1575566)`.
+
+### 10.13 The audit, and where the time actually goes (2026-09-22)
+
+From the log of a day's real use: **1683 redraws, median 1.13 ms, p90 55 ms, p99
+626 ms, worst 718 ms**, 51.4 s of window-manager work in the session. The median
+is the number the plan claims; the tail is not, and the slow ones are six or seven
+windows placed with nothing else to do — about 100 ms a window, which is
+`SetWindowPos` sending `WM_WINDOWPOSCHANGING` and waiting for the application.
+
+The obvious move is `SWP_ASYNCWINDOWPOS` and it is already refused: `DeferWindowPos`
+drops the whole batch for that flag. So the question is the batch against N
+asynchronous calls, and the bench now asks it. **The answer is the opposite of the
+guess**: for eight windows the batch costs 0.163 ms and the async calls 0.393, so
+the batch wins the CALL by 2.4x.
+
+That does not settle it, and the plan should not pretend it does: both ask for
+rectangles the windows are already in, so Windows has nothing to do and what is
+measured is the call, not the move. **A bench that really moves windows is a bench
+the running manager immediately undoes**, and what comes out is the two of them
+arguing — built, measured, and removed rather than left looking like a number.
+
+What answers it from real use instead: the applier times the placement apart from
+everything else, and the first line off the desk already pays for it —
+
+    5 to place, 7 to reband, 8 to decorate -> 79.02 ms (31.00 of it moving windows)
+
+31 ms of placement and **48 ms of `SetTopmost` and DWM calls**, which is not where
+anybody would have looked. That is the next thing to measure, not the batch.
+
+**tests/wm stands at 144 of 156** (from 138/16 the same day). The twelve left are
+three groups, and only the first is a fault:
+
+1. **Z-order around a fullscreen game (4).** Removing the always-on-top band —
+   which was necessary, `SetWindowPos` on a flip-model swapchain costs a game its
+   direct path to the screen — left nothing that puts a game above an
+   always-on-top window, and nothing that lifts an app over a game when it is
+   asked for by name. To be done with Diego at the machine and a game running.
+2. **Workspace assumptions in the setups (4).** Cases that expect to land on
+   13/14/22 and land on 12/21.
+3. **Four singles**, including one new in the tiling suite: "stacked, not side by
+   side" on the vertical monitor.
 
 ## 12. Risks
 
