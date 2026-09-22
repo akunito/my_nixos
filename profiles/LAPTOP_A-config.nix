@@ -202,8 +202,13 @@ in
     # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
     # (priority 30 vs 40) over Tailscale. Extra substituter only — cache.nixos.org
     # stays, and fallback + connect-timeout mean a sleeping DESK costs seconds.
-    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
-    nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
+    # DESK (NixOS) and DESK_W11 (same box booted into Windows) — whichever is up
+    # serves; scripts/warm-binary-caches.sh drops the one that does not answer.
+    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" "http://100.64.0.15:5000" ];
+    nixBinaryCachePublicKeys = [
+      "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s="
+      "nixosw11aku-1:AvlQDaw4z34O5P0zgBMmXJKdFN7D4uv/82hCXTWsVqM="
+    ];
 
     # Build parallelism: this is an 8-core ThinkPad someone is actually using.
     # Nix's default (max-jobs=auto, cores=0) ran 8 concurrent derivations with

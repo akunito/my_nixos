@@ -86,8 +86,13 @@ in
     # connect-timeout mean a sleeping DESK costs seconds, never a failed build.
     # This machine is the reason the cache exists: 62 commits of drift meant
     # rebuilding bitwarden-desktop/nextcloud-client/voxtype from source.
-    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" ];
-    nixBinaryCachePublicKeys = [ "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s=" ];
+    # DESK (NixOS) and DESK_W11 (same box booted into Windows) — whichever is up
+    # serves; scripts/warm-binary-caches.sh drops the one that does not answer.
+    nixBinaryCacheSubstituters = [ "http://100.64.0.5:5000" "http://100.64.0.15:5000" ];
+    nixBinaryCachePublicKeys = [
+      "nixosaku-1:a1t91oU1udPpLWvLr8lWwj2kS5a7lPxhH38p094Ps+s="
+      "nixosw11aku-1:AvlQDaw4z34O5P0zgBMmXJKdFN7D4uv/82hCXTWsVqM="
+    ];
 
     # NFS nofail safety net (prevents boot hang when TrueNAS is unreachable)
     disk3_enabled = true;
