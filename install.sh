@@ -854,7 +854,13 @@ generate_hardware_config() {
         # flag's documented "keeps containers running" behaviour.
         $SUDO_CMD env SKIP_DOCKER="$SKIP_DOCKER" $SCRIPT_DIR/stop_external_drives.sh
         echo "Generating hardware configuration file..."
-        $SUDO_CMD nixos-generate-config --show-hardware-config > $SCRIPT_DIR/system/hardware-configuration.nix
+        # nixos-generate-config runs `btrfs` against every mount it sees; on WSL
+        # the 9p/fuse mounts (/mnt/wslg/distro, /tmp/.X11-unix, ~/Nextcloud)
+        # print "ERROR: not a btrfs filesystem" and the file is still correct.
+        # Drop only that line — anything else on stderr must stay visible.
+        $SUDO_CMD nixos-generate-config --show-hardware-config \
+            2> >(grep -v "^ERROR: not a btrfs filesystem" >&2) \
+            > $SCRIPT_DIR/system/hardware-configuration.nix
         # Clean up runtime mounts captured from the live system.
         # - autofs/NFS: managed by drives.nix + nfs_client.nix (duplicate attribute errors)
         # - /var/lib/docker/*: overlay2/volume mounts captured when docker is left
