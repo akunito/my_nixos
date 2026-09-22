@@ -1546,8 +1546,25 @@ Fixed in `6a2c56e`, `MonitorReturnTests` (4), 882 tests:
 - `hyper-desktops.ahk`: `RepairAfterDisplayChange` (GlazeWM-era) sent
   `move-workspace` ten times per display change; skipped under AkuWM.
 
-Not verified on the desk yet: the disable/enable cycle itself, and the chord
-while the screen is away -- both need Diego at the Settings page.
+Verified on the desk at 15:54-15:55: disabled, three windows parked by
+Windows, nothing else moved; `fetch-windows` lent the three, woke two (the
+third floated back by itself), tiled Brave beside Zen; the click; enabled,
+loan undone, everything home. Two things the traces showed that Diego did
+not see (`2f0f9f5`-era fix, 883 tests):
+
+- Brave came home to workspace 21 with NO slot in its tree: minimised when the
+  loan was made, so in no layer, so absent from the tree clone the return
+  restores. Visible where Windows left it, in no layout, in no query. Woken
+  windows are placed into their home layer before the clone, and the return
+  re-seats any tile the restored tree does not hold.
+- Zen landed at 9,43 3822x2108 for an ask of 0,42 3840x2118 (the border read
+  0 for the instant of the display change) and stayed there: inside the 32 px
+  placement slack. The size may differ by the slack, the origin by 4 px at
+  most; a landing whose origin moved is asked again, and the patience clock
+  still ends it.
+- The floating Windows Terminal at 647 px wide will not go below 698 on the
+  main screen (its own minimum at 150 %): "will not go to ... stopped
+  asking", the layout-minimum leftover from 10.14.
 
 
 ## 12. Risks
