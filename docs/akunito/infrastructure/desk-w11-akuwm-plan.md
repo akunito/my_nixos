@@ -1700,6 +1700,52 @@ Brave after the click; band stripped from outside → terminal under Brave for
 after a click; focus → forward again.
 
 
+### 10.22 The monitors slept, and every window was gone (2026-09-22 17:41 → 18:06)
+
+From the traces. 17:41:48: the main screen (SAM7233) vanished from Windows'
+list, the vertical one became primary at 0,0 (still portrait), and Windows
+added a 1024x768 `Default_Monitor`. `MonitorRoles` handed the free role
+`main` to the ghost by position, so workspace 11 was laid out at 1024x740
+(the two Zen tiles at 508x740) and Notepad++ -- a system-DPI window -- was
+rescaled by Windows on the way (5333x830 → 4267x664). Two seconds later
+Windows parked every window of the lost screen in the taskbar (-32000). With
+`when_monitor_leaves: leave` AkuWM did nothing else, as configured.
+18:06:21: back, in three steps over three seconds -- the vertical screen
+LANDSCAPE (2560x1440, primary) for 1.2 s, then the main screen with an empty
+EDID, then the real list. Windows parked the rest. Nothing brought the parked
+windows back: their state was Minimized, their workspaces intact.
+
+Diego's call: windows going to a ghost or temporary screen would be fine, as
+long as everything is restored exactly on return. Chosen instead, and why:
+not to lay out on a screen that is not there. A placement onto the ghost is
+a real move, and Windows rescales every system-DPI window it moves across a
+DPI boundary and never undoes it (Notepad++ above); and the windows are in
+the taskbar within two seconds anyway. Restoring exactly is the part that
+matters, and it is easier from windows that never moved.
+
+Fixed in `dba2306`, `ParkedWindowsTests` (7), 920 tests:
+
+- a role with an identity (EDID, name or path) is ABSENT when its screen is;
+  only roles without one fall back by position. The ghost gets nothing.
+- a window minimised within `ParkWindowMs` (5 s) of a screen change is
+  `Parked` (Windows' doing); once the screens have settled and its monitor
+  is here, Compute restores it -- state back (Restore), placement forgotten,
+  the shell asked to un-minimise, tile or floating rectangle placed as
+  before. A parked window whose screen is away waits for it. One the person
+  minimised (no screen change in the last 5 s) stays in the taskbar.
+- `MonitorSettleMs` (2000) for a change of the screen set or shape (a
+  monitor powering on takes seconds and passes through wrong shapes);
+  `ScreenSettleMs` (600) stays for a bar that moved.
+- the crossing (`CrossedAt`, the DPI rescale that follows a move across
+  screens is not the person's resize) is stamped when a placement leaves the
+  window's screen, not when the monitor returns -- the 1 s crossing window
+  was over before the 2 s settle let the placement out.
+
+Not yet verified on the desk: the sleep itself. Diego suspends the machine
+or powers the monitors off to try it; the five windows parked at 17:41 were
+restored by hand after the install.
+
+
 ## 12. Risks
 
 | risk | what we do |
