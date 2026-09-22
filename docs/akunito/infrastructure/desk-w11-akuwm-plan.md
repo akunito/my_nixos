@@ -1601,6 +1601,29 @@ that landed 1 px inside their rectangle (1,43 3838x2116), within the 4 px
 origin rule.
 
 
+### 10.19 A new Zen window that no chord could reach (2026-09-22 16:17)
+
+Ctrl+N in Zen: the window came up floating where Zen put it, Hyper+Shift+F
+did nothing, and the next daemon restart tiled it. The traces had NO line for
+it: not adopted, not refused, not even enumerated by `query windows`. Birth
+measured with a 200 ms poll (`Temp\akuwm-diag\birth.ps1`): created invisible
+with its title at 250 ms, shown at 661 ms with `DWM_CLOAKED_APP` set (Firefox
+cloaks its window for the first paint), uncloaked at 863 ms. AkuWM read it at
+the EVENT_OBJECT_SHOW, refused it as `SelfCloaked`, and that reason was not
+one of the two the un-cloak re-check (`Temporary`) asked again about -- so
+the window stayed a refused record for ever, and every later event for it
+went to the refused record. Nothing to do with Zen's search popup.
+
+Fixed in `f4c4eb7`: `SelfCloaked` is temporary like `CloakedElsewhere` and
+`OtherVirtualDesktop`; the re-check also waits for the App cloak to be gone.
+Verified on the desk: adopted and tiled 0.5 s after the window appeared.
+`SelfCloakedBirthTests` (4): adopted when the cloak lifts through the
+single-window read and through a full sync; a window that stays cloaked by
+itself (tray) is left alone; App and Shell cloaks together wait for both.
+892 tests. `query windows --all` was the tool that showed it: the CLI's own
+enumeration listed the window as manageable while the daemon's did not.
+
+
 ## 12. Risks
 
 | risk | what we do |
