@@ -38,18 +38,6 @@ let myScript = ''
         fi
         ''+userSettings.dotfilesDir+''/pull.sh;
         exit 0;
-      elif [ "$1" = "harden" ]; then
-        if [ "$#" -gt 1 ]; then
-          echo "Warning: The 'harden' command has no subcommands (no $2 subcommand)";
-        fi
-        ''+userSettings.dotfilesDir+''/harden.sh;
-        exit 0;
-      elif [ "$1" = "soften" ]; then
-        if [ "$#" -gt 1 ]; then
-          echo "Warning: The 'soften' command has no subcommands (no $2 subcommand)";
-        fi
-        ''+userSettings.dotfilesDir+''/soften.sh;
-        exit 0;
       elif [ "$1" = "gc" ]; then
         if [ "$#" -gt 2 ]; then
           echo "Warning: The 'gc' command only accepts one argument (collect_older_than)";

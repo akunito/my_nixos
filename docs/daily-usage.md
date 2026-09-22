@@ -23,8 +23,6 @@ status: published
 | `aku gc` | Interactive garbage collection |
 | `aku gc 30d` | Delete Nix store entries older than 30 days |
 | `aku gc full` | Delete everything unused |
-| `aku harden` | Make system config files read-only |
-| `aku soften` | Relax file permissions for editing |
 
 ## Common Operations
 
@@ -91,14 +89,6 @@ The `maintenance.sh` script handles scheduled cleanup:
 
 Defaults: keeps last 6 system generations, 4 Home Manager generations, removes user generations older than 15 days.
 
-### File permissions
-
-```bash
-aku soften     # Before editing system files
-# make changes...
-aku harden     # After editing
-```
-
 ## Script Reference
 
 Full documentation: [Scripts Reference](scripts/README.md)
@@ -114,7 +104,6 @@ Full documentation: [Scripts Reference](scripts/README.md)
 | `upgrade.sh` | Update + sync |
 | `pull.sh` | Git fetch + merge |
 | `maintenance.sh` | Generation cleanup + GC |
-| `harden.sh` / `soften.sh` | File permission management |
 | `handle_docker.sh` | Stop Docker containers before rebuild |
 | `deploy.sh` | TUI-based remote deployment |
 

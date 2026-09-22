@@ -175,9 +175,6 @@ else
     SUDO_CMD="sudo_exec"
 fi
 
-# Track file hardening state for cleanup on early exit
-FILES_HARDENED=false
-
 # Sudo keepalive state (optional)
 SUDO_KEEPALIVE_PID=""
 
@@ -222,21 +219,6 @@ echo "" >> "$LOG_FILE"
 echo "================================================================================" >> "$LOG_FILE"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] === install.sh started (profile: ${2:-unknown}) ===" >> "$LOG_FILE"
 echo "================================================================================" >> "$LOG_FILE"
-
-# ======================================== Cleanup Handler ======================================== #
-
-# Cleanup function to soften files on early exit if they were hardened
-cleanup_on_exit() {
-    if [ "$FILES_HARDENED" = true ]; then
-        echo -e "\n${YELLOW}Cleaning up: Softening files due to early exit...${RESET}" >&2
-        $SUDO_CMD "$SCRIPT_DIR/soften.sh" "$SCRIPT_DIR" || true
-    fi
-}
-
-# Set up EXIT trap to automatically cleanup on any exit (errors, Ctrl+C, etc.)
-# Note: Only trap EXIT, not INT/TERM, as EXIT trap is automatically triggered
-# for all exit conditions including signals in POSIX shells
-trap cleanup_on_exit EXIT
 
 # Keep sudo timestamp alive while this script runs (prevents mid-run reprompts)
 sudo_keepalive_start() {
@@ -563,12 +545,6 @@ update_repository_safe() {
         HAS_CHANGES=true
     fi
     
-    # Soften files for git operations
-    $SUDO_CMD "$SCRIPT_DIR/soften.sh" "$SCRIPT_DIR" || {
-        echo -e "${RED}✗ Failed to soften files for git operations${RESET}"
-        return 2
-    }
-    
     # Stash local changes if any
     if [ "$HAS_CHANGES" = true ]; then
         echo -e "${CYAN}Stashing local changes...${RESET}"
@@ -585,7 +561,6 @@ update_repository_safe() {
         if [ "$HAS_CHANGES" = true ]; then
             git -C "$SCRIPT_DIR" stash pop >/dev/null 2>&1 || true
         fi
-        $SUDO_CMD "$SCRIPT_DIR/harden.sh" "$SCRIPT_DIR" || true
         return 2
     fi
     
@@ -597,12 +572,7 @@ update_repository_safe() {
             echo -e "${YELLOW}  Review the repository state manually${RESET}"
         fi
     fi
-    
-    # Harden files
-    $SUDO_CMD "$SCRIPT_DIR/harden.sh" "$SCRIPT_DIR" || {
-        echo -e "${YELLOW}⚠ Warning: Failed to harden files${RESET}"
-    }
-    
+
     return 0
 }
 
@@ -994,26 +964,6 @@ generate_root_ssh_keys_for_ssh_server_on_boot() {
     esac
 }
 
-# Permissions for files that should be owned by root
-hardening_files() {
-    local SCRIPT_DIR=$1
-    local SUDO_CMD=$2
-    echo -e "\nHardening files..."
-    $SUDO_CMD $SCRIPT_DIR/harden.sh $SCRIPT_DIR
-    # Update state tracking immediately after successful hardening
-    FILES_HARDENED=true
-}
-
-# Temporarily soften files for Home-Manager
-soften_files_for_home_manager() {
-    local SCRIPT_DIR=$1
-    local SUDO_CMD=$2
-    echo -e "\nSoftening files for Home-Manager..."
-    $SUDO_CMD $SCRIPT_DIR/soften.sh $SCRIPT_DIR
-    # Update state tracking immediately after successful softening
-    FILES_HARDENED=false
-}
-
 maintenance_script() {
     local SCRIPT_DIR=$1
     local SILENT_MODE=$2
@@ -1209,8 +1159,13 @@ else
     open_hardware_configuration_nix $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
 fi
 
-# Hardening files to Rebuild system
-hardening_files $SCRIPT_DIR $SUDO_CMD
+# The repo stays owned by the user for the whole run. It used to be chowned to
+# root here (harden.sh) and back before Home Manager (soften.sh): every git in
+# this directory by the user died with "dubious ownership" for the length of
+# the rebuild, and a second deploy landing in that window failed (VPS_PROD,
+# 2026-09-22). Root reads the flake fine either way — sudo exports SUDO_UID and
+# git accepts the caller's files; the systemd weekly update adds its own
+# safe.directory (autoSystemUpdate.sh). Retired 2026-09-22.
 
 # Rebuild system
 if [ "$BOOT_MODE" = true ]; then
@@ -1356,22 +1311,15 @@ fi
 # duplicate work or fail. Skip them; user must reboot then re-run install.sh
 # (without -b) to apply HM and hooks on the new generation.
 if [ "$BOOT_MODE" = true ]; then
-    # Soften files so the next deploy can `git reset --hard` cleanly.
-    # The cleanup trap would also do this, but we want a successful exit (0).
-    soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
     echo -e "\n${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo -e "${YELLOW}BOOT mode: new system staged for next reboot.${RESET}"
     echo -e "${YELLOW}  Home Manager + post-sync hooks SKIPPED.${RESET}"
     echo -e "${YELLOW}  Reboot now, then re-run install.sh WITHOUT -b to apply them.${RESET}"
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    trap - EXIT
     notify_deploy ok "boot mode: new system staged for the next reboot, home-manager skipped"
     echo -e "\n${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${RESET} Installation script finished (BOOT mode)"
     exit 0
 fi
-
-# Temporarily soften files for Home-Manager
-soften_files_for_home_manager $SCRIPT_DIR $SUDO_CMD
 
 # Install and build home-manager configuration
 echo -e "\n${CYAN}Installing and building home-manager...${RESET} "
@@ -1456,11 +1404,6 @@ fi
 
 # Ending menu
 ending_menu $SCRIPT_DIR $SUDO_CMD $SILENT_MODE
-
-# Disable cleanup on successful completion to preserve final file state
-FILES_HARDENED=false
-# Clear the EXIT trap to prevent cleanup from running
-trap - EXIT
 
 if [ -n "${DEPLOY_WARN:-}" ]; then
     notify_deploy warn "$DEPLOY_WARN"
