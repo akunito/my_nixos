@@ -175,7 +175,12 @@ if ! $config_only; then
   bash "$here/fork-suite.sh" unit "$ref" || fail_out "L1 unit tests"
   bash "$here/fork-suite.sh" build "$ref" || fail_out "L0 build gate"
   sha=$(git -C "$REPO" rev-parse --short HEAD)
-  bundle=$REPO/apps/web/build/client
+  # Stage the bundle OUTSIDE the checkout: every later fork-suite command (the E2E step) checks
+  # the tree out again and `git clean -fdx`s it, which deletes apps/web/build. Deploying straight
+  # from the repo worked on dev and then died on the way to prod.
+  bundle=$HOME/.cache/plane-tests/bundle
+  rsync -a --delete "$REPO/apps/web/build/client/" "$bundle/" || fail_out "staging the built bundle"
+  log "  bundle staged at $bundle ($(find "$bundle" -type f | wc -l) files)"
 fi
 
 # ---------------------------------------------------------------- 2. dev + the full suite
