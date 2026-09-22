@@ -1459,6 +1459,52 @@ Commits `838c005..f889207`, 858 tests.
   across screens is stamped as having crossed, so the DPI rescale that
   follows is undone: the terminals came back 645x481, not 581x400.
 
+### 10.16 The bar is never measured: the work area is (2026-09-22)
+
+How AkuWM knows where the taskbar is: it does not. Every bar on Windows -- the
+shell's taskbar (on this desk moved to the TOP by Windhawk's `taskbar-on-top`
+mod, 28 logical px tall, its tray window reports 0x0), Zebar when it docks,
+anything that calls `SHAppBarMessage(ABM_SETPOS)` -- reserves an edge with the
+shell, and the shell subtracts all of them and publishes what is left as each
+monitor's `rcWork`. `Win32Monitors.Read` copies that into
+`MonitorSnapshot.WorkArea`, `DeskMonitor.TilingArea` IS that rectangle, and
+the layout tree fills it. A bar on another edge, thicker, on one screen only,
+per-monitor or auto-hidden is therefore just a different work area; nothing
+in AkuWM knows the word taskbar apart from `ITaskbarList2::MarkFullscreenWindow`.
+
+How a change reaches it, measured on the desk:
+
+| change | how it arrived | latency | what moved |
+|---|---|---|---|
+| 80 px app bar registered on the LEFT of the main screen | `WM_SETTINGCHANGE` / `SPI_SETWORKAREA` broadcast | 7 ms | the shown tile went 0,42 3840x2118 -> 80,42 3760x2118 |
+| bar removed | same | 5 ms | back to 0,42 3840x2118 |
+| taskbar set to auto-hide (`ABM_SETSTATE`) | same, once per monitor (3 broadcasts 8-200 ms apart; the first one arrives BEFORE the shell has updated `rcWork`) | 10 ms | all three work areas grew to their bounds; the tile took the whole screen |
+| auto-hide off | same | 15 ms | all three back |
+
+The 4 s `ScreenWatch` poll never fired for any of them. It did in the previous
+build, spuriously: the notified path called `SetMonitors` but never re-primed
+the poller, so the next idle pass compared against a stale list, logged "the
+screens changed without a notification" and laid the desk out a second time.
+Fixed the same day (`_screens.Prime` on the notified path, plus the work areas
+in the log line so the next reader sees which edge moved).
+
+Windows 11 cannot put its taskbar on a side (Settings offers bottom only;
+Windhawk adds top). Height changes through Windhawk's `taskbar-icon-size` mod
+are re-reservations by explorer and take the same broadcast path as the rows
+above. Hidden workspaces are not touched by a bar change; they are laid out
+against the new area the moment they are shown, which is what the tests pin.
+
+`BarAuditTests` (18): a single tile fills exactly the work area with the bar on
+any edge, at any thickness, or hidden; two tiles share it without touching the
+bar; a bar moved on the fly re-lays the tiles out in the next turn and the turn
+after has nothing to do; a bar on one screen leaves the other alone; the
+second screen can carry its own; floating windows keep their place as a
+fraction of the work area (a bar that moves from top to bottom moves them up by
+its height and nothing else); a system-DPI window beside a side bar starts at
+the work area, never inside the bar; hidden workspaces get the new area when
+shown; the poller sees a bar that grew on either screen. 878 tests.
+
+
 ## 12. Risks
 
 | risk | what we do |
