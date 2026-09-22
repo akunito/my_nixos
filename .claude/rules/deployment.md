@@ -105,7 +105,10 @@ Add `-u` to any row only when the task is a flake.lock update.
 ssh -A akunito@192.168.8.96                  # DESK
 ssh -A -p 56777 akunito@100.64.0.6           # VPS_PROD (via Tailscale)
 ssh -A -p 56777 akunito@172.26.5.155         # VPS_PROD (via WireGuard)
-ssh -A akunito@192.168.20.200                # NAS_PROD
+ssh -A akunito@100.64.0.1                    # NAS_PROD (Tailscale, default). LAN leg: 192.168.8.206.
+                                             # NOT 192.168.20.200 unless the caller has its own VLAN 100 leg:
+                                             # the NAS answers 192.168.8.x via enp10s0, so a request routed in by
+                                             # pfSense to bond0 returns asymmetrically and rp_filter drops it.
 ssh admin@192.168.8.1                        # pfSense
 ```
 
