@@ -1863,6 +1863,12 @@ Alt+drag has and what no move of Windows' or of the application's own has.
 An application that moves itself is put back; the patience clock ends the
 argument as before.
 
+Verified with the idle sleep at 19:22 (the burst of three lists again):
+every window in its workspace and rectangle, the Zen tiles in their order;
+the one difference a hidden tile 1 px inside its rectangle. Two of five
+idle runs produced no burst at all (the displays slept without dropping off
+the bus); a run with zero "screens changed" lines proves nothing.
+
 
 ## 12. Risks
 
