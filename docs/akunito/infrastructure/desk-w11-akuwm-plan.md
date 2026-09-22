@@ -1746,6 +1746,34 @@ or powers the monitors off to try it; the five windows parked at 17:41 were
 restored by hand after the install.
 
 
+### 10.23 The outline: a border around a window AkuWM may not touch (2026-09-22 18:30)
+
+Purple (an elevated WPF launcher) had no border. UIPI refuses every DWM
+attribute and every SetWindowPos from a process without uiAccess
+(0x80070006), which is also why an elevated window opens as a tile and stays
+the size it chose. Diego: floated, it can be moved with Alt+drag -- because
+AutoHotkey runs as `AutoHotkey64_UIA`, WITH uiAccess. That is the whole
+difference, and it is the pending item from 10.14: the signed install in
+Program Files gives AkuWM the same right, and with it tiling, moving and the
+DWM border on elevated windows work as on any other. No injection either
+way.
+
+Until then, and for any window nobody should touch (a game with an
+anti-cheat), `641f449`: `Redraw.Outline`. A popup window of AkuWM's own per
+target -- WS_EX_TOOLWINDOW, WS_EX_NOACTIVATE, WS_EX_TRANSPARENT plus
+HTTRANSPARENT, shaped by a region that is the 2 px (DPI-scaled) frame band
+only, painted by its background brush -- placed directly above the target
+and following its rectangle; taken down when the target hides, minimises,
+goes fullscreen, loses the focus with `other_border: none`, or closes.
+Drawn on `DecorationRefused`, which a re-assert no longer clears (that
+blinked it off for 300 ms). Lives on the message-window thread: the wm
+thread is a work queue that would never deliver a WM_ERASEBKGND.
+Inserting after the window above the target is refused when that window is
+elevated (Purple's own popup); the top of the band is the fallback.
+Fullscreen never gets one (Diego: "en fullscreen no nos hace falta"). Nine
+tests, 929. Verified: the purple frame around Purple in a screenshot.
+
+
 ## 12. Risks
 
 | risk | what we do |
