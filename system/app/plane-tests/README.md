@@ -139,6 +139,11 @@ version (1.61.1) in the fork's catalog. Specs live in the fork: `apps/web/tests/
 Verified 2026-09-17 on the VPS (P6): `unit` 8 files / 140 tests green (45 s), `build` L0-01…04 green (1.5 min, 2 type
 errors = baseline), `e2e` 200 passed / 20 skipped (12.3 min), visual 11 baselines generated and compared.
 
+The browsers are built from the dotfiles flake at its **committed** revision, not the working tree:
+`install.sh` re-locks `flake.lock` per machine, and a drifted lock once handed the suite Playwright
+1.63's browsers under a 1.61.1 pin. The runner asserts `@playwright/test` == `playwright-driver.version`
+before it starts, so a future drift fails in seconds with the two versions named.
+
 **Headless WebKit needs a software EGL** on this GPU-less server (`Could not create WPE EGL display`);
 the runner passes nixpkgs' Mesa (llvmpipe) through `__EGL_VENDOR_LIBRARY_DIRS` / `LIBGL_DRIVERS_PATH` /
 `LD_LIBRARY_PATH` for the run only — no `hardware.graphics` change on the VPS.

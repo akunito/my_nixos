@@ -167,6 +167,7 @@ error boundary / console error.
 | P7-3 | `run.sh` passed arguments to the VPS as one unquoted string, so `-g "QA Locked"` arrived as two words and Playwright found no tests | each argument is `printf '%q'`-quoted now |
 | P7-4 | A locked global view rendered nothing once in ~600 test runs and turned a deploy red; it passed 3/3 immediately after | Playwright retries once, and the deploy prints + reports anything that only passed on the retry |
 | P7-5 | `infra-notify` needs a root-only secret, but the infra-bot's relay accepts `POST /deploy` from any tailnet peer — including the VPS itself | that is the transport; no token on this path |
+| P7-6 | Running `install.sh` on the VPS re-locked `flake.lock` in its working tree, so nixpkgs jumped to Playwright 1.63 (browsers 1243) under a suite pinned to 1.61.1 (1228). The first prod deploy died 5 min in with "Executable doesn't exist" — a message that says nothing about the cause | the runner now builds the browsers from the dotfiles flake at its **committed** revision, and asserts `@playwright/test` == `playwright-driver.version` in seconds before starting |
 
 ## 8b. P6 findings (2026-09-17)
 

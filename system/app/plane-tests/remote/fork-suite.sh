@@ -68,8 +68,24 @@ case "$cmd" in
     log "reseeding qa (tests start from known data)"
     bash "$here/seed-qa.sh" >/dev/null || die "seed failed"
     trap 'log "reseeding qa after E2E"; bash "$here/seed-qa.sh" >/dev/null 2>&1 || echo "WARN: reseed failed" >&2; rm -rf "$PT_TMP"' EXIT
-    nixpkg() { (cd "$HOME/.dotfiles" && nix build --no-link --print-out-paths --impure --expr \
-      "let f = builtins.getFlake (toString ./.); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.$1" 2>/dev/null | head -1); }
+    # The browsers come from the dotfiles flake at its COMMITTED revision, never from the working
+    # tree: install.sh re-locks flake.lock per machine, and a drifted lock silently handed us
+    # Playwright 1.63's browsers (revision 1243) for a suite pinned to 1.61.1 (1228). The failure
+    # then arrives 5 minutes in as "Executable doesn't exist", which says nothing about the cause.
+    dotfiles_rev=$(git -C "$HOME/.dotfiles" rev-parse HEAD)
+    nixpkg() { nix build --no-link --print-out-paths --impure --expr \
+      "let f = builtins.getFlake \"git+file://$HOME/.dotfiles?rev=$dotfiles_rev\"; in f.inputs.nixpkgs.legacyPackages.x86_64-linux.$1" 2>/dev/null | head -1; }
+    nixeval() { nix eval --raw --impure --expr \
+      "let f = builtins.getFlake \"git+file://$HOME/.dotfiles?rev=$dotfiles_rev\"; in f.inputs.nixpkgs.legacyPackages.x86_64-linux.$1" 2>/dev/null; }
+
+    # Contract: the npm package decides which browser revision it looks for, so it must be the
+    # exact version nix builds. Check it in seconds instead of debugging a launch failure.
+    want=$(sed -n 's/^ *"@playwright\/test": *"\([0-9.]*\)".*/\1/p' "$repo/pnpm-workspace.yaml" | head -1)
+    have=$(nixeval playwright-driver.version)
+    [ -n "$want" ] && [ -n "$have" ] || die "could not read the Playwright versions (fork: '$want', nix: '$have')"
+    [ "$want" = "$have" ] || die "Playwright mismatch: the fork pins $want, nixpkgs at dotfiles $dotfiles_rev has $have.
+Bring them back together: bump @playwright/test in the fork's pnpm-workspace.yaml to $have, or
+deploy the dotfiles commit whose nixpkgs still has $want."
     browsers=$(nixpkg playwright-driver.browsers)
     # Headless WebKit (iPhone project) needs an EGL display; this GPU-less server has no
     # hardware.graphics, so give it nixpkgs' software Mesa (llvmpipe) for this run only.
