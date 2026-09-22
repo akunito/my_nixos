@@ -1990,6 +1990,22 @@ so `reset_desk` now puts the pointer at its centre before every case, as
 passed 30/32 between the two full runs: the pointer's resting place
 after the previous suite decided the outcome, not the code.
 
+**Where the suites stand on the signed build** (22:27 → 22:50, AkuWM
+`8ed9758` + the memory fix below): `tests/wm` **144/155**, the eleven the
+known groups of 10.13 (the four around a game, the workspace assumptions,
+"stacked, not side by side", the repair setups, the display-change case).
+`tests/fullscreen` **43/48** once the elevated Administrator console used
+for the installs was moved off workspace 12: with uiAccess it is a managed
+floating window now, raised over the tiles on every focus -- 30 times
+during one run, above every test game, and every present mode read
+composed. Of the five left: `startmax` 1-2 were the application memory
+tiling a window born maximised because the last fliptest closed tiled --
+fixed, a screen-covering birth is never recalled (`960` tests), and the
+fullscreen runner forgets the memory before each case as `tests/wm` does;
+`topmost` is the band case of 10.21 (flaky); the two `hover` cases had
+the NordVPN window under the pointer. Environment, all of it, once the
+memory fix is in.
+
 
 ## 12. Risks
 

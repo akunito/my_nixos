@@ -22,7 +22,16 @@ pass=0; fail=0
 ok()  { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 # Every case measures real frames, so the previous window must be gone first:
 # PresentMon filters by process name and would add the leftover's frames too.
+# AkuWM's own CLI (the pipe): the application memory (plan 10.26) learns
+# from the windows this suite drives, so it is cleared before every case.
+A=""
+for c in /mnt/c/Users/diego/AppData/Local/Programs/AkuWM/akuwm.exe /mnt/c/Users/diego/AppData/Local/Temp/akuwm-m2/akuwm-cli.exe; do
+  [ -x "$c" ] && { A="$c"; break; }
+done
 settle() {
+  if [ -n "$A" ]; then
+    for app in fliptest charmap notepad; do "$A" forget-app "$app" >/dev/null 2>&1; done
+  fi
   # The pointer decides the focus, and the focused workspace decides which
   # monitor a new window is born on: every case here is about the MAIN
   # monitor, so the pointer goes back there between cases (a window started
