@@ -1505,6 +1505,51 @@ the work area, never inside the bar; hidden workspaces get the new area when
 shown; the poller sees a bar that grew on either screen. 878 tests.
 
 
+### 10.17 A monitor disabled from Settings, and the window that came back a game (2026-09-22)
+
+Diego disabled the vertical screen in Settings > Display and enabled it again.
+Windows, not AkuWM, did three things (its own "Minimize windows when a monitor
+is disconnected" and "Remember window locations", both on by default): every
+window of that screen was MINIMISED at 15:37:14 (that is why they appeared on
+the main taskbar), restored at 15:37:32 at the remembered rectangle -- Brave,
+maximised, at the monitor's FULL bounds because the bar had not reserved its
+strip yet -- and parked again a second later by the second phase of the
+display change. `layout.when_monitor_leaves: leave` kept AkuWM out of it,
+as configured.
+
+Then Diego clicked Brave in the taskbar. It came back un-maximised, 16 x 44 px
+short of the bounds, and AkuWM still had it as fullscreen (a maximised window
+is fullscreen by design, and the state survives the taskbar): the un-minimise
+path never re-checked whether the window still covered the screen. Once
+fullscreen, Compute placed it over the bounds, marked it to the taskbar, and
+took its border off; a fullscreen window answers no move or float, so "no
+puedo moverla ni nada". The rectangle the desk restored it at was also within
+the 32 px placement slack of the old tile, which would have left it 26 px into
+the bar had it been a tile.
+
+Fixed in `6a2c56e`, `MonitorReturnTests` (4), 882 tests:
+
+- back from the taskbar, a window keeps fullscreen only if it still covers the
+  screen, or sits within the slack of a placement that itself covered the
+  screen (a console a cell short); the tile rectangle from before it was
+  maximised is no evidence. A game handed back whole stays fullscreen.
+- the placement is forgotten on the way back, so the tile is put exactly.
+- `fetch-windows` (Hyper+Shift+F5) did NOTHING when a screen was away: it
+  walked the present monitors only. It now walks every known role, lends the
+  minimised windows too (a minimised window is in no layer of its workspace,
+  so `workspace.Windows` never listed them) and wakes them; the shell is asked
+  to restore them and they tile on the focused screen. The chord toggles: a
+  second press, or the screen's return with `restore`, sends them back.
+- a parked window restored from the taskbar while its screen is away is
+  shown where Windows put it (pinned by test; it goes home when the screen
+  returns).
+- `hyper-desktops.ahk`: `RepairAfterDisplayChange` (GlazeWM-era) sent
+  `move-workspace` ten times per display change; skipped under AkuWM.
+
+Not verified on the desk yet: the disable/enable cycle itself, and the chord
+while the screen is away -- both need Diego at the Settings page.
+
+
 ## 12. Risks
 
 | risk | what we do |

@@ -80,6 +80,11 @@ OnMessage(0x7E, (wp, lp, *) => (FileAppend(A_Now " displaychange " (lp & 0xFFFF)
 ; repair runs once, six seconds after the last change in a burst.
 RepairAfterDisplayChange() {
     Dbg("repair: display change settled, " MonitorGetCount() " monitor(s)")
+    ; AkuWM keeps every workspace on the monitor its role names and answers
+    ; move-workspace with a warning; this repair sent it ten times per display
+    ; change (2026-09-22). Fetching a screen's windows is Hyper+Shift+F5.
+    if (wmPipe)
+        return
     RepairLayout(false)
     SetTimer(() => JournalSnapshot(), -8000)   ; record the repaired layout
 }
