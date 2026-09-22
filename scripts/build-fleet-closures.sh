@@ -69,7 +69,9 @@ for p in $PROFILES; do
     t=$(date +%s)
     echo "=== $p ==="
     # --keep-going: one broken package must not hide the rest of the closure.
-    if nix build --impure --no-link --keep-going \
+    # --print-out-paths: the two closures' roots, so a client can be pointed at
+    # them (`nix-store -r <path>` there must say "from 'http://100.64.0.15:5000'").
+    if nix build --impure --no-link --keep-going --print-out-paths \
             "$FLAKE#nixosConfigurations.$p.config.system.build.toplevel" \
             "$FLAKE#homeConfigurations.$p.activationPackage"; then
         ok="$ok $p"; echo "=== $p OK ($(( $(date +%s) - t ))s)"
