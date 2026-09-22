@@ -2,12 +2,12 @@
     "theme": "akuwm",
     // AkuWM's focused-window colour, painted by the Terminal itself: it resets
     // DWMWA_BORDER_COLOR on every activation, so a colour set from outside
-    // never survives (measured 2026-09-22). unfocusedFrame "default" keeps the
-    // usual grey when another window has the focus.
+    // never survives (measured 2026-09-22). The
+    // grey stays for the unfocused frame (the default when it is not named).
     "themes": [
         {
             "name": "akuwm",
-            "window": { "applicationTheme": "dark", "frame": "#C4A7E7", "unfocusedFrame": "default" }
+            "window": { "applicationTheme": "dark", "frame": "#C4A7E7" }
         }
     ],
   "_comment": "Merge into %LOCALAPPDATA%\\Packages\\Microsoft.WindowsTerminal_8wekyb3d8bbwe\\LocalState\\settings.json — NixOS-WSL registers the 'NixOS' profile itself; the default profile is 'NixOS ~/.dotfiles' = wsl-or-pwsh.ps1 (NixOS at ~/.dotfiles, PowerShell fallback when WSL cannot start). Look = DESK.",
