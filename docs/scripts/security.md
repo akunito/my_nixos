@@ -1,64 +1,27 @@
 ---
 id: scripts.security
-summary: Security scripts — harden.sh, soften.sh, cleanIPTABLESrules.sh for file permissions and firewall management
+summary: Security scripts — cleanIPTABLESrules.sh for firewall reset; harden.sh/soften.sh retired 2026-09-22
 tags: [scripts, security, permissions, firewall, hardening]
-related_files: [harden.sh, soften.sh, cleanIPTABLESrules.sh]
-date: 2026-02-15
+related_files: [cleanIPTABLESrules.sh, install.sh]
+date: 2026-09-22
 status: published
 ---
 
 # Security Scripts
 
-## harden.sh
+## harden.sh / soften.sh (retired 2026-09-22)
 
-**Purpose**: Makes system-level configuration files read-only for unprivileged users.
+They chowned `~/.dotfiles` (and `flake.nix`, `install.sh`, `system/`, `profiles/`) to root before
+`nixos-rebuild` and back to uid 1000 before Home Manager. `install.sh` left the tree user-owned on
+success, so the ownership only ever changed during a rebuild — protecting nothing at rest, while
+every `git` by the user in that window died with `dubious ownership` (two concurrent deploys hit it
+on VPS_PROD). Root never needed it: `sudo nixos-rebuild` exports `SUDO_UID` and git accepts the
+caller's files; the weekly root `autoSystemUpdate.sh` adds its own `safe.directory`. Both scripts
+also hardcoded uid 1000.
 
-**Usage**:
-```sh
-sudo ./harden.sh [path]
-# Or via aku
-aku harden
-```
-
-**What It Does**:
-- Changes ownership of system files to root (UID 0, GID 0)
-- Prevents unprivileged users from modifying:
-  - `system/` directory
-  - `profiles/*/configuration.nix` files
-  - `flake.nix` and `flake.lock`
-  - `patches/` directory
-  - Installation and update scripts
-
-**Security Note**: Assumes user has UID/GID 1000. After hardening, `nix flake update` requires root.
-
-**When to Use**:
-- After installation
-- After making configuration changes
-- Before leaving system unattended
-
-## soften.sh
-
-**Purpose**: Relaxes file permissions to allow editing by unprivileged user.
-
-**Usage**:
-```sh
-sudo ./soften.sh [path]
-# Or via aku
-aku soften
-```
-
-**What It Does**:
-- Changes ownership of all files to user (UID 1000, GID users)
-- Allows unprivileged user to edit all files
-
-**Security Warning**: After running this, unprivileged users can modify system configuration files, which may compromise system security after `nixos-rebuild switch`.
-
-**When to Use**:
-- Temporarily for git operations
-- When editing configuration files
-- Before running `pull.sh`
-
-**Important**: Always run `harden.sh` again after editing!
+The repo now stays owned by the user for the whole run. Any root-owned file under `~/.dotfiles`
+after a deploy is a bug (`find ~/.dotfiles -not -user $USER`). Secrets keep their own mode
+tightening in `install.sh` (`harden_secret_permissions`: `secrets/` 0700, `*.nix`/`*.txt` 0600).
 
 ## cleanIPTABLESrules.sh
 

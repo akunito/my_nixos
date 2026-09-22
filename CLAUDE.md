@@ -33,6 +33,8 @@ ssh -A user@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/
 
 **Workflow**: Make changes locally -> commit and push -> SSH to remote and run `git fetch && git reset --hard origin/main && ./install.sh ...`. NEVER edit files on the remote directly.
 
+**Flags**: `-s` = silent (always), `-d` on docker hosts (VPS/NAS/LXC), `-h` on LXC. `-u` **updates flake.lock** — never by default. **Never pipe the deploy chain through `tail`** (masks a failed `git fetch` as EXIT=0): log to a file, then check the node's `git rev-parse HEAD` == `origin/main`. One deploy per machine at a time. Details: `.claude/rules/deployment.md`.
+
 ## How code gets written (all repos, not just this one)
 
 Code here is read by Claude and the compiler, not by people. Write it that way.

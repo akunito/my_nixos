@@ -93,17 +93,6 @@ aku gc Xd          # Delete everything older than X days
 - `full` removes all unused packages
 - `Xd` removes packages older than X days
 
-#### Security Commands
-
-```sh
-aku harden         # Make system files read-only
-aku soften        # Relax file permissions (for editing)
-```
-
-**What it does**:
-- `harden` makes system-level config files read-only for unprivileged users
-- `soften` relaxes permissions for editing (use temporarily)
-
 ## Maintenance Script
 
 The `maintenance.sh` script automates system maintenance tasks.
@@ -283,36 +272,6 @@ Pulls from git repository.
 - Fetches from remote
 - Attempts to merge local changes
 - Useful for secondary systems
-
-## Security Scripts
-
-### harden.sh
-
-Makes system-level configuration files read-only.
-
-**Usage**:
-```sh
-./harden.sh
-```
-
-**What it does**:
-- Sets system files to read-only for unprivileged users
-- Prevents accidental modification of system configs
-- Run after installation or major changes
-
-### soften.sh
-
-Relaxes file permissions for editing.
-
-**Usage**:
-```sh
-./soften.sh
-```
-
-**What it does**:
-- Makes system files writable
-- Use temporarily for git operations or editing
-- Run `harden.sh` again after editing
 
 ## Automated Maintenance
 

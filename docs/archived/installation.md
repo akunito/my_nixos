@@ -154,14 +154,6 @@ sudo nixos-rebuild switch --flake ~/.dotfiles#DESK --impure
 nix run home-manager/master -- switch --flake ~/.dotfiles#DESK
 ```
 
-### 7. Harden System Files (Optional)
-
-```sh
-./harden.sh
-```
-
-This makes system-level configuration files read-only for unprivileged users.
-
 ## Post-Installation
 
 ### Verify Installation

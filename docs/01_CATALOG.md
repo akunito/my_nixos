@@ -76,7 +76,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
 - **system/app/docker-rootless-maintenance.nix**: Rootless Docker daemon maintenance — shared by every profile that sets *Enabled when:* `databases, Redis, Postfix`
 - **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
-- **system/app/docs-sites.nix**: Private-repo documentation sites, published from git without a system rebuild. *Enabled when:* `name: _: { isSystemUser = true; group = name; home = "/var/lib/${name}"; description = "${name} site publisher"; }`
+- **system/app/docs-sites.nix**: Private-repo documentation sites, published from git without a system rebuild. *Enabled when:* `name: _: { isSystemUser = true; group = name; # The git-crypt key file is shared between sites, so it cannot be owned by one # publisher at 0400. It belongs to group `docs-crypt` (0440) and every publisher # is a member — see the service doc for the one-time chgrp. extraGroups = [ "docs-crypt" ]; home = "/var/lib/${name}"; description = "${name} site publisher"; }`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
@@ -130,6 +130,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.postgresqlServerEnable or false`
 - **system/app/plane-bot.nix**: Plane Telegram bot (@aku_plane_bot) — runs next to Plane on VPS_PROD *Enabled when:* `bot + one Plane API token per person`
 - **system/app/plane-bot/package.nix**: The plane-bot package: python daemon + shared tgcommon, unit tests in checkPhase.
+- **system/app/plane-tests.nix**: Plane regression suite + `plane-deploy` (APLANE-7 / APLANE-14) — VPS_PROD only.
 - **system/app/portals.nix**: XDG Desktop Portal Configuration
 - **system/app/postfix-relay.nix**: Native Postfix Relay via SMTP2GO *Enabled when:* `systemSettings.postfixRelayEnable or false`
 - **system/app/postgresql.nix**: PostgreSQL Server Module *Enabled when:*
@@ -312,6 +313,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.homeBackupCallNextEnabled or false`
    - `systemSettings.remoteBackupEnable == true`
    - `systemSettings.backupMonitoringEnable or false`
+- **system/security/ssh-agent-windows.nix**: sshAgentWindowsBridge (NixOS-WSL only): SSH_AUTH_SOCK -> the Windows OpenSSH *Enabled when:* `npiperelay`
 - **system/security/sshd.nix**: Enable incoming ssh
 - **system/security/sudo.nix**: groups = [ "wheel" ]; *Enabled when:*
    - `systemSettings.sudoNOPASSWD == true`
@@ -394,6 +396,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:* `the attribute NAME`
 - **user/app/development/development-komi.nix**: Development tools and IDEs
 - **user/app/development/development.nix**: Development tools and IDEs
+- **user/app/development/dotnet.nix**: .NET toolchain for AkuWM (github.com/akunito/AkuWM), built from WSL on DESK_W11. *Enabled when:* `systemSettings.dotnetDevEnable or false`
 - **user/app/dmenu-scripts/networkmanager-dmenu.nix**: gui_if_available = <True or False> (Default: True)
 - **user/app/doom-emacs/doom.nix**: This block from https://github.com/znewman01/dotfiles/blob/be9f3a24c517a4ff345f213bf1cf7633713c9278/emacs/default.nix#L12-L34
 - **user/app/file-manager/file-manager.nix**: File manager configuration module
@@ -573,6 +576,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/audits/nas-nixos-audit-2026-04-15.md**: Post-migration audit of NixOS NAS — ZFS, network, disks, services, security, monitoring
 - **docs/akunito/infrastructure/audits/pfsense-audit-2026-02-04.md**: Security, performance, and reliability audit of pfSense firewall
 - **docs/akunito/infrastructure/audits/truenas-docker-security-audit-2026-03-06.md**: TrueNAS Docker rootless migration and security hardening audit
+- **docs/akunito/infrastructure/desk-w11-akuwm-plan.md**: **Status**: plan v2, audited 2026-09-20 and again 2026-09-22 (10.14). **M0 and M1 landed 2026-09-20** (see
 - **docs/akunito/infrastructure/desk-w11-glazewm-testing.md**: Knowledge base started 2026-09-17 when Aion 2 ran badly under GlazeWM. Two uses:
 - **docs/akunito/infrastructure/desk-w11-wsl.md**: DESK_W11 runbook — Windows 11 dual boot on the DESK box with NixOS-WSL; what lives on the Windows side, what lives in WSL, and the exact bootstrap order
 - **docs/akunito/infrastructure/services/akucraft-ai.md**: LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves
@@ -726,6 +730,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Handoffs / Akunito
 
 - **docs/handoffs/akunito/2026-09-02-main.md**: - `lib/defaults.nix` — `swayUseSwayfx` (default `true`), `ollamaServerEvictVram` + 7 knobs, `vramSamplerEnable`
+- **docs/handoffs/akunito/2026-09-22-akuwm-nordvpn-modal.md**: NordVPN 8.11.1.0 → Settings → Split tunneling → **Add apps**. The modal:
 
 ### Komi
 
@@ -766,7 +771,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/scripts/README.md**: Complete reference for all shell scripts — installation, sync, update, maintenance, security, and utilities
 - **docs/scripts/installation.md**: Installation and deployment scripts — install.sh, deploy.sh, set_environment.sh, flatpak-reconcile.sh
 - **docs/scripts/maintenance.md**: Maintenance and automated update scripts — maintenance.sh, autoSystemUpdate.sh, autoUserUpdate.sh
-- **docs/scripts/security.md**: Security scripts — harden.sh, soften.sh, cleanIPTABLESrules.sh for file permissions and firewall management
+- **docs/scripts/security.md**: Security scripts — cleanIPTABLESrules.sh for firewall reset; harden.sh/soften.sh retired 2026-09-22
 - **docs/scripts/sync-update.md**: Synchronization and update scripts — sync.sh, sync-system.sh, sync-user.sh, update.sh, upgrade.sh, pull.sh
 - **docs/scripts/utility.md**: Utility and helper scripts — fix-terminals, generate_docs_index.py, handle_docker.sh, Plasma/Sway/Ranger helpers
 

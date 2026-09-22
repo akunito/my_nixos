@@ -88,7 +88,7 @@ Use this file to select the best node ID(s), then read the referenced docs/files
 | scripts | Complete reference for all shell scripts — installation, sync, update, maintenance, security, and utilities | scripts, automation, installation, maintenance, deployment | *.sh |
 | scripts.installation | Installation and deployment scripts — install.sh, deploy.sh, set_environment.sh, flatpak-reconcile.sh | scripts, installation, deployment, flatpak | install.sh |
 | scripts.maintenance | Maintenance and automated update scripts — maintenance.sh, autoSystemUpdate.sh, autoUserUpdate.sh | scripts, maintenance, cleanup, garbage-collection, automation | maintenance.sh |
-| scripts.security | Security scripts — harden.sh, soften.sh, cleanIPTABLESrules.sh for file permissions and firewall management | scripts, security, permissions, firewall, hardening | harden.sh |
+| scripts.security | Security scripts — cleanIPTABLESrules.sh for firewall reset; harden.sh/soften.sh retired 2026-09-22 | scripts, security, permissions, firewall, hardening | cleanIPTABLESrules.sh |
 | scripts.sync-update | Synchronization and update scripts — sync.sh, sync-system.sh, sync-user.sh, update.sh, upgrade.sh, pull.sh | scripts, sync, update, upgrade, flake | sync.sh |
 | scripts.utility | Utility and helper scripts — fix-terminals, generate_docs_index.py, handle_docker.sh, Plasma/Sway/Ranger helpers | scripts, utility, helper, docker, themes, plasma, sway, ranger | handle_docker.sh |
 | security.git-crypt | Git-crypt encryption for sensitive configuration data (domains, IPs, credentials) | git-crypt, secrets, encryption, security, domains, credentials | secrets/*.nix |
