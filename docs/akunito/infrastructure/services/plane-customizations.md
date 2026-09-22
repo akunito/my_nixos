@@ -20,8 +20,8 @@ Companion skill: `/plane-upgrade` (`.claude/commands/plane-upgrade.md`).
 | Dev | `plane-dev.local.akunito.com` · `~/.homelab/plane-dev/` · `plane-dev-aio` · port 3007, own pg/redis/mq/minio |
 | Fork | `~/Projects/plane-up` (DESK), remote `origin git@github.com:akunito/plane-up.git`, upstream `makeplane/plane` |
 | Current fork branch | `akunito/mobile-v1.4.1` (29 commits, pushed to origin) |
-| Deployed version | **v1.4.1 on prod and dev** since 2026-08-13 (prod image `v1.4.1-novol`, frontend `web-override-v141`) |
-| Rollback | image `v1.3.1-novol` + `docker-compose.yml.bak-v1.3.1` + `web-override/` all retained on the VPS; DB dump `~/plane_backup_pre_upgrade_20260813_final.dump` |
+| Deployed version | **Our own image** since 2026-09-22 (APLANE-15): `plane-aku/aio-community:<fork sha>`, built from `akunito/plane-up` by `plane-deploy`. Nothing is patched at container start and no code is bind-mounted; app version is still v1.4.1. |
+| Rollback | `plane-deploy --rollback prod` swaps back to the tag in `~/.homelab/plane/.previous-image` (the pre-P8 upstream image is recorded there, with `docker-compose.yml.bak-p8-*` next to it). Older: `docker-compose.yml.bak-v1.3.1` + DB dump `~/plane_backup_pre_upgrade_20260813_final.dump` |
 | Internal access | prod/dev are behind **Cloudflare Access** — use the `.local` Tailscale hostnames for API/automation |
 
 ---
@@ -37,7 +37,8 @@ docker-compose.yml
   volumes:
     ./Caddyfile          -> /app/proxy/Caddyfile                                  :ro
     ./start-override.sh  -> /app/start-override.sh                                :ro
-    ./web-override-fork  -> /app/web                                              :ro   ← built frontend
+    (since APLANE-15 nothing is bind-mounted but /app/data and /app/logs — the frontend,
+     the Pocket ID adapter, the Caddyfile and the two API patches are all in our image)
     ./gitea-pocketid.py  -> .../authentication/provider/oauth/gitea.py            :ro
 ```
 

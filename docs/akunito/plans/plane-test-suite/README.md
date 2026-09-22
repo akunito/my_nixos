@@ -9,7 +9,7 @@ status: draft
 
 # Plan: Plane fork regression suite
 
-**Status:** P1–P7 done (P7 2026-09-22). **`plane-deploy` on the VPS is now the only way Plane changes**, and prod runs the fork's `798bc5cf3` deployed through it. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P8 (own images from the fork). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
+**Status:** P1–P8 done (P7–P8 2026-09-22). **`plane-deploy` on the VPS is now the only way Plane changes**, and since P8 **prod runs our own image built from the fork** (`plane-aku/aio-community:6547899b9`) — nothing is patched at container start and no code is bind-mounted. Fork specs in `plane-up` `apps/web/tests/{unit,e2e}`; runner `run.sh unit|build|e2e` on the VPS (L1 140 tests / 8 files, **L2 352 backend tests**, L4 12/12, E2E 200 passed / 20 skipped, ~13 min; VR baselines live on the runner). Typecheck baseline **2** (was 27). Next: P9 (docs + the security-review procedure that replaces `/plane-upgrade`). Epic **APLANE-7** (phases APLANE-8…16, follow-ups APLANE-17…20). Test catalogue: [`catalog.md`](catalog.md).
 
 **Goal:** every customisation of our Plane (frontend fork, backend patches, instance config) has an
 automated test, and the **whole suite runs on every deploy** through a single `plane-deploy`
@@ -119,7 +119,7 @@ Instance-config changes (god-mode/shell) also go through `plane-deploy --config-
 | **P5** (APLANE-12) ✅ | vitest + Playwright + VR in the fork; L1, L4, L5 for the **current** features | Full suite green on dev |
 | **P6** (APLANE-13) ✅ | Feature changes: multi-sort per view; pins by UUID + deleted/archived/no-access — each with its tests | Suite green |
 | **P7** (APLANE-14) ✅ | `plane-deploy` (dev → gate → prod → smoke → rollback → Telegram); CLAUDE.md rule | One real frontend deploy through it |
-| **P8** (APLANE-15) | Own images from the fork: port Fix 1/2/2b/3/4, Caddyfile, OIDC adapter, session env into code; L2 pytest | Same suite green on the new images, dev then prod |
+| **P8** (APLANE-15) ✅ | Own images from the fork: port Fix 1/2/2b/3/4, Caddyfile, OIDC adapter into code; L2 pytest | Same suite green on the new images, dev then prod |
 | **P9** (APLANE-16) | Replace `/plane-upgrade` with a security-review procedure; update `plane-customizations.md` (A-11, F7, F8, decisions) | Docs + skill merged |
 
 P4–P5 come **before** P8 on purpose: the suite is the safety net for the image migration, the
@@ -158,6 +158,28 @@ error boundary / console error.
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
 | APLANE-23 | L3-15 **D06 compares dev's web bundle against prod's** | Since P6, dev runs a fork build prod does not have, so D06 is red by design while a change is in flight. `plane-deploy` (P7) should compare each side against the bundle built from the ref it deployed, not against the other side |
 
+## 8-0. P8: what our image is (2026-09-22)
+
+Upstream's AIO Dockerfile **does not build from source** — it `FROM`s the six published
+`makeplane/plane-*` images and copies their artifacts into one runner. So `build_images.sh`
+builds those six from the fork (`plane-aku/plane-*:<sha>`) and assembles the AIO on top with
+`PLANE_IMAGE_PREFIX` pointing at them. Upstream's `deployments/cli/community/build.yml` is
+unused: its build contexts resolve one directory short.
+
+Every runtime patch is now source in the fork:
+
+| Was | Now |
+|---|---|
+| Fix 1/2/2b: sed on `start.sh` / `plane.env` at boot | `start.sh` honours `USE_MINIO`, `MINIO_ENDPOINT_SSL`, `WEBHOOK_ALLOWED_HOSTS` (plane.env wins over the container env, which is why they had to be written there) |
+| Fix 3: sed adding `APIKeyAuthentication` to the base views | `plane/app/views/base.py`, with L2 tests |
+| Fix 4: sed adding assignees to the notification set | `plane/bgtasks/notification_task.py`, with L2 tests |
+| Pocket ID adapter bind-mounted over `gitea.py` | the fork's `gitea.py`, with L2 tests on its endpoints and claims |
+| Caddyfile bind-mounted per stack | `Caddyfile.aio.ce`, MinIO upstream from `AWS_S3_ENDPOINT_URL` |
+| Frontend bundle bind-mounted into `/app/web` | baked into the image by `Dockerfile.web` |
+
+A deploy is now an image swap plus `compose up -d` (~40 s where the API answers 502), and
+`--rollback` swaps back to the tag recorded in `<stack>/.previous-image`.
+
 ## 8a. P7 findings (2026-09-22)
 
 | # | Finding | Where it lands |
@@ -167,6 +189,10 @@ error boundary / console error.
 | P7-3 | `run.sh` passed arguments to the VPS as one unquoted string, so `-g "QA Locked"` arrived as two words and Playwright found no tests | each argument is `printf '%q'`-quoted now |
 | P7-4 | A locked global view rendered nothing once in ~600 test runs and turned a deploy red; it passed 3/3 immediately after | Playwright retries once, and the deploy prints + reports anything that only passed on the retry |
 | P7-5 | `infra-notify` needs a root-only secret, but the infra-bot's relay accepts `POST /deploy` from any tailnet peer — including the VPS itself | that is the transport; no token on this path |
+| P8-1 | Porting the bind-mounted Caddyfile baked **prod's** container name (`plane-minio`) into the image; dev's is `plane-dev-minio`, so `/uploads` answered 502 there | L3-08 caught it on dev; the upstream is `AWS_S3_ENDPOINT_URL` now |
+| P8-2 | Readiness polled `/`, which the proxy serves from static files the moment the container exists — the suite started ~40 s before gunicorn was up and read a 502 as a failure | `plane-deploy` waits on `/api/instances/` |
+| P8-3 | Three drift checks were testing the old world: D02 demanded ≥6 mounts (there are 2), D03 hashed a `start-override.sh` neither side has (passing vacuously), D05 rewrote `plane-dev-minio` before comparing | rewritten; D07 is now "both stacks run the same image tag" |
+| P8-4 | Upstream's AIO `build.sh` installed `yq` with sudo and never used it, and had a `/bin/bash` shebang — the runner is NixOS with no passwordless sudo and no `/bin/bash` | both fixed in the fork |
 | P7-7 | The E2E step checks the tree out again too, so it deleted the built bundle *after* dev went green: the first prod attempt died with "is not a built bundle" on the way to prod (prod untouched — `deploy_bundle` refuses before copying) | the bundle is staged in `~/.cache/plane-tests/bundle` right after the build |
 | P7-6 | Running `install.sh` on the VPS re-locked `flake.lock` in its working tree, so nixpkgs jumped to Playwright 1.63 (browsers 1243) under a suite pinned to 1.61.1 (1228). The first prod deploy died 5 min in with "Executable doesn't exist" — a message that says nothing about the cause | the runner now builds the browsers from the dotfiles flake at its **committed** revision, and asserts `@playwright/test` == `playwright-driver.version` in seconds before starting |
 
