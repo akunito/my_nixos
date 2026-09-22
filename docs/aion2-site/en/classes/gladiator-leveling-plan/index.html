@@ -1,0 +1,462 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Gladiator: what to level and when (1-45 and endgame) | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/en/classes/gladiator-leveling-plan/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/classes/gladiator-leveling-plan/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/classes/gladiator-leveling-plan/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/classes/gladiator-leveling-plan/"/><link rel="sitemap" href="/sitemap-index.xml"/><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Gladiator: what to level and when (1-45 and endgame)"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/en/classes/gladiator-leveling-plan/"/><meta property="og:locale" content="en"/><meta property="og:description" content="A play-along checklist for Gladiator: skill points, specialisations, stigmas, Daevanion and gear, band by band, with the three level-45 loadouts and the point-spending cheat sheet."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="A play-along checklist for Gladiator: skill points, specialisations, stigmas, Daevanion and gear, band by band, with the three level-45 loadouts and the point-spending cheat sheet."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.BHnCjvd8.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/en/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/gladiator-leveling-plan/" class="astro-2z5xp7gb">Español</option><option value="/en/classes/gladiator-leveling-plan/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="07ybw4t" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Launch, servers and what to buy</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Settings, controls and ping</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Playing on KR/TW, the anti-cheat and getting ready for Early Access</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Classes</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Overview</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-leveling-plan/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: every skill and every combo</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progression</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 and the first days</span></a></li><li class="astro-rmhv4bp6"><a href="/en/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daily and weekly routine</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Systems</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gear</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats and combat formulas</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Character systems: pets, Genus Insight, the Closet and titles</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combat, macros, targeting and controls</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Dungeons and raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The Abyss and Abyss Points</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sieges, artifacts and the legion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas and battlefield</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economy and routine</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetization, Kinah and spending</span></a></li><li class="astro-rmhv4bp6"><a href="/en/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering and Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versions</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versions and regions</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li><li class="astro-rmhv4bp6"><a href="/en/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sources and method</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Tools</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/tools/stigma-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma planner</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/classes/gladiator-leveling-plan/" class="astro-2z5xp7gb">Español</option><option value="/en/classes/gladiator-leveling-plan/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-read-this-on-launch-day" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to read this on launch day</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-rules-in-one-table" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The rules in one table</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#level-bands" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Level bands</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#1-to-22-three-buttons-and-the-knockdown-that-feeds-them" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">1 to 22: three buttons and the knockdown that feeds them</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#22-to-27-first-stigma-slot-and-the-one-that-fixes-overhead-slam" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">22 to 27: first stigma slot, and the one that fixes Overhead Slam</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#27-to-32-second-slot-and-the-throughput-stigma" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">27 to 32: second slot and the throughput stigma</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#32-to-37-third-slot-and-the-second-ascension-gate" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">32 to 37: third slot and the second Ascension gate</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#37-to-45-fourth-slot-fourth-board-and-the-last-stretch" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">37 to 45: fourth slot, fourth board and the last stretch</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#at-45-the-reset-question" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">At 45: the reset question</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-three-level-45-loadouts" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The three level-45 loadouts</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#point-spending-cheat-sheet" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Point-spending cheat sheet</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-first-115-skill-points" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The first ~115 skill points</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-first-45-daevanion-points" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The first ~45 Daevanion points</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#main-sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Main sources</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-read-this-on-launch-day" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to read this on launch day</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-rules-in-one-table" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The rules in one table</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#level-bands" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Level bands</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#1-to-22-three-buttons-and-the-knockdown-that-feeds-them" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">1 to 22: three buttons and the knockdown that feeds them</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#22-to-27-first-stigma-slot-and-the-one-that-fixes-overhead-slam" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">22 to 27: first stigma slot, and the one that fixes Overhead Slam</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#27-to-32-second-slot-and-the-throughput-stigma" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">27 to 32: second slot and the throughput stigma</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#32-to-37-third-slot-and-the-second-ascension-gate" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">32 to 37: third slot and the second Ascension gate</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#37-to-45-fourth-slot-fourth-board-and-the-last-stretch" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">37 to 45: fourth slot, fourth board and the last stretch</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#at-45-the-reset-question" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">At 45: the reset question</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-three-level-45-loadouts" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The three level-45 loadouts</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#point-spending-cheat-sheet" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Point-spending cheat sheet</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-first-115-skill-points" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The first ~115 skill points</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-first-45-daevanion-points" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The first ~45 Daevanion points</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#main-sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Main sources</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Gladiator: what to level and when (1-45 and endgame)</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Region:</b> Korea, Taiwan and Global · <b>Version:</b> Inven Korean skill database of 2026-09-22 over the KR/TW syntheses to 2026-09-16, with the Global Launch Scale Test rules of 2026-09-17/19 · <b>Reviewed:</b> 2026-09-22 · <b>Confidence:</b> medium. This page is a point-spending checklist, not a combat guide: the kit, the Overhead Slam loop and the macros live on the Gladiator class page. The frame rules (4 stigmas, skill cap 20, free skill resets) were measured on a test build capped at level 37, not on the launch client.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="how-to-read-this-on-launch-day">How to read this on launch day</h2><a class="sl-anchor-link" href="#how-to-read-this-on-launch-day"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How to read this on launch day”</span></a></div>
+<ol>
+<li>Find your level band, work its list top to bottom, and do not read the others.</li>
+<li>Every figure carries its region and date in brackets. If it does not, it is a general rule with no source and says so.</li>
+<li>Skill points are free to reset on Global, so getting them wrong costs nothing.</li>
+<li>Stigma Shards are not free to reset and nobody has seen the cost screen: pick the four stigmas from level 22 and leave them alone.</li>
+<li>Gladiator has very few actives worth deep investment, so its passives carry unusually high weight (KR, 2026-09-05). Do not treat them as leftovers.</li>
+<li>Any Korean or Taiwanese build you find runs 5 or 6 stigmas: cut it to 4 before you copy it.</li>
+<li>No source anywhere publishes a full point-by-point 1-45 ladder for this class. Every source stops at level these three skills to 20. What follows below that line is priority order, not a route.</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-rules-in-one-table">The rules in one table</h2><a class="sl-anchor-link" href="#the-rules-in-one-table"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The rules in one table”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Value</th>
+<th>Region and date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Character level cap</td>
+<td>45</td>
+<td>Global LST, 2026-09-17/19</td>
+</tr>
+<tr>
+<td>Skill level cap</td>
+<td><strong>20</strong></td>
+<td>Global LST, 2026-09-17/19</td>
+</tr>
+<tr>
+<td>How far skill points alone reach</td>
+<td><strong>10</strong></td>
+<td>Global LST, 2026-09-17/19</td>
+</tr>
+<tr>
+<td>Point cost, levels 2-4 / 5-7 / 8-10</td>
+<td>1 / 2 / 4 per level · <strong>13 points to reach 8, 21 to reach 10</strong></td>
+<td>Inven skill database, KR, 2026-09-22</td>
+</tr>
+<tr>
+<td>From 10 to 14</td>
+<td>the four base Daevanion boards, +1 skill level each</td>
+<td>Global LST, 2026-09-18 and 09-20</td>
+</tr>
+<tr>
+<td>From 14 to 20</td>
+<td>Arcana cards (from Transcendence) plus a gear soul binding. A skill stuck at 15 is not capped, it is missing one of the three systems</td>
+<td>Global, 2026-09-21</td>
+</tr>
+<tr>
+<td>Which slots roll an <strong>active</strong>-skill soul binding</td>
+<td>rings and weapons only. On Global a ring carries <strong>2 active-skill slots</strong>; put Overhead Slam, Rending Blow and Ruinous Blow there before raw attack</td>
+<td>Global LST, 2026-09-18/20; ring priority TW, 2026-08-12</td>
+</tr>
+<tr>
+<td>Specialisation steps on Gladiator</td>
+<td><strong>three options at 8</strong> (you pick one), <strong>one at 12</strong>, <strong>one at 16</strong>, on every active in the class. The cross-class frame lists a step at 20 as well; the Gladiator data of 2026-09-22 has <strong>no entry at 20</strong></td>
+<td>Inven skill database, KR, 2026-09-22</td>
+</tr>
+<tr>
+<td>Stigma specialisation steps</td>
+<td><strong>5 / 10 / 15 / 20</strong> on every Gladiator stigma</td>
+<td>Inven skill database, KR, 2026-09-22</td>
+</tr>
+<tr>
+<td>Equipped stigma slots</td>
+<td><strong>4</strong> out of a class pool of 13 equippable stigmas (the database lists 14 entries, but Whirling Blades is Blade Toss’s chain link, not a slot). Korea and Taiwan equip 5-6 from the same pool</td>
+<td>Global LST, 2026-09-17/19, 12 sources; pool from Inven KR, 2026-09-22</td>
+</tr>
+<tr>
+<td>When they open</td>
+<td><strong>22 / 27 / 32 / 37</strong>; the first arrives with the level-22 Ascension quest</td>
+<td>Global LST, 2026-09-17/21</td>
+</tr>
+<tr>
+<td>Stigma level cap</td>
+<td><strong>20</strong> (25 explicitly deferred to a later season)</td>
+<td>Global LST, 2026-09-18 and 09-20</td>
+</tr>
+<tr>
+<td>Stigma bonus effects</td>
+<td>at levels 5, 10, 15 and 20; stopping on anything that is not a multiple of 5 buys nothing</td>
+<td>Global LST, 2026-09-20</td>
+</tr>
+<tr>
+<td>Shard cost per level</td>
+<td><strong>1 / 2 / 4 / 8</strong> for the bands 1-5 / 6-10 / 11-15 / 16-20 · <strong>~75 shards</strong> to take one stigma from 1 to 20</td>
+<td>Global LST, 2026-09-18 and 09-20</td>
+</tr>
+<tr>
+<td>Stigma presets</td>
+<td>a preset system now exists to swap a PvE and a PvP stigma slate without a manual reset</td>
+<td>KR, 2026-09-21</td>
+</tr>
+<tr>
+<td>Daevanion boards</td>
+<td>4 base plus Asphel (PvP). The <strong>Ariel (PvE) board was absent from the Global LST build</strong>; its point sinks still exist in the Nightmare shop and in reward text; unconfirmed for 10-05</td>
+<td>Global LST, 2026-09-17/21, 14 deltas</td>
+</tr>
+<tr>
+<td>Per-node values on Global</td>
+<td>flat attack +5 → <strong>+3</strong> · critical 10 → <strong>5</strong> · defence 50 → <strong>30</strong> · combat speed 2.5% → <strong>1.5%</strong> · cooldown reduction 2.5% → <strong>1.5%</strong> · damage boost 5% → <strong>1.5%</strong>. The +50/+50 board-centre pieces were removed. The 11 active-skill nodes are unchanged</td>
+<td>Global LST, 2026-09-17/21</td>
+</tr>
+<tr>
+<td>Board point cap</td>
+<td><strong>45</strong> (Taiwan 50). At level 37 players held ~120 points across 3 boards</td>
+<td>Global LST, 2026-09-17/19</td>
+</tr>
+<tr>
+<td>Where points come from</td>
+<td>green side quest <strong>+1 skill and +1 Daevanion</strong> · sealed dungeon <strong>+2 and +2</strong> · the Monolith <strong>no longer gives skill points</strong>, which kills the Korean feather route</td>
+<td>Global LST, 2026-09-17/21</td>
+</tr>
+<tr>
+<td>Budget seen at level 37</td>
+<td>150 skill points, 15 stigma points, ~120 Daevanion points</td>
+<td>Global LST, 2026-09-17</td>
+</tr>
+<tr>
+<td>Resetting skill points</td>
+<td><strong>free</strong> on Global</td>
+<td>Global LST, 2026-09-20 and 09-21, 2 sources</td>
+</tr>
+<tr>
+<td>Resetting stigmas</td>
+<td><strong>cost unknown</strong>: nobody has seen the screen on Global</td>
+<td>no Global source</td>
+</tr>
+<tr>
+<td>Gear enhancement cap while levelling</td>
+<td>green <strong>+5</strong>, blue <strong>+10</strong>; never push a transitional piece past +5</td>
+<td>Global LST, 2026-09-18/20</td>
+</tr>
+<tr>
+<td>Gear-score gates</td>
+<td>1★ <strong>700</strong> · 2★ <strong>1,400</strong> · 3★ <strong>2,100</strong> · Ascension Trial first rank <strong>1,000</strong> · Nightmare, first boss Zikel ~<strong>2,400</strong> · Ludra raid ~<strong>2,700</strong></td>
+<td>Global LST, 2026-09-17/20</td>
+</tr>
+<tr>
+<td>Smite, on Global called <strong>Double Chance</strong></td>
+<td><strong>Special board, slot 4 only, capped 3%</strong>. Korea and Taiwan keep it on slots 3 and 9 of every normal board; that targeting does <strong>not</strong> apply to Global</td>
+<td>Global LST, 2026-09-17/19, 7 deltas</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="level-bands">Level bands</h2><a class="sl-anchor-link" href="#level-bands"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Level bands”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="1-to-22-three-buttons-and-the-knockdown-that-feeds-them">1 to 22: three buttons and the knockdown that feeds them</h3><a class="sl-anchor-link" href="#1-to-22-three-buttons-and-the-knockdown-that-feeds-them"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “1 to 22: three buttons and the knockdown that feeds them”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Skills, in this order:</strong> <strong>Rending Blow</strong> (절단의 맹타), a 0.5 s recast frontal 4-hit that is your whole filler, then <strong>Keen Strike</strong> (예리한 일격) and its chain, which is the mana engine (100 / 100 / 120 mana per hit, TW, 2026-09-09), then <strong>Ruinous Blow</strong> (파멸의 맹타, called <strong>Luminous Blow</strong> on the Global client), whose whole job is hanging Prepare for Battle on you.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Understand the Overhead Slam gate before you spend a point on it.</strong> <strong>Overhead Slam</strong> (내려찍기) only fires on a <strong>knocked-down</strong> target, or on a <strong>7% chance per hit</strong> against an incapacitation-immune boss (Inven KR database, 2026-09-22; confirmed Global, 2026-09-21). While levelling, the knockdown you supply yourself is <strong>Devastating Sword</strong> (유린의 검): 3 s knockdown, 20 s recast, 200 mana. That pairing is what makes Overhead Slam usable before you own the Rage Burst stigma.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Prepare for Battle is the metronome.</strong> Ruinous Blow grants +20% PvE damage, +10% PvP damage, +100 critical and +15% status accuracy for a <strong>base 5 s</strong>, extended by 5 s at specialisation step 12 (Inven KR database, 2026-09-22). If that buff is down you are playing the class wrong; that is the one execution rule every source repeats.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Passives:</strong> <strong>Experienced Counter Strike</strong> (노련한 반격) first. Four of five source groups put it at the top, then <strong>Murderous Burst</strong> (살기 파열), <strong>Attack Readiness</strong> (공격 준비) and <strong>Impact Hit</strong> (충격 적중) in an order the sources shuffle (KR 2026-08-17 and 09-05, TW 2026-08-12, Global 2026-09-21). One Global source of 2026-09-21 puts Impact Hit first instead; it stands alone.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Allocation rule inside a band:</strong> unconditional actives first, then conditional actives, groggy-only skills last, passives after that. Respec is free, so a wrong guess costs nothing (KR, baseline).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stigmas:</strong> none. The first slot does not exist until 22.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Daevanion:</strong> the board opens around level 12-13. Spend points the day you earn them. For Gladiator the node order is <strong>Orange, then Blue, then Green, then White</strong>, following the same skill order as your points (Global, 2026-09-21; the Korean baseline says the same, orange DPS nodes before blue, green and white).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gear:</strong> all disposable. Nothing above <strong>+5</strong> (Global LST, 2026-09-18/20). One Korean source says not to enhance at all before level 30, where soul-bind rolls are worth more (KR, baseline).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gate before you move on:</strong> level 22 has a red quest that blocks the main story until the world-progress bar is at 100%, filled with regional quests and sealed dungeons. Every sealed dungeon is +2 skill and +2 Daevanion points, so the bar and your build fill together (Global LST, 2026-09-17/21).</li>
+</ul>
+<p><strong>Do not:</strong></p>
+<ul>
+<li>Spend a point past <strong>20</strong> on anything. Levels only unlock specialisation slots; 20 against 24 is thrown away (KR, 2026-08-17 and 09-08).</li>
+<li>Skip green side quests: each one is +1 skill point and +1 Daevanion point (Global LST, 2026-09-17/21).</li>
+<li>Plan around the Monolith for skill points. On Global it gives none (Global LST, 10 deltas).</li>
+<li>Fight from behind. The frontal damage passive was moved to front positioning (KR/TW, baseline).</li>
+</ul>
+<div class="sl-heading-wrapper level-h3"><h3 id="22-to-27-first-stigma-slot-and-the-one-that-fixes-overhead-slam">22 to 27: first stigma slot, and the one that fixes Overhead Slam</h3><a class="sl-anchor-link" href="#22-to-27-first-stigma-slot-and-the-one-that-fixes-overhead-slam"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “22 to 27: first stigma slot, and the one that fixes Overhead Slam”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stigma, slot 1: Rage Burst</strong> (격노 폭발). Near-unanimous across Korean, Taiwanese and Global sources: it activates Overhead Slam for <strong>10 s</strong> on hit, which is what turns Overhead Slam from a 7% lottery into a skill. It also puts a 10 s, 10% attack-down bruise on the target and gives you +10% PvE and +5% PvP damage. 90 s recast, 100 mana; its specialisation step 5 cuts <strong>15 s off its own recast</strong> (Inven KR database, 2026-09-22).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stop it at 5</strong> (4 shards) until you know your four. Effects only change at 5, 10, 15 and 20.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Skills:</strong> Rending Blow, Keen Strike and Ruinous Blow towards <strong>8</strong> (13 points each, Inven KR database, 2026-09-22), then place their specialisations. Unlocking a specialisation and placing it are two separate steps in the UI.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>The specialisation picks that matter at 8:</strong> Rending Blow, take <strong>mobile cast</strong> or <strong>-20% mana</strong>; Ruinous Blow, take <strong>+20% skill speed</strong> or <strong>+12.5 m range</strong>; Keen Strike, take the <strong>+20% mana recovery</strong> if your mana still runs out (Inven KR database, 2026-09-22).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gear:</strong> enhancement cap is still +5 green / +10 blue.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gate before you move on:</strong> <strong>700</strong> gear score for 1-star Conquest (Global LST, 2026-09).</li>
+</ul>
+<p><strong>Do not:</strong> push one skill to 10 before the others are at 8; spread shards across four stigmas at once; copy a 5-stigma or 6-stigma build.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="27-to-32-second-slot-and-the-throughput-stigma">27 to 32: second slot and the throughput stigma</h3><a class="sl-anchor-link" href="#27-to-32-second-slot-and-the-throughput-stigma"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “27 to 32: second slot and the throughput stigma”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stigma, slot 2: Lunge Stance</strong> (돌격 자세). 10 s of +20% combat speed and -20% mana cost on a 60 s recast. Its step-20 effect, a <strong>50% chance on critical hit to cut every skill recast by 1 s</strong>, is called the single biggest throughput item the class owns (KR 2026-08-17, Global 2026-09-21, and one more Global build of 2026-09-20). Take it knowing you will be feeding it shards for a long time.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Skills:</strong> the core three towards <strong>10</strong>, which is as far as points go. Overhead Slam joins them: its step <strong>16 removes its cooldown entirely</strong> (재시전 시간 삭제, Inven KR database, 2026-09-22), and every source calls that pick mandatory. You cannot reach 16 with points, so from here the board, Arcana cards and ring soul bindings are what finish the skill.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Overhead Slam’s step 12 is a guaranteed critical</strong> on hit. Two Korean build philosophies fork here (KR, 2026-03): take the guaranteed crit and then ignore the crit stat on gear entirely, the higher ceiling; or take the <strong>2% lifesteal</strong> at step 8 and gear crit normally, which is more stable if you actually hold aggro.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Daevanion:</strong> keep following the skill order, Overhead Slam then Rending Blow then Ruinous Blow, then the top four passives (Global, 2026-09-21).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gear:</strong> blue to +10 at most.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gate before you move on:</strong> no hard gate in this band. The next one is 2-star Conquest, <strong>1,400</strong> gear score (Global LST, 2026-09).</li>
+</ul>
+<p><strong>Do not:</strong> take a PvP stigma into a dungeon; with four slots that is a slot thrown away.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="32-to-37-third-slot-and-the-second-ascension-gate">32 to 37: third slot and the second Ascension gate</h3><a class="sl-anchor-link" href="#32-to-37-third-slot-and-the-second-ascension-gate"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “32 to 37: third slot and the second Ascension gate”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Ascension gate #2 at 32:</strong> another world-progress bar filled with exploration and side quests, then the red quest (Global, 2026-09-18).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stigma, slot 3: Zekiel’s Blessing</strong> (지켈의 축복). Mandatory in every Korean and Taiwanese source and still core in one Global build. <strong>Read the next line before you commit shards:</strong> the Korean database of 2026-09-22 has it as a party buff, +20% attack for 10 s to everyone within 40 m; one hands-on Global source of 2026-09-20 reports it <strong>changed to self-only, +50% stagger damage</strong>. Those are different skills doing different jobs.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Skills:</strong> spend the band on the second rank of utility. Sources that go deeper than the core three agree on the shape and not the list: one Global build takes two defensive skills to 16 and five utility skills to 12; another levels most of the kit to 12 and only pushes Overhead Slam to 20 at endgame (both Global, 2026-09-21 and 09-20).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>The utility specialisations worth the points:</strong> <strong>Ankle Slice</strong> (발목 베기) step 8 <strong>+16 m range</strong>, taking it from 4 m to 20 m and turning a block-triggered poke into your second gap-closer; <strong>Leaping Slam</strong> (도약 찍기) step 8 <strong>resets on kill</strong>, which is the farming pick; <strong>Crushing Wave</strong> (분쇄 파동) step 12 <strong>resets its recast on a critical</strong>, which turns a mob pack into a self-healing loop; <strong>Shock Release</strong> (충격 해제) step 8 <strong>+50% PvE and +25% PvP damage tolerance</strong> during its 5 s immunity, the pick one Global source levels to 16 (Inven KR database, 2026-09-22; Global, 2026-09-21).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gear:</strong> start watching gear score for real. <strong>1,000</strong> is the first Ascension Trial rank’s requirement, and that trial also drops shards.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gate before you move on:</strong> 1,400 for 2-star; 1,000 for the Ascension Trial.</li>
+</ul>
+<p><strong>Do not:</strong> level <strong>Sword Aura Rampage</strong> (검기 난무) to 16 for its recast reduction if your content has unstaggerable bosses. The skill only fires on a staggered target, so the bonus never happens (KR/TW, baseline). And do not put Ankle Slice, Leaping Slam or Ruinous Blow on a panic button expecting them to save you while rooted: since the Korean patch of <strong>2026-09-16</strong> none of the three fires while you are rooted or bound.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="37-to-45-fourth-slot-fourth-board-and-the-last-stretch">37 to 45: fourth slot, fourth board and the last stretch</h3><a class="sl-anchor-link" href="#37-to-45-fourth-slot-fourth-board-and-the-last-stretch"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “37 to 45: fourth slot, fourth board and the last stretch”</span></a></div>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Stigma, slot 4 at 37, and this is the one nobody has settled.</strong> Three candidates, no head-to-head test on the Global build: <strong>Wave Armor</strong> (파동의 갑주), personal damage, whose steps 10 and 15 multiply your Blood Absorption and Murderous Burst passives by 1.5; <strong>Life Stealing Blade</strong> (흡혈의 검), 7% lifesteal rising to 10% at step 20 and a 20 s party leech effect at step 10; <strong>Focused Block</strong> (집중 막기), a guaranteed weapon block that reaches 3 charges by step 15 and blocks the yellow floor telegraphs. Global guides split (Global, 2026-09-20/21; Inven KR database, 2026-09-22).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Fourth Daevanion board at level 40.</strong> The Asphel (PvP) board opens at 45; the PvE board was not in the test build.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Skills:</strong> the core three towards <strong>20</strong>. Past 10 they no longer depend on points: they depend on the four boards (+4), on Arcana cards and on soul bindings from rings and weapons. A ring carries two active-skill slots on Global, so that is where Overhead Slam, Rending Blow and Ruinous Blow levels come from.</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gear:</strong> at 45 the Season 1 ceiling is Unique; there is no Heroic rarity at launch (Global LST, 2026-09-17/20).</li>
+<li class="task-list-item"><input type="checkbox" disabled> <strong>Gates:</strong> 3-star <strong>2,100</strong>; Nightmare, first boss Zikel ~<strong>2,400</strong>; Abyssal Forge: Ludra raid ~<strong>2,700</strong> (Global LST, 2026-09).</li>
+</ul>
+<p><strong>Do not:</strong> sit next to a Templar expecting both party buffs to land. Experienced Counter Strike and the Templar’s Fury are the same frontal damage buff and <strong>do not stack</strong>; one of you is contributing nothing there (KR/TW, baseline). The optimised Global 5-player comp still seats a Gladiator alongside a Templar (Global, 2026-09-20), so agree who carries it.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="at-45-the-reset-question">At 45: the reset question</h2><a class="sl-anchor-link" href="#at-45-the-reset-question"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “At 45: the reset question”</span></a></div>
+<p><strong>What to reset:</strong> skill points, without thinking about it. They are <strong>free</strong> on Global (Global LST, 2026-09-20 and 09-21), so the lifesteal and survival specialisations you levelled with convert into endgame damage the day you arrive.</p>
+<p><strong>What not to reset:</strong> the stigmas. They are paid in <strong>Stigma Shards</strong>, taking all four to 20 is roughly <strong>300 shards</strong> (~75 each), and nobody has seen the reset screen on Global. That is why the four get chosen from 22 and then left alone. What softens this for Gladiator specifically is the <strong>stigma preset system</strong>, which lets you swap a PvE slate for a PvP one without a manual reset (KR, 2026-09-21); it swaps which stigmas are equipped, it does not refund a shard.</p>
+<p><strong>The middle ground:</strong> Daevanion nodes, which refund for 500 Kinah each on Korea and are removed from the branch tips inwards (KR, 2025-11).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="the-three-level-45-loadouts">The three level-45 loadouts</h3><a class="sl-anchor-link" href="#the-three-level-45-loadouts"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The three level-45 loadouts”</span></a></div>
+<p>Gladiator’s real third mode is <strong>solo</strong>, not a hybrid: the class is rated <strong>S-tier for solo Abyss farming</strong>, where regeneration and invulnerability let it chain-kill PvE-geared players, while it drops to B-tier in large-scale Abyss where ranged classes win (2026-09-19, region unknown, relayed in the Global round).</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>PvE (dungeons and raid)</strong></th>
+<th><strong>PvP (arena and small-scale)</strong></th>
+<th><strong>Solo (Abyss farm and open world)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Origin and date</td>
+<td>KR 2026-08/09 and TW 2026-08-12, cut to 4 slots by the Global frame; confirmed in shape by two Global builds of 2026-09-20/21</td>
+<td>KR 2025-11 and 2026-01, TW 2026-09-05; not Global-verified</td>
+<td>Global round, 2026-09-19/21, on the KR/TW kit</td>
+</tr>
+<tr>
+<td>Stigma 1</td>
+<td>Rage Burst (격노 폭발)</td>
+<td>Tenacity (근성)</td>
+<td>Rage Burst (격노 폭발)</td>
+</tr>
+<tr>
+<td>Stigma 2</td>
+<td>Lunge Stance (돌격 자세)</td>
+<td>Force Restraint (강제 결박)</td>
+<td>Lunge Stance (돌격 자세)</td>
+</tr>
+<tr>
+<td>Stigma 3</td>
+<td>Zekiel’s Blessing (지켈의 축복)</td>
+<td>Rage Burst (격노 폭발)</td>
+<td>Life Stealing Blade (흡혈의 검)</td>
+</tr>
+<tr>
+<td>Stigma 4</td>
+<td>Contested: Wave Armor, Life Stealing Blade or Focused Block</td>
+<td>Crushing Charge (분쇄 돌진) if available, else a health-reduction stigma</td>
+<td>Tenacity (근성)</td>
+</tr>
+<tr>
+<td>Deliberately out</td>
+<td>Force Restraint and Crushing Charge: PvP pieces, a wasted slot in a dungeon</td>
+<td>Zekiel’s Blessing: a 2 min recast buff does not fit a fight that ends in seconds</td>
+<td>Focused Block: solo you are not eating the telegraphs you would eat as an off-tank</td>
+</tr>
+<tr>
+<td>Skill-level focus</td>
+<td>Overhead Slam 20, Rending Blow 20, Ruinous Blow 20</td>
+<td>Overhead Slam and Rending Blow to 20; Rush Strike and Aerial Snare for the CC chain</td>
+<td>Overhead Slam and Rending Blow to 20; Leaping Slam and Crushing Wave for the farm loop</td>
+</tr>
+<tr>
+<td>Specialty picks</td>
+<td>Overhead Slam step 16 removes the recast, non-negotiable; step 12 guaranteed crit; Ruinous Blow step 12 for +5 s of Prepare for Battle; Rending Blow step 16 for mana on crit</td>
+<td>Ruinous Blow step 16, <strong>ignore block and evade</strong>, instead of buff duration: PvP fights are too short for the buff to pay off (KR/TW, baseline); Rush Strike step 16, +25% knockdown</td>
+<td>Leaping Slam step 8 reset on kill; Crushing Wave step 12 reset on crit; Devastating Sword step 8 lifesteal, 4% normally and 15% against incapacitation-immune targets</td>
+</tr>
+<tr>
+<td>Daevanion focus</td>
+<td>Orange first, following the skill order, then the top four passives (provisional, the PvE board was absent from the test build)</td>
+<td>The Asphel (PvP) board, whose PvP damage node is 1.5% on Global against 2.5% on Korea and Taiwan</td>
+<td>Same as PvE, with the survival nodes taken earlier</td>
+</tr>
+<tr>
+<td>Preset</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<p>Verified on Global: the <strong>4 slots</strong>, stigma cap <strong>20</strong>, the absence of Heroic rarity and the cut node values. Everything else in this table is Korean and Taiwanese priority logic: transfer the order, not the numbers.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="point-spending-cheat-sheet">Point-spending cheat sheet</h2><a class="sl-anchor-link" href="#point-spending-cheat-sheet"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Point-spending cheat sheet”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="the-first-115-skill-points">The first ~115 skill points</h3><a class="sl-anchor-link" href="#the-first-115-skill-points"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The first ~115 skill points”</span></a></div>
+<p>No source publishes a numbered ladder for this class. This is the majority skill order (Global, 2026-09-21, corroborated by TW 2026-08-12 and KR 2026-09-08) laid over the per-level costs from the Inven skill database (KR, 2026-09-22).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>What</th>
+<th>Cost</th>
+<th>Running total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Rending Blow to 8</td>
+<td>13</td>
+<td>13</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Keen Strike to 8</td>
+<td>13</td>
+<td>26</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Ruinous Blow to 8</td>
+<td>13</td>
+<td>39</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Overhead Slam to 8</td>
+<td>13</td>
+<td>52</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Devastating Sword to 5</td>
+<td>5</td>
+<td>57</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Experienced Counter Strike to 5</td>
+<td>5</td>
+<td>62</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Rending Blow and Overhead Slam to 10</td>
+<td>8 + 8</td>
+<td>78</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Ruinous Blow to 10</td>
+<td>8</td>
+<td>86</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Murderous Burst and Attack Readiness to 5</td>
+<td>5 + 5</td>
+<td>96</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Leaping Slam and Crushing Wave to 5</td>
+<td>5 + 5</td>
+<td>106</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Impact Hit to 5</td>
+<td>5</td>
+<td>111</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Shock Release to 5</td>
+<td>5</td>
+<td>116</td>
+</tr>
+</tbody>
+</table>
+<p>Reminder: 1 → 5 is 5 points, 1 → 8 is 13 and 1 → 10 is 21. From 10 onwards nothing is paid in points, which is exactly why Overhead Slam’s step 16 is a gear and board problem, not a point problem.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="the-first-45-daevanion-points">The first ~45 Daevanion points</h3><a class="sl-anchor-link" href="#the-first-45-daevanion-points"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The first ~45 Daevanion points”</span></a></div>
+<p>No source publishes a node map for Gladiator, so this is a <strong>priority order, not a route</strong>, and it is <strong>provisional</strong>: the PvE board was absent from the Global test build entirely, so this advice cannot be checked against a board nobody has seen (Global LST, 2026-09-17/21).</p>
+<ol>
+<li><strong>Orange</strong> nodes before Blue, Green and White (Global, 2026-09-21; the Korean baseline agrees, DPS nodes first).</li>
+<li>Follow your skill order: <strong>Overhead Slam</strong>, then <strong>Rending Blow</strong>, then <strong>Ruinous Blow</strong>.</li>
+<li>Then the top four passives: Experienced Counter Strike, Murderous Burst, Attack Readiness, Impact Hit.</li>
+<li>Flat <strong>Attack</strong> (+3 per node on Global, +5 on Korea and Taiwan).</li>
+<li>Combat speed and cooldown reduction (1.5% per node on Global against 2.5% on Korea and Taiwan).</li>
+<li>Leave defence and mana nodes until the damage lines are full (KR/TW, baseline).</li>
+<li>The +50/+50 board-centre pieces no longer exist on Global.</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="main-sources">Main sources</h2><a class="sl-anchor-link" href="#main-sources"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Main sources”</span></a></div>
+<p>Inven skill database, Korean client, captured 2026-09-22, 41 skills (per-level costs, specialisation steps, stigma effects, activation conditions). Korean patch notes of 2026-09-16. Global-build Gladiator guides <code dir="auto">s_gKkkLG0jM</code> and <code dir="auto">SrTJoAgvppg</code> (2026-09-21), <code dir="auto">Ft4XarY_V6k</code> (2026-09-20), <code dir="auto">rxHUH9_IFA4</code> (2026-09-03). Korean optimisation and macro notes <code dir="auto">nrCsW9hOWJA</code> (2026-09-05), <code dir="auto">OoffKwPdAAc</code> (2026-08-17), <code dir="auto">sJ_STw00Fe4</code> (2026-09-08), <code dir="auto">pOAuQ_WqiUc</code> (2026-09-21), <code dir="auto">k65oa7TXTF0</code>, <code dir="auto">Divg0k54pII</code>. Taiwanese builds <code dir="auto">qGJhvtXUt1E</code> (2026-08-12), <code dir="auto">x5crWQPV2no</code> (2026-09-09), <code dir="auto">vRSioIhNfj8</code> (2026-09-05), <code dir="auto">igZ9RDE3s-g</code>, <code dir="auto">NducdcEvFCw</code>. Global Launch Scale Test: <code dir="auto">5klnmd6NXYU</code>, <code dir="auto">NUobrjYnsRA</code>, <code dir="auto">KAO5QzxywUk</code>, <code dir="auto">WkI1rIjsawo</code>, <code dir="auto">dpGoRCy_314</code>, <code dir="auto">zlDa9CydEDM</code>, <code dir="auto">XOAoH41OMj8</code>, <code dir="auto">2KAq_6wMvdc</code>, <code dir="auto">6EdhP2yH3nM</code>, <code dir="auto">wVBm761Fydg</code>. The AION 2 Global announcements board. The Inven community boards.</p>
+<aside aria-label="Still contested or unconfirmed" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"/></svg>Still contested or unconfirmed</p><div class="starlight-aside__content"><p><strong>Zekiel’s Blessing does two different things depending on the source.</strong> The Korean database of 2026-09-22 has it as a party buff, +20% attack for 10 s within 40 m. One hands-on Global source of 2026-09-20 says it is now self-only and grants +50% stagger damage. It is a core stigma in both readings, so the slot is safe; what changes is whether your party gets anything. Check it in the client before you tell a group you are bringing it.</p><p><strong>Rending Blow’s mana-on-crit specialisation sits at a different step in different sources.</strong> The Korean database of 2026-09-22 puts +50 mana on critical at step <strong>16</strong>. The KR/TW synthesis reports it at level <strong>20</strong>. That gap decides whether Keen Strike retires as your filler at 16 or at 20.</p><p><strong>The fourth stigma slot is genuinely open.</strong> Wave Armor, Life Stealing Blade and Focused Block; no source tests all three head to head on the Global build. Take whichever your content punishes you for lacking and accept that you may be wrong.</p><p><strong>The passive order has one dissenting Global source.</strong> Four source groups put Experienced Counter Strike first; one Global guide of 2026-09-21 puts Impact Hit first. This page publishes the majority order, not a consensus.</p><p><strong>Aerial Snare’s 5% proc chance</strong> against incapacitation-immune bosses comes only from the raw skill data of 2026-09-22 and is corroborated by no creator. Note that it is a <strong>different number</strong> from Overhead Slam’s 7%, which is confirmed on Global. Worth checking on the live client before you build a CC plan on it.</p><p><strong>The Daevanion node order cannot be verified.</strong> The PvE (Ariel) board was absent from the Global LST build; its point sinks still exist in the Nightmare shop and in reward text, and it is unconfirmed for the 10-05 launch. Do not plan Season 1 counting on it.</p><p><strong>Do not target Smite on Genus Insight slots 3 and 9 on Global.</strong> One Gladiator source ports that Korean and Taiwanese targeting straight across. On Global the stat is called <strong>Double Chance</strong> and it sits on the <strong>Special board, slot 4 only, capped at 3%</strong>, removed from slots 3 and 9 of every normal board and from titles (7 deltas, Global LST). The 3 and 9 advice is correct for Korea and Taiwan and wrong for Global.</p><p><strong>Whether a global cooldown exists on Global is unresolved</strong>, and every macro timing figure for this class is inherited from Korea or Taiwan. The animation-cancel mechanic itself changed on 2026-08-12, reverted on 2026-08-26 and was still being argued on 2026-09-05, so any macro guide older than about three weeks is wrong. Korea’s 2026-09-16 patch added anti-macro cancel delays to Templar and Assassin and left Gladiator untouched, which its own community reads as groundwork rather than a reprieve.</p><p><strong>Which Korean patch state Global ships is unknown.</strong> NC said class balance stays identical across Korea, Taiwan and Global, so the Korean patch of 2026-09-16 should be your launch kit, but nobody tested it: the test capped at level 37 with the Abyss locked.</p></div></aside></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/en/classes/chanter-skills/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Chanter skills</span></span></a><a href="/en/classes/gladiator-skills-guide/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Gladiator: every skill and every combo</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
