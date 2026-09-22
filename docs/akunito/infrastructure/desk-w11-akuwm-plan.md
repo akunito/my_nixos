@@ -1938,6 +1938,58 @@ through `glazewm.exe`, `akuwm-cli.exe` or the unsigned copy in
 `%LOCALAPPDATA%\Programs\AkuWM`; installing a new build is `dotnet publish
 -p:UiAccess=true` plus the installer, elevated, every time.
 
+### 10.28 Game mode, and what the driven suite taught the app memory (2026-09-22 21:50)
+
+**Game mode is in** (`57f4ac2`, 957 tests): a rule action `anticheat` and
+`general.hotkey_host` (`process`, `command`). The desk raises
+`GameModeChanged` once when the first window of such an application
+appears, managed or ignored, and once when the last one is gone; the host
+kills the process on the way in and starts the command on the way out.
+The desk's config: `hotkey_host` = `AutoHotkey64_UIA` + the Startup
+`.lnk`, rule `aion2` on process `AION2`. Not yet exercised with the real
+game (the launch is 2026-10-05); the config validates on the installed
+build with no error.
+
+**The first `tests/wm` run on the signed build fell to 117/156** from 144,
+and the traces put both causes in the bench, not the manager:
+
+- **The application memory (10.26) learns from the suite.** A case floats
+  `fliptest`, closes it, and the next case is handed a floating `fliptest`
+  ("got floating/floating, want tiling/tiling"), which then takes tiling,
+  stacking, sticky and every fullscreen-game setup with it. The feature
+  doing what it says; the suite assumed sway, which has no such memory.
+  `akuwm forget-app <process>` now drops what was learnt about one process,
+  and `reset_desk` calls it for fliptest, notepad, charmap and calc before
+  every case.
+- **Windows 11 Notepad restores its windows.** After a `taskkill` it comes
+  back with every window it had, four on this desk, so toggle case 8 ("one
+  focused → hide") met "several → cycle". The case closes the extras.
+
+The uiAccess process cannot be asked from a shell, and `config validate`
+sent to a running daemon is answered BY the daemon: an old daemon says
+`anticheat` is unknown while the new CLI copy knows it. Read the
+"starting" line of the log before trusting a validation.
+
+**The second run (22:15, the daemon warm) still said "unmanaged"** for the
+toggle windows, and the trace added to the case showed it plainly: the
+window the AHK waited for was in no query at all, and the daemon's log had
+no line for it either, ever. A window refused at birth as cloaked by its
+own application (`SelfCloaked`, 10.19) is asked about again only when its
+next event arrives, and for a DirectX window (`fliptest`) that un-cloak
+event does not: it was adopted when some OTHER window made noise, three
+seconds later in one probe and never in another. Zen's un-cloak arrives on
+its own, which is why 10.19 looked complete. Now a window refused as
+self-cloaked is read again every 150 ms for five seconds
+(`Desk.BirthCloaked`, `BirthCloakMs`), whatever events come.
+
+Two more things the probes settled. With the pointer on the vertical
+screen a new `fliptest` opens there and goes fullscreen there
+(`open_under_pointer` doing its job); the suites assume the main screen,
+so `reset_desk` now puts the pointer at its centre before every case, as
+`park-primary.ps1` does for `tests/fullscreen`. And the toggle suite alone
+passed 30/32 between the two full runs: the pointer's resting place
+after the previous suite decided the outcome, not the code.
+
 
 ## 12. Risks
 

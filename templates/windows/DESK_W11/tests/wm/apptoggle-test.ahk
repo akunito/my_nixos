@@ -132,6 +132,11 @@ Sleep 1500
 h := WinExist("ahk_class FlipTestWnd")
 Check("1 launch: a window appeared", h ? 1 : 0, 1)
 Check("1 launch: it is focused", WinActive("ahk_id " h) ? 1 : 0, 1)
+seen := ""
+for w in GlazeWins()
+    if (StrLower(w["proc"]) = "fliptest")
+        seen .= Format("{:x}", w["hwnd"]) "/" w["ws"] "/" w["state"] " "
+Note("1 looked for " Format("{:x}", h) " | query has fliptest: " (seen = "" ? "none" : seen))
 Check("1 launch: on the workspace we are on", WsOf(h), home)
 
 ; --- 2. one window, focused -> hide (minimise) -----------------------------

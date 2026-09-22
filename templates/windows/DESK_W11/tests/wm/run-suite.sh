@@ -111,6 +111,12 @@ reset_desk() {
       "$A" forget-app "$app" >/dev/null 2>&1
     done
   fi
+  # The pointer on the main screen: a new window opens on the screen the
+  # pointer is on (general.open_under_pointer, plan 10.26), and every case
+  # here expects its windows on the main one. The previous suite may have
+  # left the pointer on the vertical screen (wskeys walks it there).
+  powershell.exe -NoProfile -Command \
+    "Add-Type -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool SetCursorPos(int x, int y);' -Name U -Namespace W; [W.U]::SetCursorPos(1920, 1080)" >/dev/null 2>&1
   for ws in 12 22; do
     powershell.exe -NoProfile -Command \
       "\$p = Start-Process '$(printf %s "$G" | sed 's|^/mnt/c|C:|; s|/|\\|g')' \
