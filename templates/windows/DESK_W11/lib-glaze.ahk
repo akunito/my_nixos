@@ -202,7 +202,16 @@ Glaze(args) {
         Dbg(Format("glaze {1} ({2} ms, pipe)", args, A_TickCount - t))
         return
     }
-    RunWait('"' glazeExe '" command ' args, , "Hide")
+    ; The CLI fallback. GlazeWM is uninstalled on this desk, so in the seconds
+    ; between logon and the pipe answering this path is a missing file, and a
+    ; bare RunWait on it threw a modal error for the first chord of the day.
+    if (!FileExist(glazeExe)) {
+        Dbg(Format("glaze {1}: no pipe and no CLI at {2}", args, glazeExe))
+        return
+    }
+    try RunWait('"' glazeExe '" command ' args, , "Hide")
+    catch as e
+        Dbg(Format("glaze {1}: {2}", args, e.Message))
     Dbg(Format("glaze {1} ({2} ms)", args, A_TickCount - t))
 }
 

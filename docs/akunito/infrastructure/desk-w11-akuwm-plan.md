@@ -1,7 +1,7 @@
 # AkuWM: one app for the Windows desk
 
-**Status**: plan v2, audited 2026-09-20. **M0 and M1 landed 2026-09-20** (see
-section 10); M2 is next. The open points of section 15 were closed with their
+**Status**: plan v2, audited 2026-09-20 and again 2026-09-22 (10.14). **M0 and M1 landed 2026-09-20** (see
+section 10); M2 has the desk. The open points of section 15 were closed with their
 defaults when implementation started. One decision changed as a result of
 measuring it -- AkuWM takes `uiAccess`, see section 2 -- and that is the only
 one.
@@ -1305,6 +1305,114 @@ three groups, and only the first is a fault:
    13/14/22 and land on 12/21.
 3. **Four singles**, including one new in the tiling suite: "stacked, not side by
    side" on the vertical monitor.
+
+### 10.14 The second audit: seven agents, four commits (2026-09-22)
+
+Seven adversarial readers over the whole of M2 at once -- correctness,
+geometry, platform and state, security, performance, the tests themselves,
+and the live desk (Zebar, the border) -- then every finding that could be
+fixed without the desk, fixed with its test. **810 unit tests** (from 751),
+four commits `1a489d8..861edca`, dev build published to `Temp\akuwm-m2`.
+
+**What was wrong, by class.**
+
+- *The model remembered what Windows had undone* (ModelAuditTests, 22). A
+  switch to an EMPTY workspace left `Focused` on the window just cloaked --
+  chords acted on it, the keyboard stayed on it, the bar said the old
+  workspace had focus; and `Workspace.Contains(None)` was true whenever
+  nothing was fullscreen. A window restored from the taskbar onto a hidden
+  workspace was cloaked in the same pass. Sticky on a fullscreen window kept
+  the taskbar mark for ever. Returning to a workspace focused a MINIMISED
+  window. A refused `SetForegroundWindow` was recorded as taken. A reload that
+  moved a displayed workspace left two displayed. And the cause of tests/wm
+  sticky 5 and tiling 8: a window's own activation right after adoption was
+  refused by the hover guard, the focus went to the other monitor, and the
+  next window opened there (`AdoptedAt`).
+- *Z-order around a game.* HWND_NOTOPMOST lands a window at the TOP of the
+  ordinary band -- above the game it was taken out of the band for. There was
+  no restack at all. `Redraw.Behind` inserts each de-banded window behind the
+  game, on the sibling and never on the game; the game's own band is never
+  touched in either direction, and `Banded` is seeded from WS_EX_TOPMOST
+  instead of null, which had every adopted window sent a synchronous
+  `SetWindowPos` -- including a game that had banded itself.
+- *The files that survive a crash* (StateAuditTests, 14). The watchdog read
+  the length of a SLEEP as silence: every resume would have restored the
+  pre-AkuWM desk and exited 3 (its own wait overshoot is the tell). A record
+  that never reached the disk let the cloak proceed. `RecordStore.Remove`
+  zeroed a slot by a map another mapping had reused. A capacity change wiped
+  the file. The round-trip proof hid its guinea pig with no record and its
+  last resort tried `(Shell, 1)`. And **a reboot counted as a crash**: two in a
+  row would have put the third boot in safe mode, managing nothing. A run
+  that started before the current boot is one the machine ended;
+  WM_QUERYENDSESSION writes the marker clean too; the watchdog's own kill
+  leaves it unclean so safe mode is reachable by the failure it was built for.
+  PBT_APMRESUMESUSPEND was mapped as a suspend.
+- *Geometry* (GeometryAuditTests, 10). The drag outline was half of the
+  target tile while the drop joined the ROW as a sibling (the plan's own
+  numbers in 10.12 record the mismatch as a success); the outline is now
+  computed by making the drop on a clone of the tree. Resize gave a negative
+  amount once a neighbour was under the minimum share, so wider made a window
+  narrower. A window too big for the screen Windows names was placed by its
+  top-left corner -- the last part to enter a screen to the right -- so it
+  could never be dropped on the vertical monitor; the hand decides. For a
+  second after a crossing every move was thrown away as Windows' rescale;
+  only a change of size is. A tile too narrow for its gaps put its children
+  outside it. The invisible border read at 150 % was applied at 100 %.
+  Per-workspace `direction` was dead, and an empty workspace told the bar
+  "horizontal" while its next window would stack.
+- *The socket and the pipe* (CompatHardeningTests). One client that stopped
+  reading parked every event for every other client for ever; each has a
+  bounded outbox and its own writer now, waits 2 s for room, then is dropped.
+  Any web page could read every window title (no Origin check; refused 403
+  unless loopback). No caps on connections, subscriptions, message size or
+  handshake time. The pipe -- the boundary into a uiAccess process, carrying
+  `shell-exec` -- had the DEFAULT named-pipe DACL: Everyone may read. Current
+  user's SID only now, first instance marked, 64 KB line cap.
+- *The anti-cheat policy was a document.* `Win32Focus.GameInFront` was never
+  assigned, so the F24 injection ran with a game in front; wired to "the
+  foreground covers its screen" and checked before the AttachThreadInput
+  route too.
+- *Where the time goes.* The applier times every phase apart now (place,
+  cloak, band, decorate, taskbar, focus) and names the windows a placement
+  over 50 ms waited on; the cloak read-back is one DWM call instead of a
+  fourteen-call window read; an unknown handle that moved no longer forces a
+  full enumeration unless it could be ours; decoration sends only what
+  changed; the log writes from its own thread. Not done, listed for the next
+  pass: the taskbar buttons off the wm thread, the bar's query answered from
+  a cached serialisation, the 40 ms focus polls, titles in the log.
+- *The bar and the border, from the live desk.* Zebar was not running because
+  6123 is held by a GlazeWM that died at 18:52 -- the watcher, `HasExited`
+  true, stuck in kernel teardown -- and AkuWM gave up on the port after two
+  minutes; it retries for ever now, `doctor` names the owning pid and says
+  when it no longer exists, and the configured `startup` list is finally RUN
+  (`after: "ipc"` when the port binds, skipping anything already running).
+  **Nothing but a reboot frees the port.** Windows Terminal and VS Code paint
+  their own DWMWA_BORDER_COLOR on every activation, a beat after AkuWM's:
+  `effects.reassert_ms` (300) sends it once more. The Razer installer is
+  elevated and this build has no uiAccess, so DWM refuses it; a refused
+  decoration is recorded as such now instead of as done.
+
+**The desk after a reboot** (audited): AkuWM.lnk pointed at the Store's
+version-stamped pwsh directory, which the next PowerShell update would have
+emptied -- the app-execution alias now. The Desktop rescue button does not
+exist on this desk (`install-uiaccess.ps1` predates it) and `recovery.md`
+promised a GlazeWM that is uninstalled; both corrected. The Windows clone of
+the dotfiles was 14 commits behind with every changed file identical to
+HEAD; reset to origin/main.
+
+**tests/wm, re-read from the trace**, changes the count in 10.13: of the
+twelve, four are the harness (`reset_desk` ends on `focus 22`, `FocusWs`
+skips a workspace already displayed, a refocus toggles back), one is a test
+assumption (the third monitor clamps the off-screen window before repair 2
+measures it), and the rest were the faults above. The driven suites and a
+real suspend are what this build still owes.
+
+**On M3 and the AutoHotkey rewrite**, measured rather than assumed: the
+hotkey script talks to AkuWM over the pipe at 0 ms per call (under the 15.6
+ms AHK timer floor), against 47 ms for GlazeWM's CLI. The latency reason for
+replacing the input layer is gone; what remains of M3 is the drag plumbing
+and the chords as configuration, which are worth doing only for the GUI's
+sake, not for speed.
 
 ## 12. Risks
 
