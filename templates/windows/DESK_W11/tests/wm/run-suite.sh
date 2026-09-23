@@ -80,7 +80,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -133,6 +133,7 @@ for s in $suites; do
     *)     sticky off;;
   esac
   case "$s" in
+    bindings) collect bindings-test.ahk bindings-test.txt 40 "Chords as data: bindings.tsv re-read on WM_APP+1 (plan 10.27)";;
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
     wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;
     sticky) collect sticky-test.ahk    sticky-test.txt    180 "Sticky windows: shown on every workspace of their monitor";;

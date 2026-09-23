@@ -367,7 +367,6 @@ WinSwitcher() {
 ^!#WheelUp:: Glaze("raise")
 ^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
 ^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
-^!#Space:: Send "#!{Space}" ; PowerToys Command Palette (its own hotkey is Win+Alt+Space; PowerToys Run is disabled) — rofi stand-in
 
 ; ---- Tiling: the sway keymap ---------------------------------------------
 ; Windows tile by default (config.yaml `initial_state: tiling`), with sway's
@@ -413,27 +412,76 @@ WinSwitcher() {
 
 ; raise-or-launch = Sway's app-toggle.sh; the decision table and the reasons
 ; live in lib-app-toggle.ahk (AppToggle).
-^!#t:: AppToggle("WindowsTerminal.exe", "wt.exe")           ; sway: kitty
-^!#r:: AppToggle("alacritty.exe", A_ProgramFiles "\Alacritty\alacritty.exe")   ; sway: Alacritty
-^!#z:: AppToggle("zen.exe", A_ProgramFiles "\Zen Browser\zen.exe")
-^!#v:: AppToggle("vivaldi.exe", EnvGet("LOCALAPPDATA") "\Vivaldi\Application\vivaldi.exe")
-^!#l:: AppToggle("Telegram.exe", A_AppData "\Telegram Desktop\Telegram.exe")
-^!#d:: AppToggle("Obsidian.exe", EnvGet("LOCALAPPDATA") "\Programs\Obsidian\Obsidian.exe")
-^!#c:: AppToggle("Code.exe", "code")
-^!#p:: AppToggle("Bitwarden.exe", EnvGet("LOCALAPPDATA") "\Programs\Bitwarden\Bitwarden.exe")
-^!#o:: AppToggle("Element.exe", EnvGet("LOCALAPPDATA") "\element-desktop\Element.exe")
-^!#y:: AppToggle("Spotify.exe", A_AppData "\Spotify\Spotify.exe")
-^!#x:: AppToggle("CalculatorApp.exe", "calc")
-^!#e:: AppToggle("explorer.exe", "explorer")
-^!#u:: AppToggle("dbeaver.exe", EnvGet("LOCALAPPDATA") "\DBeaver\dbeaver.exe")
+; ---- the chords that are DATA: Hyper+<letter> apps, ShareX, the palette ----
+; They live in akuwm/common.json (`shortcuts`), which the GUI edits; the daemon
+; renders them to %LOCALAPPDATA%\akuwm\bindings.tsv (chord, kind, app, command,
+; process) and posts WM_APP+1 to this script's main window, which re-reads the
+; file and rebinds with Hotkey() -- no Reload, no chord lost (plan 10.27).
+; Chords with logic of their own (workspaces, switcher, scratchpad, the wm
+; one-liners) stay static above.
+bindingsFile := EnvGet("LOCALAPPDATA") "\akuwm\bindings.tsv"
+boundChords := Map()
+DllCall("SetWindowText", "Ptr", A_ScriptHwnd, "Str", "AkuWM hotkeys")
+OnMessage(0x8001, (*) => LoadBindings())
+LoadBindings()
+LoadBindings() {
+    global bindingsFile, boundChords
+    seen := Map(), n := 0
+    if FileExist(bindingsFile) {
+        Loop Read bindingsFile {
+            line := A_LoopReadLine
+            if (line = "" || SubStr(line, 1, 1) = "#")
+                continue
+            f := StrSplit(line, "`t")
+            if (f.Length < 4)
+                continue
+            chord := f[1], kind := f[2], app := f[3], cmd := f[4], proc := f.Length >= 5 ? f[5] : ""
+            fn := BindingHandler(kind, app, cmd)
+            if !fn {
+                Dbg("binding " chord ": unknown kind " kind)
+                continue
+            }
+            try {
+                if (proc != "")
+                    HotIfWinActive("ahk_exe " proc)
+                Hotkey chord, fn, "On"
+                HotIfWinActive()
+                seen[chord "|" proc] := true, n++
+            } catch as e {
+                HotIfWinActive()
+                Dbg("binding " chord ": " e.Message)
+            }
+        }
+    }
+    for key in boundChords
+        if !seen.Has(key) {
+            parts := StrSplit(key, "|")
+            try {
+                if (parts[2] != "")
+                    HotIfWinActive("ahk_exe " parts[2])
+                Hotkey parts[1], "Off"
+                HotIfWinActive()
+            } catch {
+                HotIfWinActive()
+            }
+        }
+    boundChords := seen
+    Dbg("bindings: " n " chords from " bindingsFile)
+}
+BindingHandler(kind, app, cmd) {
+    switch kind {
+        case "app": return (*) => AppToggle(app, cmd)
+        case "wm": return (*) => Glaze(cmd)
+        case "exec": return (*) => Run(cmd)
+        case "send": return (*) => Send(cmd)
+    }
+    return ""
+}
 ; ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (Windows keeps that set for
 ; the "Office key"), so the hook-based AHK owns Hyper+Shift+C and runs the workflow.
-^!#+c:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+C"'
 ; The monitor under the pointer, whole: to the clipboard and the editor (X),
 ; or to the clipboard and a file (Z). ShareX's ActiveMonitor job is the
 ; monitor with the cursor. Also listed in akuwm/common.json for the GUI.
-^!#+x:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+X"'
-^!#+z:: Run '"' A_ProgramFiles '\ShareX\ShareX.exe" -workflow "Hyper+Shift+Z"'
 ; ---- Ctrl+Alt+C in Windows Terminal: last Claude Code answer -> Notepad++ ----
 ; Claude Code has no keybinding action for /copy, so this types the slash command,
 ; waits for the clipboard to change (the fullscreen picker may ask which block:
