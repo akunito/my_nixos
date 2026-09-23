@@ -2198,6 +2198,55 @@ opened the palette on every Hyper released without a chord (reported 09:10;
 the feature dates from 09-14).
 
 
+### 10.32 Z-order on workspace 11: the floating stack reshuffled, and a tile that stayed on top (2026-09-23 09:26)
+
+Diego saw z-order errors on workspace 11 while moving the mouse across
+windows, clicking, moving again. Reproduced with a driven sequence run
+elevated through the capture daemon (`zorder-seq.ps1`: hover each of five
+floating windows and two tiles, click a tile, hover again, click again; the
+z-order and the foreground listed after every step). Two faults, both
+AkuWM's; and a third finding about the bench.
+
+1. **"Raise the floating windows over the tiles" reshuffled them.** After a
+   tile got the focus, the pass raised every floating window of the
+   workspace with one `SetWindowPos(HWND_TOP)` each, in list order -- and
+   from a process without the foreground right that call does not keep
+   their order: the window the person had on top (alacritty) ended fourth,
+   explorer first, every time a tile was hovered. `IPlatform.RaiseOver`
+   now reads the z-order once and puts every tile that sits above the
+   lowest floating window directly behind it (a lowering needs no right),
+   and touches no floating window at all. Measured after: the five kept
+   their order through every hover and click of the sequence.
+2. **A click on a tile that already had the focus raised it over the
+   floating windows for good.** The native raise sends no foreground event,
+   so nothing asked the pass for the floating windows back: the tile sat
+   over five of them for 28 s until an unrelated hover. `EVENT_OBJECT_REORDER`
+   is hooked now (`WindowsReordered` -> `TheStackChanged`), and with a tile
+   in focus the desk arms the same delayed raise a click does, once.
+3. **An elevated window cannot be the anchor from a process without
+   uiAccess**: naming it as `hwndInsertAfter` makes `SetWindowPos` return
+   false (measured 09:45, the elevated console as the lowest floating
+   window). The next floating window up is the anchor then; with the signed
+   build the first attempt is enough. The same UIPI rule made the whole
+   first probe a no-op: `SetCursorPos` raises no hook event and a click
+   injected from a medium-integrity process is dropped while an elevated
+   window has the foreground -- the sequence has to walk the pointer with
+   `mouse_event` and run elevated.
+
+Also from the traces: with the pointer resting, the foreground is stable;
+the 407 foreground events of one run are the pointer WALKING across windows
+(Windows' active-window tracking activates each one it crosses), and every
+one costs a redraw and two decorations here, plus three `query` calls in
+the AutoHotkey's pill sync -- 17 000 log lines in one minute. The bar query
+cache from the audit list is the answer to that, not this section.
+
+And `?` (Hyper+?, the right-hand focus) was not a key the chord parser
+knew: the daemon refused to start on the configuration the bindings
+renderer had already accepted, and the boot script rescued the desk (09:37).
+Any printable character is a key now. AkuWM `8bd0d10`, 993 tests;
+tests/wm `stacking` 11/11.
+
+
 ## 12. Risks
 
 | risk | what we do |
