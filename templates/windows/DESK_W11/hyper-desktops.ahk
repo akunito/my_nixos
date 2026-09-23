@@ -859,6 +859,23 @@ AltDragCore(mode) {
 }
 
 #MaxThreadsPerHotkey 2   ; so a press during a running gesture reaches AltDrag (which logs and drops it)
+; ---- a click holds the tile in front (plan 10.35) ----
+; Windows raises a tile only when the click ACTIVATES it, and with the focus
+; following the pointer the tile already has the focus when it is clicked:
+; the floating windows kept covering the tile being clicked. The window
+; manager lifts the window under the pointer into the always-on-top band on
+; button down (a tile only, never under a fullscreen window) and lets it go
+; on button up; the floating windows come back 80 ms later. `~` passes the
+; click through; Alt+click is the drag above and never comes here.
+~LButton:: ClickHold()
+~LButton Up:: Glaze("release")
+~RButton:: ClickHold()
+~RButton Up:: Glaze("release")
+ClickHold() {
+    MouseGetPos , , &under
+    if under
+        Glaze("--handle " under " press")
+}
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
 #MaxThreadsPerHotkey 1
