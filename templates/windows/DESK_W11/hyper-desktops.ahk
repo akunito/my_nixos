@@ -527,13 +527,22 @@ PowerAction(choice) {
 ; Win+E / Win+L / the Hyper chords pass through untouched (~). On release, if no
 ; physical key was pressed in between (A_PriorKey ignores keys sent by AHK), open
 ; the palette. Delete these two hotkeys to get the Start menu back.
-~LWin:: Send "{Blind}{vkE8}"
+winBare := false
+~LWin:: {
+    ; Whether this press can be a bare tap is decided NOW, not on release:
+    ; Hyper is Ctrl+Alt+Win let go in whatever order the hand (or the
+    ; remapped key) releases them, and when Win is the last one up Ctrl and
+    ; Alt are already up -- the release-time check passed and the palette
+    ; opened on every Hyper released without a chord (twice reported
+    ; 2026-09-23). A modifier pressed after Win shows up in A_PriorKey.
+    global winBare := !GetKeyState("Ctrl", "P") && !GetKeyState("Alt", "P") && !GetKeyState("Shift", "P")
+    Send "{Blind}{vkE8}"
+}
 ~LWin Up:: {
-    ; Tapped ALONE: with Ctrl or Alt physically held it is Hyper being let
-    ; go, and the palette opened on every Hyper released without a chord
-    ; (reported 2026-09-23). A_PriorKey says nothing about the modifiers.
-    if (A_PriorKey = "LWin" && !GetKeyState("Ctrl", "P") && !GetKeyState("Alt", "P") && !GetKeyState("Shift", "P"))
+    global winBare
+    if (winBare && A_PriorKey = "LWin" && !GetKeyState("Ctrl", "P") && !GetKeyState("Alt", "P") && !GetKeyState("Shift", "P"))
         Send "#!{Space}"
+    winBare := false
 }
 ; (no "sticky": GlazeWM workspaces replace Windows virtual desktops here)
 ^!#+r:: Reload

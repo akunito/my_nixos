@@ -315,5 +315,11 @@ echo "$out" | grep "^hover A " | grep -q "B-still-above-A=True" && ok "hovering 
 echo "$out" | grep "^click on A" | grep -q "A-now-above-B=True" && ok "clicking raises" || ko "click did not raise" "$(echo "$out" | grep '^click')"
 echo "$out" | grep "^after unhide" | grep -q "B-focused=True" && ok "hover still works after a workspace comes back" || ko "hover after unhide" "$(echo "$out" | grep '^after unhide')"
 
+# The Administrator console settle() minimised comes back, shown without
+# activation (it stayed hidden in the taskbar after every run until 2026-09-23).
+rm -f "$P/parkrestore.out"; echo "park-elevated.ps1 restore" > "$P/parkrestore.elev"
+for _ in $(seq 8); do [ -f "$P/parkrestore.out" ] && break; sleep 1; done
+rm -f "$P/parkrestore.elev"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]

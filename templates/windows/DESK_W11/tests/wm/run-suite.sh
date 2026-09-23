@@ -37,7 +37,14 @@ ko() { printf '  FAIL %s\n' "$1"; fail=$((fail+1)); }
 # themselves -- that one needs them exactly as the config left them.
 sticky() { powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
   'C:\Users\diego\AppData\Local\Temp\perf\sticky-park.ps1' "$1" 2>/dev/null | tr -d '\r' | sed 's/^/  /'; }
-trap 'sticky on >/dev/null 2>&1' EXIT
+# The Administrator console minimised by reset_desk comes back at the end
+# (it stayed hidden in the taskbar after every run until 2026-09-23).
+restore_elevated() {
+  rm -f "$P/parkrestore.out"; echo "park-elevated.ps1 restore" > "$P/parkrestore.elev"
+  for _ in $(seq 8); do [ -f "$P/parkrestore.out" ] && break; sleep 1; done
+  rm -f "$P/parkrestore.elev"
+}
+trap 'sticky on >/dev/null 2>&1; restore_elevated' EXIT
 
 mkdir -p "$WT/tests/wm"
 cp "$SRC"/lib-*.ahk "$WT/"
@@ -80,7 +87,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="bindings toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings wintap gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -145,6 +152,8 @@ for s in $suites; do
   esac
   case "$s" in
     bindings) collect bindings-test.ahk bindings-test.txt 40 "Chords as data: bindings.tsv re-read on WM_APP+1 (plan 10.27)";;
+    wintap) collect wintap-test.ahk    wintap-test.txt    40 "Win tapped alone opens the palette; Hyper let go does not";;
+    gui)    collect gui-test.ahk       gui-test.txt       90 "The settings window (M5): Hyper+S, sections by name, the smoke";;
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
     wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;
     sticky) collect sticky-test.ahk    sticky-test.txt    180 "Sticky windows: shown on every workspace of their monitor";;

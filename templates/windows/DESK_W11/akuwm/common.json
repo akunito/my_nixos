@@ -1022,6 +1022,28 @@
       "enabled": true,
       "notes": "sway's Hyper+` opens the monitors section",
       "updated_at": 1790160534
+    },
+    {
+      "id": "k-bluetooth",
+      "keys": "Hyper+A",
+      "kind": "exec",
+      "command": "ms-settings:bluetooth",
+      "category": "System",
+      "name": "Bluetooth settings",
+      "enabled": true,
+      "notes": "sway's Hyper+A is blueman",
+      "updated_at": 1790161461
+    },
+    {
+      "id": "k-sound",
+      "keys": "Hyper+Shift+A",
+      "kind": "exec",
+      "command": "ms-settings:sound",
+      "category": "System",
+      "name": "Sound settings (output and input devices)",
+      "enabled": true,
+      "notes": "sway's Hyper+Shift+A is pavucontrol; the System > Sound page, not the volume flyout",
+      "updated_at": 1790161461
     }
   ],
   "startup": [
