@@ -21,7 +21,20 @@ $wmMarker = "$env:LOCALAPPDATA\akuwm\wm-cli.txt"
 if (Test-Path $wmMarker) { $wmCli = (Get-Content $wmMarker -Raw).Trim(); if ($wmCli -and (Test-Path $wmCli)) { $glaze = $wmCli } }
 $d = "$env:TEMP\perf"
 
+# One re-measure when a reading is not direct: DWM grants a swapchain its
+# independent flip a variable moment after a window operation, and the 4 s
+# window landed on that moment on a different step of every run (0/470
+# frames on step 1, 2, or 3-4, 2026-09-23 12:10) while the window manager
+# had touched nothing over the game. A composition that persists fails the
+# second reading just the same; both readings are reported.
 function Modes($name, $seconds = 4) {
+  $first = MeasureOnce $name $seconds
+  if ($first -match '^(\d+)% direct' -and [int]$Matches[1] -ge 90) { return $first }
+  Start-Sleep -Milliseconds 700
+  $second = MeasureOnce "$name-again" $seconds
+  "$second, first reading $first"
+}
+function MeasureOnce($name, $seconds = 4) {
   Remove-Item "$d\$name.csv" -EA SilentlyContinue
   & "$d\PresentMon.exe" --process_name fliptest.exe --output_file "$d\$name.csv" --v2_metrics --timed $seconds --terminate_after_timed --stop_existing_session --session_name AkuCycle --no_console_stats *> $null
   if (-not (Test-Path "$d\$name.csv")) { return "no frames" }

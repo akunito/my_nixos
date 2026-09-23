@@ -2411,7 +2411,17 @@ of the main screen has the vertical monitor, and a window pushed there lands
 ON it, which is right); the injected Alt+drag of a probe does not move a
 window (the script wants a physical Alt), so the live check is Diego's.
 
-AkuWM `b2c2463`, 1010 tests.
+AkuWM `b2c2463`, 1010 tests. `tests/wm` 162/162 on the dev build with all
+three; `tests/fullscreen` 47/48, the one being `8-gamelike`'s present mode
+and it is a measurement, not the manager: the composed step is a different
+one on every run (2, then 1/3/4, then none), two readings 8 s apart both read
+0/470 on the same step while a probe of the same start -- same `StartAsUser`,
+same PresentMon, three rounds -- read 100 % with nothing above the game, and
+the daemon's log after a composed birth is the same as after a direct one
+(one placement, the taskbar mark, nothing on the game since). `Modes` in
+`win-cycle.ps1` re-measures once after a non-direct reading and reports both;
+what makes a whole step compose only inside that script (its PresentMon
+sessions, `AkuCycle`, one after another) is open.
 
 
 ## 12. Risks
