@@ -78,7 +78,7 @@ shape. Moving to our own image can change it without any test noticing — check
 | **L5 E2E** | Playwright: Chromium desktop, Chromium Android, WebKit iPhone, 767/768 | dev QA | yes |
 | **VR Visual** | ~15 screenshot baselines | dev QA | no |
 | **L7 Prod smoke** | L3 + login page + read-only crawl as `qa-smoke` | prod | **no** |
-| **M Manual** | real iPhone/Android/passkey/PWA checks (Diego, only when frontend changes) | prod | — |
+| **M Manual** | real Android + passkey/PWA checks (Diego, only when frontend changes). **No iPhone exists** — the WebKit half is covered by Playwright and VR only, never on a real device | prod | — |
 
 **Placement:** L0/L1/L2/L5/VR specs live **in the fork** (they move with the code); `plane-deploy`,
 L3/L4/L7, seeds and the Telegram reporter live in dotfiles (`system/app/plane-tests/`, nix-packaged).
@@ -157,6 +157,16 @@ error boundary / console error.
 | APLANE-21 | Prod `WEB_URL=http://plane.akunito.com` (not https) | Plane builds email/notification links from it |
 | APLANE-16 | Register gaps: A-11 session, mount name, removed "More" buttons | Update `plane-customizations.md` (part of P9, don't lose it if P9 slips) |
 | APLANE-23 | L3-15 **D06 compares dev's web bundle against prod's** | Since P6, dev runs a fork build prod does not have, so D06 is red by design while a change is in flight. `plane-deploy` (P7) should compare each side against the bundle built from the ref it deployed, not against the other side |
+
+## 8-000. Manual verification log
+
+The suite cannot log in with a passkey or hold a phone. What Diego confirmed by hand:
+
+| When | Check | Verdict |
+|---|---|---|
+| 2026-09-23 | **Pocket ID sign-in on prod** after the image cutover (the OIDC adapter now comes from our image, not a bind-mount) | ✅ Works. Server side: `last_login medium=gitea` on the account created 2026-01-30 and the user count unchanged at 6 — it matched the existing account instead of creating a new one, which was the real risk |
+| — | Android PWA (drawer, a pinned ticket, the Display sheet) | pending |
+| — | iPhone PWA | **not possible** — no device. Known gap, carried deliberately |
 
 ## 8-00. P9: watching upstream instead of upgrading (2026-09-22)
 
