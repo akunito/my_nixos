@@ -2181,8 +2181,21 @@ Two things the desk taught, both in the script's comments:
 
 Also fixed on the way: the two ShareX entries in `common.json` carried
 doubled backslashes (hand-written), and `Hyper+Shift+C` and `Hyper+Space`
-had no entry at all -- they were only in the script. The importer's next job
-is the `wm` one-liners, so the GUI can offer them too.
+had no entry at all -- they were only in the script.
+
+**09:20, the `wm` one-liners too** (dotfiles `d0b6100e`): the 23
+`Hyper+<key>:: Glaze("...")` lines -- focus and move by direction and by
+monitor, resize, fullscreen, floating, sticky, tiling direction,
+set-minimized -- were lifted out of the script by a script (chord -> keys,
+the `; sway:` remark -> notes) into `shortcuts` as kind `wm`, ids
+`k-wm-<key>`. 42 chords render now and `tests/wm tiling` is unchanged at
+17/19 (the two of 10.13). What is left static in `hyper-desktops.ahk` is what
+has logic: the ten workspace keys and Hyper+Q/W (the monitor under the
+pointer), the switcher, the scratchpad show, the power menu, the Ctrl+Alt+C
+macro, Alt+drag, and the Win-tap palette. That last one now checks the
+physical modifiers: with Ctrl or Alt held it is Hyper being let go, and it
+opened the palette on every Hyper released without a chord (reported 09:10;
+the feature dates from 09-14).
 
 
 ## 12. Risks
