@@ -419,12 +419,16 @@ WinSwitcher() {
 ; one-liners) stay static above.
 bindingsFile := EnvGet("LOCALAPPDATA") "\akuwm\bindings.tsv"
 boundChords := Map()
-DllCall("SetWindowText", "Ptr", A_ScriptHwnd, "Str", "AkuWM hotkeys")
+; A hidden window of its own as the letterbox, never shown. NOT the main
+; window renamed: #SingleInstance finds the previous instance by that title,
+; and renaming it left three copies of this script running side by side, each
+; firing every chord (2026-09-23 08:45).
+bindingsBox := Gui("+ToolWindow", "AkuWM hotkeys")
 ; This script runs with uiAccess, and UIPI drops any message above WM_USER
 ; posted by a process of lower integrity -- the daemon and the CLI both are.
-; FindWindow found this window and PostMessage still returned false
+; FindWindow found the window and PostMessage still returned false
 ; (measured 2026-09-23 08:44); MSGFLT_ALLOW (1) on the one message opens it.
-DllCall("ChangeWindowMessageFilterEx", "Ptr", A_ScriptHwnd, "UInt", 0x8001, "UInt", 1, "Ptr", 0)
+DllCall("ChangeWindowMessageFilterEx", "Ptr", bindingsBox.Hwnd, "UInt", 0x8001, "UInt", 1, "Ptr", 0)
 OnMessage(0x8001, (*) => LoadBindings())
 LoadBindings()
 LoadBindings() {

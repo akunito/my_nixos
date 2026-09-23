@@ -25,7 +25,7 @@ Poke() {
     Sleep 700
 }
 DetectHiddenWindows true
-Check("0 setup: the script's window is there", WinExist("AkuWM hotkeys ahk_class AutoHotkey") ? 1 : 0, 1)
+Check("0 setup: the script's window is there", WinExist("AkuWM hotkeys ahk_class AutoHotkeyGUI") ? 1 : 0, 1)
 Check("0 setup: bindings.tsv is rendered", FileExist(tsv) ? 1 : 0, 1)
 original := FileExist(tsv) ? FileRead(tsv) : ""
 Note("original has " (StrSplit(original, "`n").Length - 1) " lines")
