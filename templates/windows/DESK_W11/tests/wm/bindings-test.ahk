@@ -42,12 +42,20 @@ try FileDelete marker
 try FileDelete tsv
 FileAppend rendered "^!#F12`texec`t`tcmd /c echo hi > `"" marker "`"`t`n", tsv
 CliRun("poke")
+; Injected input is dropped while an elevated window holds the foreground
+; (UIPI): the desk was left on the Administrator console once and the
+; chord never arrived. The desktop is medium integrity and the hook sees
+; the keys either way.
+WinActivate "ahk_class Progman"
+Sleep 300
 Send "^!#{F12}"
 Sleep 1500
 Check("1 a chord added to the file fires after the poke", FileExist(marker) ? 1 : 0, 1)
 ; 2. rendered again from the configuration (the GUI's undo), it no longer fires
 try FileDelete marker
 CliRun("reload")
+WinActivate "ahk_class Progman"
+Sleep 300
 Send "^!#{F12}"
 Sleep 1500
 Check("2 rendered again without it, the chord is gone", FileExist(marker) ? 1 : 0, 0)

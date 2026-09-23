@@ -117,6 +117,17 @@ reset_desk() {
   # left the pointer on the vertical screen (wskeys walks it there).
   powershell.exe -NoProfile -Command \
     "Add-Type -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool SetCursorPos(int x, int y);' -Name U -Namespace W; [W.U]::SetCursorPos(1920, 1080)" >/dev/null 2>&1
+  # No elevated window in front: the focus policy refuses the attach and
+  # the injection while an elevated window has the foreground, and a build
+  # without uiAccess cannot even see the Administrator console -- with it in
+  # front every focus a case asks for was undone and every chord a case sent
+  # was dropped (12 checks red, 2026-09-23 10:23). The capture daemon, which
+  # is elevated, minimises them (park-elevated.ps1); skipped when it is not
+  # running. Restore the console from the taskbar afterwards.
+  cp "$(dirname "$HERE")/fullscreen/park-elevated.ps1" "$P/" 2>/dev/null
+  rm -f "$P/parkelev.out"; echo "park-elevated.ps1" > "$P/parkelev.elev"
+  for _ in $(seq 12); do [ -f "$P/parkelev.out" ] && break; sleep 1; done
+  rm -f "$P/parkelev.elev"
   for ws in 12 22; do
     powershell.exe -NoProfile -Command \
       "\$p = Start-Process '$(printf %s "$G" | sed 's|^/mnt/c|C:|; s|/|\\|g')' \

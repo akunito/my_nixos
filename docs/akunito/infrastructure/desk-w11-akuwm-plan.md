@@ -2247,6 +2247,78 @@ Any printable character is a key now. AkuWM `8bd0d10`, 993 tests;
 tests/wm `stacking` 11/11.
 
 
+### 10.33 Towards every test green: a window over the restored game, the UWP process, and five tests caught up (2026-09-23 10:15)
+
+Diego asked for every test green before the next thing. The morning's
+standing was `tests/fullscreen` 44/48 and `tests/wm` 145/156, and each red
+one was read rather than re-run.
+
+**A window that took the focus while the game was away sat over it after the
+restore** (`8-gamelike` step 2 at 0 % direct; case 4 the same way when
+something took the focus during the trip to the other workspace, which is
+why it passed alone and failed in the suite). The insert-behind of 10.21 is
+sent once per (window, game) pair, and Windows raises a window it activates:
+explorer (sticky) and the console took the focus while the game was
+minimised, came up, and the model still had them behind. `Desk.Focus`
+forgets the pair now; the next pass sends it again. AkuWM `03a4ea5`, the
+case 99 % direct afterwards.
+
+**The Calculator opened a second copy on Hyper+X.** A UWP application's
+top-level window belongs to `ApplicationFrameHost`; the application owns
+the `CoreWindow` inside it. Reported as the host, neither the app-toggle
+(which matches the query's process) nor any rule by process ever saw a
+`CalculatorApp` window. The platform now reads the hosted process through
+one `FindWindowEx` per `ApplicationFrameWindow`, and the desk's rule that
+floats UWP frames matches the class instead (`8dc5237`).
+
+**Five tests were behind the manager, not the other way round:**
+
+- `sticky` ×4 and the tiling case 8: the test focused its home workspace
+  right after choosing it, and again after a trip to the other monitor --
+  and asking for the workspace you are on goes back to the previous one
+  (`workspace_auto_back_and_forth`, on in the config), so the window was
+  born on the previous workspace both times ("got 15, want 12"). The test
+  focuses a workspace only when it is not on screen. The tiling case opened
+  its "vertical" windows under a pointer left on the main monitor
+  (`open_under_pointer`); it parks the pointer first.
+- `tiledrag` case 3 expected half of the tile under the pointer; the outline
+  is the rectangle the drop PRODUCES since 10.2x (a drop beside a tile whose
+  row already splits that way joins the row). Expectations rewritten.
+- `repair` cases 1-2 demanded a broken window to repair; AkuWM puts a
+  floating window somebody shrank back before the journal repair gets a
+  turn (10.26). A window already back passes; the repair must then change
+  nothing.
+- `display` staged the fork's bug with `move-workspace --direction`, which
+  AkuWM's monitor roles do not allow; the invariant is that a mode change
+  and its restore leave every workspace on its monitor.
+- `tiling` case 1 "same height" compared exact heights; an application
+  rounds its own frame (2119 against 2118). Within 2 px.
+
+Two AutoHotkey lessons from writing those: `GoTo` is a reserved word in v2
+(a function of that name gives "Unexpected }" at load), and names are
+case-insensitive (a function `Cli` clashes with a variable `cli`).
+
+**The last of 10.13's four around a game** (`toggle` 7b, "asking for it by
+name lifts it over the game"): `focus --container-id` -- what every
+Hyper+<letter> sends through the app-toggle -- on a window whose workspace
+a fullscreen window covers marks it `OverGame`: it goes into the
+always-on-top band, over the game, and the game is never touched; tiles
+too, because Notepad opens tiled. The game taking the focus again sends it
+back under (the band off, the insert-behind again). AkuWM `29b95d7`.
+
+**And the suite's own blind spot.** The focus policy refuses the attach and
+the injection while the foreground window looks like a game -- and counted
+any ELEVATED window as one. With the Administrator console in front (my
+z-order sequence had clicked it), every focus a case asked for was undone
+and every chord a case sent was dropped: `toggle` fell to 21/33 and
+`bindings` lost its first check, on the dev build. Two answers: an elevated
+foreground vetoes those routes only without uiAccess (with it they work);
+and `reset_desk` minimises every elevated window through the capture
+daemon's mailbox (`park-elevated.ps1`, run elevated), because a build
+without uiAccess cannot even see the console, let alone move it. `toggle`
+33/33 and `bindings` 6/6 afterwards.
+
+
 ## 12. Risks
 
 | risk | what we do |
