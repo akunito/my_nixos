@@ -1,20 +1,33 @@
-/* Skill tooltips: the MDX pages stay plain prose, this wraps skill names at runtime.
-   Class = body[data-skill-class] (frontmatter `skillClass`) else the URL.
-   Payloads: tools/build_tooltip_data.py */
+/* Skill tooltips, one popover for the whole site.
+
+   Two ways in, same popover:
+     - [data-skill="<code>"] elements the components render (tables, browser, planners),
+       anywhere on the page. Their class comes from the nearest [data-skill-class].
+     - skill names matched in prose, on class pages only (the components already say
+       everything a tooltip would, and one table would eat the whole MAX budget).
+
+   Payloads: /skill-tooltips/<slug>.<lang>.json (tools/build_tooltip_data.py), fetched
+   once per class and only on the first hover/focus of one of its skills — the browser
+   page can touch all eight classes, so nothing is fetched up front. */
 (function () {
   'use strict';
 
-  var MAX = 200;                       // hard cap on wraps per page
+  var MAX = 200;                       // hard cap on prose wraps per page
   var TIP_ID = 'skill-tip';
   var SKIP_TAG = /^(CODE|PRE|A|H1|H2|SCRIPT|STYLE|NOSCRIPT|BUTTON|INPUT|TEXTAREA|SELECT)$/;
   // The class pages already carry a full skill table and the tool pages are the
-  // browser/planner islands: wrapping names inside either is noise, and one table
-  // would eat the whole MAX budget on its own.
+  // browser/planner islands: wrapping names inside either is noise.
   var SKIP_CLASS = /(^|\s)(skill-table|skills-browser|stigma-planner|skill-point-planner|skill-ref)(\s|$)/;
   // Latin + Hangul syllables both count as "inside a word" for boundary tests.
   var WORD = /[A-Za-z0-9À-ɏ가-힣]/;
+  var L = {
+    es: { chain: 'Cadena', combos: 'combos' },
+    en: { chain: 'Chain', combos: 'combos' },
+  };
 
-  var byCode = {}, tip = null, cur = null;
+  var lang = 'es', pageSlug = '', t = L.es;
+  var cache = {};          // slug -> Promise<{meta, byCode}>
+  var tip = null, cur = null;
 
   function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
@@ -23,10 +36,26 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  function boundaryOk(text, start, end, term) {
-    if (WORD.test(term.charAt(0)) && start > 0 && WORD.test(text.charAt(start - 1))) return false;
-    if (WORD.test(term.charAt(term.length - 1)) && end < text.length && WORD.test(text.charAt(end))) return false;
-    return true;
+  /* One fetch per class for the life of the page, shared by every ref of that class. */
+  function load(slug) {
+    var p = cache[slug];
+    if (p) return p;
+    p = fetch('/skill-tooltips/' + slug + '.' + lang + '.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (doc) {
+        var list = doc && doc.skills, by = {}, i;
+        if (list) for (i = 0; i < list.length; i++) by[list[i].code] = list[i];
+        return { meta: (doc && doc.meta) || {}, byCode: by, list: list || [] };
+      })
+      .catch(function () { return { meta: {}, byCode: {}, list: [] }; });
+    cache[slug] = p;
+    return p;
+  }
+
+  /* The class a ref belongs to: its own container wins, the page is the fallback. */
+  function slugOf(el) {
+    var owner = el.closest('[data-skill-class]');
+    return (owner && owner.getAttribute('data-skill-class')) || pageSlug;
   }
 
   function tipEl() {
@@ -40,29 +69,28 @@
     return tip;
   }
 
-  function place(t, span) {
-    t.style.left = '0px';
-    t.style.top = '0px';
-    var r = span.getBoundingClientRect(), b = t.getBoundingClientRect();
+  function place(el) {
+    var t2 = tipEl();
+    t2.style.left = '0px';
+    t2.style.top = '0px';
+    var r = el.getBoundingClientRect(), b = t2.getBoundingClientRect();
     var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     var x = Math.min(r.left, vw - b.width - 8);
     if (x < 8) x = 8;
     var y = r.bottom + 8;
     if (y + b.height > vh - 8) y = Math.max(8, r.top - b.height - 8);
-    t.style.left = x + 'px';
-    t.style.top = y + 'px';
+    t2.style.left = x + 'px';
+    t2.style.top = y + 'px';
   }
 
-  function show(span) {
-    var s = byCode[span.getAttribute('data-code')];
-    if (!s) return;
-    var t = tipEl(), o = '';
+  function render(el, s, cls, slug) {
+    var o = '', i, bits = [], names = [], to;
     if (s.icon) o += '<img class="skill-tip-icon" src="' + h(s.icon) + '" alt="">';
     o += '<p class="skill-tip-name">' + h(s.name);
     if (s.ko && s.ko !== s.name) o += ' <span class="skill-tip-ko">' + h(s.ko) + '</span>';
     o += '</p>';
-    if (s.kind) o += '<span class="skill-tip-kind">' + h(s.kind) + '</span>';
-    var bits = [];
+    var kind = (cls.meta.kindLabel && cls.meta.kindLabel[s.kind]) || s.kind;
+    if (kind) o += '<span class="skill-tip-kind">' + h(kind) + '</span>';
     if (s.cd) bits.push('CD ' + s.cd);
     if (s.cost) bits.push('MP ' + s.cost);
     if (s.range) bits.push(s.range);
@@ -71,10 +99,34 @@
     var body = s.short || s.desc;
     if (body) o += '<p class="skill-tip-short">' + h(body) + '</p>';
     if (s.rank20) o += '<p class="skill-tip-r20">' + h(s.rank20) + '</p>';
-    t.innerHTML = o;
-    t.hidden = false;
-    place(t, span);
-    cur = span;
+    if (s.chain) {
+      for (i = 0; i < s.chain.length; i++) {
+        to = cls.byCode[s.chain[i][1]];
+        if (to) names.push(to.name);
+      }
+      if (names.length) {
+        o += '<p class="skill-tip-chain">' + h(t.chain) + ': ' + h(names.join(' → ')) + '</p>';
+      }
+    }
+    // The table passes the anchor it already computed; anywhere else the payload carries it.
+    var href = el.getAttribute('data-combos')
+      || (s.anchor ? '/' + lang + '/classes/' + slug + '-skills-guide/#' + s.anchor : '');
+    if (href) o += '<p class="skill-tip-combos"><a href="' + h(href) + '">' + h(t.combos) + '</a></p>';
+    var t2 = tipEl();
+    t2.innerHTML = o;
+    t2.hidden = false;
+    place(el);
+  }
+
+  function show(el) {
+    cur = el;
+    var slug = slugOf(el);
+    if (!slug) return;
+    load(slug).then(function (cls) {
+      if (cur !== el) return;                        // pointer already moved on
+      var s = cls.byCode[el.getAttribute('data-skill')];
+      if (s) render(el, s, cls, slug);
+    });
   }
 
   function hide() {
@@ -85,7 +137,7 @@
   function makeRef(s, term) {
     var span = document.createElement('span');
     span.className = 'skill-ref';
-    span.setAttribute('data-code', s.code);
+    span.setAttribute('data-skill', s.code);
     span.setAttribute('tabindex', '0');
     span.setAttribute('aria-describedby', TIP_ID);
     if (s.icon) {
@@ -101,19 +153,19 @@
     return span;
   }
 
-  function start(root, list) {
-    var byTerm = {}, terms = [], i, j, s, t, cand;
+  /* Wrap matched skill names in the page's prose. Class pages only. */
+  function wrapProse(root, list) {
+    var byTerm = {}, terms = [], i, j, s, term, cand;
     for (i = 0; i < list.length; i++) {
       s = list[i];
-      byCode[s.code] = s;
       cand = [s.name, s.en, s.ko];
       for (j = 0; j < 3; j++) {
-        t = cand[j];
+        term = cand[j];
         // 1-2 char names would match inside ordinary prose; skip them.
-        if (t && t.length > 2 && !byTerm[t]) { byTerm[t] = s; terms.push(t); }
+        if (term && term.length > 2 && !byTerm[term]) { byTerm[term] = s; terms.push(term); }
       }
     }
-    if (!terms.length) return;
+    if (!terms.length) return 0;
     terms.sort(function (a, b) { return b.length - a.length; });   // longest first
     var re = new RegExp(terms.map(esc).join('|'), 'g');
 
@@ -136,8 +188,10 @@
       var node = nodes[i], text = node.nodeValue, frag = null, last = 0, m;
       re.lastIndex = 0;
       while ((m = re.exec(text)) !== null && count < MAX) {
-        var term = m[0], a = m.index, b = a + term.length;
-        if (!boundaryOk(text, a, b, term)) { re.lastIndex = a + 1; continue; }
+        term = m[0];
+        var a = m.index, b = a + term.length;
+        if (WORD.test(term.charAt(0)) && a > 0 && WORD.test(text.charAt(a - 1))) { re.lastIndex = a + 1; continue; }
+        if (WORD.test(term.charAt(term.length - 1)) && b < text.length && WORD.test(text.charAt(b))) { re.lastIndex = a + 1; continue; }
         if (!frag) frag = document.createDocumentFragment();
         if (a > last) frag.appendChild(document.createTextNode(text.slice(last, a)));
         frag.appendChild(makeRef(byTerm[term], term));
@@ -149,22 +203,25 @@
         node.parentNode.replaceChild(frag, node);
       }
     }
-    if (!count) return;
+    return count;
+  }
 
-    root.addEventListener('mouseover', function (e) {
-      var r = e.target.closest && e.target.closest('.skill-ref');
-      if (r && r !== cur) show(r);
+  /* Delegated on document: the browser and the planners build their rows after this
+     runs, and re-build them on every filter change. */
+  var bound = false;
+  function bind() {
+    if (bound) return;
+    bound = true;
+    document.addEventListener('mouseover', function (e) {
+      var r = e.target.closest && e.target.closest('[data-skill]');
+      if (r && r !== cur) show(r); else if (!r && cur) hide();
     });
-    root.addEventListener('mouseout', function (e) {
-      var r = e.target.closest && e.target.closest('.skill-ref');
-      if (r && (!e.relatedTarget || !r.contains(e.relatedTarget))) hide();
+    document.addEventListener('focusin', function (e) {
+      var r = e.target.closest && e.target.closest('[data-skill]');
+      if (r) show(r); else hide();
     });
-    root.addEventListener('focusin', function (e) {
-      var r = e.target.closest && e.target.closest('.skill-ref');
-      if (r) show(r);
-    });
-    root.addEventListener('focusout', function (e) {
-      if (e.target.closest && e.target.closest('.skill-ref')) hide();
+    document.addEventListener('focusout', function (e) {
+      if (e.target.closest && e.target.closest('[data-skill]')) hide();
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' || e.key === 'Esc') hide();
@@ -172,8 +229,8 @@
     // Touch: tap toggles. On a hover-capable pointer mouseover already opened it,
     // so a click there must not close it again — only an outside click dismisses.
     document.addEventListener('click', function (e) {
-      var r = e.target.closest ? e.target.closest('.skill-ref') : null;
-      if (!r) { hide(); return; }
+      var r = e.target.closest ? e.target.closest('[data-skill]') : null;
+      if (!r) { if (!(e.target.closest && e.target.closest('.skill-tip'))) hide(); return; }
       if (!matchMedia('(hover: hover)').matches) { if (cur === r) hide(); else show(r); }
     });
     window.addEventListener('scroll', hide, { passive: true });
@@ -182,21 +239,26 @@
 
   function init() {
     var path = location.pathname;
-    if (path.indexOf('/tools/') !== -1) return;          // browser + planner islands
     var lm = path.match(/^\/(es|en)\//);
-    var lang = lm ? lm[1] : 'es';
-    var slug = (document.body.dataset && document.body.dataset.skillClass) || '';
-    if (!slug) {
+    lang = lm ? lm[1] : 'es';
+    t = L[lang];
+    pageSlug = (document.body.dataset && document.body.dataset.skillClass) || '';
+    if (!pageSlug) {
       var cm = path.match(/^\/(?:es|en)\/classes\/([a-z]+)/);
-      if (cm) slug = cm[1];
+      if (cm) pageSlug = cm[1];
     }
-    if (!/^[a-z]+$/.test(slug)) return;
-    var root = document.querySelector('.sl-markdown-content');
+    if (!/^[a-z]*$/.test(pageSlug)) pageSlug = '';
+
+    // Components render their own refs; nothing to fetch until one is hovered.
+    if (document.querySelector('[data-skill]')) bind();
+
+    // Prose matching needs the class payload up front, and only class pages get it.
+    var root = pageSlug && path.indexOf('/classes/') !== -1
+      ? document.querySelector('.sl-markdown-content') : null;
     if (!root) return;
-    fetch('/skill-tooltips/' + slug + '.' + lang + '.json')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (list) { if (list && list.length) start(root, list); })
-      .catch(function () { /* no payload for this class: leave the prose alone */ });
+    load(pageSlug).then(function (cls) {
+      if (cls.list.length && wrapProse(root, cls.list)) bind();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
