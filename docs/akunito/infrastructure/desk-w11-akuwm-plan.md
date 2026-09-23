@@ -2363,8 +2363,13 @@ two faults behind it, one of them the reason for "sometimes".
 
 A click on a tile that already has the focus changes no z-order (measured
 with the dev build, 11:15); it was the flicker that made the click an
-activation. AkuWM `4c0db53`, 1000 tests. Verified once the signed build is
-installed: the console point sampled quiet, and the click sequence.
+activation. Verified on the signed build at 11:23: the console point sampled
+quiet (one foreground change in 4 s, against ~130 before), and after the
+click on the right Zen tile the Explorer was back over it within 1.5 s
+(`raise over ... moved 1` in the log, the reorder event arriving).
+
+**Every test green on the signed build `4c0db53`, 2026-09-23 11:35:** unit
+1000/1000, `tests/wm` 162/162, `tests/fullscreen` 48/48. Next: the GUI (M5).
 
 
 ## 12. Risks
