@@ -523,6 +523,21 @@
       "enabled": true,
       "notes": "NCGuard/VIOLET: the hotkey process is stopped while the game runs (plan 10.27)",
       "updated_at": 1790106284
+    },
+    {
+      "id": "r-akuwm-gui",
+      "name": "AkuWM settings window",
+      "enabled": true,
+      "match": [
+        {
+          "process": "akuwm-gui"
+        }
+      ],
+      "actions": [
+        "float"
+      ],
+      "notes": "sway-apps floats too; Hyper+S toggles it, the window hides on close",
+      "updated_at": 1790161765
     }
   ],
   "shortcuts": [
