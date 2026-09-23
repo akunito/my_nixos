@@ -552,7 +552,10 @@ PowerAction(choice) {
 ; the palette. Delete these two hotkeys to get the Start menu back.
 ~LWin:: Send "{Blind}{vkE8}"
 ~LWin Up:: {
-    if (A_PriorKey = "LWin")
+    ; Tapped ALONE: with Ctrl or Alt physically held it is Hyper being let
+    ; go, and the palette opened on every Hyper released without a chord
+    ; (reported 2026-09-23). A_PriorKey says nothing about the modifiers.
+    if (A_PriorKey = "LWin" && !GetKeyState("Ctrl", "P") && !GetKeyState("Alt", "P") && !GetKeyState("Shift", "P"))
         Send "#!{Space}"
 }
 ; (no "sticky": GlazeWM workspaces replace Windows virtual desktops here)
