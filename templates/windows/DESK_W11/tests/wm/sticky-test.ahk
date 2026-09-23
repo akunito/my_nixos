@@ -61,10 +61,23 @@ EmptyWs(prefix, skip := "") {
     return prefix (skip = prefix "8" ? "9" : "8")
 }
 
+; Focus a workspace only when it is not already the one on its monitor:
+; asking for the workspace you are on goes back to the previous one
+; (workspace_auto_back_and_forth, on in the config), and this test asked for
+; its home workspace right after computing it and again after a trip to the
+; other monitor -- the window was born on the PREVIOUS workspace both times
+; ("managed on the home workspace (got 15, want 12)", 2026-09-23).
+FocusWs(ws) {
+    for m in GlazeMonitors()
+        for w in m["wss"]
+            if (w["name"] = ws && w["displayed"])
+                return
+    Glaze("focus --workspace " ws)
+}
 KillFlips()
 startWs := GlazeFocusedWs()
 home := EmptyWs("1")
-Glaze("focus --workspace " home)
+FocusWs(home)
 Sleep 1200
 other := EmptyWs("1", home)
 Note("home " home ", spare " other ", started on " startWs)
@@ -84,7 +97,7 @@ Check("1 the flag is set and visible in the query", rec["sticky"] ? 1 : 0, 1)
 before := RectOf(h)
 
 ; --- follows you to another workspace of the same monitor ------------------
-Glaze("focus --workspace " other)
+FocusWs(other)
 Sleep 1500
 rec := WinRec(h)
 Note("after the switch: ws=" rec["ws"] " display=" rec["display"] " cloaked=" Cloaked(h) " rect=" RectOf(h))
@@ -92,19 +105,19 @@ Check("2 still on screen on the next workspace", IsOnScreen(h) ? 1 : 0, 1)
 Check("2 carried to the displayed workspace", rec["ws"], other)
 Check("2 same size and place", RectOf(h), before)
 
-Glaze("focus --workspace " home)
+FocusWs(home)
 Sleep 1500
 Check("3 and back again", IsOnScreen(h) ? 1 : 0, 1)
 Check("3 on the workspace we returned to", WinRec(h)["ws"], home)
 
 ; --- the other monitor must not drag it away ------------------------------
 vert := EmptyWs("2")
-Glaze("focus --workspace " vert)
+FocusWs(vert)
 Sleep 1500
 rec := WinRec(h)
 Note("after focusing " vert ": ws=" rec["ws"] " cloaked=" Cloaked(h))
 Check("4 stays on its own monitor", rec["ws"], home)
-Glaze("focus --workspace " home)
+FocusWs(home)
 Sleep 1200
 
 ; --- a fullscreen window keeps the screen to itself -----------------------
@@ -122,7 +135,7 @@ Sleep 1500
 GlazeOn(WinRec(h)["id"], "unset-sticky")
 Sleep 700
 Check("6 the flag is cleared", WinRec(h)["sticky"] ? 1 : 0, 0)
-Glaze("focus --workspace " other)
+FocusWs(other)
 Sleep 1500
 rec := WinRec(h)
 Note("after unsticky: ws=" rec["ws"] " display=" rec["display"] " cloaked=" Cloaked(h))
@@ -139,7 +152,7 @@ Check("7 toggle-sticky clears it", WinRec(h)["sticky"] ? 1 : 0, 0)
 
 KillFlips()
 if (startWs != "")
-    Glaze("focus --workspace " startWs)
+    FocusWs(startWs)
 out .= (fails ? fails " failed" : "all passed") "`n"
 try FileDelete(A_Temp "\perf\sticky-test.txt")
 FileAppend(out, A_Temp "\perf\sticky-test.txt")

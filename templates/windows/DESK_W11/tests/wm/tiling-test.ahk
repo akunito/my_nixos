@@ -83,6 +83,21 @@ ParkOnMain() {
         }
     }
 }
+; The vertical monitor: new windows open under the POINTER
+; (open_under_pointer), so a workspace focused there is not enough -- with
+; the pointer on the main monitor the two tiles opened there, side by side,
+; and "stacked" measured the wrong screen (2026-09-23).
+ParkOnVertical() {
+    CoordMode "Mouse", "Screen"
+    Loop MonitorGetCount() {
+        MonitorGet(A_Index, &l, &t, &r, &b)
+        if (b - t > r - l) {
+            MouseMove((l + r) // 2, (t + b) // 2, 10)
+            Sleep 500
+            return
+        }
+    }
+}
 KillFlips() {
     try RunWait(A_ComSpec ' /c taskkill /F /IM fliptest.exe', , "Hide")
     Sleep 1200
@@ -193,6 +208,7 @@ KillFlips()
 vert := EmptyWs("2")
 Glaze("focus --workspace " vert)
 Sleep 1200
+ParkOnVertical()
 d := StartTiled(&pd)
 e := StartTiled(&pe)
 rd := WRect(d), re := WRect(e)
