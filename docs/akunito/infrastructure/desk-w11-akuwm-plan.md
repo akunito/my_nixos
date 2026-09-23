@@ -2083,6 +2083,49 @@ build is published to `Temp\akuwm-uia` and waits for the installer; both
 suites go again on it for the record.
 
 
+### 10.30 The morning after a suspend: the elevated console, and Brave (2026-09-23 07:40)
+
+Three things wrong on resume, and Diego's read was right: two are about an
+elevated window, Brave is not. All three from one night's log.
+
+**Switching the vertical monitor to an empty workspace disturbed the main
+one.** The elevated PowerShell's outline was built and torn down nine times
+in a few minutes (`outline windows created/destroyed for 0x3b0e8c` x9), and
+each time the window was raised over the main tiles. The cause:
+`FocusSomethingVisible`, called when the focused window is hidden (switching
+the vertical monitor's workspace hides what was on it), fell back to the
+last-focused window of ANY displayed monitor when the workspace it landed on
+was empty -- and took the elevated console on the main screen, raising it and
+rebuilding its outline (the purple flashing). A screen the person is looking
+at that shows nothing now takes the keyboard to the desktop instead; the
+cross-screen fallback stays only for when no screen is being looked at
+(a toast or a SetForegroundWindow on a hidden window with no monitor
+context). Reproduced and confirmed fixed: after the change, focusing an empty
+vertical workspace leaves the foreground on `Progman` and does not raise or
+outline the main window at all. The outline's coordinates were always on the
+main monitor (1475,244), never the vertical -- so if the purple is ever seen
+ON the vertical screen, that is a separate case still to catch.
+
+**Brave stopped painting and had to be relaunched.** Not elevated: the resume
+brought the three monitors back one at a time, 15 `screens changed`
+notifications over 17 s with gaps of 2.3, 3.2, 3.2 and 2.6 s, and a
+`Default_Monitor` placeholder (1920x1080, then 1024x740) standing in for the
+main screen for eight of those seconds. `MonitorSettleMs` is 2 s, so it ran
+out inside every gap, and Brave was placed eight times into layouts that were
+gone a second later -- sizes swinging 1440x2525 -> 1426x1405 -> 1438x2110 ->
+1199x2133, placements taking 1 and 1.7 s each because Brave was mid-relayout.
+That thrash wedged Chromium's compositor. While a screen is missing (fewer
+than the most ever seen this run) or a placeholder stands in for one, the
+layout now waits `MonitorReturnMs` (6 s) rather than 2 s before placing
+anything. The unit tests cover the longer wait and the placeholder skip; the
+live proof needs the next real suspend, because the monitor-by-monitor return
+cannot be forced from a script.
+
+The dev loop stayed the one from 10.29 (unsigned copy in `Programs\AkuWM`,
+`akuwm-boot.ps1`, no UAC). The probes are in `Temp\akuwm-diag\`
+(`focusgrab.ps1`, `focusgrab2.ps1`). 970 tests.
+
+
 ## 12. Risks
 
 | risk | what we do |
