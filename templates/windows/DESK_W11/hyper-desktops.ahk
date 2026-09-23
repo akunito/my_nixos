@@ -299,10 +299,6 @@ Loop 10 {
 ^!#w:: WsCycle(+1)
 ^!#+q:: WsCycle(-1, true)
 ^!#+w:: WsCycle(+1, true)
-^!#Left:: Glaze("focus --monitor 0")          ; focus output left/right (main is left)
-^!#Right:: Glaze("focus --monitor 1")
-^!#+Left:: Glaze("move --workspace-in-direction left")
-^!#+Right:: Glaze("move --workspace-in-direction right")
 ; ---- Hyper+Tab / Win+Tab: overview of every window in every GlazeWM workspace ----
 ; The Task View replacement. Typing filters (ListBox type-ahead), Enter or double
 ; click focuses the window (GlazeWM switches that monitor to its workspace).
@@ -363,8 +359,6 @@ WinSwitcher() {
 }
 ; Floating windows stay over the tiles; the wheel sends the focused one behind
 ; them (down) and brings it back (up). Focusing it brings it back too.
-^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
-^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
 
 ; ---- Tiling: the sway keymap ---------------------------------------------
 ; Windows tile by default (config.yaml `initial_state: tiling`), with sway's
@@ -380,25 +374,8 @@ WinSwitcher() {
 ;   fullscreen hyper+f, hyper+Shift+g
 ;   hide/show  hyper+Shift+- / hyper+-    sway's scratchpad, minimise here
 ;   split      hyper+Shift+n              toggle tiling direction (no sway twin)
-^!#h:: Glaze("focus --direction left")
-^!#j:: Glaze("focus --direction down")
-^!#k:: Glaze("focus --direction up")
-^!#?:: Glaze("focus --direction right")       ; sway: hyper+question (hyper+l is Telegram)
-^!#+j:: Glaze("move --direction left")
-^!#+k:: Glaze("move --direction down")
-^!#+l:: Glaze("move --direction up")
-^!#+;:: Glaze("move --direction right")       ; sway: hyper+colon
-^!#+u:: Glaze("resize --width -5%")           ; sway: resize shrink width 5 ppt
-^!#+p:: Glaze("resize --width 5%")
-^!#+i:: Glaze("resize --height 5%")
-^!#+o:: Glaze("resize --height -5%")
-^!#+f:: Glaze("toggle-floating --centered=false")
-^!#+Space:: Glaze("toggle-floating --centered=false")
-^!#+s:: Glaze("toggle-sticky")
-^!#+n:: Glaze("toggle-tiling-direction")
 ; sway's scratchpad: hide the focused window, and bring back the last hidden one
 ; to the workspace you are on (AppShow does the move + restore + focus).
-^!#+-:: Glaze("set-minimized")
 ^!#-:: {
     for w in GlazeWins()
         if (w["state"] = "minimized" && w["ws"] != "") {
