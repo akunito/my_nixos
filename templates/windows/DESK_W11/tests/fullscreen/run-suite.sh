@@ -38,6 +38,14 @@ settle() {
   # while the pointer rests on the vertical monitor goes fullscreen over
   # there, and the case then measures the wrong screen).
   $W 'C:\Users\diego\AppData\Local\Temp\perf\park-primary.ps1' >/dev/null 2>&1
+  # No elevated window in front or under the pointer: the Administrator
+  # console, floating over the centre of the main screen, took the focus
+  # when the side window died and the game never got it back (13/4 red in
+  # every run, 2026-09-23). The capture daemon, elevated, minimises them.
+  cp "$(dirname "$0")/park-elevated.ps1" "$P/" 2>/dev/null
+  rm -f "$P/parkelev.out"; echo "park-elevated.ps1" > "$P/parkelev.elev"
+  for _ in $(seq 12); do [ -f "$P/parkelev.out" ] && break; sleep 1; done
+  rm -f "$P/parkelev.elev"
   powershell.exe -NoProfile -Command 'Get-Process fliptest, charmap -EA SilentlyContinue | Stop-Process -Force' 2>/dev/null
   for _ in $(seq 20); do
     powershell.exe -NoProfile -Command 'if (Get-Process fliptest -EA SilentlyContinue) { "yes" }' 2>/dev/null | grep -q yes || break
