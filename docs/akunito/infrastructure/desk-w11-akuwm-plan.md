@@ -2372,6 +2372,48 @@ click on the right Zen tile the Explorer was back over it within 1.5 s
 1000/1000, `tests/wm` 162/162, `tests/fullscreen` 48/48. Next: the GUI (M5).
 
 
+### 10.35 A click holds the tile in front, and a floating window may hang off the screen (2026-09-23 11:40)
+
+Three things Diego asked for on the desk, done in that order.
+
+**The second under a clicked Zen tile.** Clicking a tile made the Explorer
+and Purple vanish behind it for about a second, then come back. Measured:
+355 ms for a synthetic click (release at once), the exact `RaiseDelayMs`
+plus the settle timer; the human second came from the fixed wait
+RESTARTING on every foreground event the click produced (Zen sends two or
+three while it activates). The raise over the tiles is armed once per
+workspace now, waits for the mouse buttons to be up (`GetAsyncKeyState`,
+read only while a raise is pending, no hook) and fires
+`RaiseAfterReleaseMs` (80) later; while it is pending the host looks again
+every 40 ms instead of at the next settle. The synthetic click's dip went
+375 -> 148 ms.
+
+**Held, the tile stays in front -- over the elevated floating windows
+too.** Windows raises a tile only when the click ACTIVATES it, and with the
+focus following the pointer the tile already has the focus when clicked, so
+nothing came up at all and the floating windows kept covering the tile being
+clicked. The AutoHotkey's `~LButton` / `~LButton Up` (and the right button)
+now send `press --handle <the window under the pointer>` and `release`; a
+tile goes into the always-on-top band on press -- never under a fullscreen
+window -- and leaves it on release, the floating windows coming back 80 ms
+later. Nothing is done to the floating windows themselves. A release the
+script never sent (reloaded mid-click) is taken from the buttons. Measured:
+the tile over the Explorer for the whole 800 ms hold, the Explorer back
+46 ms after the button went up; a quick click leaves no dip a 40 ms probe
+can see. `press` and `release` are AkuWM's own compat verbs.
+
+**A floating window dragged mostly off the screen.** "More than half
+inside" pulled every such window back; the rule is a grabbable piece now:
+24 px of it, both ways, on the work area (Diego's number). A rectangle
+remembered from a screen that is gone overlaps the current one not at all,
+so it still comes back. Unit-tested against the bottom edge (the right edge
+of the main screen has the vertical monitor, and a window pushed there lands
+ON it, which is right); the injected Alt+drag of a probe does not move a
+window (the script wants a physical Alt), so the live check is Diego's.
+
+AkuWM `b2c2463`, 1010 tests.
+
+
 ## 12. Risks
 
 | risk | what we do |
