@@ -2334,6 +2334,39 @@ foreground flapped between the test window and a zen tile every 30 ms for
 pointer while the windows closed); it lasted only while they were closing.
 
 
+### 10.34 Zen over the Explorer after a click, and the console that made the focus flicker (2026-09-23 11:12)
+
+Diego: on workspace 11, clicking the right Zen tile sometimes leaves the
+Explorer (sticky, floating) behind it -- against the rule that floating
+windows stay over the tiles. Reproduced with a driven hover-then-click, and
+two faults behind it, one of them the reason for "sometimes".
+
+1. **The z-order event never reached the model.** `EVENT_OBJECT_REORDER`
+   is reported on the desktop with `OBJID_CLIENT` (-4) and child 0, and the
+   hook's OBJID_WINDOW filter dropped every one -- so the trigger added in
+   10.32 for a tile raised natively had never fired. Let through by event
+   id; the log says `z-order events flow (object -4, child 0, window 101a2)`
+   once per run now.
+2. **The elevated console made the foreground flicker.** With the pointer
+   resting on the Administrator console where it overlaps a tile, the
+   foreground flipped between the console and the tile every 30 ms for as
+   long as the pointer stayed, AkuWM decorating both on every flip. Stable
+   with the dev build (which cannot touch an elevated window) and with no
+   window manager at all: the trigger is what only a uiAccess build can do
+   to the console -- strip its caption (`SetWindowLongPtr` + a FRAMECHANGED
+   `SetWindowPos`), which the console answers by putting its style back and
+   taking the foreground again. DWM refuses the border and the corners on it
+   regardless (0x80070006, 10.27). Elevated windows are outlined only now,
+   never decorated. A click landing during that flicker activated the tile
+   (the console held the foreground at that instant), Windows raised it
+   over the floating windows, and nothing put them back: the "sometimes".
+
+A click on a tile that already has the focus changes no z-order (measured
+with the dev build, 11:15); it was the flicker that made the click an
+activation. AkuWM `4c0db53`, 1000 tests. Verified once the signed build is
+installed: the console point sampled quiet, and the click sequence.
+
+
 ## 12. Risks
 
 | risk | what we do |
