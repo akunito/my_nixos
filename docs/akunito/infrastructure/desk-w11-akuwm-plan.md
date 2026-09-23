@@ -2318,6 +2318,21 @@ daemon's mailbox (`park-elevated.ps1`, run elevated), because a build
 without uiAccess cannot even see the console, let alone move it. `toggle`
 33/33 and `bindings` 6/6 afterwards.
 
+**Where it stands on the signed build, 11:05:** `tests/wm` **162/162**;
+`tests/fullscreen` **47/48**, and the one left (`13/4`, the game not refocused
+when the side window dies) was the test opening its "monitor 2" window under
+a pointer still on the main screen -- over the game, which yielded the slot
+and stayed demoted under its own tiles for the rest of the case. Two
+answers: the test parks the pointer on the other screen first (it passes
+alone with that), and the model now demotes the holder properly when a second
+covering window arrives and hands the slot back when that one closes
+(`YieldedTo`; before, the holder kept the Fullscreen state with no slot and no
+container -- drawn nowhere -- and `Forget` never looked). AkuWM `3098de7`,
+1000 tests. One thing seen and not chased: at the very end of case 14 the
+foreground flapped between the test window and a zen tile every 30 ms for
+0.6 s (Windows' active-window tracking against a z-order changing under the
+pointer while the windows closed); it lasted only while they were closing.
+
 
 ## 12. Risks
 

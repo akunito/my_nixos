@@ -92,6 +92,12 @@ Start-Sleep 2
 # pointer -- with a window actually there. Parking on an empty desktop proves
 # nothing: Windows leaves the focus where it was, so the case used to pass or
 # fail depending on what happened to be open on that monitor.
+# On the OTHER monitor: a new window opens under the pointer
+# (open_under_pointer), and with the pointer still on the main screen this
+# one opened there, over the game, and the game was demoted for the rest of
+# the case ("4 pointer back focused=False", 2026-09-23).
+ParkCursorOnSecondary
+Start-Sleep 1
 $s = StartAsUser "$d\fliptest.exe" "25 1 now"
 Start-Sleep 3
 $side = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
