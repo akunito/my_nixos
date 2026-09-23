@@ -363,8 +363,6 @@ WinSwitcher() {
 }
 ; Floating windows stay over the tiles; the wheel sends the focused one behind
 ; them (down) and brings it back (up). Focusing it brings it back too.
-^!#WheelDown:: Glaze("lower")
-^!#WheelUp:: Glaze("raise")
 ^!#f:: Glaze("toggle-fullscreen")             ; sway: fullscreen toggle
 ^!#+g:: Glaze("toggle-fullscreen")            ; sway: hyper+Shift+g, same thing
 

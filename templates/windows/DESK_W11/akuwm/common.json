@@ -683,25 +683,47 @@
       "updated_at": 1789922518
     },
     {
+      "id": "k-sx-region",
+      "keys": "Hyper+Shift+C",
+      "kind": "exec",
+      "command": "\"%ProgramFiles%\\ShareX\\ShareX.exe\" -workflow \"Hyper+Shift+C\"",
+      "category": "Screenshots",
+      "name": "Screenshot of a region (ShareX)",
+      "enabled": true,
+      "notes": "ShareX cannot RegisterHotKey Ctrl+Alt+Shift+Win+<letter> (the Office key set), so the AutoHotkey owns the chord and runs the workflow",
+      "updated_at": 1790232000
+    },
+    {
+      "id": "k-palette",
+      "keys": "Hyper+Space",
+      "kind": "send",
+      "command": "#!{Space}",
+      "category": "System",
+      "name": "PowerToys Command Palette (rofi stand-in)",
+      "enabled": true,
+      "notes": "the palette's own hotkey is Win+Alt+Space; PowerToys Run is disabled",
+      "updated_at": 1790232000
+    },
+    {
       "id": "k-sx-mon-edit",
       "keys": "Hyper+Shift+X",
       "kind": "exec",
-      "command": "\"%ProgramFiles%\\\\ShareX\\\\ShareX.exe\" -workflow \"Hyper+Shift+X\"",
+      "command": "\"%ProgramFiles%\\ShareX\\ShareX.exe\" -workflow \"Hyper+Shift+X\"",
       "category": "Screenshots",
       "name": "Screenshot of the monitor under the pointer, to the clipboard and the editor",
       "enabled": true,
-      "notes": "ShareX workflow of the same name (Documents\\\\ShareX\\\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
+      "notes": "ShareX workflow of the same name (Documents\\ShareX\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
       "updated_at": 1790082834
     },
     {
       "id": "k-sx-mon-save",
       "keys": "Hyper+Shift+Z",
       "kind": "exec",
-      "command": "\"%ProgramFiles%\\\\ShareX\\\\ShareX.exe\" -workflow \"Hyper+Shift+Z\"",
+      "command": "\"%ProgramFiles%\\ShareX\\ShareX.exe\" -workflow \"Hyper+Shift+Z\"",
       "category": "Screenshots",
       "name": "Screenshot of the monitor under the pointer, to the clipboard and a file",
       "enabled": true,
-      "notes": "ShareX workflow of the same name (Documents\\\\ShareX\\\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
+      "notes": "ShareX workflow of the same name (Documents\\ShareX\\HotkeysConfig.json); bound in hyper-desktops.ahk until M3",
       "updated_at": 1790082834
     },
     {
