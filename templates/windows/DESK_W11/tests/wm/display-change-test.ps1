@@ -55,12 +55,11 @@ if (-not $ws.children.Count) {
   $main = (& $glaze query monitors | ConvertFrom-Json).data.monitors | ? { $_.x -eq 0 -and $_.y -eq 0 }
   $ws = ($main.children | ? isDisplayed)
 }
-"misplacing workspace $($ws.name) ($($ws.children.Count) window(s))"
-& $glaze command --id $ws.id move-workspace --direction right | Out-Null
-Start-Sleep 2
-$mixed = Layout
-Show "mixed " $mixed
-if ($mixed[$ws.name] -eq $before[$ws.name]) { "workspace did not move, nothing to test"; return }
+# No misplacing step: the fork's bug (a workspace left on the other monitor)
+# cannot be staged on AkuWM, whose workspaces belong to a monitor ROLE, so
+# the invariant under test is that the change and the restore leave every
+# workspace on the monitor it was on, with its windows (2026-09-23).
+"workspace $($ws.name) ($($ws.children.Count) window(s)) on the main monitor"
 
 # Fire a real display-settings change: re-applying the SAME mode is a no-op
 # and Windows broadcasts nothing (checked -- the AHK log stayed silent), so a
@@ -90,6 +89,6 @@ $cur.dmFields = 0x80000 -bor 0x100000 -bor 0x40000
 Start-Sleep 14
 $after = Layout
 Show "after " $after
-"workspace $($ws.name): was $($before[$ws.name]), mixed to $($mixed[$ws.name]), now $($after[$ws.name])"
 Get-Process fliptest -EA SilentlyContinue | Stop-Process -Force
-if ($after[$ws.name] -eq $before[$ws.name]) { "RESULT ok" } else { "RESULT not restored" }
+$moved = @($before.Keys | ? { $after[$_] -ne $before[$_] })
+if ($moved.Count -eq 0) { "RESULT ok" } else { "RESULT not restored: " + ($moved -join ",") }

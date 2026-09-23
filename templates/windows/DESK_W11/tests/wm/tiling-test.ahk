@@ -115,7 +115,9 @@ Check("1 both are tiling", WinRec(a)["state"] "/" WinRec(b)["state"], "tiling/ti
 ra := WRect(a), rb := WRect(b)
 Note("1 rects " Rs(a) " | " Rs(b))
 Check("1 they do not overlap", Overlap(a, b), 0)
-Check("1 same height", ra["h"] = rb["h"] ? 1 : 0, 1)
+; Within 2 px: an application rounds its own frame (2119 against 2118 on
+; this desk, 2026-09-23), and the layout asked for the same height of both.
+CheckNear("1 same height", ra["h"], rb["h"], 2)
 CheckNear("1 equal widths", ra["w"], rb["w"], 2)
 left := ra["l"] < rb["l"] ? ra : rb, right := ra["l"] < rb["l"] ? rb : ra
 gap := right["l"] - left["r"]

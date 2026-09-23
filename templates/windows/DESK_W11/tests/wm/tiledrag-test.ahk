@@ -122,12 +122,19 @@ ra1 := WRect(a), rb1 := WRect(b)
 leftOutline := ra1["l"] < rb1["l"] ? a : b
 rightOutline := leftOutline = a ? b : a
 rr := WRect(rightOutline)
-Check("3 the outline for the left half of a tile is its left half",
+; The outline is the rectangle the DROP will produce, not half of the tile
+; under the pointer (the window manager makes the drop on a copy of the tree
+; and reads the landing back; a drop beside a tile whose row already splits
+; that way joins the row as a sibling). With two tiles in a row: the left
+; half of the right tile puts the dragged window before it -- where it
+; already is -- and the right half puts it after, in the right column.
+rl := WRect(leftOutline)
+Check("3 the outline for the left half of the other tile is the left column",
     TilingDropTarget(Rec(leftOutline)["id"], rr["l"] + rr["w"] // 4, rr["t"] + rr["h"] // 2),
-    rr["l"] "," rr["t"] "," (rr["w"] // 2) "," rr["h"])
-Check("3 and for the right half, its right half",
+    rl["l"] "," rl["t"] "," rl["w"] "," rl["h"])
+Check("3 and for the right half, the right column",
     TilingDropTarget(Rec(leftOutline)["id"], rr["l"] + (rr["w"] * 3) // 4, rr["t"] + rr["h"] // 2),
-    (rr["l"] + rr["w"] // 2) "," rr["t"] "," (rr["w"] - rr["w"] // 2) "," rr["h"])
+    rr["l"] "," rr["t"] "," rr["w"] "," rr["h"])
 Check("3 the window's own tile is not a target",
     TilingDropTarget(Rec(leftOutline)["id"], WRect(leftOutline)["l"] + 40, WRect(leftOutline)["t"] + 40) = "" ? 1 : 0, 1)
 ra := WRect(a), rb := WRect(b)

@@ -153,9 +153,9 @@ for s in $suites; do
         'C:\Users\diego\AppData\Local\Temp\perf\display-change-test.ps1' 2>/dev/null |
         tr -d '\r' | grep -vE '^\s*\+|CategoryInfo|FullyQualified|^\s*$')
       echo "$out" | sed 's/^/    /'
-      if echo "$out" | grep -q "^RESULT ok"; then ok "a misplaced workspace is reclaimed by its monitor"
+      if echo "$out" | grep -q "^RESULT ok"; then ok "every workspace stays on its monitor through a display change"
       elif echo "$out" | grep -q "no other mode available"; then echo "    (skipped: the second monitor has a single mode)"
-      else ko "misplaced workspace after a display change"; fi
+      else ko "a workspace left its monitor after a display change"; fi
       echo
       ;;
     rules)  collect rules-test.ahk     rules-test.txt     120 "Window rules ported from sway";;
