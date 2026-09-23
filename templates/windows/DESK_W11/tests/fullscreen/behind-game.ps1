@@ -66,8 +66,12 @@ $homeWs = (WsOf $game).Split("/")[0]
 # The launcher: a normal app started while the game holds the foreground.
 $cm = Start-Process charmap.exe -PassThru
 Start-Sleep 3
-$app = WinOf "ClassicCharmap"
-if ($app -eq [IntPtr]::Zero) { $app = WinOf "#32770" }
+# A VISIBLE window of charmap's own process first. The class fallback took
+# the first "#32770" of the whole desk, which was a hidden dialog of
+# GpuFanHelper at 331,945 (2026-09-23), and every check then measured that.
+$app = [IntPtr]::Zero; $x = [W]::GetTopWindow([IntPtr]::Zero)
+while ($x -ne [IntPtr]::Zero) { if ([W]::Pid($x) -eq $cm.Id -and [W]::IsWindowVisible($x)) { $r = [W]::Rect($x); if (($r.Rt - $r.L) -gt 200) { $app = $x; break } }; $x = [W]::GetWindow($x, 2) }
+if ($app -eq [IntPtr]::Zero) { $x = [W]::GetTopWindow([IntPtr]::Zero); while ($x -ne [IntPtr]::Zero) { if ([W]::Cls($x) -eq "ClassicCharmap" -and [W]::IsWindowVisible($x)) { $app = $x; break }; $x = [W]::GetWindow($x, 2) } }
 if ($app -eq [IntPtr]::Zero) { "no app window"; Stop-Process -Id $p.Id -Force; exit 1 }
 Report "1 app launched" $game $app
 

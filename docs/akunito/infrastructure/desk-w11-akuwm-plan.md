@@ -2123,7 +2123,22 @@ cannot be forced from a script.
 
 The dev loop stayed the one from 10.29 (unsigned copy in `Programs\AkuWM`,
 `akuwm-boot.ps1`, no UAC). The probes are in `Temp\akuwm-diag\`
-(`focusgrab.ps1`, `focusgrab2.ps1`). 970 tests.
+(`focusgrab.ps1`, `focusgrab2.ps1`, `ffmprobe4.ps1`). 970 tests.
+
+**The fullscreen suite on the signed build, 08:11: 43/48**, and the five
+were the bench, not the manager. Case 10 (`behind-game.ps1`) looked for
+charmap by class and, not finding it within 3 s, took the first `#32770` of
+the desk -- a hidden dialog of `GpuFanHelper` at 331,945, present since
+yesterday 10:55 -- and measured that for all five checks. It takes a visible
+window of charmap's own process now, and passes 1-3 and 5; step 4 ("the app
+is the top window once the game is minimised") sees the elevated
+Administrator console, back on workspace 11 this morning, floating over it.
+Case 13/4 ("pointer back", the game not refocused after the side window on
+the other screen dies) has failed in EVERY run since the suite's first one
+last night; 10.28 blamed NordVPN under the pointer and that was wrong. Run by
+hand (`ffmprobe4.ps1`) the same steps pass, with the game under the pointer
+and focused. Open; the difference is the elevated launch through the capture
+daemon, or timing.
 
 
 ## 12. Risks
