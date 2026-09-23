@@ -682,7 +682,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 | **M2** ⬛ 2026-09-21, one check short | the safety net first (11.1, landed), then it takes over the WM: cloak-hiding, workspaces, states, rules, layout, z-order, fullscreen, the taskbar mark, the pill sync, the IPC on 6123 and the `glazewm` shim. GlazeWM is switched off; **AutoHotkey stays** and drives AkuWM through the shim | **it has the desk since 2026-09-21** and GlazeWM is out of Startup. `tests/fullscreen` **47/48** (the last is flaky). `tests/wm` **144/156** -- the twelve are 10.13, and only the four z-order-around-a-game ones are a fault. Zebar pills work; the bar cannot connect only because a dead GlazeWM's watcher still holds 6123 (10.8), which a reboot frees. **S7 mixed-DPI rects turned out to be the largest thing in the milestone** -- see 10.9 | S6 done · **S7 done, and it was not small** | XL |
 | **M3** (partly landed early; **reduced 2026-09-22, see 10.27: the AutoHotkey stays**) | bindings as data pushed live into the AHK, game mode (the AHK killed around a game with an anti-cheat), the drag plumbing. ~~input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off.~~ **Alt+drag's POLICY already moved into AkuWM ahead of this** (10.11, 10.12): the script reports a point or a gesture and the layout decides, so `drag-tile`, `drop-target`, `drag-to-top` and `across_monitors` are AkuWM's already and only the input plumbing is left | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** (partly landed early) | journal, repair, display changes, suspend/resume. **Display changes and Startup landed in M2**: they had to, because the listener never worked (10.10) and because a desk with no GlazeWM to fall back on needs `akuwm-boot.ps1` (10.8). Windows following a screen that moves landed with them (10.11) | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
-| **M5** | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S` | headless tests green; the driven smoke opens every section; a rule edited in the GUI is live after Apply | -- | L |
+| **M5** (landed 2026-09-23, 10.36) | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S`. **Its own process**, `akuwm-gui.exe`, on the daemon's pipe | 37 headless tests green; the driven smoke opens every section (wm `gui` case 21/21); a rule edited in the GUI is live after Apply (the smoke proves it against the daemon) | -- | L |
 | **M6** | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported | -- | M |
 | **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, the AHK deleted from the repo (`w11-apps` went with M0) | a clean install on this machine from the release; the runbook updated | -- | S |
 
@@ -800,6 +800,70 @@ would have made them untestable. And `akuwm <command> --out <file>` exists
 because a `uiAccess` process is launched through AppInfo and its output cannot
 be redirected by whoever starts it -- the driven suites will need it for the
 same reason.
+
+### 10.36 M5: the settings window, and three things the desk taught while building it (2026-09-23 13:20)
+
+The signed build of 11:56 (`b2c2463`) went through both driven suites first:
+`tests/wm` 162/162, `tests/fullscreen` 48/48. Then the GUI.
+
+**What landed** (`a116285`, `src/AkuWM.Gui`, 37 GUI tests + 1012 unit):
+`akuwm-gui.exe`, Avalonia 12.1.3 in code (no XAML), Rosé Pine over Fluent
+dark. One window, a sidebar: Rules, Startup, Apps, Windows, Shortcuts,
+Monitors, Tools, Log, Doctor. Items are edited as raw JSON and written whole
+per layer through `ConfigEdit` -- the daemon's own `config set` path, so
+unknown keys survive and the validator has the last word -- then
+`wm-reload-config` (and `bindings reload` for shortcuts). The rule tester
+runs the engine's `RuleMatcher` over `query windows --all`; the window picker
+fills a criterion from a live window. Windows is `compat query monitors`
+every 2 s, click to focus, float/tile, close. Log tails `akuwm.log` with a
+debug switch backed by the new `akuwm debug on|off|status` (live level +
+marker). Apps reads the winget catalogue and asks `winget list` (parsed by
+the header's column offsets). Monitors draws the layout to scale and has
+the Identify button. Tools is a launcher grid plus its editor.
+
+**A deviation from section 5.15, on purpose.** The GUI is its own process,
+not inside `akuwm.exe`: the daemon is uiAccess (signed, Program Files, no
+shell can start it, no stdout), holds the one hot thread, and must not die
+because a panel threw; a toolkit's working set has no place in it either.
+The window is a normal-integrity client of the pipe, exactly like the CLI,
+and its headless tests run on Linux (xunit v3, because Avalonia 12's runner
+is built on it; the Core suite stays on v2 in its own project).
+`tools/publish-gui.sh` puts it at `%LOCALAPPDATA%\Programs\AkuWM\akuwm-gui.exe`,
+no UAC. `Hyper+S` is an `exec` shortcut with `--toggle`, ``Hyper+` `` opens
+Monitors, a startup entry runs it `--hidden` after `ipc` for the tray icon;
+a second launch hands its arguments to the first over the `akuwm-gui` pipe
+and exits; close hides; a rule floats it.
+
+**Three things measured:**
+
+1. **A save on Windows turned every line of common.json into a diff** (1050
+   lines): the JSON writer and `Environment.NewLine` are CRLF, the checkout
+   is LF. `ConfigStore` now keeps the file's own line ending (LF for a new
+   file). This was latent in `config set` since M0.
+2. **A window shown by a launch handed over the pipe stays behind**: the
+   process is not the foreground one and Windows refuses its
+   `SetForegroundWindow` (gui case 1 red). The window asks the daemon, which
+   has the focus routes, by container id once `compat query windows` lists
+   its handle. Green.
+3. **The Win-tap palette guard opened on Hyper let go Win-last** (Diego,
+   twice): the release-time check saw Ctrl and Alt already up. The decision
+   is taken at Win press now (`winBare`); `wintap-test.ahk` injects the
+   three release orders and a bare tap: 6/6.
+
+Also: `Hyper+A` → `ms-settings:bluetooth`, `Hyper+Shift+A` → `ms-settings:sound`
+(verified: Settings opens and is active); `park-elevated.ps1 restore`
+brings the Administrator console back at the end of both suites (it stayed
+in the taskbar after every run); `tests/wm` has `wintap` and `gui` cases
+(`gui` = Hyper+S shows/hides, `--section`, `--toggle`, and `--smoke`, which
+opens every section and round-trips a rule through the editor and the
+daemon: 21/21). `tools/publish-uia.sh` stages the signed build.
+
+**Open**: M5's Windows section has no drag-to-move (click, float/tile,
+close only); Startup's "run now" starts the entry from the GUI process, not
+the daemon; the Apps section's install/upgrade opens a console with winget.
+Diego to install the staged signed build (it carries `debug on|off`; the
+running 11:56 one answers "not a command" to the Log switch) and try the
+window by hand.
 
 ## 11. Migration, rollback, and getting the desk back
 
