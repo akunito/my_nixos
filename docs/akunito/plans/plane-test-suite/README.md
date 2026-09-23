@@ -165,8 +165,13 @@ The suite cannot log in with a passkey or hold a phone. What Diego confirmed by 
 | When | Check | Verdict |
 |---|---|---|
 | 2026-09-23 | **Pocket ID sign-in on prod** after the image cutover (the OIDC adapter now comes from our image, not a bind-mount) | ✅ Works. Server side: `last_login medium=gitea` on the account created 2026-01-30 and the user count unchanged at 6 — it matched the existing account instead of creating a new one, which was the real risk |
-| — | Android PWA (drawer, a pinned ticket, the Display sheet) | pending |
+| 2026-09-23 | **Android PWA** (drawer, a pinned ticket, the Display sheet) | ✅ "parece ir bien de momento" — provisional, which is why APLANE-25 keeps it In Review until 2026-10-23 |
 | — | iPhone PWA | **not possible** — no device. Known gap, carried deliberately |
+
+Nothing else is outstanding, but "green on the first day" is not the same as "green in a
+month of real use": **APLANE-25** holds the soak period open until 2026-10-23, listing what
+changed and is therefore worth suspecting first (attachments, assignee notifications, the
+webhook payload the bot and n8n read, sub-issues, page ordering, anything mobile).
 
 ## 8-00. P9: watching upstream instead of upgrading (2026-09-22)
 
