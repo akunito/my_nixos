@@ -1,0 +1,1263 @@
+{
+ "source_url_pattern": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/{icon}.png",
+ "generated": "2026-09-23",
+ "total_icons": 311,
+ "total_bytes": 5889527,
+ "missing": [],
+ "per_class_counts": {
+  "assassin": 40,
+  "chanter": 39,
+  "cleric": 39,
+  "gladiator": 41,
+  "ranger": 38,
+  "sorcerer": 38,
+  "spiritmaster": 37,
+  "templar": 39
+ },
+ "icons": {
+  "assassin/icon_as_skill_001": {
+   "path": "icons/skills/assassin/icon_as_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_001.png"
+  },
+  "assassin/icon_as_skill_003": {
+   "path": "icons/skills/assassin/icon_as_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_003.png"
+  },
+  "assassin/icon_as_skill_004": {
+   "path": "icons/skills/assassin/icon_as_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_004.png"
+  },
+  "assassin/icon_as_skill_005": {
+   "path": "icons/skills/assassin/icon_as_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_005.png"
+  },
+  "assassin/icon_as_skill_006": {
+   "path": "icons/skills/assassin/icon_as_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_006.png"
+  },
+  "assassin/icon_as_skill_007": {
+   "path": "icons/skills/assassin/icon_as_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_007.png"
+  },
+  "assassin/icon_as_skill_009": {
+   "path": "icons/skills/assassin/icon_as_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_009.png"
+  },
+  "assassin/icon_as_skill_010": {
+   "path": "icons/skills/assassin/icon_as_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_010.png"
+  },
+  "assassin/icon_as_skill_011": {
+   "path": "icons/skills/assassin/icon_as_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_011.png"
+  },
+  "assassin/icon_as_skill_013": {
+   "path": "icons/skills/assassin/icon_as_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_013.png"
+  },
+  "assassin/icon_as_skill_014": {
+   "path": "icons/skills/assassin/icon_as_skill_014.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_014.png"
+  },
+  "assassin/icon_as_skill_016": {
+   "path": "icons/skills/assassin/icon_as_skill_016.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_016.png"
+  },
+  "assassin/icon_as_skill_019": {
+   "path": "icons/skills/assassin/icon_as_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_019.png"
+  },
+  "assassin/icon_as_skill_020": {
+   "path": "icons/skills/assassin/icon_as_skill_020.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_020.png"
+  },
+  "assassin/icon_as_skill_022": {
+   "path": "icons/skills/assassin/icon_as_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_022.png"
+  },
+  "assassin/icon_as_skill_023": {
+   "path": "icons/skills/assassin/icon_as_skill_023.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_023.png"
+  },
+  "assassin/icon_as_skill_024": {
+   "path": "icons/skills/assassin/icon_as_skill_024.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_024.png"
+  },
+  "assassin/icon_as_skill_025": {
+   "path": "icons/skills/assassin/icon_as_skill_025.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_025.png"
+  },
+  "assassin/icon_as_skill_026": {
+   "path": "icons/skills/assassin/icon_as_skill_026.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_026.png"
+  },
+  "assassin/icon_as_skill_028": {
+   "path": "icons/skills/assassin/icon_as_skill_028.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_028.png"
+  },
+  "assassin/icon_as_skill_029": {
+   "path": "icons/skills/assassin/icon_as_skill_029.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_029.png"
+  },
+  "assassin/icon_as_skill_031": {
+   "path": "icons/skills/assassin/icon_as_skill_031.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_031.png"
+  },
+  "assassin/icon_as_skill_033": {
+   "path": "icons/skills/assassin/icon_as_skill_033.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_033.png"
+  },
+  "assassin/icon_as_skill_034": {
+   "path": "icons/skills/assassin/icon_as_skill_034.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_034.png"
+  },
+  "assassin/icon_as_skill_035": {
+   "path": "icons/skills/assassin/icon_as_skill_035.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_035.png"
+  },
+  "assassin/icon_as_skill_036": {
+   "path": "icons/skills/assassin/icon_as_skill_036.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_036.png"
+  },
+  "assassin/icon_as_skill_037": {
+   "path": "icons/skills/assassin/icon_as_skill_037.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_037.png"
+  },
+  "assassin/icon_as_skill_039": {
+   "path": "icons/skills/assassin/icon_as_skill_039.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_039.png"
+  },
+  "assassin/icon_as_skill_passive_001": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_001.png"
+  },
+  "assassin/icon_as_skill_passive_002": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_002.png"
+  },
+  "assassin/icon_as_skill_passive_003": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_003.png"
+  },
+  "assassin/icon_as_skill_passive_004": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_004.png"
+  },
+  "assassin/icon_as_skill_passive_006": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_006.png"
+  },
+  "assassin/icon_as_skill_passive_007": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_007.png"
+  },
+  "assassin/icon_as_skill_passive_008": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_008.png"
+  },
+  "assassin/icon_as_skill_passive_009": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_009.png"
+  },
+  "assassin/icon_as_skill_passive_010": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_010.png"
+  },
+  "assassin/icon_as_skill_passive_011": {
+   "path": "icons/skills/assassin/icon_as_skill_passive_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_011.png"
+  },
+  "assassin/icon_co_skill_002": {
+   "path": "icons/skills/assassin/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "assassin/icon_co_skill_003": {
+   "path": "icons/skills/assassin/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "chanter/icon_ch_skill_001": {
+   "path": "icons/skills/chanter/icon_ch_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_001.png"
+  },
+  "chanter/icon_ch_skill_002": {
+   "path": "icons/skills/chanter/icon_ch_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_002.png"
+  },
+  "chanter/icon_ch_skill_003": {
+   "path": "icons/skills/chanter/icon_ch_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_003.png"
+  },
+  "chanter/icon_ch_skill_004": {
+   "path": "icons/skills/chanter/icon_ch_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_004.png"
+  },
+  "chanter/icon_ch_skill_005": {
+   "path": "icons/skills/chanter/icon_ch_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_005.png"
+  },
+  "chanter/icon_ch_skill_006": {
+   "path": "icons/skills/chanter/icon_ch_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_006.png"
+  },
+  "chanter/icon_ch_skill_008": {
+   "path": "icons/skills/chanter/icon_ch_skill_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_008.png"
+  },
+  "chanter/icon_ch_skill_009": {
+   "path": "icons/skills/chanter/icon_ch_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_009.png"
+  },
+  "chanter/icon_ch_skill_010": {
+   "path": "icons/skills/chanter/icon_ch_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_010.png"
+  },
+  "chanter/icon_ch_skill_013": {
+   "path": "icons/skills/chanter/icon_ch_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_013.png"
+  },
+  "chanter/icon_ch_skill_014": {
+   "path": "icons/skills/chanter/icon_ch_skill_014.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_014.png"
+  },
+  "chanter/icon_ch_skill_015": {
+   "path": "icons/skills/chanter/icon_ch_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_015.png"
+  },
+  "chanter/icon_ch_skill_016": {
+   "path": "icons/skills/chanter/icon_ch_skill_016.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_016.png"
+  },
+  "chanter/icon_ch_skill_017": {
+   "path": "icons/skills/chanter/icon_ch_skill_017.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_017.png"
+  },
+  "chanter/icon_ch_skill_019": {
+   "path": "icons/skills/chanter/icon_ch_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_019.png"
+  },
+  "chanter/icon_ch_skill_021": {
+   "path": "icons/skills/chanter/icon_ch_skill_021.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_021.png"
+  },
+  "chanter/icon_ch_skill_022": {
+   "path": "icons/skills/chanter/icon_ch_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_022.png"
+  },
+  "chanter/icon_ch_skill_023": {
+   "path": "icons/skills/chanter/icon_ch_skill_023.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_023.png"
+  },
+  "chanter/icon_ch_skill_024": {
+   "path": "icons/skills/chanter/icon_ch_skill_024.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_024.png"
+  },
+  "chanter/icon_ch_skill_025": {
+   "path": "icons/skills/chanter/icon_ch_skill_025.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_025.png"
+  },
+  "chanter/icon_ch_skill_029": {
+   "path": "icons/skills/chanter/icon_ch_skill_029.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_029.png"
+  },
+  "chanter/icon_ch_skill_030": {
+   "path": "icons/skills/chanter/icon_ch_skill_030.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_030.png"
+  },
+  "chanter/icon_ch_skill_033": {
+   "path": "icons/skills/chanter/icon_ch_skill_033.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_033.png"
+  },
+  "chanter/icon_ch_skill_041": {
+   "path": "icons/skills/chanter/icon_ch_skill_041.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_041.png"
+  },
+  "chanter/icon_ch_skill_042": {
+   "path": "icons/skills/chanter/icon_ch_skill_042.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_042.png"
+  },
+  "chanter/icon_ch_skill_043": {
+   "path": "icons/skills/chanter/icon_ch_skill_043.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_043.png"
+  },
+  "chanter/icon_ch_skill_044": {
+   "path": "icons/skills/chanter/icon_ch_skill_044.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_044.png"
+  },
+  "chanter/icon_ch_skill_passive_001": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_001.png"
+  },
+  "chanter/icon_ch_skill_passive_002": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_002.png"
+  },
+  "chanter/icon_ch_skill_passive_007": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_007.png"
+  },
+  "chanter/icon_ch_skill_passive_008": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_008.png"
+  },
+  "chanter/icon_ch_skill_passive_010": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_010.png"
+  },
+  "chanter/icon_ch_skill_passive_011": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_011.png"
+  },
+  "chanter/icon_ch_skill_passive_012": {
+   "path": "icons/skills/chanter/icon_ch_skill_passive_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ch_skill_passive_012.png"
+  },
+  "chanter/icon_co_skill_002": {
+   "path": "icons/skills/chanter/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "chanter/icon_co_skill_003": {
+   "path": "icons/skills/chanter/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "chanter/icon_gl_skill_passive_005": {
+   "path": "icons/skills/chanter/icon_gl_skill_passive_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_005.png"
+  },
+  "chanter/icon_gl_skill_passive_006": {
+   "path": "icons/skills/chanter/icon_gl_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_006.png"
+  },
+  "chanter/icon_gl_skill_passive_009": {
+   "path": "icons/skills/chanter/icon_gl_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_009.png"
+  },
+  "cleric/icon_cl_skill_001": {
+   "path": "icons/skills/cleric/icon_cl_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_001.png"
+  },
+  "cleric/icon_cl_skill_002": {
+   "path": "icons/skills/cleric/icon_cl_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_002.png"
+  },
+  "cleric/icon_cl_skill_003": {
+   "path": "icons/skills/cleric/icon_cl_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_003.png"
+  },
+  "cleric/icon_cl_skill_004": {
+   "path": "icons/skills/cleric/icon_cl_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_004.png"
+  },
+  "cleric/icon_cl_skill_005": {
+   "path": "icons/skills/cleric/icon_cl_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_005.png"
+  },
+  "cleric/icon_cl_skill_006": {
+   "path": "icons/skills/cleric/icon_cl_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_006.png"
+  },
+  "cleric/icon_cl_skill_007": {
+   "path": "icons/skills/cleric/icon_cl_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_007.png"
+  },
+  "cleric/icon_cl_skill_008": {
+   "path": "icons/skills/cleric/icon_cl_skill_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_008.png"
+  },
+  "cleric/icon_cl_skill_009": {
+   "path": "icons/skills/cleric/icon_cl_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_009.png"
+  },
+  "cleric/icon_cl_skill_010": {
+   "path": "icons/skills/cleric/icon_cl_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_010.png"
+  },
+  "cleric/icon_cl_skill_012": {
+   "path": "icons/skills/cleric/icon_cl_skill_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_012.png"
+  },
+  "cleric/icon_cl_skill_015": {
+   "path": "icons/skills/cleric/icon_cl_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_015.png"
+  },
+  "cleric/icon_cl_skill_019": {
+   "path": "icons/skills/cleric/icon_cl_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_019.png"
+  },
+  "cleric/icon_cl_skill_026": {
+   "path": "icons/skills/cleric/icon_cl_skill_026.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_026.png"
+  },
+  "cleric/icon_cl_skill_027": {
+   "path": "icons/skills/cleric/icon_cl_skill_027.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_027.png"
+  },
+  "cleric/icon_cl_skill_028": {
+   "path": "icons/skills/cleric/icon_cl_skill_028.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_028.png"
+  },
+  "cleric/icon_cl_skill_029": {
+   "path": "icons/skills/cleric/icon_cl_skill_029.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_029.png"
+  },
+  "cleric/icon_cl_skill_032": {
+   "path": "icons/skills/cleric/icon_cl_skill_032.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_032.png"
+  },
+  "cleric/icon_cl_skill_035": {
+   "path": "icons/skills/cleric/icon_cl_skill_035.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_035.png"
+  },
+  "cleric/icon_cl_skill_037": {
+   "path": "icons/skills/cleric/icon_cl_skill_037.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_037.png"
+  },
+  "cleric/icon_cl_skill_039": {
+   "path": "icons/skills/cleric/icon_cl_skill_039.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_039.png"
+  },
+  "cleric/icon_cl_skill_040": {
+   "path": "icons/skills/cleric/icon_cl_skill_040.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_040.png"
+  },
+  "cleric/icon_cl_skill_041": {
+   "path": "icons/skills/cleric/icon_cl_skill_041.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_041.png"
+  },
+  "cleric/icon_cl_skill_042": {
+   "path": "icons/skills/cleric/icon_cl_skill_042.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_042.png"
+  },
+  "cleric/icon_cl_skill_044": {
+   "path": "icons/skills/cleric/icon_cl_skill_044.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_044.png"
+  },
+  "cleric/icon_cl_skill_046": {
+   "path": "icons/skills/cleric/icon_cl_skill_046.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_046.png"
+  },
+  "cleric/icon_cl_skill_047": {
+   "path": "icons/skills/cleric/icon_cl_skill_047.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_047.png"
+  },
+  "cleric/icon_cl_skill_passive_001": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_001.png"
+  },
+  "cleric/icon_cl_skill_passive_002": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_002.png"
+  },
+  "cleric/icon_cl_skill_passive_003": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_003.png"
+  },
+  "cleric/icon_cl_skill_passive_005": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_005.png"
+  },
+  "cleric/icon_cl_skill_passive_006": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_006.png"
+  },
+  "cleric/icon_cl_skill_passive_007": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_007.png"
+  },
+  "cleric/icon_cl_skill_passive_008": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_008.png"
+  },
+  "cleric/icon_cl_skill_passive_011": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_011.png"
+  },
+  "cleric/icon_cl_skill_passive_012": {
+   "path": "icons/skills/cleric/icon_cl_skill_passive_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_cl_skill_passive_012.png"
+  },
+  "cleric/icon_co_skill_002": {
+   "path": "icons/skills/cleric/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "cleric/icon_co_skill_003": {
+   "path": "icons/skills/cleric/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "cleric/icon_gl_skill_passive_009": {
+   "path": "icons/skills/cleric/icon_gl_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_009.png"
+  },
+  "gladiator/icon_co_skill_002": {
+   "path": "icons/skills/gladiator/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "gladiator/icon_co_skill_003": {
+   "path": "icons/skills/gladiator/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "gladiator/icon_gl_skill_001": {
+   "path": "icons/skills/gladiator/icon_gl_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_001.png"
+  },
+  "gladiator/icon_gl_skill_002": {
+   "path": "icons/skills/gladiator/icon_gl_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_002.png"
+  },
+  "gladiator/icon_gl_skill_003": {
+   "path": "icons/skills/gladiator/icon_gl_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_003.png"
+  },
+  "gladiator/icon_gl_skill_004": {
+   "path": "icons/skills/gladiator/icon_gl_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_004.png"
+  },
+  "gladiator/icon_gl_skill_005": {
+   "path": "icons/skills/gladiator/icon_gl_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_005.png"
+  },
+  "gladiator/icon_gl_skill_006": {
+   "path": "icons/skills/gladiator/icon_gl_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_006.png"
+  },
+  "gladiator/icon_gl_skill_007": {
+   "path": "icons/skills/gladiator/icon_gl_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_007.png"
+  },
+  "gladiator/icon_gl_skill_008": {
+   "path": "icons/skills/gladiator/icon_gl_skill_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_008.png"
+  },
+  "gladiator/icon_gl_skill_009": {
+   "path": "icons/skills/gladiator/icon_gl_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_009.png"
+  },
+  "gladiator/icon_gl_skill_010": {
+   "path": "icons/skills/gladiator/icon_gl_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_010.png"
+  },
+  "gladiator/icon_gl_skill_011": {
+   "path": "icons/skills/gladiator/icon_gl_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_011.png"
+  },
+  "gladiator/icon_gl_skill_013": {
+   "path": "icons/skills/gladiator/icon_gl_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_013.png"
+  },
+  "gladiator/icon_gl_skill_015": {
+   "path": "icons/skills/gladiator/icon_gl_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_015.png"
+  },
+  "gladiator/icon_gl_skill_017": {
+   "path": "icons/skills/gladiator/icon_gl_skill_017.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_017.png"
+  },
+  "gladiator/icon_gl_skill_019": {
+   "path": "icons/skills/gladiator/icon_gl_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_019.png"
+  },
+  "gladiator/icon_gl_skill_020": {
+   "path": "icons/skills/gladiator/icon_gl_skill_020.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_020.png"
+  },
+  "gladiator/icon_gl_skill_024": {
+   "path": "icons/skills/gladiator/icon_gl_skill_024.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_024.png"
+  },
+  "gladiator/icon_gl_skill_028": {
+   "path": "icons/skills/gladiator/icon_gl_skill_028.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_028.png"
+  },
+  "gladiator/icon_gl_skill_034": {
+   "path": "icons/skills/gladiator/icon_gl_skill_034.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_034.png"
+  },
+  "gladiator/icon_gl_skill_036": {
+   "path": "icons/skills/gladiator/icon_gl_skill_036.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_036.png"
+  },
+  "gladiator/icon_gl_skill_038": {
+   "path": "icons/skills/gladiator/icon_gl_skill_038.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_038.png"
+  },
+  "gladiator/icon_gl_skill_039": {
+   "path": "icons/skills/gladiator/icon_gl_skill_039.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_039.png"
+  },
+  "gladiator/icon_gl_skill_040": {
+   "path": "icons/skills/gladiator/icon_gl_skill_040.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_040.png"
+  },
+  "gladiator/icon_gl_skill_041": {
+   "path": "icons/skills/gladiator/icon_gl_skill_041.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_041.png"
+  },
+  "gladiator/icon_gl_skill_042": {
+   "path": "icons/skills/gladiator/icon_gl_skill_042.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_042.png"
+  },
+  "gladiator/icon_gl_skill_043": {
+   "path": "icons/skills/gladiator/icon_gl_skill_043.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_043.png"
+  },
+  "gladiator/icon_gl_skill_044": {
+   "path": "icons/skills/gladiator/icon_gl_skill_044.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_044.png"
+  },
+  "gladiator/icon_gl_skill_045": {
+   "path": "icons/skills/gladiator/icon_gl_skill_045.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_045.png"
+  },
+  "gladiator/icon_gl_skill_passive_001": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_001.png"
+  },
+  "gladiator/icon_gl_skill_passive_002": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_002.png"
+  },
+  "gladiator/icon_gl_skill_passive_003": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_003.png"
+  },
+  "gladiator/icon_gl_skill_passive_004": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_004.png"
+  },
+  "gladiator/icon_gl_skill_passive_005": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_005.png"
+  },
+  "gladiator/icon_gl_skill_passive_006": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_006.png"
+  },
+  "gladiator/icon_gl_skill_passive_007": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_007.png"
+  },
+  "gladiator/icon_gl_skill_passive_008": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_008.png"
+  },
+  "gladiator/icon_gl_skill_passive_009": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_009.png"
+  },
+  "gladiator/icon_gl_skill_passive_010": {
+   "path": "icons/skills/gladiator/icon_gl_skill_passive_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_010.png"
+  },
+  "gladiator/icon_te_skill_034": {
+   "path": "icons/skills/gladiator/icon_te_skill_034.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_034.png"
+  },
+  "ranger/icon_as_skill_passive_009": {
+   "path": "icons/skills/ranger/icon_as_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_009.png"
+  },
+  "ranger/icon_co_skill_002": {
+   "path": "icons/skills/ranger/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "ranger/icon_co_skill_003": {
+   "path": "icons/skills/ranger/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "ranger/icon_ra_skill_001": {
+   "path": "icons/skills/ranger/icon_ra_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_001.png"
+  },
+  "ranger/icon_ra_skill_002": {
+   "path": "icons/skills/ranger/icon_ra_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_002.png"
+  },
+  "ranger/icon_ra_skill_003": {
+   "path": "icons/skills/ranger/icon_ra_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_003.png"
+  },
+  "ranger/icon_ra_skill_004": {
+   "path": "icons/skills/ranger/icon_ra_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_004.png"
+  },
+  "ranger/icon_ra_skill_005": {
+   "path": "icons/skills/ranger/icon_ra_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_005.png"
+  },
+  "ranger/icon_ra_skill_006": {
+   "path": "icons/skills/ranger/icon_ra_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_006.png"
+  },
+  "ranger/icon_ra_skill_007": {
+   "path": "icons/skills/ranger/icon_ra_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_007.png"
+  },
+  "ranger/icon_ra_skill_008": {
+   "path": "icons/skills/ranger/icon_ra_skill_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_008.png"
+  },
+  "ranger/icon_ra_skill_011": {
+   "path": "icons/skills/ranger/icon_ra_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_011.png"
+  },
+  "ranger/icon_ra_skill_012": {
+   "path": "icons/skills/ranger/icon_ra_skill_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_012.png"
+  },
+  "ranger/icon_ra_skill_013": {
+   "path": "icons/skills/ranger/icon_ra_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_013.png"
+  },
+  "ranger/icon_ra_skill_015": {
+   "path": "icons/skills/ranger/icon_ra_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_015.png"
+  },
+  "ranger/icon_ra_skill_016": {
+   "path": "icons/skills/ranger/icon_ra_skill_016.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_016.png"
+  },
+  "ranger/icon_ra_skill_017": {
+   "path": "icons/skills/ranger/icon_ra_skill_017.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_017.png"
+  },
+  "ranger/icon_ra_skill_018": {
+   "path": "icons/skills/ranger/icon_ra_skill_018.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_018.png"
+  },
+  "ranger/icon_ra_skill_019": {
+   "path": "icons/skills/ranger/icon_ra_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_019.png"
+  },
+  "ranger/icon_ra_skill_022": {
+   "path": "icons/skills/ranger/icon_ra_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_022.png"
+  },
+  "ranger/icon_ra_skill_023": {
+   "path": "icons/skills/ranger/icon_ra_skill_023.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_023.png"
+  },
+  "ranger/icon_ra_skill_026": {
+   "path": "icons/skills/ranger/icon_ra_skill_026.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_026.png"
+  },
+  "ranger/icon_ra_skill_030": {
+   "path": "icons/skills/ranger/icon_ra_skill_030.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_030.png"
+  },
+  "ranger/icon_ra_skill_031": {
+   "path": "icons/skills/ranger/icon_ra_skill_031.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_031.png"
+  },
+  "ranger/icon_ra_skill_033": {
+   "path": "icons/skills/ranger/icon_ra_skill_033.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_033.png"
+  },
+  "ranger/icon_ra_skill_034": {
+   "path": "icons/skills/ranger/icon_ra_skill_034.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_034.png"
+  },
+  "ranger/icon_ra_skill_035": {
+   "path": "icons/skills/ranger/icon_ra_skill_035.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_035.png"
+  },
+  "ranger/icon_ra_skill_037": {
+   "path": "icons/skills/ranger/icon_ra_skill_037.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_037.png"
+  },
+  "ranger/icon_ra_skill_038": {
+   "path": "icons/skills/ranger/icon_ra_skill_038.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_038.png"
+  },
+  "ranger/icon_ra_skill_passive_001": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_001.png"
+  },
+  "ranger/icon_ra_skill_passive_003": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_003.png"
+  },
+  "ranger/icon_ra_skill_passive_004": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_004.png"
+  },
+  "ranger/icon_ra_skill_passive_006": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_006.png"
+  },
+  "ranger/icon_ra_skill_passive_007": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_007.png"
+  },
+  "ranger/icon_ra_skill_passive_008": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_008.png"
+  },
+  "ranger/icon_ra_skill_passive_011": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_011.png"
+  },
+  "ranger/icon_ra_skill_passive_012": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_012.png"
+  },
+  "ranger/icon_ra_skill_passive_013": {
+   "path": "icons/skills/ranger/icon_ra_skill_passive_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_ra_skill_passive_013.png"
+  },
+  "sorcerer/icon_as_skill_passive_009": {
+   "path": "icons/skills/sorcerer/icon_as_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_009.png"
+  },
+  "sorcerer/icon_co_skill_002": {
+   "path": "icons/skills/sorcerer/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "sorcerer/icon_co_skill_003": {
+   "path": "icons/skills/sorcerer/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "sorcerer/icon_so_skill_001": {
+   "path": "icons/skills/sorcerer/icon_so_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_001.png"
+  },
+  "sorcerer/icon_so_skill_003": {
+   "path": "icons/skills/sorcerer/icon_so_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_003.png"
+  },
+  "sorcerer/icon_so_skill_004": {
+   "path": "icons/skills/sorcerer/icon_so_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_004.png"
+  },
+  "sorcerer/icon_so_skill_005": {
+   "path": "icons/skills/sorcerer/icon_so_skill_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_005.png"
+  },
+  "sorcerer/icon_so_skill_006": {
+   "path": "icons/skills/sorcerer/icon_so_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_006.png"
+  },
+  "sorcerer/icon_so_skill_009": {
+   "path": "icons/skills/sorcerer/icon_so_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_009.png"
+  },
+  "sorcerer/icon_so_skill_010": {
+   "path": "icons/skills/sorcerer/icon_so_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_010.png"
+  },
+  "sorcerer/icon_so_skill_011": {
+   "path": "icons/skills/sorcerer/icon_so_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_011.png"
+  },
+  "sorcerer/icon_so_skill_012": {
+   "path": "icons/skills/sorcerer/icon_so_skill_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_012.png"
+  },
+  "sorcerer/icon_so_skill_013": {
+   "path": "icons/skills/sorcerer/icon_so_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_013.png"
+  },
+  "sorcerer/icon_so_skill_014": {
+   "path": "icons/skills/sorcerer/icon_so_skill_014.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_014.png"
+  },
+  "sorcerer/icon_so_skill_015": {
+   "path": "icons/skills/sorcerer/icon_so_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_015.png"
+  },
+  "sorcerer/icon_so_skill_016": {
+   "path": "icons/skills/sorcerer/icon_so_skill_016.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_016.png"
+  },
+  "sorcerer/icon_so_skill_019": {
+   "path": "icons/skills/sorcerer/icon_so_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_019.png"
+  },
+  "sorcerer/icon_so_skill_020": {
+   "path": "icons/skills/sorcerer/icon_so_skill_020.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_020.png"
+  },
+  "sorcerer/icon_so_skill_021": {
+   "path": "icons/skills/sorcerer/icon_so_skill_021.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_021.png"
+  },
+  "sorcerer/icon_so_skill_022": {
+   "path": "icons/skills/sorcerer/icon_so_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_022.png"
+  },
+  "sorcerer/icon_so_skill_023": {
+   "path": "icons/skills/sorcerer/icon_so_skill_023.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_023.png"
+  },
+  "sorcerer/icon_so_skill_025": {
+   "path": "icons/skills/sorcerer/icon_so_skill_025.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_025.png"
+  },
+  "sorcerer/icon_so_skill_027": {
+   "path": "icons/skills/sorcerer/icon_so_skill_027.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_027.png"
+  },
+  "sorcerer/icon_so_skill_028": {
+   "path": "icons/skills/sorcerer/icon_so_skill_028.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_028.png"
+  },
+  "sorcerer/icon_so_skill_032": {
+   "path": "icons/skills/sorcerer/icon_so_skill_032.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_032.png"
+  },
+  "sorcerer/icon_so_skill_036": {
+   "path": "icons/skills/sorcerer/icon_so_skill_036.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_036.png"
+  },
+  "sorcerer/icon_so_skill_038": {
+   "path": "icons/skills/sorcerer/icon_so_skill_038.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_038.png"
+  },
+  "sorcerer/icon_so_skill_039": {
+   "path": "icons/skills/sorcerer/icon_so_skill_039.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_039.png"
+  },
+  "sorcerer/icon_so_skill_040": {
+   "path": "icons/skills/sorcerer/icon_so_skill_040.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_040.png"
+  },
+  "sorcerer/icon_so_skill_041": {
+   "path": "icons/skills/sorcerer/icon_so_skill_041.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_041.png"
+  },
+  "sorcerer/icon_so_skill_passive_001": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_001.png"
+  },
+  "sorcerer/icon_so_skill_passive_002": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_002.png"
+  },
+  "sorcerer/icon_so_skill_passive_003": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_003.png"
+  },
+  "sorcerer/icon_so_skill_passive_004": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_004.png"
+  },
+  "sorcerer/icon_so_skill_passive_005": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_005.png"
+  },
+  "sorcerer/icon_so_skill_passive_006": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_006.png"
+  },
+  "sorcerer/icon_so_skill_passive_007": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_007.png"
+  },
+  "sorcerer/icon_so_skill_passive_008": {
+   "path": "icons/skills/sorcerer/icon_so_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_so_skill_passive_008.png"
+  },
+  "spiritmaster/icon_as_skill_passive_009": {
+   "path": "icons/skills/spiritmaster/icon_as_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_as_skill_passive_009.png"
+  },
+  "spiritmaster/icon_co_skill_002": {
+   "path": "icons/skills/spiritmaster/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "spiritmaster/icon_co_skill_003": {
+   "path": "icons/skills/spiritmaster/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "spiritmaster/icon_el_skill_001": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_001.png"
+  },
+  "spiritmaster/icon_el_skill_002": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_002.png"
+  },
+  "spiritmaster/icon_el_skill_003": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_003.png"
+  },
+  "spiritmaster/icon_el_skill_004": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_004.png"
+  },
+  "spiritmaster/icon_el_skill_006": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_006.png"
+  },
+  "spiritmaster/icon_el_skill_007": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_007.png"
+  },
+  "spiritmaster/icon_el_skill_008": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_008.png"
+  },
+  "spiritmaster/icon_el_skill_010": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_010.png"
+  },
+  "spiritmaster/icon_el_skill_011": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_011.png"
+  },
+  "spiritmaster/icon_el_skill_012": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_012.png"
+  },
+  "spiritmaster/icon_el_skill_013": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_013.png"
+  },
+  "spiritmaster/icon_el_skill_014": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_014.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_014.png"
+  },
+  "spiritmaster/icon_el_skill_015": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_015.png"
+  },
+  "spiritmaster/icon_el_skill_017": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_017.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_017.png"
+  },
+  "spiritmaster/icon_el_skill_019": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_019.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_019.png"
+  },
+  "spiritmaster/icon_el_skill_022": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_022.png"
+  },
+  "spiritmaster/icon_el_skill_023": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_023.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_023.png"
+  },
+  "spiritmaster/icon_el_skill_024": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_024.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_024.png"
+  },
+  "spiritmaster/icon_el_skill_025": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_025.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_025.png"
+  },
+  "spiritmaster/icon_el_skill_026": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_026.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_026.png"
+  },
+  "spiritmaster/icon_el_skill_030": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_030.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_030.png"
+  },
+  "spiritmaster/icon_el_skill_033": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_033.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_033.png"
+  },
+  "spiritmaster/icon_el_skill_034": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_034.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_034.png"
+  },
+  "spiritmaster/icon_el_skill_036": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_036.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_036.png"
+  },
+  "spiritmaster/icon_el_skill_037": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_037.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_037.png"
+  },
+  "spiritmaster/icon_el_skill_passive_002": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_002.png"
+  },
+  "spiritmaster/icon_el_skill_passive_003": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_003.png"
+  },
+  "spiritmaster/icon_el_skill_passive_004": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_004.png"
+  },
+  "spiritmaster/icon_el_skill_passive_006": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_006.png"
+  },
+  "spiritmaster/icon_el_skill_passive_007": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_007.png"
+  },
+  "spiritmaster/icon_el_skill_passive_008": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_008.png"
+  },
+  "spiritmaster/icon_el_skill_passive_011": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_011.png"
+  },
+  "spiritmaster/icon_el_skill_passive_012": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_012.png"
+  },
+  "spiritmaster/icon_el_skill_passive_013": {
+   "path": "icons/skills/spiritmaster/icon_el_skill_passive_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_el_skill_passive_013.png"
+  },
+  "templar/icon_co_skill_002": {
+   "path": "icons/skills/templar/icon_co_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_002.png"
+  },
+  "templar/icon_co_skill_003": {
+   "path": "icons/skills/templar/icon_co_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_co_skill_003.png"
+  },
+  "templar/icon_gl_skill_013": {
+   "path": "icons/skills/templar/icon_gl_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_013.png"
+  },
+  "templar/icon_gl_skill_027": {
+   "path": "icons/skills/templar/icon_gl_skill_027.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_027.png"
+  },
+  "templar/icon_gl_skill_passive_006": {
+   "path": "icons/skills/templar/icon_gl_skill_passive_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_006.png"
+  },
+  "templar/icon_gl_skill_passive_009": {
+   "path": "icons/skills/templar/icon_gl_skill_passive_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_gl_skill_passive_009.png"
+  },
+  "templar/icon_te_skill_001": {
+   "path": "icons/skills/templar/icon_te_skill_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_001.png"
+  },
+  "templar/icon_te_skill_002": {
+   "path": "icons/skills/templar/icon_te_skill_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_002.png"
+  },
+  "templar/icon_te_skill_003": {
+   "path": "icons/skills/templar/icon_te_skill_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_003.png"
+  },
+  "templar/icon_te_skill_004": {
+   "path": "icons/skills/templar/icon_te_skill_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_004.png"
+  },
+  "templar/icon_te_skill_006": {
+   "path": "icons/skills/templar/icon_te_skill_006.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_006.png"
+  },
+  "templar/icon_te_skill_007": {
+   "path": "icons/skills/templar/icon_te_skill_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_007.png"
+  },
+  "templar/icon_te_skill_009": {
+   "path": "icons/skills/templar/icon_te_skill_009.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_009.png"
+  },
+  "templar/icon_te_skill_010": {
+   "path": "icons/skills/templar/icon_te_skill_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_010.png"
+  },
+  "templar/icon_te_skill_011": {
+   "path": "icons/skills/templar/icon_te_skill_011.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_011.png"
+  },
+  "templar/icon_te_skill_012": {
+   "path": "icons/skills/templar/icon_te_skill_012.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_012.png"
+  },
+  "templar/icon_te_skill_013": {
+   "path": "icons/skills/templar/icon_te_skill_013.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_013.png"
+  },
+  "templar/icon_te_skill_014": {
+   "path": "icons/skills/templar/icon_te_skill_014.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_014.png"
+  },
+  "templar/icon_te_skill_015": {
+   "path": "icons/skills/templar/icon_te_skill_015.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_015.png"
+  },
+  "templar/icon_te_skill_018": {
+   "path": "icons/skills/templar/icon_te_skill_018.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_018.png"
+  },
+  "templar/icon_te_skill_021": {
+   "path": "icons/skills/templar/icon_te_skill_021.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_021.png"
+  },
+  "templar/icon_te_skill_022": {
+   "path": "icons/skills/templar/icon_te_skill_022.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_022.png"
+  },
+  "templar/icon_te_skill_024": {
+   "path": "icons/skills/templar/icon_te_skill_024.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_024.png"
+  },
+  "templar/icon_te_skill_025": {
+   "path": "icons/skills/templar/icon_te_skill_025.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_025.png"
+  },
+  "templar/icon_te_skill_028": {
+   "path": "icons/skills/templar/icon_te_skill_028.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_028.png"
+  },
+  "templar/icon_te_skill_029": {
+   "path": "icons/skills/templar/icon_te_skill_029.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_029.png"
+  },
+  "templar/icon_te_skill_030": {
+   "path": "icons/skills/templar/icon_te_skill_030.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_030.png"
+  },
+  "templar/icon_te_skill_033": {
+   "path": "icons/skills/templar/icon_te_skill_033.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_033.png"
+  },
+  "templar/icon_te_skill_035": {
+   "path": "icons/skills/templar/icon_te_skill_035.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_035.png"
+  },
+  "templar/icon_te_skill_041": {
+   "path": "icons/skills/templar/icon_te_skill_041.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_041.png"
+  },
+  "templar/icon_te_skill_045": {
+   "path": "icons/skills/templar/icon_te_skill_045.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_045.png"
+  },
+  "templar/icon_te_skill_passive_001": {
+   "path": "icons/skills/templar/icon_te_skill_passive_001.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_001.png"
+  },
+  "templar/icon_te_skill_passive_002": {
+   "path": "icons/skills/templar/icon_te_skill_passive_002.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_002.png"
+  },
+  "templar/icon_te_skill_passive_003": {
+   "path": "icons/skills/templar/icon_te_skill_passive_003.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_003.png"
+  },
+  "templar/icon_te_skill_passive_004": {
+   "path": "icons/skills/templar/icon_te_skill_passive_004.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_004.png"
+  },
+  "templar/icon_te_skill_passive_005": {
+   "path": "icons/skills/templar/icon_te_skill_passive_005.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_005.png"
+  },
+  "templar/icon_te_skill_passive_007": {
+   "path": "icons/skills/templar/icon_te_skill_passive_007.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_007.png"
+  },
+  "templar/icon_te_skill_passive_008": {
+   "path": "icons/skills/templar/icon_te_skill_passive_008.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_008.png"
+  },
+  "templar/icon_te_skill_passive_010": {
+   "path": "icons/skills/templar/icon_te_skill_passive_010.png",
+   "source_url": "https://static.inven.co.kr/image_2011/site_image/aion2/skillicon/icon_te_skill_passive_010.png"
+  }
+ }
+}
