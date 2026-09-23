@@ -2141,6 +2141,50 @@ and focused. Open; the difference is the elevated launch through the capture
 daemon, or timing.
 
 
+### 10.31 Bindings as data: the first slice of M3 (2026-09-23 08:55)
+
+The GUI's prerequisite from 10.27, done and driven on the desk (AkuWM
+`65610b3`, 985 tests; tests/wm `bindings` 6/6):
+
+- **The source of truth is `shortcuts` in `common.json`** (kind `app` |
+  `wm` | `exec` | `send`, a `when` scope, `enabled`), which the importer had
+  already filled from the script. The daemon renders them at every start and
+  on `akuwm bindings reload` to `%LOCALAPPDATA%\akuwm\bindings.tsv` --
+  chord, kind, app, command, process; `Hyper+Shift+C` becomes `^!#+c`;
+  environment variables expanded once, there -- and posts `WM_APP+1` to the
+  script. `bindings validate` says what cannot be rendered (a key that is
+  not a chord, an unknown kind, an app with no process, a tab in a field);
+  `render` and `poke` are the two halves for the tests.
+- **The script (`hyper-desktops.ahk`) binds the file with `Hotkey()`** at
+  start and on every poke: chords gone from the file are switched off,
+  scoped ones under `HotIfWinActive("ahk_exe ...")`. The nineteen chords of
+  the configuration -- the thirteen `Hyper+<letter>` apps, ShareX ×3, the
+  palette, the wheel -- left the script; workspaces, the switcher, the
+  scratchpad and the `wm` one-liners with no entry yet stay static.
+- **The GUI flow is therefore**: edit a shortcut in `common.json` (or
+  `config set`), then `akuwm bindings reload`. No `Reload`, no gesture lost,
+  measured at 700 ms from poke to rebind in the driven case.
+
+Two things the desk taught, both in the script's comments:
+
+1. **UIPI drops the message.** The script runs with uiAccess and the daemon
+   does not, so `PostMessage` of anything above `WM_USER` returned false
+   while `FindWindow` found the window (08:44). The script opens the one
+   message with `ChangeWindowMessageFilterEx(MSGFLT_ALLOW)`.
+2. **Do not rename the script's main window.** `#SingleInstance Force`
+   finds the previous instance by that title; renamed for `FindWindow`, three
+   copies of the script ran side by side, each firing every chord, and none
+   could be killed from a medium-integrity shell (uiAccess). The letterbox is
+   a hidden `Gui` of its own (class `AutoHotkeyGUI`, title `AkuWM hotkeys`).
+   Killing uiAccess copies takes the elevated capture daemon
+   (`kill-ahk.ps1` through the `.elev` mailbox).
+
+Also fixed on the way: the two ShareX entries in `common.json` carried
+doubled backslashes (hand-written), and `Hyper+Shift+C` and `Hyper+Space`
+had no entry at all -- they were only in the script. The importer's next job
+is the `wm` one-liners, so the GUI can offer them too.
+
+
 ## 12. Risks
 
 | risk | what we do |
