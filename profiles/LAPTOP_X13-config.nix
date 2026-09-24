@@ -338,8 +338,10 @@ in
     tailscaleEnable = true; # Enable daemon (but don't auto-connect - manual via Trayscale GUI)
     # trayscaleGuiEnable inherited from LAPTOP-base.nix (true)
     tailscaleLoginServer = "https://${secrets.headscaleDomain}"; # Self-hosted Headscale
-    tailscaleAcceptRoutes = false; # Accept routes (already on LAN)
-    tailscaleAcceptDns = false; # Don't override DNS (use pfSense directly)
+    # Roaming: tailscale-lan-toggle sets accept-routes/accept-dns (off at home, on away).
+    tailscaleLanAutoToggle = true;
+    tailscaleAcceptRoutes = false; # initial value only; the toggle owns it
+    tailscaleAcceptDns = false; # initial value only; the toggle owns it
 
     # === Database Client Credentials ===
     # Generate ~/.pgpass, ~/.my.cnf, ~/.redis-credentials for CLI tools and DBeaver

@@ -1134,7 +1134,9 @@
     tailscaleAcceptRoutes = false; # Accept advertised routes from other nodes
     tailscaleAcceptDns = true; # Accept DNS from Tailscale (set false if always on LAN)
     tailscaleLanAutoToggle = false; # Auto-toggle accept-routes/dns based on LAN presence (for roaming laptops)
-    tailscaleLanGateway = "192.168.8.1"; # Gateway IP to detect home LAN (ping target for auto-toggle)
+    tailscaleLanGateway = "192.168.8.1"; # Home gateway (auto-toggle)
+    tailscaleLanSubnet = "192.168.8.0/24"; # Home subnet: on-link route on a real NIC = at home (auto-toggle)
+    tailscaleLanGatewayMac = ""; # Optional pfSense LAN MAC; "" = subnet match alone (auto-toggle)
     tailscaleGuiAutostart = false; # Auto-start Tailscale GUI (trayscale) with desktop session
     tailscaleOperator = ""; # Local user allowed to control tailscaled without sudo (for GUI/CLI). "" = root-only. Set to the desktop user on GUI machines.
 

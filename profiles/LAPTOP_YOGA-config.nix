@@ -140,8 +140,7 @@ in
     tailscaleLoginServer = "https://${headscaleDomain}"; # Self-hosted Headscale
     tailscaleAcceptRoutes = true; # Accept routes from subnet router (LAN access)
     tailscaleAcceptDns = true; # Accept DNS from Tailscale
-    tailscaleLanAutoToggle = false; # Disabled - user controls manually
-    tailscaleLanGateway = "192.168.8.1"; # Not used (auto-toggle disabled)
+    tailscaleLanAutoToggle = true; # off at home, on away (owns accept-routes/dns)
     tailscaleGuiAutostart = true; # Start trayscale GUI with Plasma 6
 
     # === Development Tools & AI ===

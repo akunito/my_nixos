@@ -220,8 +220,7 @@ in
     tailscaleLoginServer = "https://${headscaleDomain}"; # Self-hosted Headscale
     tailscaleAcceptRoutes = true; # Accept routes from subnet router (LAN access)
     tailscaleAcceptDns = true; # Accept DNS from Tailscale
-    tailscaleLanAutoToggle = false; # Disabled - user controls manually
-    tailscaleLanGateway = "192.168.8.1"; # Not used (auto-toggle disabled)
+    tailscaleLanAutoToggle = true; # off at home, on away (owns accept-routes/dns)
     tailscaleGuiAutostart = true; # Start trayscale GUI with Plasma 6
 
     # === Development Tools & AI ===
@@ -265,11 +264,10 @@ in
       # root on this machine could remount rw — so the real guarantee is the
       # matching ro entry for 100.64.0.4 in DESK's own /etc/exports.
       #
-      # Addressed by DESK's Tailscale IP rather than its LAN one because this
-      # machine runs with accept-routes on: pfSense advertises 192.168.8.0/24,
-      # so even a neighbour on the same LAN is reached through the tunnel and
-      # arrives at DESK as 100.64.0.4. Naming the tunnel is honest about the
-      # path, and about the speed.
+      # Addressed by DESK's Tailscale IP rather than its LAN one: the source is
+      # always 100.64.0.4 (what DESK's exports match), at home or away. Away,
+      # tailscale-lan-toggle turns accept-routes on and the LAN IP would only
+      # be reachable through pfSense anyway.
       {
         what = "100.64.0.5:/mnt/DATA/Games";
         where = "/mnt/DESK_Games_DATA";
