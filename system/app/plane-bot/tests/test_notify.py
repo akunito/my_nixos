@@ -3,7 +3,7 @@ import json
 import unittest
 
 from helpers import HOME, MY, PID, UID, FakeCommentsPlane, FakeTelegram, World, item
-from notify import Notifier, strip_html
+from notify import Notifier, comment_links, strip_html
 
 
 def as_prev(mirror, item_id):
@@ -192,6 +192,25 @@ class Comments(unittest.TestCase):
         w.n.process([(prev, new)])
         self.assertIn("…", w.tg.sent[0][2])
         self.assertLess(len(w.tg.sent[0][2]), 500)
+
+    def test_links_survive_truncation(self):
+        # the babydocs delivery shape: long summary, site links at the very end
+        w = NotifyWorld()
+        body = "<p>" + "summary " * 200 + "</p><p>Read it here: <a href=\"https://baby.local.akunito.com/research/health/irin-23-x/synthesis/\">synthesis</a> · <a href=\"https://baby.local.akunito.com/research/health/irin-23-x/decision/?a=1&amp;b=2\">decision (pending)</a></p>"
+        w.plane.comments_by_item["i-HOME-1"] = [{"id": "c1", "actor": UID["aga"], "comment_html": body, "created_at": "2026-09-12T09:59:00+02:00"}]
+        prev, new = w.change("HOME", 1, updated_by=UID["aga"])
+        w.n.process([(prev, new)])
+        text = w.tg.sent[0][2]
+        self.assertIn("…", text)
+        self.assertIn('🔗 <a href="https://baby.local.akunito.com/research/health/irin-23-x/synthesis/">synthesis</a>', text)
+        self.assertIn('<a href="https://baby.local.akunito.com/research/health/irin-23-x/decision/?a=1&amp;b=2">decision (pending)</a>', text)
+
+    def test_comment_links(self):
+        html_ = '<a href="https://a/x">A &amp; B</a> <a href=\'https://a/x\'>dup</a> <a href="mailto:x@y">m</a> <a href="https://b/"></a>'
+        self.assertEqual(comment_links(html_), [("A & B", "https://a/x"), ("https://b/", "https://b/")])
+        self.assertEqual(comment_links("<p>no links</p>"), [])
+        many = "".join(f'<a href="https://h/{i}">{i}</a>' for i in range(10))
+        self.assertEqual(len(comment_links(many)), 6)
 
     def test_strip_html(self):
         self.assertEqual(strip_html("<p>a &lt;b&gt; <i>c</i></p>"), "a <b> c")

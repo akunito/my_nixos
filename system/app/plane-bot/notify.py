@@ -26,6 +26,11 @@ log = logging.getLogger("plane-bot.notify")
 PRIORITY_ICON = {"urgent": "🔥", "high": "🔴", "medium": "🟠", "low": "🟢", "none": "⚪"}
 COMMENT_MAX = 300
 TAG_RE = re.compile(r"<[^>]+>")
+# Links survive the truncation: they are listed under the quote. A research delivery puts its
+# site links at the END of a ~1500-char comment, so the cut dropped them and Telegram readers
+# only had the Plane link (babydocs IRIN-23, 2026-09-24).
+LINK_RE = re.compile(r"""<a\s[^>]*?href\s*=\s*["'](https?://[^"']+)["'][^>]*>(.*?)</a>""", re.I | re.S)
+LINKS_MAX = 6
 
 # Inline buttons under a card. callback_data = "a:<action>:<item id without dashes>" (<= 64 bytes).
 ACTIONS = {"t": "Todo", "p": "In Progress", "d": "Done", "m": "assign me"}
@@ -48,6 +53,20 @@ def keyboard_for(row):
 
 def strip_html(s):
     return html.unescape(TAG_RE.sub("", s or "")).strip()
+
+
+def comment_links(s):
+    """[(label, url)] for every http(s) link in the comment, first occurrence of each url."""
+    out, seen = [], set()
+    for href, inner in LINK_RE.findall(s or ""):
+        url = html.unescape(href)
+        if url in seen:
+            continue
+        seen.add(url)
+        out.append((strip_html(inner) or url, url))
+        if len(out) == LINKS_MAX:
+            break
+    return out
 
 
 class Notifier:
@@ -218,6 +237,10 @@ class Notifier:
             if len(body) > COMMENT_MAX:
                 body = body[:COMMENT_MAX - 1] + "…"
             text = f"💬 <b>{esc(self.label(c_actor))}</b> on {self.link(row)} {esc(row['name'])}:\n<i>{esc(body)}</i>"
+            links = comment_links(c.get("comment_html"))
+            if links:
+                text += "\n" + "\n".join(
+                    f'🔗 <a href="{html.escape(url, quote=True)}">{esc(label)}</a>' for label, url in links)
             m = self.tg.send(chat_id, text, thread, reply_to=post["message_id"] if post else None)
             if m:
                 self.mirror.map_message(chat_id, m["message_id"], row["id"])
