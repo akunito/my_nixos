@@ -22,6 +22,17 @@
       "notes": "auto-adopted HDMI-A-1 on first sight",
       "always_connected": false,
       "updated_at": 1788800342
+    },
+    {
+      "id": "third",
+      "criteria": "UTV MONITOR 0x00000001",
+      "group": 3,
+      "name": "UTV MONITOR",
+      "primary": false,
+      "enabled": true,
+      "notes": "auto-adopted HDMI-A-1 on first sight",
+      "always_connected": false,
+      "updated_at": 1790270937
     }
   ],
   "settings": {
