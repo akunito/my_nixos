@@ -559,6 +559,7 @@
     # Thinkpad hardware optimizations (via nixos-hardware)
     thinkpadEnable = false; # Enable Lenovo Thinkpad hardware optimizations
     thinkpadModel = ""; # Thinkpad model (e.g., "lenovo-thinkpad-l14-intel", "lenovo-thinkpad-x280", "lenovo-thinkpad-t490")
+    thinkpadConvertible = false; # 2-in-1 (Yoga): screen auto-rotation via iio-sensor-proxy (requires thinkpadEnable)
     thinkfanEnable = false; # Enable thinkfan daemon for active fan curve management (requires thinkpadEnable)
 
     # Thunderbolt support (bolt daemon, auto-authorization, diagnostic tools)

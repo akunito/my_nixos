@@ -31,11 +31,11 @@
 # from `path:` — the shared checkout is never touched.
 #
 # Skipped by default: KOMI_LXC_* and MACBOOK-KOMI (secrets/komi is git-crypt
-# locked here), LAPTOP_YOGA (does not evaluate: ananicy), DESK_VMDESK (retired).
+# locked here), DESK_VMDESK (retired).
 set -u
 cd "$(dirname "$0")/.." || exit 1
 
-SKIP_RE='^(KOMI_LXC_|MACBOOK-KOMI|LAPTOP_YOGA|DESK_VMDESK)'
+SKIP_RE='^(KOMI_LXC_|MACBOOK-KOMI|DESK_VMDESK)'
 FILTER="${*:-}"
 
 PROFILES=$(grep -E '^\s+[A-Za-z][A-Za-z0-9_-]+ = \./profiles/' flake.nix | sed -E 's/^\s*([A-Za-z][A-Za-z0-9_-]*).*/\1/')

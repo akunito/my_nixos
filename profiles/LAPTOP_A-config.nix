@@ -1,5 +1,7 @@
-# LAPTOP_AGA Profile Configuration (nixosaga)
-# Inherits from LAPTOP-base.nix with machine-specific overrides
+# LAPTOP_A Profile Configuration (nixosaga)
+# Inherits from LAPTOP-base.nix with machine-specific overrides.
+# LAPTOP_YOGA imports THIS file and overrides only hardware + identity: every
+# software setting here applies to both of Aga's laptops.
 
 let
   base = import ./LAPTOP-base.nix;
@@ -113,7 +115,7 @@ in
     # Settings → Power Management, instead of having it forced by Nix.
     #
     # This overrides LAPTOP-base.nix (which uses TLP + forced logind lid actions).
-    # Only LAPTOP_A is affected — X13/YOGA keep the base TLP behavior.
+    # LAPTOP_A and LAPTOP_YOGA (inherits this file); X13 keeps the base TLP behavior.
     #
     #   - powerManagement.enable = TRUE is the key fix: NixOS's plasma6 module
     #     gates the WHOLE PowerDevil stack on it — it only installs the `powerdevil`

@@ -8,7 +8,7 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 |------|-------|-------------|---------|------|
 | DESK | 192.168.8.96 | `ssh -A akunito@192.168.8.96` | DESK | workstation |
 | LAPTOP_X13 | 192.168.8.92, 100.64.0.8 | `ssh -A akunito@192.168.8.92` | LAPTOP_X13 | laptop |
-| LAPTOP_YOGA | 192.168.8.100 | `ssh -A aga@192.168.8.100` | LAPTOP_YOGA | laptop |
+| LAPTOP_YOGA | 192.168.8.100 (not in tailnet yet) | `ssh -A aga@192.168.8.100` | LAPTOP_YOGA | laptop (Aga) — imports LAPTOP_A, overrides hardware only |
 | LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A aga@192.168.8.78` | LAPTOP_A | laptop (Aga) |
 | VPS_PROD | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
 | NAS_PROD | 100.64.0.1 (TS, default), 192.168.8.206 (LAN leg enp10s0, DHCP), 192.168.20.200 (VLAN 20 bond0 — only from hosts with their own VLAN 100 leg: DESK, Proxmox) | `ssh -A akunito@100.64.0.1` | NAS_PROD | nas |

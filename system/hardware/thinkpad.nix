@@ -32,6 +32,10 @@ in
       (systemSettings.thinkpadEnable && selectedModule == null)
       "thinkpadEnable is true but thinkpadModel '${systemSettings.thinkpadModel}' is not recognized. Available models: ${lib.concatStringsSep ", " (lib.attrNames thinkpadModules)}";
 
+  # Convertibles (X380 Yoga): accelerometer -> iio-sensor-proxy, which Plasma
+  # reads for auto-rotation in tablet mode. Same as nixos-hardware's thinkpad/yoga.nix.
+  hardware.sensor.iio.enable = lib.mkIf (systemSettings.thinkpadEnable && (systemSettings.thinkpadConvertible or false)) true;
+
   # PS/2 keyboard and touchpad support for ThinkPads
   # i8042/atkbd in initrd: needed for built-in keyboard at LUKS password prompt
   # psmouse: PS/2 touchpad driver (not autoloaded on some kernels)
