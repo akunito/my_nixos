@@ -610,7 +610,7 @@
     claudeSyncHubHost = "100.64.0.6"; # Hub Tailscale IP (VPS_PROD)
     claudeSyncHubPort = 56777; # Hub ssh port
     claudeSyncHubDir = "claude-sync"; # Hub directory under the hub user's home
-    claudeSyncRetentionDays = 90; # cleanupPeriodDays on every client; the hub deletes one day earlier
+    claudeSyncRetentionDays = 365; # cleanupPeriodDays on every client; the hub deletes one day earlier
     claudeSyncHubEnable = false; # Hub side (VPS_PROD): restricted forced-command shell, bare repo, retention + Telegram alerts
     claudeSyncHubKeys = [ ]; # Client public keys (one per machine, `claude-sync pubkey`), pinned to claude-sync-shell
 
