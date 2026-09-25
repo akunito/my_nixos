@@ -65,6 +65,8 @@ let
   settingsJson = lib.optionalAttrs cs.enable {
     # transcripts kept this long on every synced machine (hub ages out one day earlier)
     cleanupPeriodDays = systemSettings.claudeSyncRetentionDays or 90;
+  } // lib.optionalAttrs (systemSettings.claudeCodeTuiFullscreen or false) {
+    tui = "fullscreen";
   } // {
     permissions = {
       allow = [
@@ -469,6 +471,12 @@ try:
             if key not in cur_perms and key in base_perms:
                 cur_perms[key] = base_perms[key]
                 changed = True
+
+    # seeded only when absent: /tui is the user's to change afterwards
+    for key in ('tui',):
+        if key in base and key not in current:
+            current[key] = base[key]
+            changed = True
 
     if changed:
         with open('$settings_file', 'w') as f:

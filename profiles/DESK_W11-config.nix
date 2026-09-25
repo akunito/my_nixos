@@ -149,6 +149,7 @@ in
     dotnetDevEnable = true; # .NET 8 SDK: AkuWM is built here and published to win-x64
     claudeCodeEnable = true; # standalone Claude Code: CLI + settings + MCP + git-crypt + uv, no IDEs
     claudeSyncEnable = true; # memory/skills/sessions ↔ VPS hub, identity DESK_W11
+    claudeCodeTuiFullscreen = true; # drag-select inside Claude copies without wrap breaks
     claudeBackupToNextcloudEnable = false; # DESK already does it
 
     # === Backups: Windows-side configs -> NAS (restic, same service as DESK/X13) ===

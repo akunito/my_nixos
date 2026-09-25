@@ -599,6 +599,7 @@
     dotnetDevEnable = false; # .NET 8 SDK + dotnet-format for building AkuWM (DESK_W11) from WSL
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeGuiEnvEnable = false; # Put the MCP credentials in the SESSION env (environment.d + Plasma env), so a GUI-launched VS Code extension can expand them
+    claudeCodeTuiFullscreen = false; # Seed "tui": "fullscreen" into settings.json: Claude owns mouse selection and copies logical lines (tmux/terminal selection copies the wrap breaks)
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
     claudeProjectsWorkspaceDir = "Projects"; # Directory under $HOME that holds the project repositories
     developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)
