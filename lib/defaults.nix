@@ -656,6 +656,7 @@
     # Package module feature flags
     systemBasicToolsEnable = true; # Enable basic system tools (vim, wget, rsync, cryptsetup, etc.)
     systemNetworkToolsEnable = false; # Enable advanced networking tools (nmap, traceroute, dnsutils, etc.)
+    ytDlpEnable = true; # yt-dlp on every NixOS machine (system/packages/yt-dlp.nix, imported by flake-base for all profiles)
 
     # === WiFi Security Audit ===
     wifiAuditEnable = false; # Enable WiFi security audit toolkit (aircrack-ng, hcxtools, hashcat, wireshark, etc.) — for AUTHORIZED testing of own networks only

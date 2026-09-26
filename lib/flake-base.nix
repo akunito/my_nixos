@@ -416,6 +416,7 @@ let
           # mounts (the emergency-mode brick). Applied to every profile on
           # purpose — script-level guards only cover the install.sh path.
           (self + "/system/security/hwconfig-guard.nix")
+          (self + "/system/packages/yt-dlp.nix")
           # ‼️ lib.nixosSystem instantiates its OWN nixpkgs — flake-base's
           # pkgs-stable/pkgs-unstable (and their overlays) only feed Home
           # Manager and specialArgs. Verified 2026-09-05: with the gamescope
