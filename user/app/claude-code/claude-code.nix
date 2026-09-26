@@ -68,6 +68,10 @@ let
   } // lib.optionalAttrs (systemSettings.claudeCodeTuiFullscreen or false) {
     tui = "fullscreen";
   } // {
+    # user-level, so it applies to every repo; force-synced key by key on activation
+    env = {
+      CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION = "600";
+    };
     permissions = {
       allow = [
         # Read-only tools (always safe)
@@ -470,6 +474,15 @@ try:
         for key in ('allow', 'ask'):
             if key not in cur_perms and key in base_perms:
                 cur_perms[key] = base_perms[key]
+                changed = True
+
+    # env: base keys win, env vars the user added by hand are kept
+    base_env = base.get('env', {})
+    if base_env:
+        cur_env = current.setdefault('env', {})
+        for k, v in base_env.items():
+            if cur_env.get(k) != v:
+                cur_env[k] = v
                 changed = True
 
     # seeded only when absent: /tui is the user's to change afterwards
