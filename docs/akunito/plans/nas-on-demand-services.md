@@ -79,14 +79,19 @@ de `extpool/vps-backups`).
 
 Trabajo con el NAS: 16:10–23:00.
 
-### 0 · Preparación (solo lectura)
+### 0 · Preparación — HECHA 2026-09-30 (AINF-401)
 
-1. Ticket AINF (buscar antes de crear); ID en todos los commits.
-2. `headscale policy get > ~/headscale-policy-backup-2026-09-30.json`.
-3. Cloudflare: origen que usa `truenas-local` para `jellyfin.akunito.com`; política de Access de Jellyfin (correo de Komi).
-4. pfSense: IP de `jellyfin.local` (los nuevos siguen esa convención); destino de la regla NAT `192.168.8.0/24 → tailscale0`.
-5. Medir VPS→NAS con un fichero de 1 G (thumbnails: copiar o regenerar).
-6. Leer compose y nombres de variables de `.env` de los cuatro stacks del VPS.
+| Punto | Resultado (medido) |
+|---|---|
+| Ticket | **AINF-401** |
+| Copia de la ACL | `~/headscale-policy-backup-2026-09-30.json` en el VPS (13 miembros, 2 reglas) |
+| Origen del túnel `truenas-local` | `jellyfin.akunito.com` y `jellyseerr.akunito.com` → `http://192.168.20.200` (NPM :80, enruta por `Host`). Los hostnames públicos nuevos necesitan **también** proxy host en NPM |
+| DNS `.local` del NAS | alias del override de pfSense id 3 (`jellyfin` → **`100.64.0.1`**); los del VPS son alias del id 2 (`grafana` → `100.64.0.6`); `akucraft.local` es el id 0. La API REST de pfSense funciona desde DESK_W11 (el ssh no: la clave de esta máquina no está autorizada) |
+| NAT de pfSense | `192.168.8.0/24 → any` por Tailscale, descripción "UniFi inform": **no está limitada al VPS**, el inform a `100.64.0.1` debería pasar |
+| Enlace VPS→NAS | 55,7 MiB/s (256 MiB de ROMs por ssh; Tailscale directo). Thumbnails: **se copian** (~15 min en bruto, más por ser 194 k ficheros) |
+| Discos del NAS | `extpool` es NVMe, `ssdpool` raidz1 de 4 SSD: el restore local de restic gana a los 56 MiB/s del enlace (254 G ≈ 77 min por red) |
+| Compose del VPS | leídos. Calibre sin `.env`; RomM: OIDC atado a `emulators.akunito.com` (no cambia); UniFi: 8443 en loopback, 8080 en la IP del tailnet; survival: `100.64.0.6:25565`, RCON en loopback, 11 G |
+| Pendiente (solo dashboard) | hostnames del túnel del VPS y política de Access de Jellyfin (correo de Komi) |
 
 ### 1 · Mecanismo "bajo demanda" en el NAS — deploy NAS
 
@@ -113,7 +118,7 @@ Trabajo con el NAS: 16:10–23:00.
 | Bibliotecas (254 G) | **restic local en el NAS**, snapshot 27-09 | `sudo restic restore latest --tag libraries --target /mnt/ssdpool/media/library/.restore`; `mv .restore/home/akunito/{calibre-library,romm-library} .`; delta `sudo rsync -a --numeric-ids --delete` desde el VPS |
 | Proyecto survival entero sin `world-snapshot` ni `.bak*` (~30 G) | VPS | tar dentro de contenedor por ssh → `gameservers/akucraft-survival/` |
 | Proyectos calibre (sin thumbnails), romm, unifi + volúmenes `unifi_unifi_app_config`, `unifi_unifi_db_data_mongo8` | VPS en frío | tar dentro de contenedor → `/mnt/ssdpool/docker/{calibre,romm,unifi}`; compose y `.env` al proyecto en `compose/` |
-| Thumbnails 50 G | VPS | `sudo rsync --numeric-ids` en segundo plano si 0.5 lo permite; si no, CWA los regenera |
+| Thumbnails 50 G | VPS | `sudo rsync --numeric-ids` en segundo plano (no bloquea la puerta) |
 | `akucraft-web`, `akucraft-playermap` (con `secrets/`) | VPS | tar dentro de contenedor → `gameservers/akucraft-archive/` |
 
 3. Survival en el NAS: `addressToSend` → `100.64.0.1` en `automodpack-server.json` (dentro de contenedor).
@@ -132,10 +137,10 @@ Orden: NPM y pfSense → Cloudflare → deploy del VPS (antes, los `.local` dar�
 
 | Host | Después | Cómo (rollback = deshacer la misma entrada) |
 |---|---|---|
-| `calibre.akunito.com`, `emulators.akunito.com`, `unifi.akunito.com` | túnel `truenas-local` | dashboard Cloudflare, origen según 0.3; Access va por hostname y se conserva |
+| `calibre.akunito.com`, `emulators.akunito.com`, `unifi.akunito.com` | túnel `truenas-local` | dashboard Cloudflare, origen `http://192.168.20.200` + proxy host en NPM para cada uno; Access va por hostname y se conserva |
 | `akucraft-map.akunito.com` | eliminado (hostname + app de Access) | dashboard |
-| `calibre.local`, `emulators.local`, `unifi.local` | NPM del NAS | proxy hosts a IP:puerto del host (UniFi: https + websockets); pfSense según 0.4 |
-| `akucraft.local` | `100.64.0.1` | `VPS_PROD-config.nix:94-96` |
+| `calibre.local`, `emulators.local`, `unifi.local` | NPM del NAS | proxy hosts a IP:puerto del host (UniFi: https + websockets); en pfSense (API) pasan de alias del id 2 a alias del id 3 (`100.64.0.1`) |
+| `akucraft.local` | `100.64.0.1` | `VPS_PROD-config.nix:94-96` y override id 0 de pfSense |
 | `akucraft-map.local` | eliminado | `VPS_PROD-config.nix:492-498` |
 
 - VPS: `unifi romm calibre` fuera de `homelabDockerStacks` y `nginxLocalServices`; `nfsServerEnable`/`nfsExports` fuera (sin clientes activos, comprobado).
@@ -204,7 +209,6 @@ y `docker-startup-nas`, comentario en `templates/truenas/homelab/docker-compose.
 - Contenido del snapshot de bibliotecas no comprobado hasta la fase 2; el delta y el manifiesto lo cubren.
 - Tras la fase 6 las bibliotecas tienen una sola copia (aceptado).
 - Cambios a mano (Cloudflare, NPM, pfSense, Kuma) no quedan en el repo: se documentan en la fase 7.
-- Si `.local` apunta a `192.168.20.200`, los clientes remotos del tailnet pierden ~10 % de conexiones (medido 2026-09-18); en casa no afecta.
 - Fases 1–5 caben en una o dos tardes; la verificación de 24 h de la fase 5 no bloquea la limpieza si Diego da el OK; la fase 6 no se empieza después de las 21:00.
 
 ## Fuera de alcance (detectado, no pedido)
