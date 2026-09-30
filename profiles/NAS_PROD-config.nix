@@ -130,15 +130,27 @@ in
     # rootless container owns (AkuCraft writes level.dat / playerdata as uid
     # 100999 mode 0600). nas-backup-acl grants akunito read via POSIX ACL, plus a
     # default ACL so the files the servers create later stay readable.
-    nasBackupAclPaths = [ "/mnt/ssdpool/docker/compose/gameservers" ];
+    nasBackupAclPaths = [
+      "/mnt/ssdpool/docker/compose/gameservers"
+      # State of the on-demand stacks (AINF-401): mariadb/mongo/CWA write as subuids.
+      "/mnt/ssdpool/docker/calibre"
+      "/mnt/ssdpool/docker/romm"
+      "/mnt/ssdpool/docker/unifi"
+    ];
     nasAutoSnapshotEnable = true;
-    nasDockerProjects = [
-      "npm"
-      "cloudflared"
-      "media"
-      "vpn-media"
-      "exporters"
-      "monitoring"
+    nasRootDockerProjects = [ "vpn-media" ];
+    nasRootlessDockerProjects = [ "npm" "cloudflared" "media" "exporters" "monitoring" ];
+    # Stopped by default, started with `nas-svc start <name>` (AINF-401). State lives
+    # in /mnt/ssdpool/docker/<name>, NOT under compose/: the VPS "configs" backup job
+    # sweeps the whole compose dir except gameservers/.
+    nasOnDemandDockerProjects = [
+      "calibre"
+      "romm"
+      "unifi"
+      "gameservers/akucraft-survival"
+      "gameservers/akucraft-solo"
+      "gameservers/akucraft-creative"
+      "gameservers/akucraft-staging"
     ];
 
     # ============================================================================
@@ -243,6 +255,7 @@ in
         pciutils
         git-crypt
         python3 # Required by autoSystemUpdate.sh autofs/NFS scrub step
+        restic # security.wrappers.restic points at /run/current-system/sw/bin/restic; the VPS repos in extpool/vps-backups are restored/pruned locally (AINF-401)
       ];
 
     # ============================================================================

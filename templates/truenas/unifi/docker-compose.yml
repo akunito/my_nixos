@@ -1,64 +1,91 @@
-# UniFi Network Application - TrueNAS Docker (FALLBACK)
-# NOT auto-started. Manual use only when VPS UniFi is unavailable.
-# Start: cd /mnt/ssdpool/docker/compose/unifi && sudo docker compose up -d
-# Stop:  cd /mnt/ssdpool/docker/compose/unifi && sudo docker compose down
-
+# UniFi Network Application — unifi.akunito.com (Cloudflare Access) + unifi.local
+# Deploy: /mnt/ssdpool/docker/compose/unifi on NAS_PROD (rootless docker)
+#
+# Moved from VPS_PROD (~/.homelab/unifi) on AINF-401; this replaces the mongo 4.4
+# "fallback" template of the TrueNAS era. ON-DEMAND stack: nothing starts it;
+# `nas-svc start unifi` or /svc in the infra bot does, and the NAS takes it down
+# before the 23:00 suspend. Switches and the AP keep forwarding without a
+# controller; no statistics are collected while it is off.
+#
+# mongo MUST stay 8.0: the data files came from the VPS's mongo 8 and do not
+# downgrade.
+#
+# State is NOT under this directory (the VPS "configs" backup job sweeps compose/):
+#   /mnt/ssdpool/docker/unifi/db        mongo data (was volume unifi_unifi_db_data_mongo8)
+#   /mnt/ssdpool/docker/unifi/config    controller config (was volume unifi_unifi_app_config)
+#
+# Inform: devices on 192.168.8.x reach 100.64.0.1:8080 through pfSense, which
+# masquerades LAN -> Tailscale (rule "UniFi inform", destination any), so the
+# NAS sees them as 100.64.0.7 on tailscale0 — a trusted interface, no firewall
+# port needed. system_ip in config/data/system.properties must be 100.64.0.1.
+#
+# .env: MONGO_ROOT_USER MONGO_ROOT_PASS MONGO_USER MONGO_PASS MONGO_DBNAME
+# init-mongo.sh (next to this file, not synced by nas-docker-startup.sh) only
+# runs on an empty db directory.
 services:
-  unifi-mongodb:
-    image: mongo:4.4
-    container_name: unifi-mongodb
-    restart: unless-stopped
-    volumes:
-      - ./mongodb/data:/data/db
-      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+  unifi-db:
+    image: mongo:8.0
+    container_name: unifi-db
+    restart: "no"
     environment:
-      TZ: Europe/Warsaw
-    logging:
-      driver: json-file
-      options:
-        max-size: 50m
-        max-file: "2"
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS}
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PASS=${MONGO_PASS}
+      - MONGO_DBNAME=${MONGO_DBNAME}
+      - MONGO_AUTHSOURCE=admin
+    volumes:
+      - /mnt/ssdpool/docker/unifi/db:/data/db
+      - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
           memory: 512M
 
-  unifi-network-app:
-    image: lscr.io/linuxserver/unifi-network-application:latest
-    container_name: unifi-network-app
+  unifi-app:
+    image: lscr.io/linuxserver/unifi-network-application:10.5.67-ls141
+    container_name: unifi-app
+    restart: "no"
     depends_on:
-      - unifi-mongodb
-    restart: unless-stopped
+      - unifi-db
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Warsaw
-      - MONGO_HOST=unifi-mongodb
+      - MONGO_USER=${MONGO_USER}
+      - MONGO_PASS=${MONGO_PASS}
+      - MONGO_HOST=unifi-db
       - MONGO_PORT=27017
-      - MONGO_DBNAME=unifi
-      - MONGO_USER=unifi
-      - MONGO_PASS=${UNIFI_MONGO_PASS}
-    ports:
-      - "8443:8443"       # Web UI (HTTPS)
-      - "3478:3478/udp"   # STUN
-      - "10001:10001/udp" # AP discovery
-      - "8080:8080"       # Device inform
+      - MONGO_DBNAME=${MONGO_DBNAME}
+      - MONGO_AUTHSOURCE=admin
+      - MEM_LIMIT=1024
+      - MEM_STARTUP=1024
     volumes:
-      - ./config:/config
-    cap_drop: [ALL]
-    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
-    logging:
-      driver: json-file
-      options:
-        max-size: 50m
-        max-file: "2"
+      - /mnt/ssdpool/docker/unifi/config:/config
+    ports:
+      # Management UI: NPM forwards to 192.168.20.200:<port> (https upstream).
+      - "192.168.20.200:8443:8443"
+      # Inform + STUN on the tailnet address only. STUN was impossible on the VPS
+      # (headscale's embedded DERP owns 3478/udp there).
+      - "100.64.0.1:8080:8080"
+      - "100.64.0.1:3478:3478/udp"
     healthcheck:
-      test: ["CMD-SHELL", "curl -kf https://localhost:8443 || exit 1"]
+      test: ["CMD", "curl", "-kf", "https://localhost:8443"]
       interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 120s
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1536M

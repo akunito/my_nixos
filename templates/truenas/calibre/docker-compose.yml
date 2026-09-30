@@ -1,0 +1,53 @@
+# Calibre-Web-Automated — calibre.akunito.com (Cloudflare Access) + calibre.local
+# Deploy: /mnt/ssdpool/docker/compose/calibre on NAS_PROD (rootless docker)
+#
+# Moved from VPS_PROD (~/.homelab/calibre) on AINF-401. ON-DEMAND stack: nothing
+# starts it; `nas-svc start calibre` or /svc in the infra bot does, and the NAS
+# takes it down before the 23:00 suspend.
+#
+# State is NOT under this directory: the VPS "configs" backup job sweeps all of
+# compose/, and config/ holds a 300 MB app.db plus ~50 G of thumbnails.
+#   /mnt/ssdpool/docker/calibre/config     app.db, cwa.db, custom-services/, thumbnails/
+#   /mnt/ssdpool/docker/calibre/ingest     drop books here
+#   /mnt/ssdpool/media/library/calibre-library   the library + metadata.db (uid 100999)
+services:
+  calibre-web-automated:
+    # Digest of the `latest` the VPS ran (7 months old). CWA migrates its DBs on
+    # start; a newer image must be a deliberate upgrade, not a side effect of a move.
+    image: crocodilestick/calibre-web-automated@sha256:c31a738b6d5ec6982c050063dd3f063b6943eb1051fc81144789f840d9093a8d
+    container_name: calibre-web-automated
+    ports:
+      # NPM forwards to 192.168.20.200:<port> like every other NAS service.
+      - "192.168.20.200:8083:8083"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Warsaw
+      - NETWORK_SHARE_MODE=false
+      # The library is ~57k directories: CWA's recursive chown at start takes minutes
+      # and buys nothing, the tree already belongs to 100999.
+      - SKIP_CHOWN=true
+      - NO_PERMISSIONS_CHECK=true
+      - DISABLE_LIBRARY_AUTOMOUNT=true
+    volumes:
+      - /mnt/ssdpool/docker/calibre/config:/config
+      - /mnt/ssdpool/docker/calibre/ingest:/cwa-book-ingest
+      - /mnt/ssdpool/media/library/calibre-library:/calibre-library:rw
+      - /mnt/ssdpool/docker/calibre/config/custom-services/cwa-ingest-run.sh:/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run:ro
+      - /mnt/ssdpool/docker/calibre/config/custom-services/apply-db-patch.sh:/custom-cont-init.d/99-apply-db-patch.sh:ro
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 4G

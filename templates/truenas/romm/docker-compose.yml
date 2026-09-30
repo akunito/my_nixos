@@ -1,0 +1,103 @@
+# RomM — emulators.akunito.com (Cloudflare Access + Pocket ID) + emulators.local
+# Deploy: /mnt/ssdpool/docker/compose/romm on NAS_PROD (rootless docker)
+#
+# Moved from VPS_PROD (~/.homelab/romm) on AINF-401. ON-DEMAND stack: nothing
+# starts it; `nas-svc start romm` or /svc in the infra bot does, and the NAS takes
+# it down before the 23:00 suspend.
+#
+# State is NOT under this directory (the VPS "configs" backup job sweeps compose/):
+#   /mnt/ssdpool/docker/romm/{mysql_data,assets,config}
+#   /mnt/ssdpool/media/library/romm-library      the ROMs
+#
+# .env: ROMM_DB_ROOT_PASSWORD ROMM_DB_PASSWORD ROMM_AUTH_SECRET IGDB_CLIENT_ID
+#       IGDB_CLIENT_SECRET STEAMGRIDDB_API_KEY SCREENSCRAPER_USER
+#       SCREENSCRAPER_PASSWORD OIDC_CLIENT_ID OIDC_CLIENT_SECRET
+services:
+  romm-db:
+    image: mariadb:12.2
+    container_name: romm-db
+    restart: "no"
+    environment:
+      - MARIADB_ROOT_PASSWORD=${ROMM_DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=romm
+      - MARIADB_USER=romm-user
+      - MARIADB_PASSWORD=${ROMM_DB_PASSWORD}
+    volumes:
+      - /mnt/ssdpool/docker/romm/mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      start_interval: 10s
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+        max-file: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  romm:
+    image: rommapp/romm:5.1.0
+    container_name: romm
+    restart: "no"
+    environment:
+      - DB_HOST=romm-db
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD=${ROMM_DB_PASSWORD}
+      - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET}
+      - IGDB_CLIENT_ID=${IGDB_CLIENT_ID}
+      - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET}
+      - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY}
+      - SCREENSCRAPER_USER=${SCREENSCRAPER_USER}
+      - SCREENSCRAPER_PASSWORD=${SCREENSCRAPER_PASSWORD}
+      - HASHEOUS_API_ENABLED=true
+      - SCAN_TIMEOUT=14400
+      - OIDC_ENABLED=true
+      - OIDC_PROVIDER=Pocket ID
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
+      # Hostname-bound: unchanged by the move, so the Pocket ID client needs no edit.
+      - OIDC_REDIRECT_URI=https://emulators.akunito.com/api/oauth/openid
+      - OIDC_SERVER_APPLICATION_URL=https://auth.akunito.com
+      - OIDC_SERVER_METADATA_URL=https://auth.akunito.com/.well-known/openid-configuration
+      - OIDC_USERNAME_ATTRIBUTE=preferred_username
+      - OIDC_ALLOW_REGISTRATION=false
+      - DISABLE_USERPASS_LOGIN=false
+    volumes:
+      - /mnt/ssdpool/media/library/romm-library:/romm/library
+      - /mnt/ssdpool/docker/romm/assets:/romm/assets
+      - /mnt/ssdpool/docker/romm/config:/romm/config
+      # Both were empty on the VPS (covers cache, redis): regenerated, not migrated.
+      - romm_resources:/romm/resources
+      - romm_redis_data:/redis-data
+    ports:
+      # NPM forwards to 192.168.20.200:<port> like every other NAS service.
+      - "192.168.20.200:8998:8080"
+    depends_on:
+      romm-db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+volumes:
+  romm_resources:
+  romm_redis_data:

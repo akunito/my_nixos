@@ -1,0 +1,255 @@
+# AkuCraft SOLO — Minecraft Fabric 1.21.1, HARDCORE, un solo jugador
+# Deploy: /mnt/ssdpool/docker/compose/gameservers/akucraft-solo en NAS_PROD
+#
+# MUDADO DESDE VPS_PROD el 2026-08-25, junto con staging: los tres mundos
+# secundarios (creative, solo, staging) viven ahora en el NAS y el VPS se
+# queda sólo con prod. Motivo: el mismo que llevó a creative aquí el 22 —
+# el VPS tiene 31 GB, la swap estaba al 100% y prod necesita su sitio.
+#
+# ⚠️ EL NAS DUERME 23:00-16:00 (nas-suspend.timer). El servidor no está
+# disponible fuera de esa ventana, y el script de suspensión NO comprueba si
+# hay jugadores dentro: a las 23:00 se suspende contigo conectado.
+#
+# Qué es: una run de supervivencia hardcore en solitario. Muerte = espectador
+# permanente (comportamiento vanilla del server, no hay mod que lo haga). El
+# mundo se queda como esté; para empezar otra vez se ejecuta ./newrun.sh a
+# mano. NO hay watcher, ni reset automático, ni nada programado: fue una
+# decisión explícita.
+#
+# Diferencias de diseño frente a prod (:25565) y staging (:25599):
+#   - Overworld generado por Terralith DESDE EL CHUNK 0. Prod necesita
+#     multiworld + shadowborders + pregeneración vallada sólo porque su mundo
+#     es anterior a Terralith y habría costura. En un mundo nuevo no existe el
+#     problema, así que esos tres mods (+ icommon) no están aquí.
+#   - Sin mapa web. Ni BlueMap ni surveyor/akucraft-playermap.
+#   - Sin mods de colaboración (teams, chats, claims, tiendas, tpa, permisos)
+#     ni de IA/NPC (mca, secondbrain): es para jugar solo.
+#   - Sin red de seguridad ante la muerte: fuera universal-graves, soulbound,
+#     hardcore-revival e inventory-totem. En hardcore el tótem vuelve a exigir
+#     llevarlo en la mano, que es la decisión que da tensión a cada salida.
+#
+# Uso:
+#   docker compose up -d       arrancar
+#   docker compose logs -f     ver el arranque
+#   docker compose down        parar
+#   docker exec minecraft-solo rcon-cli list
+#   ./newrun.sh                archivar el mundo y empezar una run nueva
+services:
+  minecraft-solo:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft-solo
+    # "no", not unless-stopped: on-demand stack (nasOnDemandDockerProjects). A
+    # dockerd restart or a reboot must not bring it back (AINF-401).
+    restart: "no"
+    # 2m de gracia: el guardado de mundos al parar puede superar los 10s por
+    # defecto, y un SIGKILL a media escritura corrompe regiones (pasó el
+    # 2026-08-25: exit 137 en el primer stop tras la migración).
+    stop_grace_period: 2m
+    tty: true
+    stdin_open: true
+    ports:
+      # Sólo la dirección Tailscale del NAS, nunca 0.0.0.0. Misma regla que
+      # en el VPS. 25565 prod (VPS) · 25566 creative · 25599 staging ·
+      # 25567 solo (estos tres en el NAS, 100.64.0.1).
+      - "100.64.0.1:25567:25565"
+      # RCON sin publicar: se usa docker exec minecraft-solo rcon-cli
+    environment:
+      TYPE: "FABRIC"
+      VERSION: "1.21.1"
+      EULA: "TRUE"
+
+      # === Hardcore ===
+      # Fuerza dificultad hard y deja al jugador en espectador permanente al
+      # morir. FORCE_GAMEMODE se queda SIN poner a propósito: con force-gamemode
+      # activo el server devolvería al espectador a survival en cada login,
+      # deshaciendo la muerte permanente.
+      HARDCORE: "TRUE"
+      MODE: "survival"
+      DIFFICULTY: "hard"
+
+      # === Offline / EasyAuth ===
+      ONLINE_MODE: "FALSE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
+
+      # === Rendimiento ===
+      MEMORY: "${MC_MEMORY:-6G}"
+      USE_AIKAR_FLAGS: "true"
+
+      # === server.properties ===
+      SERVER_NAME: "${MC_SERVER_NAME:-AkuCraft Solo}"
+      MOTD: "${MC_MOTD:-AkuCraft Solo — hardcore, una vida}"
+      # 2, no 1: deja sitio a un espectador (/gamemode spectator <nombre>).
+      MAX_PLAYERS: "${MC_MAX_PLAYERS:-2}"
+      # Más generoso que prod (12/8): aquí sólo hay un jugador que alimentar.
+      VIEW_DISTANCE: "${MC_VIEW_DISTANCE:-16}"
+      SIMULATION_DISTANCE: "${MC_SIMULATION_DISTANCE:-10}"
+      SPAWN_PROTECTION: "0"
+      ALLOW_FLIGHT: "true"
+      ENABLE_COMMAND_BLOCK: "true"
+      PVP: "false"
+
+      # === Whitelist ===
+      # El ACL de headscale confina tag:mc-guest a 100.64.0.6:25565,8100, así
+      # que un invitado ni siquiera alcanza el NAS. group:family sí llega, y
+      # en modo offline cualquiera puede presentarse con el nombre que
+      # quiera, así que la whitelist es lo que hace la respuesta independiente
+      # del ACL.
+      #
+      # WHITELIST (la variable que rellena el fichero por nombre) se queda SIN
+      # poner a propósito: resuelve el nombre contra Mojang y guardaría el UUID
+      # ONLINE de un desconocido. data/whitelist.json está escrito a mano con
+      # el UUID OFFLINE, md5("OfflinePlayer:Akunito") con los bits de versión
+      # y variante puestos, verificado contra el usercache de prod.
+      # OVERRIDE_WHITELIST se queda en false (defecto) para que la imagen no
+      # lo reescriba.
+      ENABLE_WHITELIST: "TRUE"
+      ENFORCE_WHITELIST: "TRUE"
+      # Vacío = semilla aleatoria al crear el mundo, que es el caso normal.
+      # newrun.sh --same-seed lo rellena para repetir mapa: mismo terreno,
+      # cero rastro de la run anterior. Se pasa por entorno del shell, no por
+      # .env, porque .env aquí es sólo para secretos.
+      SEED: "${MC_SEED:-}"
+
+      # === Watchdog ===
+      # Desactivado. El watchdog de vanilla mata el servidor cuando un tick
+      # pasa de 60 s, asumiendo que se ha colgado. Durante una pregeneración de
+      # chunky —una hora de trabajo pesado con NADIE dentro— un tick lento no
+      # es un cuelgue, es el trabajo. El 2026-08-22 un tick de 78 s tiró este
+      # servidor dos veces mientras la máquina estaba a load 198; chunky
+      # reanudó solo gracias a continueOnRestart, así que no se perdió nada,
+      # pero cada muerte costó ~70 s de arranque y pudo haber pillado a chunky
+      # a media escritura.
+      #
+      # Sin jugadores que noten el lag, el watchdog sólo tiene inconvenientes.
+      MAX_TICK_TIME: "-1"
+
+      # === RCON ===
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${MC_RCON_PASSWORD}"
+      RCON_PORT: "25575"
+
+      # === Mods (78) ===
+      # Versiones PINNED. Una versión sin pinear se resuelve de nuevo al
+      # recrear el contenedor y expulsa al cliente (pasó en prod 2026-08-03).
+      # Punto de partida: los 99 de staging − 22 + chunky.
+      #
+      # Retirados frente a staging, y por qué:
+      #   colaboración   system-teams, chat-plus, styled-chat, flan,
+      #                  universal-shops, warputils, luckperms, anti-xray
+      #   revivir        hardcore-revival + balm (balm existe sólo para él)
+      #   IA / NPC       minecraft-comes-alive-reborn, secondbrain
+      #   mapa web       surveyor
+      #   multimundo     multiworld, icommon, shadowborders
+      #   muerte blanda  universal-graves, ly-soulbound-enchantment,
+      #                  inventory-totem + collective (única dependencia suya)
+      #   descubrimiento explorers-compass (localiza estructuras por menú)
+      #   mascotas       respawnable-pets (hardcore es hardcore también para ellas)
+      # Verificado: ningún mod superviviente depende de ninguno de los 22.
+      #
+      # NO pongas comentarios DENTRO del bloque: cada línea se lee como un
+      # nombre de proyecto.
+      MODRINTH_PROJECTS: |
+        fabric-api:0.116.15+1.21.1
+        lithium:mc1.21.1-0.15.4-fabric
+        easyauth:3.4.4
+        supplementaries:1.21.1-3.8.2
+        moonlight:1.21.1-3.1.1
+        skinrestorer:2.10.0+1.21-fabric
+        cloth-config:15.0.140+fabric
+        fabric-language-kotlin:1.13.13+kotlin.2.4.10
+        grind-enchantments:4.0.0+1.21.1
+        expanded-armor-enchanting:1.0.9
+        expanded-weapon-enchanting:1.1.1
+        expanded-axe-enchanting:1.0.11
+        expanded-bow-enchanting:1.1.2
+        expanded-crossbow-enchanting:1.0.2
+        expanded-trident-enchanting:1.0.11
+        shield-expansion:1.4.1
+        enchanting-infuser:v21.1.4-1.21.1-Fabric
+        puzzles-lib:v21.1.52-1.21.1-Fabric
+        forge-config-api-port:v21.1.6-1.21.1-Fabric
+        polymer:0.9.19+1.21.1
+        playeranimator:2.0.4+1.21.1-fabric
+        trinkets:3.10.0
+        spell-power:1.6.0+1.21.1-fabric
+        spell-engine:1.9.16+1.21.1-fabric
+        structure-pool-api:1.2.1+1.21.1-fabric
+        bundle-api:1.1.0-fabric
+        runes:1.3.1+1.21.1-fabric
+        azurelib-armor:3.1.3
+        wizards:3.0.4+1.21.1-fabric
+        paladins-and-priests:3.0.5+1.21.1-fabric
+        rogues-and-warriors:3.0.4+1.21.1-fabric
+        architectury-api:13.0.11+fabric
+        simply-tooltips:0.1.3
+        fzzy-config:0.7.6+1.21
+        simply-swords:1.63.0-1.21.1
+        sswaystones:1.1.3-HOTFIX
+        ferrite-core:7.0.3-fabric
+        krypton:0.2.8
+        cristel-lib:fabric-1.21.1-3.1.7
+        towns-and-towers:1.13.11
+        when-dungeons-arise:2.1.68
+        skills:0.18.3
+        attributes:0.8.3
+        default-skill-trees:1.1
+        artifacts:13.2.1
+        geckolib:4.9.2
+        cardinal-components-api:6.1.3
+        bosses-of-mass-destruction:1.10.2-1.21.1
+        automodpack:4.0.6
+        yungs-api:1.21.1-Fabric-5.1.6
+        yungs-better-dungeons:1.21.1-Fabric-5.1.4
+        yungs-better-mineshafts:1.21.1-Fabric-5.1.1
+        yungs-better-strongholds:1.21.1-Fabric-5.1.3
+        yungs-better-desert-temples:1.21.1-Fabric-4.1.5
+        yungs-better-jungle-temples:1.21.1-Fabric-3.1.2
+        yungs-better-witch-huts:1.21.1-Fabric-4.1.1
+        yungs-better-ocean-monuments:1.21.1-Fabric-4.1.2
+        yungs-better-nether-fortresses:1.21.1-Fabric-3.1.5
+        structory:1.3.17
+        dungeons-and-taverns:v4.4.4+mod
+        nullscape:1.2.14
+        amplified-nether:1.2.16
+        lithostitched:1.7.13-fabric-21.1
+        terralith:2.6.2
+        doggy-talents-next:t76oZsgc
+        naturalist:DwMaTECx
+        small-ships:BSRcyUiv
+        sound-physics-remastered:tVu2EZ4u
+        presence-footsteps:CrvsDgLW
+        creativecore:wZEbqU3j
+        ambientsounds:wU311vqz
+        pets-not-friendly-fire:1.0.2
+        travelersbackpack:1.21.1-10.1.38
+        toms-storage:1.21-2.4.1-fabric
+        storagedrawers:1.21.1-13.11.4
+        hybrid-aquatic:1.6.9-fabric
+        biolith:3.0.14
+        chunky:1.4.23
+
+      TZ: "Europe/Madrid"
+
+    volumes:
+      - ./data:/data
+    deploy:
+      resources:
+        limits:
+          # 6G de heap + ~2G de off-heap/metaspace/buffers directos.
+          memory: 8G
+          # Tope de CPU: el NAS comparte máquina con el stack de media y
+          # creative; el pregen de chunky llegó a 670% en prod. Con 6 el
+          # pregen tarda algo más pero no ahoga al resto.
+          cpus: "6"
+        reservations:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
+networks:
+  default:
+    driver: bridge

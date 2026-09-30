@@ -42,8 +42,12 @@ ROOT_PROJECTS=("tailscale" "vpn-media")
 # Rootless Docker projects (no host namespace requirements)
 ROOTLESS_PROJECTS=("cloudflared" "npm" "media" "homelab" "exporters" "monitoring")
 
-# All projects for sync (includes non-auto-started projects like unifi)
-ALL_TEMPLATE_PROJECTS=("tailscale" "vpn-media" "cloudflared" "npm" "media" "homelab" "exporters" "monitoring" "unifi")
+# All projects for sync. The on-demand ones (nasOnDemandDockerProjects: unifi,
+# calibre, romm, the game servers) are synced but never started here — `nas-svc`
+# does that. gameservers/akucraft-staging is deliberately absent: its live
+# compose carries a literal RCON password and has no .env, and this sync
+# overwrites the live file whenever it differs from the template.
+ALL_TEMPLATE_PROJECTS=("tailscale" "vpn-media" "cloudflared" "npm" "media" "homelab" "exporters" "monitoring" "unifi" "calibre" "romm" "gameservers/akucraft-survival" "gameservers/akucraft-solo" "gameservers/akucraft-creative")
 
 # ============================================================================
 # Parse arguments

@@ -765,6 +765,17 @@
     # backed was retired in restic-backup-nas.nix.
     nasResticBackupLocalDir = "/var/lib/truenas-backups";             # Local staging + restic repo dir (path kept — live restic repos)
 
+    # === NAS services module (system/app/nas-services.nix) ===
+    nasServicesEnable = false;
+    # Compose projects under /mnt/ssdpool/docker/compose started at boot, stopped
+    # before suspend and started again after resume.
+    nasRootDockerProjects = [ "vpn-media" ];
+    nasRootlessDockerProjects = [ "npm" "cloudflared" "media" "exporters" "monitoring" ];
+    # Rootless projects that exist but are NEVER started by the system: `nas-svc`
+    # starts them, the pre-suspend hook takes down whichever is running, nothing
+    # brings them back. Paths relative to the compose dir; the basename is the name.
+    nasOnDemandDockerProjects = [ ];
+
     # === Centralized Database Server (LXC_database) ===
     # Database bind address: "0.0.0.0" for LAN access (LXC), "127.0.0.1" for local-only (VPS)
     databaseBindAddress = "0.0.0.0";

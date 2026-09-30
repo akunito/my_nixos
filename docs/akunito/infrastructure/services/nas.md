@@ -84,6 +84,13 @@ See [nas-services.md](./nas-services.md) for full Docker container inventory and
 
 **Compose root**: `/mnt/ssdpool/docker/compose/<project>/docker-compose.yml`.
 
+**On-demand stacks** (`nasOnDemandDockerProjects`, AINF-401): projects that exist but that nothing starts — not at boot, not after resume. `nas-svc list | status <name> | start <name> | stop <name>` is the only entry point (closed list baked from the flag; `stop` is `compose down -t 120`, so no exited container is left for the deploy announcement to flag). `nas-docker-ondemand-pre-suspend` takes down whichever is running before the 23:00 suspend and nothing brings it back. Their compose files use `restart: "no"`. State lives in `/mnt/ssdpool/docker/<name>`, never under `compose/` (the VPS `configs` backup job sweeps that whole tree except `gameservers/`).
+
+```bash
+ssh -A akunito@100.64.0.1 'nas-svc list'            # name + running|stopped|absent
+ssh -A akunito@100.64.0.1 'nas-svc start calibre'
+```
+
 **Management**:
 ```bash
 # Check all containers (rootless via DOCKER_HOST env)

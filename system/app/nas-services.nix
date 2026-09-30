@@ -23,6 +23,52 @@ let
   ];
   # Combined for backward compat (used by suspend/resume)
   composeProjects = rootDockerProjects ++ rootlessDockerProjects;
+  # Rootless projects nothing starts automatically (profile: nasOnDemandDockerProjects).
+  onDemandProjects = systemSettings.nasOnDemandDockerProjects or [ ];
+  onDemandCases = lib.concatMapStringsSep "\n" (p: "    ${baseNameOf p}) dir='${composeBase}/${p}' ;;") onDemandProjects;
+  onDemandNames = lib.concatMapStringsSep " " baseNameOf onDemandProjects;
+  # The one entry point for on-demand stacks: a human over ssh, the infra bot's
+  # /svc and the pre-suspend hook all go through it. Names come from a closed list
+  # baked at build time, never from a path. `stop` is `down`: an exited container
+  # left behind turns every deploy announcement yellow (infra-notify lists them).
+  nasSvc = pkgs.writeShellScriptBin "nas-svc" ''
+    export XDG_RUNTIME_DIR=/run/user/1000
+    export DOCKER_HOST=unix:///run/user/1000/docker.sock
+    compose=${pkgs.docker-compose}/bin/docker-compose
+    resolve() {
+      case "$1" in
+${onDemandCases}
+        *) echo "nas-svc: unknown service '$1' (known: ${onDemandNames})" >&2; exit 2 ;;
+      esac
+    }
+    state() {
+      resolve "$1"
+      if [ ! -f "$dir/docker-compose.yml" ]; then echo absent; return; fi
+      if [ -n "$(cd "$dir" && $compose ps -q 2>/dev/null)" ]; then echo running; else echo stopped; fi
+    }
+    case "''${1:-}" in
+      list)
+        for n in ${onDemandNames}; do echo "$n $(state "$n")"; done ;;
+      status)
+        [ -n "''${2:-}" ] || { echo "usage: nas-svc status <name>" >&2; exit 2; }
+        resolve "$2"
+        echo "$2 $(state "$2")" ;;
+      start)
+        [ -n "''${2:-}" ] || { echo "usage: nas-svc start <name>" >&2; exit 2; }
+        resolve "$2"
+        [ -f "$dir/docker-compose.yml" ] || { echo "nas-svc: $2 is not installed ($dir)" >&2; exit 3; }
+        cd "$dir" && exec $compose up -d ;;
+      stop)
+        [ -n "''${2:-}" ] || { echo "usage: nas-svc stop <name>" >&2; exit 2; }
+        resolve "$2"
+        [ -f "$dir/docker-compose.yml" ] || { echo "$2 absent"; exit 0; }
+        # 120s: a Minecraft world save outlasts the 10s default and a SIGKILL mid-write
+        # corrupts regions (exit 137 on 2026-08-25).
+        cd "$dir" && exec $compose down -t 120 ;;
+      *)
+        echo "usage: nas-svc list | status <name> | start <name> | stop <name>" >&2; exit 2 ;;
+    esac
+  '';
   # Rootless environment
   rootlessEnv = {
     XDG_RUNTIME_DIR = "/run/user/1000";
@@ -46,6 +92,8 @@ in
     # Kernel modules — drivetemp for SATA disk temperature via hwmon
     # ========================================================================
     boot.kernelModules = [ "drivetemp" ];
+
+    environment.systemPackages = lib.optional (onDemandProjects != [ ]) nasSvc;
 
     # ========================================================================
     # Textfile collector directory for Docker node-exporter
@@ -659,6 +707,31 @@ HEADER
           fi
         done
         echo "Rootless Docker projects stopped."
+      '';
+    };
+
+    # On-demand stacks: take down whichever is running before S3, and never bring it
+    # back. Same port-binding reason as the unit above; the game servers under
+    # gameservers/ sat outside every list and rode through suspend until AINF-401.
+    # Parallel + 300s: two Minecraft servers need up to 120s each to save.
+    systemd.services.nas-docker-ondemand-pre-suspend = lib.mkIf (isRootless && onDemandProjects != [ ]) {
+      description = "Take down on-demand Docker Compose projects before suspend";
+      before = [ "sleep.target" ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        TimeoutSec = 300;
+        User = username;
+      };
+      script = ''
+        for n in ${onDemandNames}; do
+          if [ "$(${nasSvc}/bin/nas-svc status "$n" | ${pkgs.coreutils}/bin/cut -d' ' -f2)" = running ]; then
+            echo "  Taking down $n..."
+            ${nasSvc}/bin/nas-svc stop "$n" &
+          fi
+        done
+        wait
+        echo "On-demand Docker projects are down."
       '';
     };
 

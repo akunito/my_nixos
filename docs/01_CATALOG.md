@@ -108,10 +108,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
-   - `not NixOS-native`
+   - `onDemandProjects != [ ]`
    - `systemSettings.nfsServerEnable or false`
    - `backupAclPaths != [ ]`
    - `p: "'${p}'"`
+   - `isRootless && onDemandProjects != [ ]`
    - `seq 1 30`
    - `!isRootless`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
