@@ -37,6 +37,12 @@ in
     thinkpadModel = "lenovo-thinkpad-x280"; # no x380-yoga module; X280 is the same generation
     thinkpadConvertible = true; # 2-in-1: auto-rotation in tablet mode
     thunderboltEnable = false; # X380 Yoga has no Thunderbolt 3
+    # Measured 2026-09-30 (20LJ, BIOS R0SET47W 1.31, kernel 7.2.8): the EC does not
+    # expose fan status — /proc/acpi/ibm/fan and hwmon fan1_input both return
+    # ENXIO, although fan_control=Y and pwm1_enable=2 (firmware auto). thinkfan
+    # refuses to start ("Fan_control seems disabled") and restart-loops every
+    # 30 s. Firmware curve + thermald handle cooling on this model.
+    thinkfanEnable = false;
     # LUKS UUID of encrypted swap partition (from: sudo cryptsetup luksDump /dev/nvme0n1p2)
     hibernateSwapLuksUUID = "1fbdeb58-e07a-4c7b-81db-d72067ae12cb";
   };
