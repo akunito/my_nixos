@@ -1065,6 +1065,33 @@ happen -- the Git section commits in whichever checkout the config dir is
 in, here the Windows clone, so a push from it would need WSL's keys:
 `git` too should go through WSL, like ssh; noted for M7).
 
+### 10.43 Aion 2 and the hotkey process: the login risk is Diego's to take (2026-09-30 15:35)
+
+Diego: with Aion 2 running no Hyper chord works, not even on the other
+monitor. Not a fault: the `anticheat` rule (10.27) stops the AutoHotkey
+process while the game is on the desk (log 15:28:59 "stopped 1
+AutoHotkey64_UIA process(es) for the game") and NCGuard/VIOLET look at
+process names, not at the focus, so "alive only for the other monitor" is
+the same exposure as alive with the game focused.
+
+His reasoning, and the decision: the playtest ran with GlazeWM + AHK alive
+and nothing happened; the expected outcome for a blacklisted process is a
+refused login, not a ban (bans are for behaviour -- injected input -- which
+neither AkuWM nor the script does over a game); so the script stays alive.
+New knob `general.hotkey_host.stop_for_games` (default true keeps 10.27's
+behaviour), `false` on this desk; the rule keeps `anticheat` so game mode
+still marks the desk. If Purple refuses to log in one day, the knob goes
+back to true from the GUI. Documented in `docs/input-and-anticheat.md`.
+The script was started by hand for the running session; the signed build
+with the knob is staged for the next quiet moment (the install restarts
+the daemon, not something to do mid-game).
+
+The alternative he named for the ban case -- a way to move between
+workspaces without the script -- exists already in the daemon: Zebar's
+workspace pills, and `akuwm-gui`'s Windows section (click to focus). A chord
+engine inside the daemon during game mode (the M3 that 10.27 reduced) stays
+an option if the knob ever has to go back to true.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
