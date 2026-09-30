@@ -683,7 +683,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 | **M3** (partly landed early; **reduced 2026-09-22, see 10.27: the AutoHotkey stays**) | bindings as data pushed live into the AHK, game mode (the AHK killed around a game with an anti-cheat), the drag plumbing. ~~input and behaviours: chords, app-toggle, scratchpad, Alt+drag, switcher, power menu, the Terminal quirk, virtual-desktop fold. AutoHotkey is switched off.~~ **Alt+drag's POLICY already moved into AkuWM ahead of this** (10.11, 10.12): the script reports a point or a gesture and the layout decides, so `drag-tile`, `drop-target`, `drag-to-top` and `across_monitors` are AkuWM's already and only the input plumbing is left | `tests/wm` green with AkuWM's own input; the bench meets the budget; the keymap gaps of section 8 decided and bound | -- | L |
 | **M4** (partly landed early) | journal, repair, display changes, suspend/resume. **Display changes and Startup landed in M2**: they had to, because the listener never worked (10.10) and because a desk with no GlazeWM to fall back on needs `akuwm-boot.ps1` (10.8). Windows following a screen that moves landed with them (10.11) | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** (landed 2026-09-23, 10.36) | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S`. **Its own process**, `akuwm-gui.exe`, on the daemon's pipe | 37 headless tests green; the driven smoke opens every section (wm `gui` case 21/21); a rule edited in the GUI is live after Apply (the smoke proves it against the daemon) | -- | L |
-| **M6** | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported | -- | M |
+| **M6** (landed 2026-09-30, 10.42) | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported (62 unit tests, 6 GUI tests; the smoke probes the VPS and builds the dashboard on the desk) | -- | M |
 | **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, the AHK deleted from the repo (`w11-apps` went with M0) | a clean install on this machine from the release; the runbook updated | -- | S |
 
 M2 is the largest and the one that carries the risk; cutting it so that the
@@ -1015,6 +1015,55 @@ Three things the suites themselves needed, none of them the window manager:
    nothing restarts it; without it PresentMon "gets no frames" and every
    `.elev` request waits out its timeout. The suite refuses to start without
    `cap-daemon.alive` and prints the one-UAC command; Diego runs it.
+
+### 10.42 M6: Profiles, Git, Nodes, Docker, Monitoring (2026-09-30 13:55 → 14:40)
+
+sway-apps' last five sections, ported to Core with their tests and put in
+the settings window and the CLI. AkuWM `9842e60` + the timeout commit:
+unit 1085 (62 new: profiles 17, git 17 -- the id-keyed merge and real
+repositories in a temp dir -- docker 10, prometheus 15, ops 3), GUI 43.
+
+- **Core** (`Profiles/`, `Git/`, `Nodes/`): layers side by side and copied
+  by id with a dated snapshot first (30 kept, restore whole or per
+  section); git status/commit/push/pull and `Sync` (fetch, rebase our state
+  commits, merge a layer touched on both sides item by item, push);
+  `NodeShell` (ssh with the BatchMode options, or a local shell),
+  `Docker` (the same command lines as dockerctl, compose-aware actions),
+  `Prometheus` (every query of the dashboard in one shell line of curls,
+  levels computed here), `Levels` (the thresholds). `NodeConfig` gains
+  profile, sudo_rootful, order; `settings.monitoring` names the node
+  Prometheus runs on and the URLs; the validator checks nodes.
+- **The one Windows decision**: ssh from this desk runs THROUGH WSL
+  (`wsl.exe -- ssh -A ...`): Windows' OpenSSH has no keys and no
+  known_hosts here ("Host key verification failed" against the VPS),
+  WSL has the agent. Deploy opens a Windows Terminal running `deploy.sh
+  --profile X` in the WSL checkout for the same reason.
+- **GUI**: Profiles (other layer in a dropdown, groups only-there /
+  differ / only-here / same with checkboxes, pull → here / push → other,
+  snapshots with Restore all / Restore <section>), Git, Nodes (editor with
+  Probe and Deploy…), Docker (node/daemon dropdown, containers grouped by
+  compose project with state/health/cpu/mem chips, detail with mounts,
+  limits, usage, logs on demand, the seven actions), Monitoring (five tabs
+  with red badges, gauges and sparklines drawn on a Canvas from the Rosé
+  Pine palette). 14 sections, `--section` names them all.
+- **CLI**: `akuwm profiles|git|nodes|docker|monitor ...` (help lists the
+  verbs), answered by the daemon or by `akuwm.exe` alone; JSON out. The
+  pipe wait for these is 180 s (a dashboard is ~15 s of ssh; the 5 s
+  default called the daemon stuck).
+- **Proven on the desk** with the dev build: `nodes probe VPS_PROD` through
+  the daemon → wsl.exe → ssh answers "vps-prod"; `docker ps VPS_PROD/rootless`
+  lists 34 containers; the smoke's two new lines pass -- the probe, and the
+  dashboard in one round trip: 30 targets, 5 node cards, 15 backups, 13
+  probes -- and the Monitoring section renders it (VPS and NAS cards, 79 %
+  root on the VPS in amber, 85 % memory on the NAS).
+
+Open: the Docker section's list is loaded on a task and rendered when it
+lands (the headless test only proves the daemon list and the parse); Sync
+has not run against the real dotfiles repository from this desk (the
+Windows clone is read-only for the daemon, the WSL one is where commits
+happen -- the Git section commits in whichever checkout the config dir is
+in, here the Windows clone, so a push from it would need WSL's keys:
+`git` too should go through WSL, like ssh; noted for M7).
 
 ## 11. Migration, rollback, and getting the desk back
 
