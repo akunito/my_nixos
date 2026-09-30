@@ -126,32 +126,53 @@ terminal breaks on the rendered line wraps, so:
   PowerShell prompt: PSReadLine reads ESC as RevertLine, so Shift+Enter there
   clears the line instead of adding one.
 
-### GlazeWM is a patched fork build (2026-09-16)
+### AkuWM is the window manager (2026-09-21; GlazeWM uninstalled, history in the plan)
 
-Stock GlazeWM re-stacks EVERY floating window of the workspace by its own focus
-history on each focus change (`windows_to_bring_to_front` in
-`packages/wm/src/commands/general/platform_sync.rs`): clicking one of four
-windows moved others. No config option exists. Installed instead: fork
-`akunito/glazewm`, branch `floating-keep-zorder-nouia` (v3.10.1 + a 3-line
-filter that raises only the focused floating window + CI fixes), version
-**3.10.2**, built by the fork's `package.yaml` workflow (workflow_dispatch on
-GitHub Actions, no local toolchain) and installed from its `installer-x64.msi`
-(copy in `~/Nextcloud/backups/w11-bootstrap/`). `winget pin add --id
-glzr-io.glazewm` keeps upgrades from replacing it; unpin, uninstall with
-winget/msiexec and reinstall stock to go back. Built **without `ui_access`**:
-an unsigned binary with `uiAccess="true"` refuses to start ("A referral was
-returned from the server"), so this build does not manage elevated windows;
-signing it locally (`%TEMP%\sign-glazewm.ps1`, self-signed root) would restore
-that. To update: rebase the branch on the new tag, run the workflow, download
-the artifact, swap with the MSI (exit GlazeWM first; uninstall the previous
-version with its own MSI before installing, or Windows Installer leaves an empty
-Program Files dir — happened 2026-09-16, fixed with `msiexec /fa`).
+AkuWM (`~/Projects/AkuWM`, MIT, .NET 8, repo `akunito/AkuWM`) replaced GlazeWM
+on 2026-09-21: per-monitor workspaces bound by EDID, tiling and floating,
+sticky, a fullscreen path built for games, GlazeWM-compatible IPC so
+`hyper-desktops.ahk` and Zebar kept working unchanged (a `glazewm.exe` shim
+answers `glazewm command/query`), and a settings window (`akuwm-gui.exe`,
+Hyper+S). Its config is read from the Windows clone
+(`C:\Users\diego\.dotfiles\templates\windows\DESK_W11\akuwm\`) and the daemon picks
+file changes up itself. The plan, with every milestone and measured Windows
+fact: `desk-w11-akuwm-plan.md`. Rescue reference: `docs/recovery.md` in the repo.
 
-Pitfall: a Windows process spawned from WSL (`pwsh.exe` via interop) does NOT
-see user environment variables set after WSL started, so `glazewm.exe start`
-launched that way loads the default config (`shell-exec zebar` dialog, workspaces
-1-9). Set `$env:GLAZEWM_CONFIG_PATH` from `HKCU:\Environment` in the launching
-shell, or restart WSL.
+Three commands cover install, update and rescue (each from any PowerShell, no
+elevation to start; the installer prompts UAC once because the daemon is
+signed on this machine with a certificate that exists only here):
+
+```powershell
+# Install or update from the latest GitHub release (downloads akuwm-<tag>-win-x64.zip
+# into %TEMP%\akuwm-uia, stops the running daemon, signs + installs, restarts it)
+irm https://raw.githubusercontent.com/akunito/AkuWM/main/tools/bootstrap.ps1 | iex
+# A specific release, from the clone
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\diego\Projects\AkuWM\tools\bootstrap.ps1 -Tag v0.2.0
+# The desk back, AkuWM stopped (what the "Rescue my desk (AkuWM)" Desktop shortcut runs;
+# rescue is the one verb the CLI never delegates, so it is the daemon exe here)
+& "C:\Program Files\AkuWM\akuwm.exe" rescue --forgive
+```
+
+Where things live: daemon `akuwm.exe` (uiAccess, self-signed), `akuwm-cli.exe`
+and the `glazewm.exe` shim in `C:\Program Files\AkuWM` (on the PATH);
+`akuwm-gui.exe` in `%LOCALAPPDATA%\Programs\AkuWM`; state and logs in
+`%LOCALAPPDATA%\akuwm\` (`akuwm-cli doctor` and `akuwm-cli debug on|off` first);
+Startup runs `akuwm-boot.ps1`, which starts the daemon and only trusts a pipe
+that answers (a timeout runs the rescue and leaves the desk usable by hand).
+Never run the uiAccess `akuwm.exe` from a shell for anything but `rescue`: it
+cannot redirect its output. The dev loop from WSL (an unsigned build into
+`Programs\AkuWM`, no UAC) is in the plan, §10.
+
+The test suites of the desk stay in this repo: `templates/windows/DESK_W11/tests/wm`
+(189 driven cases, AHK + AkuWM) and `tests/fullscreen` (48, needs the elevated
+capture daemon started once per boot; the runner prints the command). The
+GlazeWM-era files (`glazewm-config.yaml`, `vd-merge.ahk`) are in
+`templates/windows/DESK_W11/archive/`.
+
+Pitfall kept from the GlazeWM days: a Windows process spawned from WSL
+(`pwsh.exe` via interop) does NOT see user environment variables set after WSL
+started. AkuWM does not depend on one (it finds its config by the Windows clone
+path), but anything launched that way that does needs a WSL restart.
 
 ### Smart App Control is OFF (2026-09-16)
 
@@ -165,8 +186,8 @@ the unsigned plain `AutoHotkey64.exe` was still allowed (reputation), and was
 used as a bridge for a few minutes. Turned OFF by hand (Windows Security > App &
 browser control > Smart App Control settings > Off); the switch is one-way — it
 cannot be re-enabled without reinstalling Windows. Accepted on purpose: this box
-runs AutoHotkey UIA, Windhawk (injects into explorer), GlazeWM, Zebar and an
-unsigned ShareX. A fresh install of DESK_W11 must repeat this before the desktop
+runs AutoHotkey UIA, Windhawk (injects into explorer), a self-signed AkuWM,
+Zebar and an unsigned ShareX. A fresh install of DESK_W11 must repeat this before the desktop
 tooling is trusted (bootstrap step 3 below).
 
 ## Files in the repo
@@ -174,7 +195,7 @@ tooling is trusted (bootstrap step 3 below).
 - `profiles/DESK_W11-config.nix` — flag sheet (hostname `nixosw11aku`, `envProfile = "DESK_W11"`, `wslWindowsUser`)
 - `profiles/wsl/configuration.nix`, `profiles/wsl/home.nix` — the module set (`profile = "wsl"`)
 - `flake.nix` — input `nixos-wsl` (pinned rev) + `DESK_W11` entry
-- `templates/windows/DESK_W11/` — `bootstrap.ps1`, `debloat.ps1`, `winget-packages.json`, `.wslconfig`, `hyper-desktops.ahk`, `windows-terminal.settings.json`
+- `templates/windows/DESK_W11/` — `bootstrap.ps1`, `debloat.ps1`, `winget-packages.json`, `.wslconfig`, `hyper-desktops.ahk` + `lib-*.ahk`, `akuwm/` (the window manager's config), `zebar/`, `tests/`, `windows-terminal.settings.json`
 - Keys: `~/Nextcloud/backups/w11-bootstrap/w11-keys.tar.gpg` (W11 ssh key + claude-sync key, symmetric gpg). The public halves are already in every `authorizedKeys` list (VPS, NAS, DESK, X13) and in `claudeSyncHubKeys`.
 
 ## Windows software (declarative: `winget import`)
@@ -215,22 +236,21 @@ commit, re-run `bootstrap.ps1`. Remove: `winget uninstall --id ...`.
 Decision 2026-09-13, re-confirmed 2026-09-14 after weighing GlazeWM/komorebi: keep the
 vanilla taskbar, restyle it with Windhawk mods (actively maintained, follow every W11
 update; no tiling, no conflicts with games). Tiling WMs bring their own workspaces
-(not Windows virtual desktops) and have no "sticky". **GlazeWM 3.10 runs here in floating-only mode (2026-09-15)**, solely for
-per-monitor, independent workspaces (10-19 main, 20-29 vertical, Sway's swaysome
-numbers); Windows virtual desktops are not used. The tiling attempt of 2026-09-14
-was rolled back the same evening: every config reload re-evaluates window rules
-and moved windows around, floating windows fought for z-order, Alt+drag on tiled
-windows needed fragile tricks. Rules now: `initial_state: floating`, no
-`move --workspace` rules, no keybindings (all in `hyper-desktops.ahk` via
-`glazewm command`), config loaded through the `GLAZEWM_CONFIG_PATH` user env var
-from the Windows clone, Startup shortcut `GlazeWM.lnk`, native focus-follows-mouse
-OFF (`focus-follows-mouse.ps1 -Off`) because GlazeWM does it. Reload the config
-only when the file changes (`glazewm command wm-reload-config`). No "sticky".
+(not Windows virtual desktops) and have no "sticky". **AkuWM runs here since
+2026-09-21** (section above) with per-monitor, independent workspaces (10-19 main,
+20-29 vertical, Sway's swaysome numbers) and sticky windows; Windows virtual
+desktops are not used. Before it, GlazeWM 3.10 ran in floating-only mode
+(2026-09-15 to 09-21): its tiling attempt of 2026-09-14 was rolled back the same
+evening (every config reload re-evaluated window rules and moved windows around,
+floating windows fought for z-order, Alt+drag on tiled windows needed fragile
+tricks), all of which AkuWM was designed around. Keybindings stay in
+`hyper-desktops.ahk` (through the `glazewm` shim), native focus-follows-mouse
+OFF (`focus-follows-mouse.ps1 -Off`), no reload step: the daemon watches its files.
 `focus_follows_cursor` is **off** (2026-09-15): with it on, UAC and system consent
 prompts (e.g. the location dialog) could not be clicked. Click to focus, like stock
 Windows. Alt+drag never moves a window across the DPI boundary live (150 % vs 125 %
-made the app rescale and GlazeWM re-place it every tick); on release over the other
-monitor the window is moved once through GlazeWM (`move --workspace` + `size`).
+made the app rescale and the manager re-place it every tick); on release over the other
+monitor the window is moved once through the manager (`move --workspace` + `size`).
 Alt+drag gestures (2026-09-15): a maximised window restores under the cursor and
 keeps dragging; dropping with the cursor in the top 6 px of a monitor's work area
 maximises there (the outline turns into the whole work area); crossing to the other
@@ -239,7 +259,7 @@ Robustness (2026-09-15 pm): the whole gesture runs under `try/catch TargetError`
 (no AHK error dialog; `%TEMP%\altdrag.log` says "destroyed" or "still exists,
 hidden"); windows under 200x80 (tooltips, Vivaldi's 237x39 tab preview) drag their
 owner or are ignored; `DetectHiddenWindows` is on inside the gesture because a
-window GlazeWM parks on a non-displayed workspace is DWM-cloaked and AutoHotkey
+window parked on a non-displayed workspace is DWM-cloaked (GlazeWM and AkuWM alike) and AutoHotkey
 otherwise reports it as not found — that is what crashed a drag right after resume
 from sleep with the main monitor still off (Discord got cloaked 5 ms after the
 placement `WinMove`). The size storm (per-monitor-DPI apps on the vertical
@@ -266,24 +286,23 @@ Open items from the captures (dropped resize right after a cross-monitor drop,
 2 s workspace switches after a display change, DP monitor flapping, geometric
 edge clamp) are in the Plane ticket "DESK_W11: Alt+drag/GlazeWM open items"
 (AINF, 2026-09-16). Trace switched off 2026-09-16 evening.
-Debug trace: `%TEMP%\hyper-debug.on` present -> gestures, GlazeWM command
+Debug trace: `%TEMP%\hyper-debug.on` present -> gestures, manager command
 timings and window events (focus, state, size outside gestures, cloak) go to
 `%TEMP%\altdrag.log`; power and display changes are logged always.
 Hyper+Tab / Win+Tab = AHK list of every window in every workspace (Task View stand-in;
 Ctrl+Win+D and Ctrl+Win+arrows are swallowed so no native desktop can be created).
 
-**Zebar** (installed with GlazeWM) draws the workspaces pill at the top-left of each
-monitor, over the empty end of the Windows taskbar: pack
-`templates/windows/DESK_W11/zebar/akuwm/` (zpack.json + workspaces.html, vanilla JS,
-`createProvider({ type: 'glazewm' })`, one widget per monitor, `top_most`), copied to
-`%USERPROFILE%\.glzr\zebar\akuwm\` and selected in `.glzr\zebar\settings.json`;
-Startup shortcut `Zebar.lnk`. Never run Zebar's starter "vanilla" widget: its weather
-block triggers the Windows location consent prompt.
-GlazeWM only manages windows on the *current native* virtual desktop: if windows end
-up on other native desktops (Win+Tab → "New desktop", or leftovers from the old AHK),
-focusing one of them jumps Windows to that desktop and the GlazeWM workspaces
-"vanish". Fix: run `vd-merge.ahk` (merges every native desktop into the first one),
-then restart GlazeWM. Never create native desktops while GlazeWM is in use.
+**Zebar** (installed on its own since GlazeWM left; `winget-packages.json`) draws
+the workspaces pill at the top-left of each monitor, over the empty end of the
+Windows taskbar: pack `templates/windows/DESK_W11/zebar/akuwm/` (zpack.json +
+workspaces.html, vanilla JS, `createProvider({ type: 'glazewm' })` served by
+AkuWM's compatibility server on 127.0.0.1:6123, one widget per monitor,
+`top_most`), copied to `%USERPROFILE%\.glzr\zebar\akuwm\` and selected in
+`.glzr\zebar\settings.json`; Startup shortcut `Zebar.lnk`. Never run Zebar's
+starter "vanilla" widget: its weather block triggers the Windows location consent
+prompt. Native virtual desktops: AkuWM manages windows on any of them, and
+`hyper-desktops.ahk` swallows Ctrl+Win+D / Ctrl+Win+arrows so none get created;
+the old `vd-merge.ahk` is archived.
 Windhawk has no CLI for mods: open it once → Explore → install these, in order,
 then set each mod's options:
 

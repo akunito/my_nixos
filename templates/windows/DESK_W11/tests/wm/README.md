@@ -23,9 +23,10 @@ run the suite, switch back.
 Needs `%TEMP%\perf` populated by `../fullscreen` (`fliptest.exe`, and
 `PresentMon.exe` for that suite). The libraries under test are copied to
 `%TEMP%\wmtest` on every run, so the suite always exercises **this checkout** —
-nothing has to be committed or pulled into the Windows clone first. The
-GlazeWM config, however, is read by the running GlazeWM from the Windows clone:
-change `glazewm/config.yaml`, copy it over and `glazewm command wm-reload-config`.
+nothing has to be committed or pulled into the Windows clone first. The AkuWM
+config, however, is read by the running daemon from the Windows clone
+(`C:\Users\diego\.dotfiles\templates\windows\DESK_W11\akuwm\`): change it, copy
+it over (or push and pull there) and the daemon picks the file change up itself.
 
 | Suite | File | What it covers |
 |---|---|---|

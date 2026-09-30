@@ -24,6 +24,9 @@
           "PackageIdentifier": "AutoHotkey.AutoHotkey"
         },
         {
+          "PackageIdentifier": "glzr-io.zebar"
+        },
+        {
           "PackageIdentifier": "Bitwarden.Bitwarden"
         },
         {
