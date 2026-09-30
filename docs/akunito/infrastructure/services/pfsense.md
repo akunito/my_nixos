@@ -135,6 +135,8 @@ Most `*.local.akunito.com` domains resolve to **192.168.20.200** (TrueNAS NPM, b
 
 > **Updated Mar 2026**: DNS overrides changed from 192.168.20.201 (macvlan) to 192.168.20.200 (bridge) as part of rootless Docker migration. Previously changed from 192.168.8.102 (old LXC_proxy) in Feb 2026.
 
+> Measured 2026-09-30 through the REST API: the NAS names are **aliases of one host override** (`jellyfin`, id 3) whose IP is **100.64.0.1**, not 192.168.20.200 as this table says — the VLAN address is unreachable from 192.168.8.x. The VPS names are aliases of the `grafana` override (id 2, 100.64.0.6). Moving a service between hosts = moving its alias between those two overrides and `POST /services/dns_resolver/apply`. The API works from DESK_W11; ssh does not (that machine's key is not authorised on pfSense).
+
 | Domain | IP | Service |
 |--------|-----|---------|
 | `jellyfin.local.akunito.com` | 192.168.20.200 | Jellyfin (TrueNAS) |
@@ -143,8 +145,8 @@ Most `*.local.akunito.com` domains resolve to **192.168.20.200** (TrueNAS NPM, b
 | `prowlarr.local.akunito.com` | 192.168.20.200 | Prowlarr (TrueNAS) |
 | `bazarr.local.akunito.com` | 192.168.20.200 | Bazarr (TrueNAS) |
 | `jellyseerr.local.akunito.com` | 192.168.20.200 | Jellyseerr (TrueNAS) |
-| `calibre.local.akunito.com` | 192.168.20.200 | Calibre-Web (TrueNAS) |
-| `emulatorjs.local.akunito.com` | 192.168.20.200 | EmulatorJS (TrueNAS) |
+| `calibre.local.akunito.com`, `emulators.local.akunito.com`, `unifi.local.akunito.com` | 100.64.0.1 | On-demand stacks on the NAS (AINF-401) — aliases of the `jellyfin` override |
+| `akucraft.local.akunito.com` | 100.64.0.1 | Minecraft servers on the NAS (own override) |
 | `uptime.local.akunito.com` | 192.168.20.200 | Uptime Kuma (TrueNAS) |
 | `qbt.local.akunito.com` | 192.168.20.200 | qBittorrent (TrueNAS) |
 | `grafana.local.akunito.com` | 192.168.20.200 | Grafana (VPS, proxied via TrueNAS NPM) |

@@ -35,7 +35,7 @@ For deploy commands see `deploy-servers.conf` or read `deploy.sh` / `install.sh`
 | Node-exporter | ✅ NixOS :9091 | ✅ Docker :9100 | all LXCs :9100 | Mixed | `services/monitoring-stack.md` |
 | PostgreSQL | ✅ NixOS :5432 | — | database :5432 | NixOS native | `services/database-redis.md` |
 | Redis | ✅ NixOS :6379 | — | database :6379 | NixOS native | `services/database-redis.md` |
-| UniFi | ✅ Docker :8443 | Docker (manual fallback) | — | Docker | `services/vps-services.md` |
+| UniFi | — (moved 2026-09-30) | Docker, **on-demand** (`nas-svc start unifi`) | — | Docker | `services/nas-services.md` |
 | Postfix | ✅ NixOS :25 | — | mailer :25 | Mixed | `services/vps-services.md` |
 | WireGuard | ✅ NixOS :51820 | — | — | NixOS native | `services/pfsense.md` |
 | Headscale | ✅ NixOS :8080 | — | — | NixOS native | `services/tailscale-headscale.md` |
@@ -56,9 +56,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 | syncthing | syncthing.akunito.com | 8384 | — | `syncthing` |
 | obsidian-remote | obsidian.akunito.com | 8090 | — | `obsidian-remote` |
 | uptime-kuma | status.akunito.com | 3009 | — | `uptime-kuma` |
-| unifi-network-app | unifi.akunito.com | 8443 | mongo:unifi | `unifi` |
 | cloudflared | — | — | — | NixOS native |
-| calibre-web | calibre.local.akunito.com | 8083 | — | `calibre` |
 | n8n | — | 5678 | pg:n8n | `n8n` |
 | openclaw | — | 18789 | — | `openclaw/` |
 | finance-tagger | finance.local.akunito.com | 8190 | sqlite:vaultkeeper.db | `finance-tagger` |
@@ -87,6 +85,12 @@ Template paths relative to `templates/`.
 | exportarr (x4) | — | 9707-9710 | `truenas/monitoring` | Arr metrics |
 | node-exporter | — | 9100 | `truenas/monitoring` | Host metrics |
 | cadvisor | — | 8081 | `truenas/monitoring` | Docker metrics |
+| **On-demand (rootless, OFF by default — AINF-401)** | | | | `nas-svc list\|start\|stop <name>`, or `/svc` in the infra bot; taken down before the 23:00 suspend |
+| calibre-web-automated | calibre.akunito.com, calibre.local | 8083 | `truenas/calibre` | library on `/mnt/extpool/library` |
+| romm + romm-db | emulators.akunito.com, emulators.local | 8998 | `truenas/romm` | mariadb 12.2; ROMs on `/mnt/extpool/library` |
+| unifi-app + unifi-db | unifi.akunito.com, unifi.local | 8443 (UI), 8080 inform on 100.64.0.1 | `truenas/unifi` | mongo 8.0 |
+| minecraft (survival) | akucraft.local:25565 | 100.64.0.1:25565 | `truenas/gameservers/akucraft-survival` | AkuCraft Telegram bot `/start` |
+| minecraft-solo / -creative / mc-mca-staging | — | 25567 / 25566 / 25599 | `gameservers/akucraft-*` | staging has no template |
 
 ## VPS NixOS Native Services
 
@@ -135,6 +139,7 @@ All module paths relative to `system/app/`.
 | `/check-redis` | VPS_PROD | Redis connectivity, DB allocation, key counts |
 | `/check-kuma` | VPS_PROD | Uptime Kuma health verification |
 | `/manage-nas` | NAS_PROD | Storage, NFS, bonds, VLAN 100 |
+| `nas-svc` (CLI on the NAS, not a skill) | NAS_PROD | `list \| status \| start \| stop <name>` for the on-demand stacks; `/svc` in the infra Telegram bot wraps it |
 | `/manage-pfsense` | pfSense | Firewall, DNS, WireGuard, SNMP |
 | `/manage-tailscale` | Tailscale/Headscale | VPN mesh management |
 | `/manage-matrix` | VPS_PROD | Matrix Synapse + Element + Claude bot |

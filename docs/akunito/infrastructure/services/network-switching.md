@@ -197,10 +197,15 @@ ip neigh show 192.168.8.82
 
 ## UniFi Controller
 
-The controller runs as a Docker stack on **VPS_PROD** (`~/.homelab/unifi/`,
-`linuxserver/unifi-network-application` 10.x + mongo). UI at **https://unifi.akunito.com**
-(Cloudflare Tunnel → `127.0.0.1:8443`). The old LXC controller at `192.168.8.206`/`.80`
-is **dead** (Proxmox shut down Feb 2026) — do not use it.
+The controller runs as an **on-demand** Docker stack on **NAS_PROD** since 2026-09-30
+(AINF-401): `/mnt/ssdpool/docker/compose/unifi`, `linuxserver/unifi-network-application`
+10.5.67 + mongo 8.0. It is OFF by default — `nas-svc start unifi` on the NAS, or
+`/svc start unifi` in the infra Telegram bot — and only reachable while the NAS is awake
+(16:00–23:00). The switches keep forwarding without it; no statistics are collected while it
+is off. UI at **https://unifi.akunito.com** (Cloudflare tunnel `truenas-local` → NPM) and
+**https://unifi.local.akunito.com**. The VPS copy (`~/.homelab/unifi/`) and the old LXC
+controller at `192.168.8.206`/`.80` are **dead** — do not start either: two controllers
+with the same device auth key fight over the switches.
 
 - **Credentials**: `secrets/domains.nix` — `unifiEmail`/`unifiPassword` (UI login),
   `unifiSessionCookie` (`unifises`, for 2FA-gated API), `unifiDeviceSshUser`/`unifiDeviceSshPassword` (switch/AP CLI).
@@ -208,27 +213,30 @@ is **dead** (Proxmox shut down Feb 2026) — do not use it.
   persist across controller restarts for SSO accounts. For predictable sessions add a
   **local-only admin** (Settings → Admins → "Restrict to local access only").
 
-### Switch inform path (LAN → VPS over Tailscale)
+### Switch inform path (LAN → NAS over Tailscale)
 
-The switches (`192.168.8.180`, `.181`) reach the VPS controller over Tailscale. Three pieces
+The switches (`192.168.8.180`, `.181`) reach the controller over Tailscale. Three pieces
 must all be in place:
 
-1. **VPS compose** publishes the inform port on the tailnet IP: `100.64.0.6:8080:8080`
-   (STUN 3478/udp is unavailable — headscale owns it on the VPS).
+1. **The compose** publishes the inform port on the tailnet IP: `100.64.0.1:8080:8080`
+   (and STUN `100.64.0.1:3478/udp`, which the VPS could not offer — headscale owns it there).
 2. **pfSense outbound-NAT** rule masquerades `192.168.8.0/24 → opt1` (tailscale0, `100.64.0.7`)
    — mirrors the pre-existing `192.168.20.0/24` rule. Without it, LAN hosts can reach pfSense's
-   own tailnet IP but **not** other tailnet nodes (the VPS). Hybrid outbound-NAT mode.
-3. **`system_ip=100.64.0.6`** in the controller's `/config/data/system.properties`
+   own tailnet IP but **not** other tailnet nodes. Hybrid outbound-NAT mode. The rule's
+   destination is `any`, and the controller sees the switches as `100.64.0.7` (measured).
+3. **`system_ip=100.64.0.1`** in the controller's `/config/data/system.properties`
    (inform-host override; applies once the controller finishes migrating).
 
-Re-point a switch: `mca-cli-op set-inform http://100.64.0.6:8080/inform` (SSH needs legacy algos
-`-o HostKeyAlgorithms=+ssh-rsa -o KexAlgorithms=+diffie-hellman-group14-sha1`).
+Re-point a switch: `mca-cli-op set-inform http://100.64.0.1:8080/inform` (password SSH; needs
+`-o HostKeyAlgorithms=+ssh-rsa`). Test first from the switch itself — it has `curl`, not
+`wget`: `curl -s -o /dev/null -w '%{http_code}' http://100.64.0.1:8080/inform` must print 400.
 
 ### Config backup & restore
 
-- **Canonical backup** (mongodump archive of the live config): VPS
-  `~/.homelab/unifi/backups/unifi-config-<date>.archive.gz` + mirrored on NAS
-  `/mnt/ssdpool/docker/unifi-network-application/config-backups/`.
+- **Canonical backup** (mongodump archive of the live config): NAS
+  `/mnt/ssdpool/docker/unifi/backups/unifi-config-<date>.archive.gz`. The whole
+  `/mnt/ssdpool/docker/unifi` tree (mongo files included, cold when the stack is off) goes
+  offsite to the VPS in the nightly `nas-backup-data` job.
 - **Create**: `docker exec unifi-db mongodump -u … -p … --authenticationDatabase admin --db unifi --gzip --archive=…`
 - **Restore**: `mongorestore -u … -p … --authenticationDatabase admin --gzip --archive=… --drop` then restart `unifi-app`.
 - **Decrypt a UniFi `.unf` backup** (static AES-128-CBC): `openssl enc -d -aes-128-cbc -K 626379616e676b6d6c756f686d617273 -iv 75626e74656e74657270726973656170 -nopad` → `zip -FF` → unzip → `db.gz` → `bsondump`.

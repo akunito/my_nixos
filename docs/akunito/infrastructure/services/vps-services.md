@@ -58,8 +58,7 @@ All containers run as `akunito` user via rootless Docker. ALL ports bound to `12
 | syncthing | syncthing.akunito.com | 8384 | File sync |
 | obsidian-remote | obsidian.akunito.com | — | Remote Obsidian |
 | uptime-kuma | status.akunito.com | 3009 | Public monitoring |
-| unifi-network-app | unifi.akunito.com | — | Network controller |
-| unifi-mongodb | — | 27017 | MongoDB 4.4 for UniFi |
+| ~~unifi, romm, calibre, minecraft~~ | — | — | moved to the NAS as on-demand stacks 2026-09-30 (AINF-401), see `nas-services.md` |
 | cloudflared | — | — | Cloudflare tunnel |
 
 | finance-tagger | finance.local.akunito.com | 8190 | Finance transaction tagger (Flask + htmx) |

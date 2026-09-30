@@ -65,20 +65,25 @@ Wildcard cert `*.local.akunito.com` via DNS-01 challenge with Cloudflare API tok
 | prowlarr.local.akunito.com | prowlarr | 9696 |
 | bazarr.local.akunito.com | bazarr | 6767 |
 | jellyseerr.local.akunito.com | jellyseerr | 5055 |
-| calibre.local.akunito.com | calibre-web-automated | 8083 |
-| emulatorjs.local.akunito.com | emulatorjs | 3000 |
+| calibre.local.akunito.com + calibre.akunito.com | calibre-web-automated (on-demand) | 8083 |
+| emulators.local.akunito.com + emulators.akunito.com | romm (on-demand) | 8998 |
+| unifi.local.akunito.com + unifi.akunito.com | unifi-app (on-demand, https upstream) | 8443 |
 | uptime.local.akunito.com | uptime-kuma | 3001 |
 | qbt.local.akunito.com | gluetun | 8080 |
 | truenas.local.akunito.com | https://192.168.20.200:9443 | 9443 |
 
-VPS services also proxied via NPM, forwarding to VPS Tailscale IP (100.64.0.6).
+Every proxy host forwards to `192.168.20.200:<published port>`: NPM sits alone on its docker
+network, so stacks are reached through the host, never by container name. An on-demand stack
+that is off answers 502. Public hostnames have their own proxy host (cert `*.akunito.com`)
+because the tunnel's origin is NPM on port 80 and it routes by `Host`.
 
 ### Cloudflared on TrueNAS
 
 Provides remote access to `*.local.akunito.com` via Cloudflare tunnel:
 - Tunnel name: `truenas-local`
 - Compose: /mnt/ssdpool/docker/compose/cloudflared/
-- Ingress routes configured in Cloudflare dashboard
+- Ingress routes configured in Cloudflare dashboard (the repo's API token is DNS-scoped and
+  cannot read or edit tunnels). Every hostname's origin is `http://192.168.20.200` (NPM).
 
 ## pfSense DNS
 

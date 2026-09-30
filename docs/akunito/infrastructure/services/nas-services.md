@@ -64,7 +64,7 @@ Reverse proxy on bridge networking (192.168.20.200). Ports 80/81/443. Connected 
 
 All services migrated to VPS. Compose project kept for NPM `homelab_default` network connectivity.
 
-**Migrated**: calibre-web (Mar 2026), romm (Feb 2026), nextcloud, syncthing, obsidian-remote, redis-local
+**Migrated**: calibre-web (Mar 2026), romm (Feb 2026), nextcloud, syncthing, obsidian-remote, redis-local. Calibre and RomM came **back** to the NAS on 2026-09-30 as on-demand stacks (below), in their own compose projects, not in this one.
 
 #### 7. exporters (4 containers)
 
@@ -79,11 +79,38 @@ Exportarr instances for Sonarr, Radarr, Prowlarr, Bazarr. Scraped by VPS Prometh
 
 Scraped by VPS Prometheus via Tailscale/WireGuard.
 
-## NOT Auto-Started
+## On-demand stacks (OFF by default — AINF-401, 2026-09-30)
 
-- **unifi** — fallback controller (manual start only, VPS runs primary)
-- **pihole** — deleted
-- **gameservers** — not deployed
+Declared in `nasOnDemandDockerProjects` (NAS_PROD profile). Nothing starts them at boot
+or after resume; `nas-docker-ondemand-pre-suspend` takes down whichever is running before
+the 23:00 suspend. All use `restart: "no"`.
+
+| Name (`nas-svc`) | Containers | Reached at | State on disk |
+|---|---|---|---|
+| calibre | calibre-web-automated (image pinned by digest) | calibre.akunito.com, calibre.local (NPM → 192.168.20.200:8083) | `/mnt/ssdpool/docker/calibre/{config,ingest}`; library + thumbnails on `/mnt/extpool/library/` |
+| romm | romm 5.1.0, romm-db (mariadb 12.2) | emulators.akunito.com, emulators.local (→ :8998) | `/mnt/ssdpool/docker/romm`; ROMs on `/mnt/extpool/library/romm-library` |
+| unifi | unifi-app 10.5.67, unifi-db (mongo 8.0 — do not downgrade) | unifi.akunito.com, unifi.local (→ https :8443); inform `100.64.0.1:8080`, STUN `100.64.0.1:3478/udp` | `/mnt/ssdpool/docker/unifi/{db,config,backups}` |
+| akucraft-survival | minecraft | `100.64.0.1:25565` (tailnet only) | `compose/gameservers/akucraft-survival/data` |
+| akucraft-solo / -creative / -staging | minecraft-solo / minecraft-creative / mc-mca-staging | `:25567` / `:25566` / `:25599` | `compose/gameservers/akucraft-*/data` |
+
+```bash
+ssh -A akunito@100.64.0.1 'nas-svc list'              # running | stopped | absent
+ssh -A akunito@100.64.0.1 'nas-svc start calibre'     # stop = compose down -t 120
+```
+
+From Telegram: `/svc`, `/svc start|stop <name>` in the infra bot (admins, confirm button);
+the AkuCraft bot's `/start` and idle-stop drive the game servers. Only reachable while the
+NAS is awake (16:00–23:00). Switches keep forwarding without the UniFi controller; no
+statistics are collected while it is off.
+
+The libraries are on **extpool**, not ssdpool: ssdpool's 870 EVOs sit behind the LSI SAS3008,
+which never passes TRIM to them (the drives lack DRAT/RZAT), and sustained writes there
+collapse to 7–20 MB/s (measured 2026-09-30). They are not backed up — re-downloadable.
+`gameservers/akucraft-archive/` holds the retired akucraft-web and akucraft-playermap.
+
+Compose templates: `templates/truenas/{calibre,romm,unifi}` and
+`templates/truenas/gameservers/akucraft-{survival,solo,creative}` (staging has none: its live
+compose carries a literal RCON password).
 
 ## Storage Layout
 
@@ -93,16 +120,15 @@ Scraped by VPS Prometheus via Tailscale/WireGuard.
 | ssdpool/docker/jellyfin | Jellyfin config/metadata |
 | ssdpool/docker/qbittorrent | qBittorrent config |
 | ssdpool/docker/npm | NPM data + certs |
-| ssdpool/docker/calibre-web | Calibre-Web config |
-| ssdpool/docker/emulatorjs | EmulatorJS config |
+| ssdpool/docker/{calibre,romm,unifi} | State of the on-demand stacks (configs, mariadb, mongo) |
+| ssdpool/docker/_old-2026-03 | Pre-VPS-migration leftovers (calibre-web, romm, unifi-db, emulatorjs), set aside 2026-09-30 |
 | ssdpool/docker/tailscale | Tailscale state |
-| ssdpool/library | Ebooks (~413GB) |
-| ssdpool/emulators | ROMs (~55GB) |
+| extpool/library (plain dir in the extpool root dataset) | Calibre library 211 G + thumbnails 50 G, ROMs 43 G |
 | ssdpool/media | Movies, TV, music + torrents |
 | ssdpool/vps-backups | VPS restic databases (critical) |
 | ssdpool/workstation_backups | Workstation restic backups |
 | extpool/downloads | Game downloads |
-| extpool/vps-backups | VPS restic services, libraries, nextcloud |
+| extpool/vps-backups | VPS restic services, databases, nextcloud, immich |
 
 ## Sleep Schedule
 

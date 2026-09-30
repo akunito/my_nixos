@@ -71,15 +71,18 @@ Independent of Tailscale/Headscale:
 - Breaks circular dependency: if VPS crashes and TrueNAS reboots, Tailscale can't re-auth without Headscale. WireGuard provides recovery path.
 - Same private key reused from old Hetzner VPS (peers only updated endpoint IP)
 
-## ACLs (Active — 2026-08-04)
+## ACLs (Active — 2026-09-30)
 
 Policy lives in the Headscale **database** (`policy.mode = "database"`), managed via
 `sudo headscale policy set --file <json>` on the VPS. Current policy:
 
-- `group:family` — all 11 trusted users (one Headscale user per device) → full access
-  to all family devices + `192.168.8.0/24` + `192.168.20.0/24` + SSH.
-- `tag:mc-guest` — Minecraft guests → **only** `100.64.0.6:25565,25566`. No LAN,
-  no other nodes, no SSH, no other VPS ports.
+- `group:family` — 12 trusted users (one Headscale user per device) → full access
+  to all family devices + `192.168.8.0/24` + `192.168.20.0/24` + SSH. It is the only rule.
+- `tag:mc-guest` — **removed 2026-09-30** (AINF-401) together with its two guest nodes and
+  the four `MC_Guest_*` users: nobody was playing. It used to allow `100.64.0.6:25565,8100`.
+- `Komi_Macbook@` — **out of `group:family` since 2026-09-30**, deliberately: the node and
+  the user still exist but reach nothing. Re-enabling is adding that one line back and
+  `headscale policy set`; nothing to do on the Mac.
 
 **CRITICAL gotcha (verified 2026-08-04, headscale 0.29.3)**: tagged devices are NOT
 excluded from `autogroup:member` (headscale diverges from Tailscale semantics here).
@@ -87,12 +90,16 @@ An `autogroup:member` src rule grants tagged guests full access. The family rule
 must use an explicit `group:family` user list. When adding a NEW family device
 user, add it to `group:family` in the policy too, or it will have no access.
 
-Backups: `~/headscale-policy-backup-*.json` on VPS. Verify isolation after any
-policy change by joining a test node with a `tag:mc-guest` preauth key.
+Backups: `~/headscale-policy-backup-*.json` on VPS (`…-2026-09-30.json` is the policy as it
+was with guests and Komi). Order matters when removing people: delete their **nodes**, then
+`policy set`, then `users destroy` — a stored policy that names a missing user stops
+headscale from starting. `headscale policy check -f <file>` validates before applying.
 
 ### Minecraft guest onboarding
 
-One command on VPS: `~/.homelab/minecraft/akucraft-invite.sh <Name> <email> [player]`
+**Retired 2026-09-30** with the guest ACL. The script now lives on the NAS
+(`gameservers/akucraft-survival/akucraft-invite.sh`) and would need the `tag:mc-guest` rule
+back, pointing at `100.64.0.1:25565`. It was: `akucraft-invite.sh <Name> <email> [player]`
 — creates user, tagged 72h single-use preauth key, optional RCON whitelist add,
 and emails full setup instructions (via Postfix→SMTP2GO).
 

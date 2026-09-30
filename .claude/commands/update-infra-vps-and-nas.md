@@ -38,10 +38,14 @@ ssh -A -p 56777 akunito@100.64.0.6 "docker compose -f ~/.homelab/miniflux/docker
 
 If pull fails with DNS timeout, investigate `resolvectl status` and Docker daemon config.
 
+> calibre, romm and unifi are no longer on the VPS: since 2026-09-30 (AINF-401) they are
+> on-demand stacks on the NAS (`nas-svc list`), OFF by default. Pull their images there
+> only when one is started; do not add them to the NAS start loop.
+
 ### 2b. Stop all VPS containers
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 'for dir in calibre finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio romm syncthing unifi uptime-kuma; do echo "=== Stopping $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml stop 2>&1; done'
+ssh -A -p 56777 akunito@100.64.0.6 'for dir in finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio syncthing uptime-kuma; do echo "=== Stopping $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml stop 2>&1; done'
 ```
 
 **Note:** `leftyworkout` has its own repo at `~/Projects/leftyworkout/` — skip it here unless specifically requested.
@@ -49,13 +53,13 @@ ssh -A -p 56777 akunito@100.64.0.6 'for dir in calibre finance-tagger matrix min
 ### 2c. Pull latest images
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 'for dir in calibre finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio romm syncthing unifi uptime-kuma; do echo "=== Pulling $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml pull 2>&1; done'
+ssh -A -p 56777 akunito@100.64.0.6 'for dir in finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio syncthing uptime-kuma; do echo "=== Pulling $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml pull 2>&1; done'
 ```
 
 ### 2d. Start all VPS containers
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 'for dir in calibre finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio romm syncthing unifi uptime-kuma; do echo "=== Starting $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml up -d 2>&1; done'
+ssh -A -p 56777 akunito@100.64.0.6 'for dir in finance-tagger matrix miniflux miniflux-ai n8n nextcloud openclaw plane portfolio syncthing uptime-kuma; do echo "=== Starting $dir ==="; docker compose -f ~/.homelab/$dir/docker-compose.yml up -d 2>&1; done'
 ```
 
 ### 2e. Verify VPS containers
