@@ -24,7 +24,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **profiles/KOMI_LXC_monitoring-config.nix**: KOMI_LXC_monitoring Profile Configuration
 - **profiles/KOMI_LXC_proxy-config.nix**: KOMI_LXC_proxy Profile Configuration
 - **profiles/KOMI_LXC_tailscale-config.nix**: KOMI_LXC_tailscale Profile Configuration
-- **profiles/LAPTOP_A-config.nix**: LAPTOP_AGA Profile Configuration (nixosaga)
+- **profiles/LAPTOP_A-config.nix**: LAPTOP_A Profile Configuration (nixosaga)
 - **profiles/LAPTOP_X13-config.nix**: LAPTOP_X13 Profile Configuration (nixosx13aku)
 - **profiles/LAPTOP_YOGA-config.nix**: LAPTOP_YOGA Profile Configuration (nixosyogaaga)
 - **profiles/LXC-base-config.nix**: LXC Base Profile Configuration
@@ -174,8 +174,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.tailscaleOperator or "") != ""`
    - `!lanAutoToggle`
    - `config.services.prometheus.exporters.node.enable or false`
-   - `${pkgs.tailscale}/bin/tailscale status --json 2>/dev/null`
-   - `allow network to stabilize`
+   - `ip -4 route show table main proto kernel "$SUBNET" | awk '{for(i=1;i<NF;i++) if($i=="dev"){print $(i+1); exit}}'`
+   - `lanAutoToggle && (systemSettings.networkManager or false)`
 - **system/app/vaultwarden.nix**: Vaultwarden — Self-hosted Bitwarden-compatible password manager *Enabled when:* `systemSettings.vaultwardenEnable or false`
 - **system/app/virtualization.nix**: Virt-manager doc > https://nixos.wiki/wiki/Virt-manager *Enabled when:*
    - `userSettings.virtualizationEnable == true`
@@ -265,6 +265,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/suspend-debug.nix**: Suspend/resume debug instrumentation *Enabled when:* `systemSettings.suspendDebugEnable or false`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware *Enabled when:*
+   - `systemSettings.thinkpadEnable && (systemSettings.thinkpadConvertible or false)`
    - `set above`
    - `systemSettings.thinkpadEnable && (systemSettings.thinkfanEnable or false)`
 - **system/hardware/thunderbolt.nix**: Thunderbolt support: bolt daemon, auto-authorization, and diagnostic tools *Enabled when:* `systemSettings.thunderboltEnable or false`
@@ -284,6 +285,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/packages/system-basic-tools.nix**: === Basic CLI Tools === *Enabled when:* `systemSettings.systemBasicToolsEnable or true`
 - **system/packages/system-network-tools.nix**: === Networking Tools (Advanced) === *Enabled when:* `systemSettings.systemNetworkToolsEnable or false`
+- **system/packages/yt-dlp.nix**: Imported for every NixOS profile by lib/flake-base.nix. Unstable on purpose: *Enabled when:* `systemSettings.ytDlpEnable or true`
 
 ### Security
 
@@ -641,6 +643,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
+- **docs/akunito/plans/nas-on-demand-services.md**: AkuCraft hibernado (bot solo Telegram, Discord e invitados fuera) y Minecraft survival + Calibre + RomM + UniFi mudados del VPS al NAS como servicios bajo demanda, con limpieza de copias y monitorización alineada
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
 - **docs/akunito/plans/plane-telegram-bot.md**: Status: **F1 + F2 + F3 deployed 2026-09-11** (notifications, buttons, reply=comment, write commands, scheduled reports, Plane webhook; infra-bot on tgcommon.py) · service doc: `../infrastructure/se...
 - **docs/akunito/plans/plane-test-suite/README.md**: Plane fork regression suite — audit, interview decisions (2026-09-17), architecture, deploy gate, phases
