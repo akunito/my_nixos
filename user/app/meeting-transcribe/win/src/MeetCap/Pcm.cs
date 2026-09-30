@@ -74,10 +74,4 @@ public static class Pcm
         }
         return onsets;
     }
-
-    public static short[] ReadWav(string path)
-    {
-        byte[] b = File.ReadAllBytes(path);
-        return MemoryMarshal.Cast<byte, short>(b.AsSpan(44, (b.Length - 44) & ~1)).ToArray();
-    }
 }

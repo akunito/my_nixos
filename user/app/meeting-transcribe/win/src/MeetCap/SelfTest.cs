@@ -50,7 +50,7 @@ static class SelfTest
             rec.Stop();
         }
 
-        short[] pcm = Pcm.ReadWav(Path.Combine(o.Dir, "them.wav"));
+        short[] pcm = Wav.ReadPcm(Path.Combine(o.Dir, "them.wav"));
         if (volume)
         {
             // Read at the scheduled times instead of searching for onsets: the quieter burst
@@ -102,7 +102,7 @@ static class SelfTest
         rec.Stop();
         child.WaitForExit();
 
-        short[] pcm = Pcm.ReadWav(Path.Combine(o.Dir, "them.wav"));
+        short[] pcm = Wav.ReadPcm(Path.Combine(o.Dir, "them.wav"));
         double early = Pcm.Db((int)Pcm.ToneAmp(pcm.AsSpan(WavSink.Rate / 5, WavSink.Rate * 3 / 10), ToneHz));
         double late = Pcm.Db((int)Pcm.ToneAmp(pcm.AsSpan(WavSink.Rate * 7 / 2, WavSink.Rate / 2), ToneHz));
         bool ok = Math.Abs(early - late) < 2.0 && late > -40;

@@ -1314,6 +1314,7 @@
     userGamedevPkgsEnable = false; # Game dev tools (Godot 4) — Komi Adventures project
     meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription
     meetingWindowsCaptureEnable = false; # NixOS-WSL only: capture through meetcap.exe (WASAPI) on the Windows side, whisper on the WSL CPU
+    meetingWindowsWhisperEnable = false; # with the above: whisper on the Windows GPU inside meetcap.exe (Whisper.net, Vulkan) instead of the WSL CPU
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
     gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 

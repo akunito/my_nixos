@@ -31,12 +31,53 @@
 let
   cfgEnable = (userSettings.meetingTranscribeEnable or false);
   winCapture = (userSettings.meetingWindowsCaptureEnable or false);
+  # GPU whisper inside meetcap.exe (Whisper.net, Vulkan): 60 s clip in 7-10 s against 67 s on
+  # the WSL CPU. Off = whisper-cli on the CPU, the fallback that needs nothing on Windows
+  # but the recorder.
+  winWhisper = winCapture && (userSettings.meetingWindowsWhisperEnable or false);
   winDir = "/mnt/c/Users/${systemSettings.wslWindowsUser}/AppData/Local/MeetCap";
   MEETCAP = "${winDir}/meetcap.exe";
 
   # Measured on DESK_W11, 60 s clip, large-v3: -t 12 = 67 s, -t 8 = 71 s, default (4) slower.
   # -ng keeps the Vulkan build off dzn, which segfaults (mesa 25.2.6) when it gets a device.
   whisperCpuArgs = lib.optionalString winCapture ''-ng -t "$(nproc)"'';
+
+  # One channel -> $BASE.json + $BASE.srt, and the language probe. Same parameters on both
+  # sides except -sns, which the exe cannot have (see win/src/MeetCap/Transcriber.cs).
+  # DET = the language, or empty when whisper is not sure (p < 0.5). Measured on de-silenced
+  # probes (DESK_W11, 2026-09-30): real speech 0.93-0.99, even 1 s of it; mic noise with
+  # nobody talking "en" 0.25 - and transcribing that channel as English produced 15 lines
+  # of a cooking video.
+  detectLang =
+    if winWhisper then ''
+      DET="$("$MEETCAP" detect-lang "$(wslpath -w "$SAMPLE")" 2>/dev/null | tr -d '\r' | head -n1)"
+    '' else ''
+      DET="$("$WHISPER" -m "$MODEL" -f "$SAMPLE" -l auto -dl ${whisperCpuArgs} 2>&1 \
+        | sed -n 's/.*auto-detected language: \([a-z][a-z]\) (p = \([0-9.]*\)).*/\1 \2/p' | head -n1 \
+        | awk '$2 >= 0.5 { print $1 }')"
+    '';
+  runWhisper =
+    if winWhisper then ''
+      # --out is built from the directory: wslpath refuses a path that does not exist yet.
+      set -- transcribe "$(wslpath -w "$WAV")" --lang "$LANG" \
+        --out "$(wslpath -w "$(dirname "$BASE")")\\$(basename "$BASE")"
+      [ -n "$PROMPT" ] && set -- "$@" --prompt "$PROMPT"
+      "$MEETCAP" "$@"
+    '' else ''
+      # -l LANG : detected/overridden language (never raw -l auto; see above)
+      # -sns    : suppress non-speech tokens
+      # -bs/-bo : beam search (already the build default; explicit for clarity)
+      # -mc 0   : do NOT carry previous-text context. Critical: without this, large-v3
+      #           can spiral into repetition loops (a whole tail of duplicated lines),
+      #           especially once an initial prompt is in play. Costs a little prompt
+      #           potency but removes the catastrophic failure mode.
+      set -- -m "$MODEL" -f "$WAV" -l "$LANG" -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE" ${whisperCpuArgs}
+      # Optional vocabulary priming. --carry-initial-prompt re-applies it to every window
+      # (since -mc 0 otherwise drops it after the first). Separate args so multi-word
+      # prompts don't word-split.
+      [ -n "$PROMPT" ] && set -- "$@" --carry-initial-prompt --prompt "$PROMPT"
+      "$WHISPER" "$@"
+    '';
 
   # whisper.cpp built with Vulkan for AMD GPU acceleration (RADV already configured on DESK).
   whisperVulkan = pkgs.whisper-cpp.override { vulkanSupport = true; };
@@ -179,6 +220,12 @@ let
     chmod -R u+w "$TMP"
     '${pkgs.dotnet-sdk_8}/bin/dotnet' test "$TMP/tests/MeetCap.Tests"
     '${pkgs.dotnet-sdk_8}/bin/dotnet' publish "$TMP/src/MeetCap" -c Release -r win-x64 --self-contained -o '${winDir}'
+    # The model has to sit on NTFS: through \\wsl.localhost it loads in 174 s, from C:\ in 4 s.
+    M='${winDir}/models/ggml-large-v3.bin'
+    mkdir -p '${winDir}/models'
+    if [ "$(stat -c %s "$M" 2>/dev/null || echo 0)" != "$(stat -c %s '${whisperModel}')" ]; then
+      cp '${whisperModel}' "$M.tmp" && mv -f "$M.tmp" "$M"
+    fi
     echo "meeting-win-install: ${winDir}"
   '';
 
@@ -204,7 +251,9 @@ let
   #       artifacts over silence ("Gracias por ver el video", "Suscríbete al
   #       canal", "Subtitles by amara.org", "Thanks for watching", ...). Drop
   #       those, plus collapse runs of identical lines (keep at most 2) so a
-  #       genuine repeat survives but a flood of "Gracias" does not.
+  #       genuine repeat survives but a flood of "Gracias" does not. Also a line that is
+  #       nothing but an annotation ("[Música]", "(risas)", "*suspiro*", "♪♪"): whisper-cli's
+  #       -sns never emits those, the Windows GPU backend has no -sns.
   # Silence files are optional: legacy dirs whose WAVs were deleted fall back
   # to filter (2) only (silence defaults to []).
   # -------------------------------------------------------------------------
@@ -239,7 +288,11 @@ let
             or ($t | test("thanks for watching"))
             or ($t | test("thank you for watching"))
             or ($t | test("^cc "))
-            or ($t | test("subscribe to"));
+            or ($t | test("^[\\[(*][^\\])*]*[\\])*]$"))
+            or ($t | test("^[♪♩♫♬ ]+$"))
+            or ($t | test("subscribe to"))
+            or ($t | test("bienvenidos a mi canal"))
+            or ($t | test("welcome (back )?to my channel"));
 
         # fraction of [a,b] (ms) covered by the silence intervals
         def overlapFrac($a; $b; $sil):
@@ -290,9 +343,8 @@ let
   meeting-transcribe = pkgs.writeShellScriptBin "meeting-transcribe" ''
     #!/bin/sh
     set -eu
-    export PATH="${binPath}:$PATH"
-    WHISPER='${WHISPER}'
-    MODEL='${whisperModel}'
+    export PATH="${binPath}:/sbin:$PATH"
+    ${if winWhisper then "MEETCAP='${MEETCAP}'" else "WHISPER='${WHISPER}'\n    MODEL='${whisperModel}'"}
     FFMPEG='${FFMPEG}'
 
     DIR="''${1:-}"
@@ -327,6 +379,27 @@ let
       LANG_OPT="$MEETING_LANG"
     fi
 
+    # Language of one channel, on stdout; empty when there is no confident answer. "auto"
+    # detects on a de-silenced sample so leading/inter-word dead air can't force the wrong
+    # language for the whole file (see LANG_OPT note above).
+    probe_lang() {
+      WAV="$1"; BASE="$2"
+      [ "$LANG_OPT" = "auto" ] || { echo "$LANG_OPT"; return 0; }
+      [ -f "$WAV" ] || return 0
+      SAMPLE="$BASE.langprobe.wav"
+      # start_periods=1 strips leading silence; stop_periods=-1 removes every
+      # silent gap > stop_duration too, packing ~40 s of pure speech to detect on.
+      "$FFMPEG" -hide_banner -loglevel error -y -i "$WAV" \
+        -af "silenceremove=start_periods=1:stop_periods=-1:stop_threshold=-40dB:stop_duration=1:start_threshold=-40dB" \
+        -t 40 "$SAMPLE" 2>/dev/null || true
+      DET=""
+      if [ -s "$SAMPLE" ]; then
+        ${detectLang}
+      fi
+      rm -f "$SAMPLE"
+      echo "$DET"
+    }
+
     transcribe_one() {
       WAV="$1"; BASE="$2"
       [ -f "$WAV" ] || { echo "meeting-transcribe: missing $WAV" >&2; return 0; }
@@ -342,42 +415,9 @@ let
         return 0
       fi
 
-      # Resolve this channel's language. A fixed override applies as-is; "auto"
-      # detects on a de-silenced sample so leading/inter-word dead air can't force
-      # the wrong language for the whole file (see LANG_OPT note above). Detection
-      # is a cheap ~30 s pass; if it yields nothing we fall back to whisper's own
-      # -l auto (raw) rather than guessing.
-      LANG="$LANG_OPT"
-      if [ "$LANG" = "auto" ]; then
-        SAMPLE="$BASE.langprobe.wav"
-        # start_periods=1 strips leading silence; stop_periods=-1 removes every
-        # silent gap > stop_duration too, packing ~40 s of pure speech to detect on.
-        "$FFMPEG" -hide_banner -loglevel error -i "$WAV" \
-          -af "silenceremove=start_periods=1:stop_periods=-1:stop_threshold=-40dB:stop_duration=1:start_threshold=-40dB" \
-          -t 40 "$SAMPLE" 2>/dev/null || true
-        if [ -s "$SAMPLE" ]; then
-          DET="$("$WHISPER" -m "$MODEL" -f "$SAMPLE" -l auto -dl ${whisperCpuArgs} 2>&1 \
-            | sed -n 's/.*auto-detected language: \([a-z][a-z]\).*/\1/p' | head -n1)"
-          [ -n "$DET" ] && LANG="$DET"
-        fi
-        rm -f "$SAMPLE"
-        echo "meeting-transcribe: $WAV language = $LANG (de-silenced auto-detect)" >&2
-      fi
-
-      echo "meeting-transcribe: $WAV (${if winCapture then "CPU" else "Vulkan GPU"})..." >&2
-      # -l LANG : detected/overridden language (never raw -l auto; see above)
-      # -sns    : suppress non-speech tokens
-      # -bs/-bo : beam search (already the build default; explicit for clarity)
-      # -mc 0   : do NOT carry previous-text context. Critical: without this, large-v3
-      #           can spiral into repetition loops (a whole tail of duplicated lines),
-      #           especially once an initial prompt is in play. Costs a little prompt
-      #           potency but removes the catastrophic failure mode.
-      set -- -m "$MODEL" -f "$WAV" -l "$LANG" -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE" ${whisperCpuArgs}
-      # Optional vocabulary priming. --carry-initial-prompt re-applies it to every window
-      # (since -mc 0 otherwise drops it after the first). Separate args so multi-word
-      # prompts don't word-split.
-      [ -n "$PROMPT" ] && set -- "$@" --carry-initial-prompt --prompt "$PROMPT"
-      "$WHISPER" "$@"
+      LANG="$3"
+      echo "meeting-transcribe: $WAV (${if winWhisper then "Vulkan GPU, Windows" else if winCapture then "CPU" else "Vulkan GPU"})..." >&2
+      ${runWhisper}
     }
 
     # Detect silence intervals on each WAV (one cheap CPU pass, no GPU). Whisper
@@ -398,8 +438,17 @@ let
         ' > "$OUT"
     }
 
-    transcribe_one "$DIR/me.wav"   "$DIR/me"
-    transcribe_one "$DIR/them.wav" "$DIR/them"
+    # A channel with no confident language of its own takes the other one's: both sides of
+    # a call speak the same language far more often than not, and the alternative is raw
+    # -l auto, which is how a silent channel gets decoded in a random one.
+    ME_LANG="$(probe_lang "$DIR/me.wav" "$DIR/me")"
+    THEM_LANG="$(probe_lang "$DIR/them.wav" "$DIR/them")"
+    echo "meeting-transcribe: language me=''${ME_LANG:-?} them=''${THEM_LANG:-?}" >&2
+    [ -n "$ME_LANG" ]   || ME_LANG="$THEM_LANG"
+    [ -n "$THEM_LANG" ] || THEM_LANG="$ME_LANG"
+
+    transcribe_one "$DIR/me.wav"   "$DIR/me"   "''${ME_LANG:-auto}"
+    transcribe_one "$DIR/them.wav" "$DIR/them" "''${THEM_LANG:-auto}"
 
     detect_silence "$DIR/me.wav"   "$DIR/me.silence.json"
     detect_silence "$DIR/them.wav" "$DIR/them.silence.json"

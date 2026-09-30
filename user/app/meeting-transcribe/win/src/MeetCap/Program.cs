@@ -3,6 +3,8 @@ using MeetCap;
 // meetcap record <dir> [--render NAME] [--mic NAME] [--no-keepalive] [--no-volume-comp] [--stop-on-stdin-eof]
 // meetcap stop
 // meetcap devices
+// meetcap transcribe <wav> --lang XX --out <base> [--prompt TEXT] [--model PATH]   -> <base>.json + <base>.srt
+// meetcap detect-lang <wav> [--model PATH]                                                     -> "es\n" on stdout; nothing and exit 1 when p < 0.5
 // meetcap selftest <dir> [--bursts N] [--spacing SEC] [--volume | --duck] [record options]
 // meetcap tone <seconds> [--render NAME]      (the other process of selftest --duck)
 //
@@ -25,6 +27,11 @@ try
             return Stop();
         case "record" when args.Length >= 2:
             return Record(args);
+        case "transcribe" when args.Length >= 2 && Str(args, "--lang") is { } lang && Str(args, "--out") is { } outBase:
+            return Transcriber.Transcribe(args[1], lang, outBase, Str(args, "--prompt"),
+                Str(args, "--model") ?? Transcriber.DefaultModel);
+        case "detect-lang" when args.Length >= 2:
+            return Transcriber.DetectLang(args[1], Str(args, "--model") ?? Transcriber.DefaultModel);
         case "tone" when args.Length >= 2:
             return SelfTest.Tone(Str(args, "--render"), int.Parse(args[1]));
         case "selftest" when args.Length >= 2 && Has(args, "--duck"):
@@ -43,7 +50,7 @@ catch (Exception e)
 
 static int Usage()
 {
-    Console.Error.WriteLine("usage: meetcap record <dir> [--render NAME] [--mic NAME] | stop | devices | selftest <dir>");
+    Console.Error.WriteLine("usage: meetcap record <dir> [--render NAME] [--mic NAME] | stop | devices | transcribe <wav> --lang XX --out <base> | detect-lang <wav> | selftest <dir>");
     return 64;
 }
 

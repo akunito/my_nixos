@@ -10,6 +10,11 @@
   <ItemGroup>
     <!-- 3.1.0 is net9-only; 2.2.1 is the last one that loads on net8. -->
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <!-- Vulkan runtime only, no CPU runtime: with both present Whisper.net falls back to the
+         CPU one without a word and every content test still passes. The natives are loose
+         files under runtimes/vulkan/win-x64/, so the whole publish dir is the install. -->
+    <PackageReference Include="Whisper.net" Version="1.9.1" />
+    <PackageReference Include="Whisper.net.Runtime.Vulkan" Version="1.9.1" />
     <InternalsVisibleTo Include="MeetCap.Tests" />
   </ItemGroup>
 </Project>

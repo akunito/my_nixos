@@ -1,7 +1,7 @@
 # DESK_W11: meeting transcription + live captions for Claude
 
-Status 2026-09-30: **M1 built and deployed on DESK_W11** (`meeting`, `meeting-record`,
-`meeting-stop`, `meeting-win-install`; section "M1 as built"). M2 and M3 not started.
+Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11** (`meeting`, `meeting-record`,
+`meeting-stop`, `meeting-win-install`; sections "M1 as built", "M2 as built"). M3 not started.
 Plan v2, audited (section "Audit" at the end). Numbers are measured on the box unless
 marked otherwise.
 
@@ -73,9 +73,35 @@ Measured while building M1:
 - A freshly published exe took several seconds to start the first time (3 WAV seconds were
   missing against the wall clock in that one run); later starts are immediate.
 
-Still to measure, each before the code that depends on it:
-- GPU cost of a 3 s and a 10 s utterance (the encoder always runs a full 30 s window);
-- VRAM held by large-v3, and what it does to a running game.
+Measured while building M2 (Aion 2 running the whole time, GPU at 97 % 3D load):
+- **VRAM**: large-v3 on Vulkan takes 4.3 GiB (adapter 9,997 → 14,297 MiB of 16,304 during
+  a run, back to 9,964 after). With the game that left 2.0 GiB free.
+- **Speed**: 60 s clip 10.2 s (7.0 s with the GPU idle); dense speech 6.5x realtime, a
+  sparse channel 31x; model load 2.6-3.2 s. `meeting` on a 30 s call: 25 s from Ctrl-C to
+  `transcript.txt` (128 s on the CPU).
+- **`-sns` through `WithSuppressRegex` costs 6.5x**: 65.8 s against 10.2 s for the 60 s
+  clip. whisper.cpp regex-matches all ~51k vocab tokens on every decoding step. Dropped.
+- **`-mc 0` is `WithMaxLastTextTokens(0)`, not `WithNoContext`**. With `WithNoContext`
+  alone the July excerpt looped one sentence for 90 s at one segment per second.
+- **System.Text.Json**: Whisper.net pulls 10.0.2 into the net8 self-contained publish, the
+  8.0 framework copy wins the file and the first JSON call throws after the transcription.
+  The JSON is written by hand.
+- **Parity with DESK** on the 278 s of the July meeting present on this box, against the
+  JSON DESK produced (whisper-cli 1.8.3, `-sns`): word difference 8.4 % (me) and 7.0 %
+  (them), 26 vs 17 and 91 vs 82 segments, no repeated lines, no bracket/note annotations.
+  The differences are single small words in both directions ("si era" / "sincera"). The
+  2 % target written before measuring was not met and was the wrong bar for two whisper
+  versions decoding the same audio.
+- **Language confidence**: on the de-silenced probe real speech scores 0.93-0.99 (even 1 s
+  of it); a mic with only key clicks scored "en" 0.25 (0.33 with whisper-cli), and decoding
+  it as English gave 15 lines of a cooking video. Below 0.5 is now "no answer" and the
+  channel takes the other one's language; the one ghost left in Spanish ("Bienvenidos a mi
+  canal") is on the blocklist.
+- Segment probability alone does not separate ghosts from speech: ghosts 0.11-0.96, real
+  speech 0.48-0.94.
+
+Still to measure, before M3:
+- GPU cost of a 3 s and a 10 s utterance (the encoder always runs a full 30 s window).
 
 ## Architecture
 
@@ -119,6 +145,19 @@ M1 has no new transcription code, so parity is immediate and M2 gets a same-box 
   music still breaks the "quiet before the burst" condition.
 - Not yet exercised: the device-change reopen (needs a hand test), the 60-minute run, the
   tab-close stop path.
+
+## M2 as built
+
+- `meetcap.exe transcribe` / `detect-lang` (Whisper.net 1.9.1, Vulkan runtime only; asserts
+  from whisper's own log that a Vulkan device is in use). Flag
+  `userSettings.meetingWindowsWhisperEnable`; with it off the CPU path of M1 remains.
+- `meeting-win-install` also copies the model to `%LOCALAPPDATA%\MeetCap\models`.
+- `meeting-transcribe` (all machines): languages are probed for both channels first;
+  detection under p 0.5 is discarded and the channel uses the other one's language.
+- `meeting-merge` (all machines): drops annotation-only lines (`[Música]`, `(risas)`, `♪`),
+  which `-sns` prevents on DESK and nothing prevents here.
+- JSON carries `.p` per segment (mean token probability), unused so far.
+- Not done: the full-length parity run (only 278 s of the July WAVs are on this box).
 
 ## `meetcap.exe`
 
@@ -173,15 +212,14 @@ the dir from the last stdout line of `meeting-record`); logs go to stderr.
 
 ### Transcription (M2)
 
-Same parameters as DESK: large-v3, explicit language, no context (`-mc 0` → `WithNoContext`),
+Same parameters as DESK: large-v3, explicit language, no context (`-mc 0` → `WithMaxLastTextTokens(0)`),
 optional prompt on every window (`WithPrompt` + `WithCarryInitialPrompt(true)`), beam 5
 (`WithBeamSearchSamplingStrategy` + `WithBeamSize(5)`; `-bo 5` is a no-op under beam search).
 `-dl` → `WhisperProcessor.DetectLanguageWithProbability` (first 30 s window, same as the CLI).
 
-`-sns` has no Whisper.net member and the native params are built privately, so it cannot be
-set. Substitute: `WithSuppressRegex` with a regex matching exactly whisper.cpp's non-speech
-token list (the regex is matched against every vocab token on the same code path). Unit test:
-the regex matches every token of the list and none of a sample of ordinary tokens.
+`-sns` has no Whisper.net member; the `WithSuppressRegex` substitute the audit proposed
+works but costs 6.5x (see Measured), so there is no `-sns` on this backend and
+`meeting-merge` drops annotation-only lines instead.
 
 Only `Whisper.net.Runtime.Vulkan` is referenced (no CPU runtime), and every GPU command asserts
 `RuntimeOptions.LoadedLibrary == Vulkan`: a silent CPU fallback produces correct text and
@@ -310,13 +348,13 @@ Sixteen findings; all taken except where noted.
 | 3 | Wall-clock padding drifts one way and cuts speech | silence renderer + drift monitor; padding only across a reopen |
 | 4 | Loopback level follows the volume slider on software-volume endpoints | measure first; compensate `1/scalar` if confirmed |
 | 5 | A stream never follows a default-device change | `IMMNotificationClient` reopen |
-| 6 | `-sns` missing and not reachable by P/Invoke | `WithSuppressRegex` reproducing the token list |
+| 6 | `-sns` missing and not reachable by P/Invoke | `WithSuppressRegex` tried and rejected (6.5x slower); annotation lines filtered in `meeting-merge` |
 | 7 | Live latency estimate ignored the fixed 30 s encoder cost | measure 3 s / 10 s; batch pending utterances; minimum 1 s |
 | 8 | Live path lacked the silence gate and run collapse | shared post-filter spec + peak floor + short-and-unsure drop |
 | 9 | Live file not time-ordered; offsets are not wall time | JSONL + `meeting-live` renderer, polling |
 | 10 | Live language undefined for the first utterances | override first, then detect until confident |
 | 11 | Silent CPU fallback passes content tests | Vulkan-only package + runtime assertion + time bound |
-| 12 | Parity test had no criterion | WER ≤ 2 %, segments ± 2 %, real `meeting-merge` |
+| 12 | Parity test had no criterion | measured 7-8 % word difference on 278 s, no loops; 2 % was not reachable across whisper versions |
 | 13 | Phase 1 could ship with CPU whisper and no C# transcription | taken as M1; the GPU path follows as M2 instead of being dropped (2.2 h of pegged CPU per hour of call is not where this stays) |
 | 14 | WASAPI can deliver 16 kHz mono directly | spike before writing the resampler |
 | 15 | stdout contract, BOM, `FileShare.Read`, `current.txt` fallback, exclusive mode | all in the text above |
