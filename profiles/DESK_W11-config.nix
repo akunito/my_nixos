@@ -225,6 +225,8 @@ in
     userAiPkgsEnable = false;
     openCodeEnable = false;
     zenBrowserEnable = false;
+    meetingTranscribeEnable = true; # `meeting`: WASAPI capture by meetcap.exe, whisper large-v3 on the WSL CPU (docs/akunito/plans/desk-w11-meeting-captions.md)
+    meetingWindowsCaptureEnable = true;
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig
       Host github.com

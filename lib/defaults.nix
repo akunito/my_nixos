@@ -1312,7 +1312,8 @@
     openCodeEnable = false;   # OpenCode terminal coding agent, driven by the local GPU — see user/app/opencode/opencode.nix
     userMediaRecordingEnable = false; # OBS Studio, HandBrake, ffmpeg-full (screen recording)
     userGamedevPkgsEnable = false; # Game dev tools (Godot 4) — Komi Adventures project
-    meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription (DESK only)
+    meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription
+    meetingWindowsCaptureEnable = false; # NixOS-WSL only: capture through meetcap.exe (WASAPI) on the Windows side, whisper on the WSL CPU
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
     gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 

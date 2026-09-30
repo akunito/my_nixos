@@ -17,7 +17,8 @@
   ]
   ++ lib.optional (systemSettings.sshHostsManaged or false) ../../user/app/ssh-hosts.nix
   ++ lib.optional (systemSettings.claudeCodeEnable or false) ../../user/app/claude-code/claude-code.nix
-  ++ lib.optional (systemSettings.dotnetDevEnable or false) ../../user/app/development/dotnet.nix; # .NET 8 SDK to build AkuWM for win-x64
+  ++ lib.optional (systemSettings.dotnetDevEnable or false) ../../user/app/development/dotnet.nix # .NET 8 SDK to build AkuWM for win-x64
+  ++ lib.optional (userSettings.meetingTranscribeEnable or false) ../../user/app/meeting-transcribe/meeting-transcribe.nix; # meeting record (meetcap.exe on Windows) + whisper.cpp
 
   home.stateVersion = userSettings.homeStateVersion;
 

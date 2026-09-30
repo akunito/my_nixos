@@ -5,11 +5,19 @@
 #   - Keeps BOTH the WAVs and the transcript under ~/Nextcloud/myLibrary/MyMeetings/<timestamp>/
 #     (so they sync via Nextcloud)
 #
-# Commands (DESK only, gated by userSettings.meetingTranscribeEnable):
+# DESK_W11 (NixOS-WSL, userSettings.meetingWindowsCaptureEnable): WSL cannot hear Windows
+# (WSLg's pulse monitor carries Linux apps only) and cannot use the GPU (dzn segfaults or
+# finds no device), so meeting-record drives win/ (meetcap.exe, WASAPI) and whisper runs
+# on the CPU after the call. Everything downstream of the two WAVs is this same file.
+# Plan + measurements: docs/akunito/plans/desk-w11-meeting-captions.md
+#
+# Commands (gated by userSettings.meetingTranscribeEnable):
 #   meeting              record + auto-transcribe on Ctrl-C (one-shot)
 #   meeting-record       start dual capture, Ctrl-C to stop & finalize
 #   meeting-transcribe   whisper.cpp on both WAVs -> JSON/SRT -> merged transcript.txt
 #   meeting-merge        interleave two whisper JSONs into a labeled transcript
+#   meeting-stop         (DESK_W11) stop the running recording from another shell
+#   meeting-win-install  (DESK_W11) test + publish win/ to %LOCALAPPDATA%\MeetCap
 {
   config,
   pkgs,
@@ -22,6 +30,13 @@
 
 let
   cfgEnable = (userSettings.meetingTranscribeEnable or false);
+  winCapture = (userSettings.meetingWindowsCaptureEnable or false);
+  winDir = "/mnt/c/Users/${systemSettings.wslWindowsUser}/AppData/Local/MeetCap";
+  MEETCAP = "${winDir}/meetcap.exe";
+
+  # Measured on DESK_W11, 60 s clip, large-v3: -t 12 = 67 s, -t 8 = 71 s, default (4) slower.
+  # -ng keeps the Vulkan build off dzn, which segfaults (mesa 25.2.6) when it gets a device.
+  whisperCpuArgs = lib.optionalString winCapture ''-ng -t "$(nproc)"'';
 
   # whisper.cpp built with Vulkan for AMD GPU acceleration (RADV already configured on DESK).
   whisperVulkan = pkgs.whisper-cpp.override { vulkanSupport = true; };
@@ -104,6 +119,70 @@ let
   '';
 
   # -------------------------------------------------------------------------
+  # meeting-record (DESK_W11) : same contract, capture done by meetcap.exe on Windows
+  #
+  # The stub WSL runs for a Windows exe must never receive a signal: SIGINT to it kills
+  # the Windows process outright (measured: gone in 3 s, no handler ran), leaving WAVs
+  # with a stale header. Ctrl-C goes to the whole foreground process group, and being a
+  # background job does not shield the stub (measured: it died with the group, WAVs not
+  # finalized), so it runs in its own session (setsid) and the trap asks the exe to stop
+  # through `meetcap stop`, a named event. recording.done is the proof that it finalized.
+  # MEETING_RENDER / MEETING_MIC pick an endpoint by name (`meetcap.exe devices`).
+  # -------------------------------------------------------------------------
+  meeting-record-win = pkgs.writeShellScriptBin "meeting-record" ''
+    set -eu
+    export PATH="${binPath}:/sbin:$PATH"
+    MEETCAP='${MEETCAP}'
+    [ -x "$MEETCAP" ] || { echo "meeting-record: $MEETCAP missing, run meeting-win-install" >&2; exit 1; }
+
+    TS="$(date +%Y-%m-%d_%H-%M-%S)"
+    DIR="''${1:-${meetingsRoot}/$TS}"
+    mkdir -p "$DIR"
+
+    set -- record "$(wslpath -w "$DIR")"
+    [ -n "''${MEETING_RENDER:-}" ] && set -- "$@" --render "$MEETING_RENDER"
+    [ -n "''${MEETING_MIC:-}" ]    && set -- "$@" --mic "$MEETING_MIC"
+
+    echo "meeting-record: dir   = $DIR" >&2
+    echo "meeting-record: recording... press Ctrl-C to stop." >&2
+
+    stop() { "$MEETCAP" stop >&2 || true; }
+    trap stop INT TERM HUP
+
+    '${lib.getExe' pkgs.util-linux "setsid"}' "$MEETCAP" "$@" >&2 </dev/null &
+    PID=$!
+    # wait returns early each time the trap runs
+    while kill -0 "$PID" 2>/dev/null; do wait "$PID" 2>/dev/null || true; done
+
+    [ -f "$DIR/recording.done" ] || { echo "meeting-record: recorder did not finalize, WAVs in $DIR may be short" >&2; exit 1; }
+    echo "meeting-record: saved to $DIR" >&2
+    echo "$DIR"            # contract: dir is the LAST stdout line
+  '';
+
+  # Stops a recording from anywhere (another terminal, a Claude session); `meeting` then
+  # carries on to the transcription as if Ctrl-C had been pressed.
+  meeting-stop = pkgs.writeShellScriptBin "meeting-stop" ''
+    exec '${MEETCAP}' stop
+  '';
+
+  # -------------------------------------------------------------------------
+  # meeting-win-install : publish win/ to the Windows side. Not a nix build: NuGet
+  # restore needs the network, same as AkuWM. Run after any change under win/.
+  # -------------------------------------------------------------------------
+  meeting-win-install = pkgs.writeShellScriptBin "meeting-win-install" ''
+    set -eu
+    export PATH="${binPath}:$PATH"
+    export DOTNET_ROOT='${pkgs.dotnet-sdk_8}/share/dotnet' DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+    TMP="$(mktemp -d)"
+    trap 'rm -rf "$TMP"' EXIT
+    cp -r ${./win}/. "$TMP/"
+    chmod -R u+w "$TMP"
+    '${pkgs.dotnet-sdk_8}/bin/dotnet' test "$TMP/tests/MeetCap.Tests"
+    '${pkgs.dotnet-sdk_8}/bin/dotnet' publish "$TMP/src/MeetCap" -c Release -r win-x64 --self-contained -o '${winDir}'
+    echo "meeting-win-install: ${winDir}"
+  '';
+
+  # -------------------------------------------------------------------------
   # meeting-merge : interleave two whisper JSONs into transcript.txt
   #   args: <me.json> <them.json> <out.txt> [me.silence.json] [them.silence.json]
   #
@@ -117,6 +196,10 @@ let
   #       long sparse segment (e.g. a "¿Hola?" greeting then a 20s connect wait,
   #       which Whisper groups as one ~91%-silent segment); a true hallucination
   #       sits over ~100% silence and is still dropped.
+  #       A segment with 500 ms or more of non-silent audio is kept whatever the fraction,
+  #       and is stamped where its audio starts: a single "1.400" said at 0:17 of a quiet
+  #       mic came back as one segment 0-17.4 s (96.6% silent), was dropped, and would
+  #       have sorted to 00:00:00 (DESK_W11, 2026-09-30).
   #   (2) caption-hallucination filter — Whisper emits YouTube training
   #       artifacts over silence ("Gracias por ver el video", "Suscríbete al
   #       canal", "Subtitles by amara.org", "Thanks for watching", ...). Drop
@@ -163,10 +246,19 @@ let
           (($b - $a) | if . < 1 then 1 else . end) as $len
           | ([ $sil[] | (([$b, .[1]] | min) - ([$a, .[0]] | max)) | if . > 0 then . else 0 end ] | add // 0) / $len;
 
+        def silentMs($a; $b; $sil):
+          [ $sil[] | (([$b, .[1]] | min) - ([$a, .[0]] | max)) | if . > 0 then . else 0 end ] | add // 0;
+
+        # end of the silence the segment starts in, if any (never past the segment)
+        def speechStart($a; $b; $sil):
+          ([ $sil[] | select(.[0] <= $a and .[1] > $a) | .[1] ] | max // $a) | if . >= $b then $a else . end;
+
         # per-channel: drop silence-covered + junk + empty, then collapse identical runs (keep <=2)
         def clean($sil):
           [ .[]
-            | select( overlapFrac(.offsets.from; .offsets.to; $sil) <= 0.95 )
+            | select( overlapFrac(.offsets.from; .offsets.to; $sil) <= 0.95
+                      or ((.offsets.to - .offsets.from) - silentMs(.offsets.from; .offsets.to; $sil)) >= 500 )
+            | .offsets.from = speechStart(.offsets.from; .offsets.to; $sil)
             | select( (.text | norm) != "" )
             | select( (.text | isJunk) | not ) ]
           | reduce .[] as $x ({out:[], prev:null, run:0};
@@ -264,7 +356,7 @@ let
           -af "silenceremove=start_periods=1:stop_periods=-1:stop_threshold=-40dB:stop_duration=1:start_threshold=-40dB" \
           -t 40 "$SAMPLE" 2>/dev/null || true
         if [ -s "$SAMPLE" ]; then
-          DET="$("$WHISPER" -m "$MODEL" -f "$SAMPLE" -l auto -dl 2>&1 \
+          DET="$("$WHISPER" -m "$MODEL" -f "$SAMPLE" -l auto -dl ${whisperCpuArgs} 2>&1 \
             | sed -n 's/.*auto-detected language: \([a-z][a-z]\).*/\1/p' | head -n1)"
           [ -n "$DET" ] && LANG="$DET"
         fi
@@ -272,7 +364,7 @@ let
         echo "meeting-transcribe: $WAV language = $LANG (de-silenced auto-detect)" >&2
       fi
 
-      echo "meeting-transcribe: $WAV (Vulkan GPU)..." >&2
+      echo "meeting-transcribe: $WAV (${if winCapture then "CPU" else "Vulkan GPU"})..." >&2
       # -l LANG : detected/overridden language (never raw -l auto; see above)
       # -sns    : suppress non-speech tokens
       # -bs/-bo : beam search (already the build default; explicit for clarity)
@@ -280,7 +372,7 @@ let
       #           can spiral into repetition loops (a whole tail of duplicated lines),
       #           especially once an initial prompt is in play. Costs a little prompt
       #           potency but removes the catastrophic failure mode.
-      set -- -m "$MODEL" -f "$WAV" -l "$LANG" -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE"
+      set -- -m "$MODEL" -f "$WAV" -l "$LANG" -sns -bs 5 -bo 5 -mc 0 -oj -osrt -of "$BASE" ${whisperCpuArgs}
       # Optional vocabulary priming. --carry-initial-prompt re-applies it to every window
       # (since -mc 0 otherwise drops it after the first). Separate args so multi-word
       # prompts don't word-split.
@@ -329,7 +421,14 @@ let
     #!/bin/sh
     set -eu
     export PATH="${binPath}:$PATH"
-    DIR="$(meeting-record | tail -n1)"
+    # Ctrl-C reaches the whole foreground group. Without a trap here bash dies with it, and
+    # a `| tail` in the pipe dies too and takes the dir with it (measured on DESK_W11: the
+    # recording finalized, `meeting` exited 130, nothing was transcribed). A trapped signal
+    # is reset to default in children, so meeting-record still gets it and stops cleanly.
+    trap : INT
+    OUT="$(meeting-record)"
+    trap - INT
+    DIR="$(printf '%s\n' "$OUT" | tail -n1)"
     [ -n "$DIR" ] && [ -d "$DIR" ] || { echo "meeting: recording produced no dir" >&2; exit 1; }
     meeting-transcribe "$DIR"
   '';
@@ -340,10 +439,10 @@ in
     # by absolute store path inside the scripts, so adding them here would only risk
     # env conflicts (e.g. DESK already ships ffmpeg-full -> duplicate bin/ffmpeg).
     home.packages = [
-      meeting-record
+      (if winCapture then meeting-record-win else meeting-record)
       meeting-transcribe
       meeting-merge
       meeting
-    ];
+    ] ++ lib.optionals winCapture [ meeting-stop meeting-win-install ];
   };
 }

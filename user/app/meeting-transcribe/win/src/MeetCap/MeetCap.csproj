@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>meetcap</AssemblyName>
+    <RootNamespace>MeetCap</RootNamespace>
+    <!-- Runs on Windows only; net8.0 (not net8.0-windows) so the pure classes unit-test on Linux. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 3.1.0 is net9-only; 2.2.1 is the last one that loads on net8. -->
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <InternalsVisibleTo Include="MeetCap.Tests" />
+  </ItemGroup>
+</Project>
