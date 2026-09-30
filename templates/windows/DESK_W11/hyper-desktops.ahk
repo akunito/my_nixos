@@ -896,6 +896,43 @@ ClickHold() {
     if under
         Glaze("--handle " under " press")
 }
+; Not over a fullscreen window: a game wants Alt for its own pointer (Aion 2
+; frees the mouse with Alt held), and Alt+drag on it pulled the game out of
+; fullscreen into a maximised window (2026-09-30). With the hotkey off the
+; click goes to the game untouched. Fullscreen = what the daemon's journal
+; says about the window (state "fullscreen" on any monitor), or a window
+; whose rectangle is exactly its monitor's (borderless fullscreen the daemon
+; has not journaled yet). Decided at press time, in the hook thread: the
+; journal is read once per press (a few KB; cached by its stamp).
+FullscreenUnderMouse() {
+    MouseGetPos &mx, &my, &hwnd
+    if !hwnd
+        return false
+    try {
+        WinGetPos &wx, &wy, &ww, &wh, "ahk_id " hwnd
+        mon := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+        mi := Buffer(40, 0), NumPut("UInt", 40, mi)
+        if (DllCall("GetMonitorInfo", "Ptr", mon, "Ptr", mi)
+            && wx = NumGet(mi, 4, "Int") && wy = NumGet(mi, 8, "Int")
+            && wx + ww = NumGet(mi, 12, "Int") && wy + wh = NumGet(mi, 16, "Int"))
+            return true
+        key := StrLower(RegExReplace(ExeOf(hwnd), "i)\.exe$", "")) "|" WinGetClass("ahk_id " hwnd)
+        for device, rec in JournalCached().Get(key, Map())
+            if (rec["state"] = "fullscreen")
+                return true
+    }
+    return false
+}
+journalCache := Map(), journalCacheStamp := ""
+JournalCached() {
+    global journalCache, journalCacheStamp, JournalFile
+    stamp := FileExist(JournalFile) ? FileGetTime(JournalFile, "M") FileGetSize(JournalFile) : ""
+    if (stamp != journalCacheStamp)
+        journalCache := JournalRead(), journalCacheStamp := stamp
+    return journalCache
+}
+#HotIf !FullscreenUnderMouse()
 !LButton:: AltDrag("move")
 !RButton:: AltDrag("resize")
+#HotIf
 #MaxThreadsPerHotkey 1
