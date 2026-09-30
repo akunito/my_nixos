@@ -32,11 +32,19 @@ The message: status, profile, host, generations, commit, duration, who/via, then
 - `infra-notify check` prints the health block by hand.
 
 ## Bot commands
-`/status` · `/status <node> [full]` · `/alerts` · `/deploys` · `/help` — read-only, answered in the topic used.
+`/status` · `/status <node> [full]` · `/alerts` · `/deploys` · `/svc` · `/help` — read-only, answered in the topic used.
 `/restart <vps|nas> <docker-rootless|docker-rootful>` — admins (`infraTelegramAdminUserIds`) only; runs
 `infra-restart --check` first, asks with ✅/❌ (2 min), then `sudo -n infra-restart` locally or over BatchMode
 ssh (`infraRestartSshTargets`). Result is edited into the confirmation message.
-`infra-bot --selftest` renders every handler without Telegram.
+`/svc` — the on-demand stacks of the NAS (`infraOnDemandServices`: calibre, romm, unifi, the AkuCraft servers;
+AINF-401). `/svc` or `/svc list` is open to the group; `/svc start|stop <name>` is admins only with the same
+✅/❌ confirmation. It runs `nas-svc` on the NAS over BatchMode ssh (`infraOnDemandSshTarget`, the key `/restart`
+already uses); the closed name list lives on both sides, so an unknown name never reaches ssh. With the NAS
+asleep it answers 💤 instead of failing. `/status nas` and the Sunday digest add `on-demand N/M on`, and the
+containers in `infraOnDemandContainers` are kept out of the "stopped" count (a stack that was just taken down
+lingers in `container_last_seen` for ~5 min). Build-time tests: `system/app/infra-bot-test.py` (checkPhase).
+`infra-bot --selftest` renders every handler without Telegram. **Run it from a file or with `< /dev/null`**:
+the handlers call ssh, and ssh swallows the rest of a script fed on stdin (`ssh host 'bash -s' < script`).
 
 ## Dead-man's switch
 healthchecks.io checks `vps-alive` (VPS timer, 5 min) and `pfsense-alive` (pfSense cron job created via the
@@ -47,6 +55,7 @@ REST API `services/cron/job`, `/usr/bin/fetch` every 5 min). Ping URLs in `secre
   `host_docker_daemon_up{mode="test"} 0` into `/var/lib/prometheus-node-exporter/textfile/` on the VPS →
   `DockerDaemonDown` fires after 3 min; delete the file → 🟢 resolved at the next 5-min group tick.
   Do not restart Alertmanager in between (a restart loses a pending resolve).
+- `/svc` path without Telegram: `ssh -o BatchMode=yes akunito@100.64.0.1 /run/current-system/sw/bin/nas-svc list` from the VPS.
 - Restart path without a restart: `sudo -n infra-restart docker-rootless --check` (VPS) and
   `env -u SSH_AUTH_SOCK ssh -o BatchMode=yes akunito@100.64.0.1 sudo -n infra-restart docker-rootful --check`.
 
