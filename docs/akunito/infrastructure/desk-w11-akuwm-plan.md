@@ -915,6 +915,33 @@ log carried 27 asks and the warning.
 Signed build with the fix (and `debug on|off`) staged 11:58 in
 `Temp\akuwm-uia`; the desk runs the dev build until it is installed.
 
+### 10.38 The toast that could not be hidden, and the CLI's code page (2026-09-30 12:15)
+
+Two of 10.37's findings, closed in `7a8c55c` (1020 tests):
+
+- **A window the shell cannot hide is asked once.** `ShellExperienceHost
+  "New notification"` has no shell view; `SetCloak` threw
+  `0x8002802B Element not found` and the model, which rightly retries a
+  SILENT refusal (the shell's yes-that-does-nothing), retried this one on
+  every redraw: 2199 warnings in one morning. `ApplyResult.Uncloakable` is
+  the subset of `Refused` the shell answered with an error; `Desk.Applied`
+  marks those `CloakRefused`, logs once, and `WantHidden` leaves them
+  alone. The round-trip proof skips such a window instead of declaring the
+  machine unable to hide anything (it took `windows[0]`; a toast first in
+  the batch would have cost the run every workspace). The fixture reads the
+  cloak back like the applier now, so a silent refusal is retried in tests
+  too. Live: a toast fired by WinRT under the fixed daemon produced no
+  refusal at all -- the storm needed the toast to be ADOPTED first (on the
+  23rd it was, after a foreground event), which a fired toast does not
+  reproduce; the tests carry the proof.
+- **The CLI prints UTF-8.** The "raw BEL" in a title was a bullet best-fit by
+  the console's OEM code page (CP437 draws 0x07 as a bullet), and `?Toni`
+  was U+200E. `Console.OutputEncoding` is UTF-8 in `akuwm-cli` and in
+  `akuwm <cmd>`; `query windows --all` parses in Python again. The wire was
+  never wrong (`ProtocolEscapingTests`).
+
+Signed build with 10.37 + 10.38 staged 12:15 in `Temp\akuwm-uia`.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
