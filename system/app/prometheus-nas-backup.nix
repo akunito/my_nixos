@@ -39,6 +39,7 @@ let
     { label = "x13_home";      path = "/mnt/ssdpool/workstation_backups/nixosx13aku/home.restic"; direction = "workstation_to_nas"; }
     { label = "deska_home";    path = "/mnt/ssdpool/workstation_backups/nixosagadesk/home.restic"; direction = "workstation_to_nas"; }
     { label = "laptopa_home";  path = "/mnt/ssdpool/workstation_backups/nixosaga/home.restic"; direction = "workstation_to_nas"; }
+    { label = "laptopyoga_home"; path = "/mnt/ssdpool/workstation_backups/nixosyogaaga/home.restic"; direction = "workstation_to_nas"; }
   ];
 
   # Build shell-friendly repo list: "label|path|direction label|path|direction ..."
