@@ -992,7 +992,7 @@ unless quoted, and the importer wrote the Startup-folder shortcuts unquoted
 (`...\Start Menu\Programs\Startup\Zebar.lnk`): after the 13:04 install
 ShareX and Zebar did not start. Started by hand through their shortcuts;
 `CommandLine.Program` takes an unquoted path that exists as the whole file
-(test with an injected `exists`). Both in `<next commit>`, staged signed.
+(test with an injected `exists`). Both in `0d74046`, staged signed 13:15.
 
 ## 11. Migration, rollback, and getting the desk back
 
