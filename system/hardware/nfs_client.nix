@@ -48,7 +48,8 @@
   #
   # Unconditional for every NFS client: it is a safety net, not a feature. The
   # check is one 4s TCP probe per mount every 5 min, so it is free where the
-  # server is always up, and load-bearing where it sleeps. Making it opt-in was
+  # server is always up, and load-bearing where it sleeps. (Now every 2 min, and
+  # it also removes/restores the autofs trigger itself — see the script.) Making it opt-in was
   # itself the bug — DESK and DESK_A both mount the sleeping NAS and neither had
   # opted in, so a plain file delete in Dolphin hung forever (kio_trash scans
   # every mountpoint for .Trash-$uid).
@@ -56,7 +57,7 @@
   systemd.services.nfs-unmount-unreachable = lib.mkIf
     (systemSettings.nfsClientEnable == true)
     {
-      description = "Lazily unmount NFS shares whose server has gone away";
+      description = "Drop NFS mounts and automount triggers whose server has gone away";
       serviceConfig = {
         Type = "oneshot";
         ExecStart = pkgs.writeShellScript "nfs-unmount-unreachable" (''
@@ -67,10 +68,34 @@
             # findmnt -t nfs,nfs4 rather than `mountpoint`: the autofs trigger is
             # itself a mountpoint, so `mountpoint` is true even with nothing
             # mounted, and we would unmount the trigger instead of the share.
-            if ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M ${lib.escapeShellArg entry.where} >/dev/null 2>&1; then
-              if ! ${pkgs.coreutils}/bin/timeout 4 ${pkgs.bash}/bin/bash -c 'exec 3<>/dev/tcp/${host}/2049' 2>/dev/null; then
-                echo "${host} is not answering on 2049 — lazily unmounting ${entry.where}"
-                ${pkgs.util-linux}/bin/umount -f -l ${lib.escapeShellArg entry.where} || true
+            if ${pkgs.coreutils}/bin/timeout 4 ${pkgs.bash}/bin/bash -c 'exec 3<>/dev/tcp/${host}/2049' 2>/dev/null; then
+              up=1
+            else
+              up=0
+            fi
+            if [ "$up" = 0 ] && ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M ${lib.escapeShellArg entry.where} >/dev/null 2>&1; then
+              echo "${host} is not answering on 2049 — lazily unmounting ${entry.where}"
+              ${pkgs.util-linux}/bin/umount -f -l ${lib.escapeShellArg entry.where} || true
+            fi
+          '' + lib.optionalString (builtins.any (a: a.where == entry.where) systemSettings.nfsAutoMounts) ''
+            # The autofs trigger only exists while the server answers. "retry=0
+            # fails in ~3s" holds on the LAN (ICMP unreachable); a sleeping
+            # TAILNET peer drops packets silently, so each attempt burns the full
+            # TimeoutSec=15 — and the KDE portal file chooser statfs()es every
+            # mount in mountinfo and retries. Measured on LAPTOP_YOGA 2026-09-30:
+            # 11 requests for a dead share from xdg-desktop-portal-kde, VS Code's
+            # "Open Folder" frozen, the portal dumped core; reproduced with a
+            # probe automount (4 requests in 22 s, nobody navigating).
+            unit=$(${pkgs.systemd}/bin/systemd-escape -p --suffix=automount ${lib.escapeShellArg entry.where})
+            if [ "$up" = 1 ]; then
+              if ! ${pkgs.systemd}/bin/systemctl is-active -q "$unit"; then
+                echo "${host} is back — restoring $unit"
+                ${pkgs.systemd}/bin/systemctl start "$unit" || true
+              fi
+            else
+              if ${pkgs.systemd}/bin/systemctl is-active -q "$unit"; then
+                echo "${host} is not answering on 2049 — removing $unit"
+                ${pkgs.systemd}/bin/systemctl stop "$unit" || true
               fi
             fi
           '') systemSettings.nfsMounts));
@@ -83,9 +108,9 @@
       description = "Check for stale NFS mounts every few minutes";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnBootSec = "3min";
-        OnUnitActiveSec = "5min";
-        AccuracySec = "30s";
+        OnBootSec = "20s";
+        OnUnitActiveSec = "2min";
+        AccuracySec = "15s";
       };
     };
 
