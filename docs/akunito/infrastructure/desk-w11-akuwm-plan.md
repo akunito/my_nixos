@@ -684,7 +684,7 @@ a commit in the dotfiles repo that documents what changed on the desk.
 | **M4** (partly landed early) | journal, repair, display changes, suspend/resume. **Display changes and Startup landed in M2**: they had to, because the listener never worked (10.10) and because a desk with no GlazeWM to fall back on needs `akuwm-boot.ps1` (10.8). Windows following a screen that moves landed with them (10.11) | repair and display suites green; a real suspend with the main monitor off leaves the desk intact; the fork and the AHK are removed from the Startup folder (the code stays in git for one more milestone) | -- | M |
 | **M5** (landed 2026-09-23, 10.36) | the GUI: Rules, Startup, Apps, Windows, Shortcuts, Monitors, Tools, Log, Doctor; `Hyper+S`. **Its own process**, `akuwm-gui.exe`, on the daemon's pipe | 37 headless tests green; the driven smoke opens every section (wm `gui` case 21/21); a rule edited in the GUI is live after Apply (the smoke proves it against the daemon) | -- | L |
 | **M6** (landed 2026-09-30, 10.42) | Profiles, snapshots, Git, Nodes, Docker, Monitoring | as `sway-apps` does them, its tests ported (62 unit tests, 6 GUI tests; the smoke probes the VPS and builds the dashboard on the desk) | -- | M |
-| **M7** | tray polish, release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM fork archived, the AHK deleted from the repo (`w11-apps` went with M0) | a clean install on this machine from the release; the runbook updated | -- | S |
+| **M7** | release pipeline, `bootstrap.ps1` install path, documentation, the GlazeWM files archived (the AHK stays, 10.27) -- **landed 2026-09-30, 10.44**: `v0.2.0` installed on this machine from the release by the one-liner; runbook updated | a clean install on this machine from the release; the runbook updated | -- | S |
 
 M2 is the largest and the one that carries the risk; cutting it so that the
 existing AHK drives AkuWM means the 155-check suite guards the WM core
@@ -1091,6 +1091,71 @@ workspaces without the script -- exists already in the daemon: Zebar's
 workspace pills, and `akuwm-gui`'s Windows section (click to focus). A chord
 engine inside the daemon during game mode (the M3 that 10.27 reduced) stays
 an option if the knob ever has to go back to true.
+
+### 10.44 M7: a release, a one-line install, the GlazeWM files archived (2026-09-30 15:45 → 16:05)
+
+**Release pipeline.** `.github/workflows/release.yml` runs on a `v*` tag:
+licence tripwire, build, unit + GUI tests, four single-file publishes (one
+output folder each, the shared-folder bundle does not run), a check that the
+daemon carries `uiAccess="true"`, then `akuwm-<tag>-win-x64.zip` + sha256 on a
+GitHub Release (`softprops/action-gh-release`). The zip: `akuwm.exe`
+(uiAccess manifest, unsigned -- the installer signs it on the machine with a
+certificate that exists only there), `akuwm-cli.exe`, `glazewm.exe`,
+`akuwm-gui.exe`, `uia-install.ps1` at the root, `tools/`, README, LICENSE,
+`recovery.md`, `input-and-anticheat.md`. 132 MB (self-contained, untrimmed;
+`docs/trimming.md` still lists the ten reflection sites). `v0.2.0` built in
+6 min; `ci.yml` now also runs the GUI tests and uploads Cli + Gui artifacts.
+Version 0.2.0 in `Directory.Build.props`; `Build.Description` dropped the
+"(M2: it arranges the desk)" label that every log line had been repeating
+(the test now pins the description to the props version).
+
+**Install path.** `tools/bootstrap.ps1`: asks the GitHub API for the latest
+release (or `-Tag`), wipes and refills `%TEMP%\akuwm-uia`, runs
+`uia-install.ps1` (self-elevating, one UAC). `install-uiaccess.ps1` gained
+`-Cli`/`-Gui` (default: siblings of `-Source`) and installs `akuwm-cli.exe`
+next to the daemon and `akuwm-gui.exe` into `Programs\AkuWM`, stopping a
+running GUI first; `publish-uia.sh` stages the GUI too. Verified from the
+desk with the public one-liner (`irm .../tools/bootstrap.ps1 | iex`): 15:52
+download, 15:54 "daemon gone after 500 ms", signed Valid, all four exes in
+place, daemon pid 8412 from Program Files, `akuwm-cli version` → 0.2.0, GUI
+restarted by the startup entry at 15:54:12, AutoHotkey untouched.
+`ReleasePlumbingTests` holds the four files (workflow, bootstrap, installer,
+staging) to the same names.
+
+**Two things the first 0.2.0 log showed, fixed in `96996c6`.** (1) `ERR pipe
+listener: UnauthorizedAccessException` at every start since 14:36: the four
+listener tasks race, the `FirstPipeInstance` flag goes to whichever calls
+`Create()` first, and CreateNamedPipe with that flag fails with ACCESS_DENIED
+when a sibling created its plain instance in between. Creation is serialised
+now; `PipeListenerRaceTests` (25 rounds × 4 listeners) passes on the Windows
+job; two dev starts and the signed start at 16:01-16:02 show no ERR. (2) The
+"does not act on it" warnings still listed `nodes`, `tools`, `apps.catalogue`
+and `settings.git.auto_commit` as M6 work -- pruned to the nine keys nobody
+reads, with honest reasons instead of milestone promises.
+
+**Windows CI was red** since the M6 push: git writes its objects read-only
+and `Directory.Delete` refuses them there (`UnauthorizedAccessException` in
+`GitSyncRepoTests.Dispose`). Attributes cleared before the delete; green.
+
+**Repo clean-up (dotfiles `157bab24`).** `glazewm/config.yaml` and
+`vd-merge.ahk` moved to `templates/windows/DESK_W11/archive/` with a README
+(`RealImportTests` reads the archived copy; the importer keeps working on the
+record). The AHK and its libraries stay (10.27; `lib-repair.ahk` and
+`lib-layout-journal.ahk` are tested by `repair-test.ahk`). Zebar added to
+`winget-packages.json` (it was installed with GlazeWM's MSI and had no
+declarative entry). The 10.42 note "git should go through WSL" is void: Git
+for Windows 2.55 is on the box and the Windows clone reaches origin, so the
+Git section's push runs natively.
+
+**Runbook** `desk-w11-wsl.md`: the GlazeWM fork section replaced by "AkuWM is
+the window manager" -- install/update/rescue in three commands, where each
+file lives, the suites, the archive; the taskbar section and the Zebar
+paragraph rewritten for AkuWM, the Alt+drag measurements kept.
+
+Left for later: the driven suites (`tests/wm`, `tests/fullscreen`) were not
+rerun after 0.2.0 -- nothing in the WM path changed, but the standing rule is
+green suites, so they run at Diego's next quiet moment; the Git section's
+real push from the GUI still wants one live run; trimming the release.
 
 ## 11. Migration, rollback, and getting the desk back
 
