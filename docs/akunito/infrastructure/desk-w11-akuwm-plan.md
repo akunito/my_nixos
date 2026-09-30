@@ -971,6 +971,29 @@ PW_RENDERFULLCONTENT sees a window under others). Notepad++ is still
 stripped. Platform code, no unit test; the GUI's Log section shows it as
 "decorate ... TitleBar = False" with no style change.
 
+### 10.40 Notepad++'s white menu bar, and a startup regression of my own (2026-09-30 13:00 → 13:12)
+
+Diego: Notepad++ in dark mode shows its menu bar white. Both his capture
+and mine sampled (240,240,240) on the File/Edit/Search row -- I had read it
+as dark and said so; the pixels were the correction.
+
+Measured: with WS_CAPTION put back (SetWindowLongPtr + SWP_FRAMECHANGED)
+the menu bar is (32,32,32) at once; stripped again it is white, and neither
+`DrawMenuBar`, `RedrawWindow(RDW_FRAME|RDW_INVALIDATE|RDW_UPDATENOW)` nor
+`WM_NCACTIVATE` repaints it dark. Notepad++ paints the dark menu from its
+non-client handlers, which the caption-less frame does not run. Rule
+(`Caption()`): a window with a classic menu bar (`GetMenu` non-null) keeps
+its caption -- a title bar is the price of a dark menu. With 10.39, `title_bar:
+hide` now acts only on windows that have a system bar AND no menu bar:
+Explorer, dialogs, Qt (Telegram), Electron.
+
+The regression: `f93d262` split every startup command at its first space
+unless quoted, and the importer wrote the Startup-folder shortcuts unquoted
+(`...\Start Menu\Programs\Startup\Zebar.lnk`): after the 13:04 install
+ShareX and Zebar did not start. Started by hand through their shortcuts;
+`CommandLine.Program` takes an unquoted path that exists as the whole file
+(test with an injected `exists`). Both in `<next commit>`, staged signed.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
