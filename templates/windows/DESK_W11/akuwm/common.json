@@ -1115,5 +1115,112 @@
   ],
   "apps": {
     "catalogue": "../winget-packages.json"
+  },
+  "nodes": [
+    {
+      "id": "VPS_PROD",
+      "name": "VPS prod (Netcup)",
+      "profile": "VPS_PROD",
+      "ssh": "akunito@100.64.0.6:56777",
+      "daemons": [
+        "rootless"
+      ],
+      "sudo_rootful": false,
+      "prometheus_instance": "monitoring",
+      "order": 10,
+      "enabled": true,
+      "notes": "rootless docker; stacks in ~/.homelab",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "NAS_PROD",
+      "name": "NAS (nas-aku)",
+      "profile": "NAS_PROD",
+      "ssh": "akunito@192.168.20.200",
+      "daemons": [
+        "rootful",
+        "rootless"
+      ],
+      "sudo_rootful": false,
+      "prometheus_instance": "nas",
+      "order": 20,
+      "enabled": true,
+      "notes": "sleeps 23:00-16:00; rootful = vpn-media, rootless = *arr",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "DESK",
+      "name": "DESK (nixosaku)",
+      "profile": "DESK",
+      "ssh": "akunito@192.168.8.96",
+      "daemons": [
+        "rootful"
+      ],
+      "sudo_rootful": false,
+      "prometheus_instance": "desk",
+      "order": 30,
+      "enabled": true,
+      "notes": "nixosaku; from DESK_W11 it is another machine (192.168.8.96)",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "LAPTOP_X13",
+      "name": "ThinkPad X13",
+      "profile": "LAPTOP_X13",
+      "ssh": "akunito@100.64.0.8",
+      "daemons": [
+        "rootful"
+      ],
+      "sudo_rootful": false,
+      "prometheus_instance": "x13",
+      "order": 40,
+      "enabled": true,
+      "notes": "",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "LAPTOP_A",
+      "name": "Aga laptop",
+      "profile": "LAPTOP_A",
+      "ssh": "aga@192.168.8.78",
+      "daemons": [],
+      "sudo_rootful": false,
+      "prometheus_instance": "laptop_a",
+      "order": 50,
+      "enabled": true,
+      "notes": "no docker",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "DESK_A",
+      "name": "Aga desk (nixosagadesk)",
+      "profile": "DESK_A",
+      "ssh": "aga@nixosagadesk",
+      "daemons": [],
+      "sudo_rootful": false,
+      "order": 60,
+      "enabled": true,
+      "notes": "hostname via Tailscale MagicDNS",
+      "updated_at": 1790771033
+    },
+    {
+      "id": "DESK_W11",
+      "name": "DESK_W11 (this machine, NixOS-WSL)",
+      "profile": "DESK_W11",
+      "ssh": "",
+      "daemons": [],
+      "sudo_rootful": false,
+      "order": 35,
+      "enabled": true,
+      "notes": "local: commands run in WSL through wsl.exe",
+      "updated_at": 1790771033
+    }
+  ],
+  "settings": {
+    "monitoring": {
+      "prometheus_node": "VPS_PROD",
+      "prometheus_url": "http://localhost:9090",
+      "grafana_url": "https://grafana.akunito.com"
+    }
   }
 }
