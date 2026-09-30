@@ -8,7 +8,7 @@
 # goes into LAPTOP_A-config.nix and reaches both.
 #
 # Tailnet: 100.64.0.16 (Headscale user Yoga_Aga, in group:family). That IP is
-# what NAS_PROD exports workstation_backups to and DESK exports Games (ro) to.
+# what NAS_PROD exports workstation_backups to.
 
 let
   laptopA = import ./LAPTOP_A-config.nix;
@@ -38,6 +38,13 @@ in
     # refuses to start ("Fan_control seems disabled") and restart-loops every
     # 30 s. Firmware curve + thermald handle cooling on this model.
     thinkfanEnable = false;
+    # Only the NAS backup share. LAPTOP_A's two DESK Games mounts are dropped:
+    # nothing here uses them, and with DESK off (or in Windows) the KDE file
+    # picker walks into the automount, waits 15 s per attempt and retries —
+    # VS Code's "Open Folder" froze and xdg-desktop-portal-kde dumped core
+    # (measured 2026-09-30).
+    nfsMounts = builtins.filter (m: m.where == "/mnt/NFS_Backups") laptopA.systemSettings.nfsMounts;
+    nfsAutoMounts = builtins.filter (m: m.where == "/mnt/NFS_Backups") laptopA.systemSettings.nfsAutoMounts;
     # No Minecraft here: UHD 620 + i5-8250U cannot run the AkuCraft packs at a
     # playable rate. Aga plays on DESK_A / LAPTOP_A.
     freesmLauncherEnable = false;
