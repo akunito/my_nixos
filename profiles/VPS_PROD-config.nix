@@ -565,6 +565,7 @@ in
       { name = "desk_a"; host = "nixosagadesk"; nodePort = 9100; cadvisorPort = null; }  # Aga's desktop, Tailscale 100.64.0.11
       { name = "x13"; host = "nixosx13aku"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
       { name = "laptop_a"; host = "nixosaga"; nodePort = 9100; cadvisorPort = null; }  # Tailscale hostname (roaming)
+      { name = "laptop_yoga"; host = "nixosyogaaga"; nodePort = 9100; cadvisorPort = null; }  # Tailscale 100.64.0.16 (roaming)
     ];
 
     # Application metrics (local VPS databases only — LXC_database decommissioned)
