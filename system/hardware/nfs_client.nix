@@ -87,14 +87,22 @@
             # "Open Folder" frozen, the portal dumped core; reproduced with a
             # probe automount (4 requests in 22 s, nobody navigating).
             unit=$(${pkgs.systemd}/bin/systemd-escape -p --suffix=automount ${lib.escapeShellArg entry.where})
+            # Only restore what THIS service parked: an automount switched off by
+            # hand (sway-apps "Automount off", systemctl stop) must stay off.
+            parked=/run/nfs-automount-parked/$unit
             if [ "$up" = 1 ]; then
-              if ! ${pkgs.systemd}/bin/systemctl is-active -q "$unit"; then
-                echo "${host} is back — restoring $unit"
-                ${pkgs.systemd}/bin/systemctl start "$unit" || true
+              if [ -e "$parked" ]; then
+                if ! ${pkgs.systemd}/bin/systemctl is-active -q "$unit"; then
+                  echo "${host} is back — restoring $unit"
+                  ${pkgs.systemd}/bin/systemctl start "$unit" || true
+                fi
+                ${pkgs.coreutils}/bin/rm -f "$parked"
               fi
             else
               if ${pkgs.systemd}/bin/systemctl is-active -q "$unit"; then
                 echo "${host} is not answering on 2049 — removing $unit"
+                ${pkgs.coreutils}/bin/mkdir -p /run/nfs-automount-parked
+                : > "$parked"
                 ${pkgs.systemd}/bin/systemctl stop "$unit" || true
               fi
             fi
