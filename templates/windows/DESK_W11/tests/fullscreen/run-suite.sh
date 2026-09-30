@@ -36,6 +36,16 @@ for exe in fliptest.exe cloaktest.exe PresentMon.exe; do
   [ -f "$P/$exe" ] || echo "WARNING: $P/$exe is missing (README: how to build or fetch it)"
 done
 
+# The elevated capture daemon dies with every reboot, and without it every
+# PresentMon capture "gets no frames" and every .elev request waits its full
+# timeout: the suite crawled through cases 1-3 in five minutes and proved
+# nothing (2026-09-30 13:40, machine rebooted 11:32). Refuse to start.
+if [ ! -f "$P/cap-daemon.alive" ]; then
+  echo "the capture daemon is not running (no $P/cap-daemon.alive): start it with one UAC prompt:"
+  echo '  powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\perf\start-cap-daemon.ps1"'
+  exit 2
+fi
+
 A=""
 for c in /mnt/c/Users/diego/AppData/Local/Programs/AkuWM/akuwm.exe /mnt/c/Users/diego/AppData/Local/Temp/akuwm-m2/akuwm-cli.exe; do
   [ -x "$c" ] && { A="$c"; break; }
