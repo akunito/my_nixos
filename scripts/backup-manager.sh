@@ -383,6 +383,25 @@ backup_home() {
     exclude_args+=("--exclude" "$HOME/$pattern")
   done
 
+  # The Nextcloud client's sync roots, whatever they are called. HOME_EXCLUDES
+  # only knows "Nextcloud"; Aga's is ~/Sync, so 2.3 of her 4.5 GB backup was a
+  # second copy of what the server-side nextcloud.restic already holds (found
+  # 2026-09-30). Read from the client config rather than excluding "Sync" by
+  # name: on other machines ~/Sync is a Syncthing folder with no server copy.
+  local nc_cfg="$HOME/.config/Nextcloud/nextcloud.cfg" nc_paths nc_path
+  if [ -f "$nc_cfg" ]; then
+    nc_paths=$(sed -n 's/^.*\\localPath=//p' "$nc_cfg")
+    while IFS= read -r nc_path; do
+      nc_path="${nc_path%/}"
+      if [ -n "$nc_path" ] && [ "$nc_path" != "$HOME" ] && [ "$nc_path" != "/" ]; then
+        exclude_args+=("--exclude" "$nc_path")
+        log "Excluding Nextcloud sync root: $nc_path"
+      fi
+    done <<NCEOF
+$nc_paths
+NCEOF
+  fi
+
   # Backup command
   local backup_cmd=(
     "$RESTIC_BIN" backup
