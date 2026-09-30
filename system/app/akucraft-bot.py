@@ -63,7 +63,7 @@ HIDDEN_PLAYERS = {p.strip().lower()
 # the roster that maps a name to a token is read fresh on every call because the
 # exporter rewrites it every few minutes.
 MAP_ROSTER = os.environ.get("MAP_ROSTER", "")
-MAP_URL = os.environ.get("MAP_URL", "http://100.64.0.6:8100/map/")
+MAP_URL = os.environ.get("MAP_URL", "")
 GROUP_LINK = os.environ.get("TG_GROUP_LINK", "")
 # /invite: players onboarding their own friends. Off unless a script is set.
 INVITE_SCRIPT = os.environ.get("INVITE_SCRIPT", "")
@@ -131,8 +131,13 @@ SERVERS = {
     "survival": {
         "label": "Survival",
         "container": "minecraft",
-        "dir": "/home/akunito/.homelab/minecraft",
-        "address": "100.64.0.6:25565",
+        # On NAS_PROD since 2026-09-30 (AINF-401): nobody was playing, so the
+        # last server left the VPS too. Same caveat as the others below - the
+        # NAS sleeps 23:00-16:00. Deaths and advancements are no longer
+        # announced for it: tail_logs() only follows a local engine.
+        "ssh_host": "akunito@100.64.0.1",
+        "dir": "/mnt/ssdpool/docker/compose/gameservers/akucraft-survival",
+        "address": "100.64.0.1:25565",
     },
     # Creative was decommissioned 2026-08-14 (unused since 2026-08-06, last
     # container exit 7 days before that). Its world is kept on disk at
@@ -224,8 +229,9 @@ CONNECT_TEXT = """How to join AkuCraft:
 2. Launcher: FreeSM Launcher (no paid account needed):
    https://github.com/FreesmTeam/FreesmLauncher/releases
    Add an OFFLINE account with your player name.
-3. Install the modpack - ONE file, the launcher does the rest:
-     http://100.64.0.6:8100/downloads/AkuCraft-2026.08.16.mrpack
+3. Install the modpack - ONE file, the launcher does the rest.
+   Ask Diego for AkuCraft-2026.08.16.mrpack (the download site went offline
+   when the server moved to standby).
    In the launcher: Add Instance -> Import -> pick that file.
    It sets up Minecraft 1.21.1, Fabric Loader 0.19.3 and all 31 mods for
    you, with the right versions. You do NOT create the instance, install
@@ -234,7 +240,9 @@ CONNECT_TEXT = """How to join AkuCraft:
    downloading its own Java.
 4. Add the server in Multiplayer -> Add Server (address = IP and port,
    copy it exactly):
-   Survival: 100.64.0.6:25565
+   Survival: 100.64.0.1:25565
+   The server is off by default: /start boots it, and the machine that
+   hosts it sleeps 23:00-16:00 (Warsaw time).
 5. First join: /auth register <password> <password>
    Later joins: /auth login <password>
 
@@ -253,13 +261,8 @@ CONNECT_TEXT = """How to join AkuCraft:
      the Alex-model body shape)
    - Undo with /skin clear
 
-7. Your map (optional, recommended).
-   Type /map in Discord and the bot sends you your own private link. It
-   shows only the terrain you have explored yourself.
-   Opens in any browser. It only works with the VPN on.
-   For the same thing in game, add these client mods (client-side only -
-   they change nothing on the server, and versions do not have to match
-   anyone else's):
+7. A map (optional). Add these client mods (client-side only - they change
+   nothing on the server, and versions do not have to match anyone else's):
      Xaero's Minimap, Xaero's World Map, Cloth Config, Mod Menu"""
 
 VPN_TEXT = """VPN (Tailscale) setup:
@@ -272,34 +275,23 @@ gives your device access to the Minecraft servers and NOTHING else.
 3. In a terminal (Windows: PowerShell):
    tailscale login --login-server https://headscale.akunito.com --auth-key <YOUR-KEY>
    (macOS app: /Applications/Tailscale.app/Contents/MacOS/Tailscale login ...)
-4. Done - check with /status that the server is up, then join with
-   100.64.0.6:25565
+4. Done - check with /status that the server is up (/start boots it), then
+   join with 100.64.0.1:25565
 
 Note: always use the IP and port above. Hostnames like akucraft.local...
 only resolve on some networks, so the IP is the reliable way in."""
 
-MAP_TEXT = """Your map of the survival world:
+MAP_TEXT = """The web map is offline: it was archived when the server moved to
+standby (2026-09-30).
 
-   http://100.64.0.6:8100/map/?k=YOUR-OWN-LINK
-
-Open it in any browser. It only works with the VPN on.
-
-It shows exactly and only the terrain YOU have explored - not the whole
-world, and not where anyone else is standing. Each player has their own
-private link: type /map in Discord and I send you yours.
-
-Want the same map in game? These 4 mods are CLIENT-SIDE ONLY: they
-change nothing on the server, nobody else has to install them, and the
-versions do not have to match anyone.
+For a map in game, these 4 mods are CLIENT-SIDE ONLY: they change nothing on
+the server, nobody else has to install them, and the versions do not have to
+match anyone.
 
    Xaero's Minimap    https://modrinth.com/mod/xaeros-minimap
    Xaero's World Map  https://modrinth.com/mod/xaeros-world-map
    Cloth Config       https://modrinth.com/mod/cloth-config
-   Mod Menu           https://modrinth.com/mod/modmenu
-
-Map Link used to be on this list. It is gone: it only knew how to open
-the old server-wide BlueMap, which is now admin-only, so the button just
-showed an error. Nothing replaces it - use the web link above."""
+   Mod Menu           https://modrinth.com/mod/modmenu"""
 
 
 COMPANIONS_TEXT = """Villager companions (MCA)
@@ -475,21 +467,22 @@ HELP_TEXT = """AkuCraft bot commands:
 /players - who is playing right now
 /start - boot the server if it is stopped (test/private ones: MCadmin only)
 /stop - stop the server (refuses if players online; same restriction)
-/map - your private map of the world you have explored
+/connect - how to join the servers
+/vpn - how to set up the VPN (Tailscale)
+/companions - befriend, hire and command villagers
+/storage - one searchable inventory across all your chests
+/help - this message
+""" + ("""/map - your private map of the world you have explored
 /ask <question> - ask about the server (Discord only, see below)
 /link <name> - tell /ask which Minecraft account is yours (Discord only)
 /guide [title] - turn the conversation you are in into a published guide
 /share - publish the conversation you are in, as it happened
 /profile <notes> [user] - admin only: context the assistant keeps about a player
 /invite <name> <email> - invite a friend (Discord only)
-/connect - how to join the servers
-/vpn - how to set up the VPN (Tailscale)
-/companions - befriend, hire and command villagers
-/storage - one searchable inventory across all your chests
-/help - this message
-
-I also announce: servers going on/offline, joins/leaves, deaths,
-advancements, and I auto-stop servers left empty for a while."""
+""" if DISCORD_TOKEN else "") + """
+The servers are off by default and live on a machine that sleeps
+23:00-16:00 (Warsaw time). I announce servers going on/offline and
+joins/leaves, and I auto-stop servers left empty for a while."""
 
 # Kept separate from HELP_TEXT because it also goes to the assistant as
 # context: players ask the bot how the bot works, and it used to have no idea.
@@ -663,6 +656,13 @@ def online_players(server):
 
 
 def compose(server, action):
+    # "stop" means `down`: a stopped-but-present container is reported as
+    # "containers not running" by every deploy announcement on that host
+    # (infra-notify), and these stacks are on-demand - off is their normal
+    # state. `down` honours the compose file's stop_grace_period (2m), so the
+    # world save is not cut short.
+    if action == "stop":
+        action = "down"
     flag = " -d" if action == "up" else ""
     if server.get("ssh_host"):
         dh = server.get("docker_host", "unix:///run/user/1000/docker.sock")
@@ -916,8 +916,16 @@ def cmd_start(arg, admin=True):
         elif h == "starting":
             replies.append(f"\U0001F7E1 {srv['label']} is already starting...")
         else:
-            compose(srv, "up")
-            replies.append(f"\U0001F680 Starting {srv['label']} - I'll announce when it's ready (~1 min).")
+            rc, out = compose(srv, "up")
+            if rc != 0 and srv.get("ssh_host"):
+                # ssh timing out is the overwhelmingly common failure: the NAS
+                # is suspended. Say so instead of promising an announcement
+                # that will never come.
+                log(f"start {name}: rc={rc} {out[-200:]}")
+                replies.append(f"\U0001F4A4 Could not start {srv['label']}: the machine that "
+                               "hosts it did not answer. It sleeps 23:00-16:00 (Warsaw time).")
+            else:
+                replies.append(f"\U0001F680 Starting {srv['label']} - I'll announce when it's ready (~1 min).")
     return "\n".join(replies)
 
 

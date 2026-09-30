@@ -7,9 +7,16 @@
 #
 # State is NOT under this directory: the VPS "configs" backup job sweeps all of
 # compose/, and config/ holds a 300 MB app.db plus ~50 G of thumbnails.
-#   /mnt/ssdpool/docker/calibre/config     app.db, cwa.db, custom-services/, thumbnails/
+#   /mnt/ssdpool/docker/calibre/config     app.db, cwa.db, custom-services/
 #   /mnt/ssdpool/docker/calibre/ingest     drop books here
-#   /mnt/ssdpool/media/library/calibre-library   the library + metadata.db (uid 100999)
+#   /mnt/extpool/library/calibre-library     the library + metadata.db (uid 100999)
+#   /mnt/extpool/library/calibre-thumbnails  ~50 G of cover thumbnails, regenerable
+#
+# The bulk lives on extpool (NVMe), NOT ssdpool: the 870 EVOs sit behind the LSI
+# SAS3008, which never passes TRIM to them, and any sustained write to ssdpool
+# collapses to 7-20 MB/s (measured 2026-09-30 restoring this very library —
+# 30 G in 20 min, hung-task warnings). extpool has no redundancy; the library is
+# re-downloadable and deliberately not backed up.
 services:
   calibre-web-automated:
     # Digest of the `latest` the VPS ran (7 months old). CWA migrates its DBs on
@@ -31,8 +38,9 @@ services:
       - DISABLE_LIBRARY_AUTOMOUNT=true
     volumes:
       - /mnt/ssdpool/docker/calibre/config:/config
+      - /mnt/extpool/library/calibre-thumbnails:/config/thumbnails
       - /mnt/ssdpool/docker/calibre/ingest:/cwa-book-ingest
-      - /mnt/ssdpool/media/library/calibre-library:/calibre-library:rw
+      - /mnt/extpool/library/calibre-library:/calibre-library:rw
       - /mnt/ssdpool/docker/calibre/config/custom-services/cwa-ingest-run.sh:/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run:ro
       - /mnt/ssdpool/docker/calibre/config/custom-services/apply-db-patch.sh:/custom-cont-init.d/99-apply-db-patch.sh:ro
     restart: "no"

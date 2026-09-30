@@ -330,7 +330,18 @@ METRICS
         log "NPM compose-relative data not found (skipping)"
       fi
 
-      # Note: calibre-web and emulatorjs are VPS services, not NAS — not backed up here
+      # On-demand stacks that came from the VPS (AINF-401). Off is their normal
+      # state, so these are cold copies; if one happens to be up at 18:00 its
+      # mongo/mariadb files are a live copy. Subuid-owned: readable through
+      # nasBackupAclPaths on the NAS. No $EXCLUDES here — "*.log" and "Backups/*"
+      # would cut into database and controller state.
+      # The libraries themselves (extpool/library, ~254 G) are deliberately
+      # NOT backed up: re-downloadable, decided 2026-09-30.
+      rsync_dir /mnt/ssdpool/docker/calibre/ "$STAGING/docker-data/calibre/" "calibre" \
+        --exclude='config/thumbnails/' --exclude='config/.cache/' --exclude='ingest/'
+      rsync_dir /mnt/ssdpool/docker/romm/ "$STAGING/docker-data/romm/" "romm"
+      rsync_dir /mnt/ssdpool/docker/unifi/ "$STAGING/docker-data/unifi/" "unifi"
+
       # Note: tailscale config is inside compose/ (backed up by configs job)
       # Note: qbittorrent is inside mediarr/ (backed up above)
     '';

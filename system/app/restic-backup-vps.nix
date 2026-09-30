@@ -1,11 +1,10 @@
 # VPS Restic Backup to TrueNAS via SFTP
 #
 # Automated backup of VPS data to TrueNAS via Tailscale SFTP.
-# Four separate backup jobs with independent schedules and retention policies:
+# Separate backup jobs with independent schedules and retention policies:
 #   - databases:  PostgreSQL + MariaDB dumps (daily at 19:00, keep 30 days) → extpool
 #   - services:   Docker configs, Headscale, Vaultwarden, secrets (daily at 19:30, keep 30 days) → extpool
 #   - nextcloud:  Nextcloud data directory (weekly Sunday at 20:00, keep 14 days) → extpool
-#   - libraries:  RomM ROMs + Calibre books ~260GB (weekly Sunday at 20:30, keep 30 days) → extpool
 #   - immich:     Immich photo library ~92GB + DB dump (weekly Sunday at 21:00, keep 30 days) → extpool
 #
 # All VPS backups target extpool/vps-backups/ on TrueNAS.
@@ -91,8 +90,13 @@ let
 
       # Prune old snapshots
       log "Pruning snapshots (keep-within ${toString retentionDays}d${retentionExtra})..."
+      # --group-by host,tags, not the default host,paths: keep-within is relative to
+      # the newest snapshot OF EACH GROUP, so dropping a path from backupPaths
+      # strands every older snapshot in a group that never ages out (it bit the
+      # UniFi volume and the libraries job on AINF-401). Tags are the job's
+      # identity: keep a job's tag list stable for the same reason.
       $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" \
-        forget --keep-within ${toString retentionDays}d${retentionExtra} --prune 2>&1
+        forget --group-by host,tags --keep-within ${toString retentionDays}d${retentionExtra} --prune 2>&1
 
       log "Backup complete"
     '';
@@ -163,7 +167,6 @@ let
       "/home/${username}/.homelab"
       "/home/${username}/.openclaw"
       "/home/${username}/.local/share/docker/volumes/uptime-kuma_kuma_data/_data"
-      "/home/${username}/.local/share/docker/volumes/unifi_unifi_app_config/_data"
       "/home/${username}/.local/share/docker/volumes/n8n_n8n_data/_data"
       "/home/${username}/.local/share/docker/volumes/plane_plane_uploads/_data"
       "/var/lib/headscale"
@@ -175,15 +178,9 @@ let
       # SQLite WAL files — backed up via safe dump in preScript
       "*/finance/data/vaultkeeper.db-wal"
       "*/finance/data/vaultkeeper.db-shm"
-      # Calibre Web thumbnail cache (~11G, regenerable from library)
-      "*/calibre/data/config/thumbnails/*"
-      # AkuCraft Solo: a hardcore world that is MEANT to be lost, plus runs/
-      # holding every previous one newrun.sh archived. Backing it up would
-      # both defeat the point and grow without bound. The compose file and
-      # newrun.sh are excluded with it; they are in git (docs/akunito/plans/
-      # akucraft-solo-hardcore.md records the design).
-      "*/.homelab/minecraft-solo/*"
     ];
+    # "unifi" stays although UniFi left for the NAS (AINF-401): retention groups by
+    # host,tags, and a changed tag list would orphan the existing snapshots.
     tags = [ "services" "docker" "headscale" "vaultwarden" "openclaw" "unifi" "n8n" "plane" ];
     schedule = "*-*-* 19:30:00";
     retentionDays = 30;
@@ -194,44 +191,6 @@ let
       if [ -f "$VAULTKEEPER_DB" ]; then
         log "Dumping Vaultkeeper SQLite database..."
         ${pkgs.sqlite}/bin/sqlite3 "$VAULTKEEPER_DB" ".backup /home/${username}/.openclaw/workspace/finance/data/vaultkeeper-backup.db" 2>&1 || log "WARNING: Vaultkeeper DB dump failed (non-fatal)"
-      fi
-
-      # Quiescent copy of the Minecraft world.
-      #
-      # Without this we back up region files while the server is mid-write, so
-      # the snapshot is crash-consistent at best and a restore can carry corrupt
-      # chunks. Restore from data/world-snapshot, not data/world.
-      #
-      # The copy runs INSIDE the container on purpose: data/world is owned by
-      # the container uid (100999 on the host) and this service runs as
-      # ${username}. restic can read it via CAP_DAC_READ_SEARCH on its wrapper,
-      # but a plain cp here cannot. Doing it container-side sidesteps that.
-      #
-      # Every step is `|| true`-guarded so `set -e` can never skip save-on and
-      # leave the live server with saving disabled.
-      export DOCKER_HOST=unix:///run/user/1000/docker.sock
-      # -qx, not -qw: "-" is not a word character, so `grep -qw minecraft`
-      # also matches "minecraft-solo" and "minecraft-creative". That made the
-      # branch fire with only the solo server up, and every `docker exec
-      # minecraft ...` below then failed against a container that is not
-      # running. --format prints one name per line, so an exact match is right.
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx minecraft; then
-        DOCKER=docker
-        log "Minecraft is running - flushing world to disk before snapshot..."
-        $DOCKER exec minecraft rcon-cli save-off      >/dev/null 2>&1 || log "WARNING: save-off failed"
-        $DOCKER exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: save-all flush failed"
-        sleep 3
-        # Copy to .tmp then swap, so an interrupted run never leaves a
-        # half-written snapshot as the thing we would restore from.
-        $DOCKER exec minecraft sh -c 'rm -rf /data/world-snapshot.tmp && cp -a /data/world /data/world-snapshot.tmp && rm -rf /data/world-snapshot && mv /data/world-snapshot.tmp /data/world-snapshot' \
-          >/dev/null 2>&1 && log "World snapshot refreshed" || log "WARNING: world snapshot copy failed (non-fatal)"
-        $DOCKER exec minecraft rcon-cli save-on >/dev/null 2>&1 \
-          && log "Saving re-enabled" \
-          || log "CRITICAL: could not re-enable saving - run 'rcon-cli save-on' by hand"
-      else
-        # Server stopped: data/world on disk is already quiescent, so the live
-        # copy in this snapshot is itself a valid restore point.
-        log "Minecraft not running - live world is already consistent, skipping flush"
       fi
     '';
     rootPreScript = ''
@@ -251,24 +210,7 @@ let
         fi
       fi
     '';
-    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw, UniFi, n8n, Plane";
-  };
-
-  # Large media libraries — weekly Sunday after nextcloud
-  librariesBackup = mkResticBackup {
-    name = "libraries";
-    passwordFile = "/etc/secrets/restic-services";
-    repoSuffix = "services.restic";
-    backupPaths = [
-      "/home/${username}/romm-library"
-      "/home/${username}/calibre-library"
-    ];
-    excludes = [ "*.log" "*.tmp" "*.cache" ];
-    tags = [ "libraries" "romm" "calibre" ];
-    schedule = "Sun *-*-* 20:30:00";
-    retentionDays = 30;
-    retentionPolicy = "--keep-monthly 3";
-    description = "RomM ROMs + Calibre book library (~260GB)";
+    description = "Docker configs, Headscale state, secrets, Vaultwarden, Uptime Kuma, OpenClaw, n8n, Plane";
   };
 
   nextcloudBackup = mkResticBackup {
@@ -382,156 +324,14 @@ in lib.mkIf (systemSettings.vpsResticBackupEnable or false) {
   # Backup services
   systemd.services.vps-restic-databases = databasesBackup.service;
   systemd.services.vps-restic-services = servicesBackup.service;
-  systemd.services.vps-restic-libraries = librariesBackup.service;
   systemd.services.vps-restic-nextcloud = nextcloudBackup.service;
   systemd.services.vps-restic-immich = immichBackup.service;
 
   # Backup timers
   systemd.timers.vps-restic-databases = databasesBackup.timer;
   systemd.timers.vps-restic-services = servicesBackup.timer;
-  systemd.timers.vps-restic-libraries = librariesBackup.timer;
   systemd.timers.vps-restic-nextcloud = nextcloudBackup.timer;
   systemd.timers.vps-restic-immich = immichBackup.timer;
-
-  # Let ${username} trigger the services backup without sudo, so
-  # akucraft-backup-now can push offsite itself. Scoped to exactly that one
-  # unit — not blanket systemd control.
-  security.polkit.extraConfig = ''
-    polkit.addRule(function(action, subject) {
-      if (action.id == "org.freedesktop.systemd1.manage-units" &&
-          action.lookup("unit") == "vps-restic-services.service" &&
-          subject.user == "${username}") {
-        return polkit.Result.YES;
-      }
-    });
-  '';
-
-  # AkuCraft operator tooling.
-  #
-  # Both scripts live here rather than in ~/.homelab so they inherit the repo
-  # path, the sftp command and the ssh key from this module instead of
-  # duplicating them in a shell script that would then drift.
-  environment.systemPackages = [
-
-    # akucraft-backup-now — pre-deployment snapshot.
-    #
-    # LOCAL FIRST, deliberately: the NAS sleeps roughly 23:00-16:00, so an
-    # offsite-only pre-deploy backup is unusable for most of the day. This
-    # always produces a local restore point in seconds, then pushes offsite
-    # only if the NAS answers.
-    (pkgs.writeShellScriptBin "akucraft-backup-now" ''
-      set -uo pipefail
-      export DOCKER_HOST=unix:///run/user/1000/docker.sock
-      STAMP=$(date +%Y%m%d-%H%M%S)
-      DEST="/home/${username}/.homelab/backups/akucraft/$STAMP"
-      log() { echo "$(date -Iseconds) [akucraft-backup-now] $*"; }
-
-      mkdir -p "$DEST"
-      COPY_OK=0
-      if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx minecraft; then
-        log "Flushing world (server is running)..."
-        docker exec minecraft rcon-cli save-off       >/dev/null 2>&1 || log "WARNING: save-off failed"
-        docker exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || log "WARNING: flush failed"
-        sleep 3
-        docker cp minecraft:/data/world "$DEST/world" >/dev/null 2>&1 \
-          && { COPY_OK=1; log "World copied to $DEST/world"; } \
-          || log "ERROR: world copy FAILED - do not deploy"
-        docker exec minecraft rcon-cli save-on >/dev/null 2>&1 \
-          && log "Saving re-enabled" \
-          || log "CRITICAL: could not re-enable saving - run 'rcon-cli save-on' by hand"
-      else
-        # The world belongs to uid 100999 inside the rootless userns, and
-        # level.dat, playerdata/ and skinrestorer/ are not world-readable, so a
-        # plain host-side cp silently produced a snapshot with no level.dat and
-        # no player inventories (caught 2026-08-16). Copy through a throwaway
-        # container, which runs as that uid and can read everything.
-        log "Server stopped - copying the world through a container"
-        docker run --rm \
-          -v /home/${username}/.homelab/minecraft/data:/src:ro \
-          -v "$DEST":/dst alpine \
-          sh -c 'cp -a /src/world /dst/world' >/dev/null 2>&1 \
-          && { COPY_OK=1; log "World copied to $DEST/world"; } \
-          || log "ERROR: world copy FAILED - do not deploy"
-      fi
-
-      # A snapshot missing level.dat or playerdata is worse than no snapshot,
-      # because it looks like one. Check rather than assume.
-      for required in level.dat playerdata region; do
-        [ -e "$DEST/world/$required" ] || { COPY_OK=0; log "ERROR: snapshot has no world/$required"; }
-      done
-
-      # Compose files and mod pins, so a rollback can rebuild the exact stack
-      cp -a /home/${username}/.homelab/minecraft/docker-compose.yml "$DEST/" 2>/dev/null || true
-
-      du -sh "$DEST" 2>/dev/null | sed 's/^/  size: /'
-      log "Local snapshot ready: $DEST"
-
-      # Prune local snapshots by TOTAL SIZE, not by count.
-      #
-      # This kept the last 10, a number chosen when the world was 292 MB. The
-      # +-12000 pregeneration takes it to roughly 27 GB, at which point ten
-      # snapshots is 270 GB and the disk has 163 GB free - it would have filled
-      # the disk the first time it ran afterwards. Offsite is unaffected either
-      # way: restic deduplicates, so history there is cheap.
-      LOCAL_BUDGET_GB=60
-      total=0
-      for d in $(ls -1dt /home/${username}/.homelab/backups/akucraft/*/ 2>/dev/null); do
-        sz=$(du -sm "$d" 2>/dev/null | cut -f1)
-        total=$(( total + sz ))
-        if [ "$total" -gt $(( LOCAL_BUDGET_GB * 1024 )) ]; then
-          rm -rf "$d" && log "pruned $d (local snapshots over ''${LOCAL_BUDGET_GB}G)"
-        fi
-      done
-
-      if [ "$COPY_OK" != "1" ]; then
-        log "REFUSING to push a snapshot that failed verification. Fix it first."
-        exit 1
-      fi
-
-      if timeout 8 ping -c1 -W3 ${target} >/dev/null 2>&1; then
-        log "NAS is awake - pushing offsite too"
-        systemctl start vps-restic-services.service \
-          && log "Offsite backup complete" \
-          || log "WARNING: offsite backup failed - local snapshot is still valid"
-      else
-        log "NAS asleep - local snapshot only (this is expected outside 16:00-23:00)"
-      fi
-      log "To roll back: stop the server, replace data/world with $DEST/world, start"
-    '')
-
-    # akucraft-restore-drill — prove the offsite repo actually restores.
-    # Restores into a scratch directory only; never touches the live world.
-    (pkgs.writeShellScriptBin "akucraft-restore-drill" ''
-      set -uo pipefail
-      export RESTIC_PASSWORD_FILE="/etc/secrets/restic-services"
-      RESTIC="/run/wrappers/bin/restic"
-      REPO="${repoBase}/services.restic"
-      SFTP_CMD="${sftpCommand}"
-      DEST="''${1:-/home/${username}/.homelab/backups/restore-drill}"
-      log() { echo "$(date -Iseconds) [restore-drill] $*"; }
-
-      if ! timeout 8 ping -c1 -W3 ${target} >/dev/null 2>&1; then
-        log "NAS unreachable - it sleeps outside 16:00-23:00. Aborting."; exit 1
-      fi
-
-      rm -rf "$DEST"; mkdir -p "$DEST"
-      log "Restoring the world snapshot from the latest offsite backup..."
-      $RESTIC -r "$REPO" -o "sftp.command=$SFTP_CMD" restore latest \
-        --target "$DEST" \
-        --include /home/${username}/.homelab/minecraft/data/world-snapshot 2>&1 | tail -5
-
-      W="$DEST/home/${username}/.homelab/minecraft/data/world-snapshot"
-      if [ ! -d "$W" ]; then log "FAIL: world-snapshot not present in the restore"; exit 1; fi
-      log "Restored to $W"
-      du -sh "$W" | sed 's/^/  size: /'
-      for f in level.dat region playerdata; do
-        [ -e "$W/$f" ] && log "  OK   $f" || log "  MISSING $f"
-      done
-      log "Claim data (Flan) in the restore:"
-      ls -1 "$W/data/claims" 2>/dev/null | sed 's/^/    /' || log "    none found"
-      log "Drill complete. Boot it in a scratch container to fully verify."
-    '')
-  ];
 
   # Declarative ACL grant on /var/lib/nextcloud-data so the non-root
   # akunito-owned restic backup can read it. Idempotent; runs at boot and

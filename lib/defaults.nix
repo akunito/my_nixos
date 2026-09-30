@@ -712,6 +712,11 @@
     infraBotPort = 8765; # Relay listen port on the tailscale0 interface
     infraRestartEnable = false; # Install `infra-restart` + sudoers so the bot can restart docker-rootless/rootful here (VPS, NAS)
     infraRestartSshTargets = {}; # Bot only: node -> "user@host" for remote /restart over BatchMode ssh (e.g. { nas = "akunito@100.64.0.1"; })
+    # Bot only: /svc list|start|stop for the on-demand stacks of one node, through its `nas-svc` over BatchMode ssh
+    infraOnDemandSshTarget = "";   # "user@host"; empty disables /svc
+    infraOnDemandNode = "nas";     # Prometheus node label of that host
+    infraOnDemandServices = [ ];   # names as `nas-svc list` prints them (that node's nasOnDemandDockerProjects basenames)
+    infraOnDemandContainers = [ ]; # their container names, hidden from the "stopped" count in /status
     healthchecksPingUrl = ""; # healthchecks.io ping URL (dead-man's switch); "" = no ping timer
     prometheusNodeExporterPort = 9100; # Port for Node Exporter
     prometheusCadvisorPort = 9092; # Port for cAdvisor
@@ -1185,6 +1190,7 @@
     planeBotWebhookDebug = false; # dump every accepted payload to /var/lib/plane-bot/webhook-samples/
     planeBotKumaPushUrl = ""; # Uptime Kuma push-monitor URL pinged after every successful sync pass ("" = no heartbeat)
     akucraftStatusBotEnable = false; # Telegram status bot for AkuCraft Minecraft servers (VPS only; needs akucraftTelegramBotToken/ChatId in secrets)
+    akucraftDiscordEnable = false; # Discord half of the bot (webhook announcements, slash commands, /ask, /invite). false = Telegram-only
     akucraftIdleStopMinutes = 45;    # stop the Minecraft server after this many minutes with no players; raise it to keep a long pregeneration alive
     akucraftStopLockReason = "";     # non-empty blocks BOTH the idle stop and the /stop command, and is shown to whoever tries
     akucraftHiddenPlayers = [ ];     # test accounts: their joins, leaves, deaths and advancements are announced nowhere

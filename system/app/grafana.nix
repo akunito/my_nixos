@@ -583,10 +583,10 @@ in
                   description = "Restic repo {{ $labels.dataset }} is {{ $value | humanizeDuration }} old (daily job, threshold: 36h)";
                 };
               }
-              # nextcloud / libraries / immich run WEEKLY (Sunday evening, restic-backup-vps.nix)
+              # nextcloud / immich run WEEKLY (Sunday evening, restic-backup-vps.nix)
               {
                 alert = "NasVpsBackupStale";
-                expr = ''nas_backup_age_seconds{dataset=~"vps_(nextcloud|libraries|immich)"} > 8 * 86400'';
+                expr = ''nas_backup_age_seconds{dataset=~"vps_(nextcloud|immich)"} > 8 * 86400'';
                 "for" = "1h";
                 labels.severity = "warning";
                 labels.schedule = "weekly";

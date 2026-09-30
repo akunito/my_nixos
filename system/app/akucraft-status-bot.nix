@@ -32,15 +32,22 @@ let
   # Discord is optional and split in two independent halves:
   #   webhook  -> announcements only (no bot account, no dependency)
   #   bot token + guild -> slash commands over the gateway (needs discord.py)
-  discordWebhook = secrets.akucraftDiscordWebhookUrl or "";
-  discordToken = secrets.akucraftDiscordBotToken or "";
-  discordGuild = secrets.akucraftDiscordGuildId or "";
-  discordChannel = secrets.akucraftDiscordChannelId or "";
+  #
+  # akucraftDiscordEnable = false disconnects both halves without touching the
+  # secrets: no announcements, no gateway, and none of the Discord-only
+  # features below (/ask, /map links, /invite and its sudo rule). The bot is
+  # then Telegram-only. Off since 2026-09-30 (AINF-401, nobody playing).
+  discordEnable = systemSettings.akucraftDiscordEnable or false;
+  ifDiscord = v: if discordEnable then v else "";
+  discordWebhook = ifDiscord (secrets.akucraftDiscordWebhookUrl or "");
+  discordToken = ifDiscord (secrets.akucraftDiscordBotToken or "");
+  discordGuild = ifDiscord (secrets.akucraftDiscordGuildId or "");
+  discordChannel = ifDiscord (secrets.akucraftDiscordChannelId or "");
   discordCommands = discordToken != "" && discordGuild != "";
 
   # Auto-role on join: the bot matches the new member against the invite codes
   # of our own invite links, so joins through other invites are left alone.
-  discordJoinRoles = secrets.akucraftDiscordJoinRoleIds or "";
+  discordJoinRoles = ifDiscord (secrets.akucraftDiscordJoinRoleIds or "");
   # Invite codes are the last path segment of the discord.gg links in secrets.
   inviteCode = link: lib.last (lib.splitString "/" link);
   discordInviteCodes = lib.concatStringsSep "," (map inviteCode
@@ -54,7 +61,8 @@ let
   askToken = secrets.litellmMasterKey or "";
   litellmHost = systemSettings.litellmHost or "127.0.0.1";
   litellmPort = systemSettings.litellmPort or 4711;
-  askEnable = (systemSettings.akucraftAskEnable or false) && askToken != "";
+  # /ask only exists as a Discord slash command.
+  askEnable = discordEnable && (systemSettings.akucraftAskEnable or false) && askToken != "";
 
   python = if discordCommands
     then pkgs.python3.withPackages (ps: [ ps.discordpy ])
@@ -89,11 +97,18 @@ lib.mkIf enabled {
       # roster is written by the playermap exporter (name -> token) and is
       # re-read on every call, since it is rebuilt every few minutes. An empty
       # path leaves /map answering with the generic text instead of a link.
-      MAP_ROSTER = "/home/${username}/.homelab/akucraft-playermap/out/admin/roster.json";
-      MAP_URL = "http://100.64.0.6:8100/map/";
+      # Both empty since AINF-401: the playermap exporter and akucraft-web were
+      # archived to the NAS (gameservers/akucraft-archive) with the survival
+      # world. Restoring /map means running those two again and pointing these
+      # at wherever they live.
+      MAP_ROSTER = "";
+      MAP_URL = "";
       # /invite - players onboard their own friends instead of Diego doing it
       # over SSH. Empty string disables the command entirely.
-      INVITE_SCRIPT = "/home/${username}/.homelab/minecraft/akucraft-invite.sh";
+      # Empty since AINF-401: the script moved to the NAS with the survival
+      # project (gameservers/akucraft-survival/akucraft-invite.sh) and the
+      # tag:mc-guest ACL rule it minted keys for is gone.
+      INVITE_SCRIPT = "";
       INVITE_ROLES = "MCplayer,MCadmin";
       # /ask - LLM-backed support, answered privately from the generated
       # manifest. Empty ASK_ENDPOINT or ASK_TOKEN disables the command, so a
@@ -188,7 +203,7 @@ lib.mkIf enabled {
   # binary. Grant exactly the two subcommands it uses rather than blanket
   # sudo or the whole binary. Every key it can mint is still tag:mc-guest,
   # so the ACL keeps the guest to the game port and the map and nothing else.
-  security.sudo.extraRules = [{
+  security.sudo.extraRules = lib.optionals discordEnable [{
     users = [ username ];
     commands = [
       # Reading the user list is needed BEFORE either of the others: the script

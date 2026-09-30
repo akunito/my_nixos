@@ -87,16 +87,22 @@ in
     # Uses pfSense Tailscale IP (100.64.0.7) so DNS works over mesh without subnet routing
     headscaleDnsSplit = { "${secrets.wildcardLocal}" = [ "100.64.0.7" ]; };
     headscaleDnsSearchDomains = [ secrets.wildcardLocal ];
-    # AkuCraft friendly name — MagicDNS A record so Minecraft clients (family
-    # AND isolated mc-guest nodes) can use a hostname instead of 100.64.0.6.
-    # One name serves both servers: survival is the default port (25565),
-    # creative is akucraft.<domain>:25566.
+    # AkuCraft friendly name — MagicDNS A record so Minecraft clients can use a
+    # hostname instead of the IP. Every server lives on the NAS since AINF-401
+    # (survival :25565, creative :25566, solo :25567, staging :25599), so it
+    # points there. pfSense carries the same record for LAN resolvers.
     headscaleExtraDnsRecords = [
-      { name = "akucraft.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.6"; }
+      { name = "akucraft.${secrets.wildcardLocal}"; type = "A"; value = "100.64.0.1"; }
     ];
     # Telegram bot posting AkuCraft server up/down + player join/leave to the
     # AkuCraft group. No-ops until akucraftTelegramBotToken/ChatId are set in secrets.
     akucraftStatusBotEnable = true;
+    # Telegram only "for now" (AINF-401, 2026-09-30): nobody is playing, the
+    # survival server moved to the NAS as an on-demand stack, and the Discord
+    # half (announcements, slash commands, /ask, /map, /invite) is disconnected.
+    # The secrets stay; flipping this back is all it takes to reconnect — plus
+    # the LiteLLM `akucraft-support` alias below, which /ask needs.
+    akucraftDiscordEnable = false;
 
     # Plane Telegram bot (@aku_plane_bot): one forum group per audience, scope = planeBotChats.
     planeBotEnable = true;
@@ -297,11 +303,8 @@ in
     acmeEnable = true;
     acmeCopyToSharedCerts = false; # No Proxmox shared mount on VPS
 
-    # === NFS Server (romm-library export — Tailscale, LAN, TrueNAS) ===
-    nfsServerEnable = true;
-    nfsExports = ''
-      /home/akunito/romm-library  100.64.0.0/10(rw,sync,no_subtree_check,root_squash) 192.168.8.0/24(rw,sync,no_subtree_check,root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,root_squash)
-    '';
+    # NFS server removed 2026-09-30 (AINF-401): its only export was
+    # romm-library, and the ROMs live on the NAS now (extpool/library).
 
     # === Vaultwarden (Password Manager — NixOS native, PostgreSQL backend) ===
     vaultwardenEnable = true;
@@ -340,34 +343,18 @@ in
     # and truncation numbers that settled the villager tuning came from
     # llama-server's own log on DESK. Nothing is lost by leaving this off.
     litellmLogMessages = false;
-    # One DeepSeek key per consumer: spend is attributable in the provider
-    # dashboard and either can be revoked without taking the other down. They
-    # share one account balance, so this is attribution, not separate budgets.
-    #
-    # Down to one DeepSeek key since 2026-09-02: DEEPSEEK_KEY_INGAME existed for
-    # the MCA villager fallback, and villager chat AI is now off at the mod
-    # (enableVillagerChatAI=false). The `deepseekApiKeyIngame` secret is left in
-    # secrets/domains.nix — unused here, and worth REVOKING in the provider
-    # dashboard rather than only unwiring.
-    litellmProviders = [
-      { envVar = "DEEPSEEK_KEY_DISCORD"; secret = "deepseekApiKeyDiscord"; }
-      { envVar = "QWEN_API_KEY"; secret = "qwenApiKey"; }
-    ];
-    # Model ids verified against the provider itself, not a price tracker:
-    #   curl https://api.deepseek.com/v1/models -H "Authorization: Bearer $KEY"
-    #   -> deepseek-v4-flash, deepseek-v4-pro   (2026-08-16)
-    # The generic `openai/` prefix is deliberate — see the version note in
-    # system/app/litellm.nix.
+    # No provider keys since 2026-09-30 (AINF-401): the only hosted aliases were
+    # `akucraft-support` (DeepSeek, the bot's Discord-only /ask) and its
+    # keyless Qwen "backup". With Discord disconnected nothing calls them.
+    # To bring /ask back: a provider entry { envVar = "DEEPSEEK_KEY_DISCORD";
+    # secret = "deepseekApiKeyDiscord"; } and a model { name = "akucraft-support";
+    # model = "openai/deepseek-v4-flash"; apiBase = "https://api.deepseek.com/v1";
+    # envVar = "DEEPSEEK_KEY_DISCORD"; } — the generic `openai/` prefix is
+    # deliberate, see the version note in system/app/litellm.nix. Both
+    # `deepseekApiKeyDiscord` and `deepseekApiKeyIngame` stay in secrets and are
+    # worth REVOKING at the provider if /ask is not coming back.
+    litellmProviders = [ ];
     litellmModels = [
-      { name = "akucraft-support";
-        model = "openai/deepseek-v4-flash";
-        apiBase = "https://api.deepseek.com/v1";
-        envVar = "DEEPSEEK_KEY_DISCORD"; }
-      { name = "akucraft-support-backup";
-        model = "openai/qwen-flash";
-        apiBase = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
-        envVar = "QWEN_API_KEY"; }
-
       # Agent work (Hermes) on DESK's own GPU — Qwen3.8-27B, dense, sub-Q4.
       # Deliberately NOT in any fallback chain and NOT used by the villagers:
       # it is the slow, strong model, and mixing it into a latency path would
@@ -414,22 +401,9 @@ in
           num_retries = 0;
         }; }
     ];
-    # 1, not the module default of 2. The retry budget multiplies BEFORE any
-    # fallback runs, and the client has its own deadline: akucraft-bot's
-    # ASK_TIMEOUT is 60s. At 2 the primary alone burns 3 x 20s = 60s, so the bot
-    # gave up at the exact moment litellm would have started asking the backup.
-    # At 1: 2 x 20s = 40s, leaving 20s for the fallback inside the deadline.
-    #
-    # NOT 0. Zero would be right if the fallback chain were real, but
-    # `akucraft-support-backup` has no key - there is no Qwen subscription - so
-    # it answers AuthenticationError instantly and the fallback is decorative.
-    # With no working backup, one retry is the only resilience against a
-    # transient DeepSeek 429 or 5xx, and it still fits the budget.
+    # Was tuned for akucraft-bot's 60s ASK_TIMEOUT against a fallback chain
+    # that no longer exists; local-agent sets its own num_retries = 0.
     litellmNumRetries = 1;
-
-    litellmFallbacks = {
-      akucraft-support = [ "akucraft-support-backup" ];
-    };
 
     # === Nginx Local Access (*.local.akunito.com via Tailscale — bypasses Cloudflare Access) ===
     nginxLocalEnable = true;
@@ -446,7 +420,6 @@ in
       status     = { port = 3009; };
       plane      = { port = 3003; };
       plane-dev  = { port = 3007; maxBodySize = "50M"; };  # isolated Plane dev/test clone (own pg/redis/mq/minio)
-      unifi      = { port = 8443; https = true; };
       portfolio  = { port = 3005; };
       # Linkwarden — self-hosted bookmarks, replacing Raindrop.io. maxBodySize
       # because it archives pages as PDF/screenshot and imports run as one
@@ -460,8 +433,9 @@ in
       # attachments above that failed with 413. Bitwarden caps attachments at
       # 100 MB, so 128M clears it with headroom.
       vault      = { port = 8222; maxBodySize = "128M"; denyPaths = [ "/admin" ]; };
-      emulators  = { port = 8998; };
-      calibre    = { port = 8083; };
+      # unifi, emulators and calibre left for the NAS on 2026-09-30 (AINF-401):
+      # their .local names are proxy hosts in the NAS's NPM now, and resolve to
+      # 100.64.0.1 through the pfSense override that carries jellyfin.local.
       n8n        = { port = 5678; };
       # Static, not a proxy: personal reference guides read from the phone over
       # Tailscale. Served from the nix store so they survive DESK being offline
@@ -489,13 +463,8 @@ in
       home       = { rootPath = "/var/www/home/current"; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
-      # AkuCraft BlueMap. It used to sit at "/" on the players' own port 8100,
-      # the address the invite email tells guests to open — so the live world
-      # map was handed to every guest. akucraft-web now serves the mod pack on
-      # 8100 and BlueMap on 127.0.0.1:8102, and this vhost is one of the two
-      # authenticated ways in. Named to match the public Cloudflare hostname
-      # akucraft-map.akunito.com, which fronts the same port behind Pocket ID.
-      akucraft-map = { port = 8102; };
+      # akucraft-map (BlueMap behind akucraft-web) archived 2026-09-30 with the
+      # survival world: NAS gameservers/akucraft-archive (AINF-401).
     };
 
     # === Monitoring Stack (Phase 2d — ENABLED) ===
@@ -552,6 +521,15 @@ in
     infraBotEnable = true; # the Infra Alerts bot lives here (relay for secrets-free nodes + /status commands)
     infraRestartEnable = true; # /restart docker-rootless here
     infraRestartSshTargets = { nas = "akunito@100.64.0.1"; }; # /restart on the NAS over BatchMode ssh (VPS key is in its authorizedKeys)
+    # /svc list|start|stop — on-demand stacks on the NAS (its nasOnDemandDockerProjects),
+    # driven through `nas-svc` over the same ssh path. The names are repeated here
+    # because the bot must know them while the NAS is asleep.
+    infraOnDemandSshTarget = "akunito@100.64.0.1";
+    infraOnDemandNode = "nas";
+    infraOnDemandServices = [ "calibre" "romm" "unifi" "akucraft-survival" "akucraft-solo" "akucraft-creative" "akucraft-staging" ];
+    # Their containers: kept out of "N stopped" in /status for the ~5 min a
+    # taken-down stack lingers in cAdvisor's container_last_seen.
+    infraOnDemandContainers = [ "calibre-web-automated" "romm" "romm-db" "unifi-app" "unifi-db" "minecraft" "minecraft-solo" "minecraft-creative" "mc-mca-staging" ];
     infraTelegramAdminUserIds = secrets.infraTelegramAdminUserIds or "";
     healthchecksPingUrl = secrets.healthchecksVpsPingUrl or ""; # dead-man's switch (F5)
 
@@ -625,9 +603,8 @@ in
       { name = "nextcloud"; path = "nextcloud"; }
       { name = "syncthing"; path = "syncthing"; }
       { name = "uptime-kuma"; path = "uptime-kuma"; }
-      { name = "unifi"; path = "unifi"; }
-      { name = "romm"; path = "romm"; }
-      { name = "calibre"; path = "calibre"; }
+      # unifi, romm, calibre: moved to the NAS as on-demand stacks 2026-09-30
+      # (AINF-401) — `nas-svc` there, /svc in the infra bot here.
       { name = "n8n"; path = "n8n"; }
       { name = "immich"; path = "immich"; }
       { name = "pocket-id"; path = "pocket-id"; }
@@ -657,10 +634,11 @@ in
     # ============================================================================
     # RESTIC BACKUP TO TRUENAS (Phase 3f — via Tailscale SFTP)
     # ============================================================================
-    # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), libraries (Sun 20:30)
+    # Repos: databases (19:00), services (19:30), nextcloud (Sun 20:00), immich (Sun 21:00)
     # Window: 19:00-22:00 (NAS sleeps 23:00-16:00)
-    # Target: NAS via Tailscale hostname (nas-aku)
-    # databases → ssdpool/vps-backups (critical), services+libraries+nextcloud → extpool/vps-backups
+    # Target: NAS via Tailscale hostname (nas-aku), all under extpool/vps-backups.
+    # The libraries job (RomM + Calibre, Sun 20:30) went away with the libraries
+    # themselves on 2026-09-30 (AINF-401).
     vpsResticBackupEnable = true;
     vpsResticTarget = "nas-aku";           # NAS Tailscale hostname (resolves via MagicDNS)
     vpsResticTargetUser = "akunito";  # NixOS NAS uses akunito (no truenas_admin user)

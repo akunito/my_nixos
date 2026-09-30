@@ -7,6 +7,9 @@
 #     Tailscale IP resolved with `tailscale status`
 #   - group commands /status [node [full]] /alerts /deploys /help, answered in
 #     the topic they were asked in, and the Sunday 10:00 digest into 📋 Weekly
+#   - /svc list|start|stop: on-demand compose stacks on the NAS through its
+#     `nas-svc` over BatchMode ssh (infraOnDemand*); start/stop admins only,
+#     same confirm button
 #   - /restart <node> docker-rootless|docker-rootful: admins only
 #     (infraTelegramAdminUserIds), inline confirm button, runs `sudo -n
 #     infra-restart` locally or over BatchMode ssh (infraRestartSshTargets)
@@ -41,6 +44,8 @@ let
     checkPhase = ''
       # import-only smoke test: the module wires TG/send/edit at import time
       TELEGRAM_BOT_TOKEN=x python3 -c 'import importlib.util as u, sys; sys.path.insert(0, "."); s = u.spec_from_file_location("infra_bot", "infra-bot.py"); m = u.module_from_spec(s); s.loader.exec_module(m); assert m.esc("<") == "&lt;"'
+      # /svc: parsing, the closed name list and the admin gate (no ssh, no Telegram)
+      TELEGRAM_BOT_TOKEN=x python3 ${./infra-bot-test.py}
     '';
     installPhase = ''
       mkdir -p $out/lib/infra-bot $out/bin
@@ -77,6 +82,11 @@ lib.mkIf enabled {
       NODE_MAP = builtins.toJSON nodeMap;
       ADMIN_USER_IDS = systemSettings.infraTelegramAdminUserIds or "";
       RESTART_SSH_TARGETS = builtins.toJSON (systemSettings.infraRestartSshTargets or {});
+      # /svc — on-demand stacks driven through nas-svc on that node
+      SVC_SSH_TARGET = systemSettings.infraOnDemandSshTarget or "";
+      SVC_NODE = systemSettings.infraOnDemandNode or "nas";
+      SVC_NAMES = builtins.toJSON (systemSettings.infraOnDemandServices or [ ]);
+      SVC_CONTAINERS = builtins.toJSON (systemSettings.infraOnDemandContainers or [ ]);
       LOCAL_NODE = systemSettings.infraNodeName or "vps";
       STATE_DIR = "/var/lib/infra-bot";
       TZ = systemSettings.timezone or "Europe/Warsaw";

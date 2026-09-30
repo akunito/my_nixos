@@ -34,7 +34,7 @@ Dos auditorías independientes el 2026-09-30; sus correcciones están integradas
 | Komi ("Misia") | **Desactivar, no borrar**: `Komi_Macbook@` sale de `group:family`; nodo y usuario se quedan. Volver = una línea en la ACL |
 | Ingress | **Nativo en el NAS**, igual que hoy: públicos por el túnel `truenas-local`, `.local` por NPM + pfSense |
 | Arranque | Minecraft por el bot de AkuCraft; Calibre/RomM/UniFi por `/svc` en el bot de infra + script `nas-svc` |
-| Bibliotecas | Sin copia extra: si se pierden, se vuelven a descargar |
+| Bibliotecas | Sin copia extra: si se pierden, se vuelven a descargar. **En `extpool`** (NVMe), no en `ssdpool` (decidido 2026-09-30 al medir el pool, ver hechos) |
 | Extras AkuCraft | `akucraft-web`, `akucraft-playermap` y alias LiteLLM: **archivados** |
 | Limpieza | **El mismo día**, tras verificación y OK explícito de Diego |
 
@@ -50,7 +50,7 @@ Dos auditorías independientes el 2026-09-30; sus correcciones están integradas
 | Restos AkuCraft | VPS `~/.homelab/{backups,minecraft-creative,*.migrated-to-nas-*}` | 8,9 + 2,8 + 5,1 G |
 
 NAS: `ssdpool` 2,85 T libres, `extpool` 1,03 T libres. VPS: 746 G usados, 210 G libres.
-Después (estimado): `ssdpool` −335 G; VPS −~330 G (385 G borrados, ~55 G vuelven como
+Después (estimado): `ssdpool` −31 G (mundo + configs), `extpool` −304 G (bibliotecas + thumbnails); VPS −~330 G (385 G borrados, ~55 G vuelven como
 copia offsite del mundo); `extpool` +~280 G, **visibles a los 7 días** (auto-snapshots
 de `extpool/vps-backups`).
 
@@ -58,7 +58,8 @@ de `extpool/vps-backups`).
 
 - Los compose del VPS **no están en este repo**. Los del NAS salen de `templates/truenas/` vía `scripts/nas-docker-startup.sh`, que **sobrescribe** el compose vivo si difiere de la plantilla; su array `ALL_TEMPLATE_PROJECTS` (`:46`) está a mano. `gameservers/*` no tiene plantilla.
 - `nasDockerProjects` (`NAS_PROD-config.nix:135-142`) es config muerta; el módulo lee `nasRootDockerProjects` / `nasRootlessDockerProjects`, que no están en `lib/defaults.nix`.
-- **Un dataset ZFS nuevo sin entrada en `nasZfsMountPoints` deja el NAS en modo emergencia** (`nas-services.nix:288-292`). No se crea dataset: bibliotecas en `/mnt/ssdpool/media/library/`.
+- **Un dataset ZFS nuevo sin entrada en `nasZfsMountPoints` deja el NAS en modo emergencia** (`nas-services.nix:288-292`). No se crea dataset: las bibliotecas son un directorio del dataset raíz de `extpool`.
+- **`ssdpool` no recibe TRIM** y se hunde en escrituras sostenidas (medido 2026-09-30: 30 G en 20 min, 7-20 MB/s, avisos de tarea colgada). Los 870 EVO no declaran DRAT/RZAT y la LSI SAS3008 solo traduce TRIM para discos que sí; no hay arreglo por software. Arreglo: los 4 SSD a puertos AHCI + `zpool trim` + `autotrim=on`. Hasta entonces lo voluminoso va a `extpool` (restore medido a 630 MiB/s): bibliotecas en `/mnt/extpool/library/`, thumbnails de Calibre en `/mnt/extpool/library/calibre-thumbnails`.
 - **`restic` no está instalado en el NAS** (wrapper colgante en `/run/wrappers/bin`).
 - **El job `configs` barre todo `/mnt/ssdpool/docker/compose/`** salvo `gameservers/` y `tailscale/state/` (`restic-backup-nas.nix:271-275`). El estado de Calibre/RomM/UniFi va por tanto a `/mnt/ssdpool/docker/{calibre,romm,unifi}` (convención del NAS), nunca dentro de `compose/`.
 - Ficheros de contenedor con `0600 uid 100999` (`level.dat`, `playerdata`, `automodpack/.private`, `calibre-library` entera): copiar o escribir como `akunito` los salta o los deja con dueño equivocado. Se copia y verifica **dentro de un contenedor** o como root con `--numeric-ids` (mismo subuid 100000 en ambos hosts).
@@ -104,7 +105,7 @@ Trabajo con el NAS: 16:10–23:00.
   - `restart: "no"`, tags del VPS (`unifi 10.5.67-ls141`, `mongo:8.0`, `romm 5.1.0`, `mariadb:12.2`, CWA por digest), mismos nombres de contenedor, `SKIP_CHOWN`/`NO_PERMISSIONS_CHECK` de CWA conservados.
   - Survival: puerto en `100.64.0.1:25565`, `stop_grace_period: 2m`, `cpus`, memoria 11 G.
   - UniFi: 8080/tcp y 3478/udp en `100.64.0.1`; 8443, 8083 (Calibre) y 8998 (RomM) donde los alcance NPM.
-  - Bibliotecas en `/mnt/ssdpool/media/library/{calibre-library,romm-library}`; ingest de Calibre creado con dueño `100999`.
+  - Bibliotecas en `/mnt/extpool/library/{calibre-library,romm-library}`; ingest de Calibre creado con dueño `100999`.
 
 **Verificar**: deploy en verde; `grep -c zfsutil /etc/fstab` = 7; `restic version` responde; `nas-svc list` = 3 parados y 4 "no instalado"; nombre desconocido rechazado; `stop` dos veces no falla; creative encendido a las 23:00 → al día siguiente parado y sin `exited`.
 
@@ -115,7 +116,7 @@ Trabajo con el NAS: 16:10–23:00.
 
 | Dato | Origen | Método |
 |---|---|---|
-| Bibliotecas (254 G) | **restic local en el NAS**, snapshot 27-09 | `sudo restic restore latest --tag libraries --target /mnt/ssdpool/media/library/.restore`; `mv .restore/home/akunito/{calibre-library,romm-library} .`; delta `sudo rsync -a --numeric-ids --delete` desde el VPS |
+| Bibliotecas (254 G) | **restic local en el NAS**, snapshot 27-09 | `sudo restic restore latest --tag libraries --target /mnt/extpool/library/.restore`; `mv .restore/home/akunito/{calibre-library,romm-library} .`; delta `sudo rsync -a --numeric-ids --delete` desde el VPS |
 | Proyecto survival entero sin `world-snapshot` ni `.bak*` (~30 G) | VPS | tar dentro de contenedor por ssh → `gameservers/akucraft-survival/` |
 | Proyectos calibre (sin thumbnails), romm, unifi + volúmenes `unifi_unifi_app_config`, `unifi_unifi_db_data_mongo8` | VPS en frío | tar dentro de contenedor → `/mnt/ssdpool/docker/{calibre,romm,unifi}`; compose y `.env` al proyecto en `compose/` |
 | Thumbnails 50 G | VPS | `sudo rsync --numeric-ids` en segundo plano (no bloquea la puerta) |

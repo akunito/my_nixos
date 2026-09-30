@@ -7,7 +7,9 @@
 #
 # State is NOT under this directory (the VPS "configs" backup job sweeps compose/):
 #   /mnt/ssdpool/docker/romm/{mysql_data,assets,config}
-#   /mnt/ssdpool/media/library/romm-library      the ROMs
+#   /mnt/extpool/library/romm-library            the ROMs (extpool: ssdpool gets no
+#                                                TRIM behind the SAS3008 and crawls
+#                                                on bulk writes; see calibre's compose)
 #
 # .env: ROMM_DB_ROOT_PASSWORD ROMM_DB_PASSWORD ROMM_AUTH_SECRET IGDB_CLIENT_ID
 #       IGDB_CLIENT_SECRET STEAMGRIDDB_API_KEY SCREENSCRAPER_USER
@@ -70,7 +72,7 @@ services:
       - OIDC_ALLOW_REGISTRATION=false
       - DISABLE_USERPASS_LOGIN=false
     volumes:
-      - /mnt/ssdpool/media/library/romm-library:/romm/library
+      - /mnt/extpool/library/romm-library:/romm/library
       - /mnt/ssdpool/docker/romm/assets:/romm/assets
       - /mnt/ssdpool/docker/romm/config:/romm/config
       # Both were empty on the VPS (covers cache, redis): regenerated, not migrated.

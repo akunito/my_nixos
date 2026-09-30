@@ -29,6 +29,13 @@ One daemon on VPS_PROD, next to Prometheus and Alertmanager. Three halves:
      listed in RESTART_SSH_TARGETS. system/app/infra-restart.nix owns the
      sudoers rule and the allow-list.
 
+  5. /svc list|start|stop — on-demand compose stacks on one node (the NAS:
+     Calibre, RomM, UniFi, the game servers). They are OFF by default and
+     nothing starts them but this and a human; `nas-svc` on that node owns the
+     closed list and the compose calls, this bot only reaches it over BatchMode
+     ssh. list is open to the group; start/stop are admin-only with the same
+     ✅/❌ confirmation as /restart.
+
 Config comes from the environment (infra-bot.nix). `infra-bot --selftest`
 prints every handler's output without touching Telegram.
 """
@@ -72,6 +79,15 @@ ADMIN_USER_IDS = {x.strip() for x in os.environ.get("ADMIN_USER_IDS", "").split(
 RESTART_SSH_TARGETS = json.loads(os.environ.get("RESTART_SSH_TARGETS", "{}"))
 LOCAL_NODE = os.environ.get("LOCAL_NODE", "vps")
 RESTART_TARGETS = ("docker-rootless", "docker-rootful")
+# On-demand stacks: names must be known HERE, not asked of the node, because the
+# node sleeps and /svc still has to say what exists.
+SVC_SSH_TARGET = os.environ.get("SVC_SSH_TARGET", "")
+SVC_NODE = os.environ.get("SVC_NODE", "nas")
+SVC_NAMES = json.loads(os.environ.get("SVC_NAMES", "[]"))
+# Their container names: a stack that was just taken down lingers in
+# container_last_seen for ~5 min and would read as "stopped" in /status.
+SVC_CONTAINERS = set(json.loads(os.environ.get("SVC_CONTAINERS", "[]")))
+SVC_BIN = "/run/current-system/sw/bin/nas-svc"
 CONFIRM_TTL = 120
 BOT_NAME = ""
 TG = Telegram(TOKEN)
@@ -230,7 +246,8 @@ def node_facts(node):
     f["pool_health"] = {m["pool"]: v for m, v in promq(f'nas_zfs_pool_healthy{{node="{node}"}}')}
     f["docker"] = {m["mode"]: v for m, v in promq(f'host_docker_daemon_up{{node="{node}"}}')}
     f["containers"] = sorted({m["name"] for m, _ in promq(f'container_last_seen{{node="{node}",name!=""}} > time() - 60')})
-    f["containers_gone"] = sorted({m["name"] for m, _ in promq(f'container_last_seen{{node="{node}",name!=""}} <= time() - 60')} - set(f["containers"]))
+    f["containers_gone"] = sorted({m["name"] for m, _ in promq(f'container_last_seen{{node="{node}",name!=""}} <= time() - 60')} - set(f["containers"])
+                                  - (SVC_CONTAINERS if node == SVC_NODE else set()))
     failed = {m["name"] for m, _ in promq(f'node_systemd_unit_state{{node="{node}",state="failed"}} == 1')}
     failed |= {m["name"] + (" (user)" if m.get("scope") == "user" else "") for m, _ in promq(f'host_systemd_unit_failed{{node="{node}"}} == 1')}
     f["failed"] = sorted(failed)
@@ -289,6 +306,11 @@ def summary_line(node, info, alerts, now):
             parts.append(f"🔴 docker {esc(mode)} down")
     if f["containers"]:
         parts.append(f"{len(f['containers'])} ctr" + (f" (🟡 {len(f['containers_gone'])} stopped)" if f["containers_gone"] else ""))
+    if node == SVC_NODE and SVC_NAMES:
+        st = svc_states()
+        if st is not None:
+            on = sorted(n for n, v in st.items() if v == "running")
+            parts.append(f"on-demand {len(on)}/{len(SVC_NAMES)} on" + (f" ({esc(', '.join(on))})" if on else ""))
     if f["failed"]:
         parts.append(f"🔴 {len(f['failed'])} failed unit" + ("s" if len(f["failed"]) > 1 else ""))
     if f["pf_ifaces_down"]:
@@ -350,6 +372,10 @@ def status_detail(node, info, alerts, full, now):
             out.append(f"<b>Containers</b> {len(f['containers'])} running"
                        + (f", not running: {esc(', '.join(f['containers_gone']))}" if f["containers_gone"] else " 🟢")
                        + f"  (<code>/status {esc(node)} full</code> lists them)")
+    if node == SVC_NODE and SVC_NAMES:
+        st = svc_states()
+        if st is not None:
+            out.append("<b>On-demand</b> " + svc_line(st))
     if f["failed"]:
         out.append("<b>Failed units</b> " + " · ".join(f"🔴 {esc(u)}" for u in f["failed"]))
     elif f["docker"] or full:
@@ -401,6 +427,7 @@ def cmd_help(args):
             "/alerts — active alerts by node\n"
             "/deploys — last generation change per node\n"
             "/restart &lt;node&gt; docker-rootless|docker-rootful — admins only, asks to confirm\n"
+            "/svc — on-demand services on the NAS (off by default); /svc start|stop &lt;name&gt; — admins only, asks to confirm\n"
             "Alerts: 🔴 critical → 🚨 Alerts topic once + 🟢 resolved · 🟡 warnings → Sunday digest in 📋 Weekly")
 
 
@@ -468,6 +495,15 @@ def handle_callback(cq):
         telegram("answerCallbackQuery", callback_query_id=cq_id, text="not yours")
         return
     del PENDING[nonce]
+    if p.get("kind") == "svc":
+        if answer != "yes" or time.time() - p["created"] > CONFIRM_TTL:
+            telegram("answerCallbackQuery", callback_query_id=cq_id, text="cancelled")
+            edit(p["message_id"], f"❌ {p['action'].capitalize()} <b>{esc(p['name'])}</b> cancelled"
+                 + ("" if answer != "yes" else " (confirmation expired)"))
+            return
+        telegram("answerCallbackQuery", callback_query_id=cq_id, text="on it…")
+        svc_confirmed(p)
+        return
     head = f"<b>{esc(p['target'])}</b> on <b>{esc(p['node'])}</b>"
     if answer != "yes" or time.time() - p["created"] > CONFIRM_TTL:
         telegram("answerCallbackQuery", callback_query_id=cq_id, text="cancelled")
@@ -488,6 +524,113 @@ def handle_callback(cq):
     threading.Thread(target=work, daemon=True).start()
 
 
+# ----------------------------------------------------------------------------
+# /svc — on-demand stacks through nas-svc over ssh
+# ----------------------------------------------------------------------------
+SVC_LED = {"running": "🟢", "stopped": "⚪", "absent": "▫️"}
+
+
+def svc_parse_list(text):
+    """`nas-svc list` output ("<name> <state>" per line) -> {name: state}.
+    Only names this bot was configured with; anything else is ignored."""
+    out = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0] in SVC_NAMES and parts[1] in SVC_LED:
+            out[parts[0]] = parts[1]
+    return out
+
+
+def svc_run(args, timeout=30):
+    """Returns (ok, output). Never raises."""
+    if not SVC_SSH_TARGET:
+        return False, "no ssh target configured"
+    cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "-o", "StrictHostKeyChecking=accept-new",
+           SVC_SSH_TARGET, SVC_BIN] + list(args)
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return False, f"timed out after {timeout}s"
+    text = (out.stdout + out.stderr).strip()
+    return out.returncode == 0, text or f"exit {out.returncode}"
+
+
+def svc_states():
+    """{name: state}, or None when the node cannot be reached."""
+    ok, out = svc_run(["list"])
+    return svc_parse_list(out) if ok else None
+
+
+def svc_line(states):
+    return " · ".join(f"{SVC_LED.get(states.get(n, 'absent'), '▫️')} {esc(n)}" for n in SVC_NAMES)
+
+
+def svc_unreachable():
+    if in_sleep_window():
+        return f"💤 <b>{esc(SVC_NODE)}</b> is asleep ({SLEEP_FROM}–{SLEEP_TO}) — its on-demand services are off until it wakes."
+    return f"🔴 cannot reach <b>{esc(SVC_NODE)}</b> over ssh."
+
+
+def svc_usage():
+    return (f"usage: /svc — list · /svc start|stop &lt;{esc('|'.join(SVC_NAMES))}&gt;")
+
+
+def cmd_svc(args, user=None, thread=None, message_id=None):
+    if not SVC_NAMES:
+        return "no on-demand services configured."
+    if not args or args[0].lower() == "list":
+        st = svc_states()
+        if st is None:
+            return svc_unreachable()
+        return (f"<b>On-demand on {esc(SVC_NODE)}</b> (off by default, down before the {SLEEP_FROM} suspend)\n"
+                + svc_line(st) + "\n🟢 running · ⚪ stopped · ▫️ not installed")
+    action = args[0].lower()
+    if action not in ("start", "stop") or len(args) != 2:
+        return svc_usage()
+    if str(user) not in ADMIN_USER_IDS:
+        return "⛔ /svc start and stop are limited to admins."
+    name = args[1].lower()
+    if name not in SVC_NAMES:
+        return f"Unknown service <b>{esc(name)}</b>.\n" + svc_usage()
+    ok, out = svc_run(["status", name])
+    if not ok:
+        return svc_unreachable()
+    state = svc_parse_list(out).get(name, "absent")
+    if state == "absent":
+        return f"▫️ <b>{esc(name)}</b> is not installed on {esc(SVC_NODE)}."
+    if (action == "start") == (state == "running"):
+        return f"{SVC_LED[state]} <b>{esc(name)}</b> is already {esc(state)}."
+    nonce = uuid.uuid4().hex[:12]
+    kb = {"inline_keyboard": [[
+        {"text": "✅ " + action.capitalize(), "callback_data": f"svc:{nonce}:yes"},
+        {"text": "❌ Cancel", "callback_data": f"svc:{nonce}:no"},
+    ]]}
+    m = send(f"⚠️ {action.capitalize()} <b>{esc(name)}</b> on <b>{esc(SVC_NODE)}</b>?", thread, reply_to=message_id, reply_markup=kb)
+    PENDING[nonce] = {"kind": "svc", "action": action, "name": name, "user": str(user),
+                      "created": time.time(), "message_id": m["message_id"]}
+    return None  # already answered
+
+
+def svc_confirmed(p):
+    head = f"<b>{esc(p['name'])}</b> on <b>{esc(SVC_NODE)}</b>"
+    edit(p["message_id"], f"⏳ {'Starting' if p['action'] == 'start' else 'Stopping'} {head} …")
+
+    def work():
+        # start may pull an image the first time; stop waits out a 120s save.
+        ok, out = svc_run([p["action"], p["name"]], timeout=600 if p["action"] == "start" else 240)
+        led = "🟢" if ok else "🔴"
+        verb = "started" if p["action"] == "start" else "stopped"
+        tail = "\n".join(out.splitlines()[-4:])
+        try:
+            edit(p["message_id"], f"{led} {head} {verb if ok else p['action'] + ' FAILED'}"
+                 + (f"\n<code>{esc(tail)}</code>" if tail and not ok else ""))
+        except Exception as e:
+            log.error("edit failed: %s", e)
+        log.info("svc %s %s by %s: %s", p["action"], p["name"], p["user"], "ok" if ok else "FAILED")
+
+    threading.Thread(target=work, daemon=True).start()
+
+
 COMMANDS = {"status": cmd_status, "alerts": cmd_alerts, "deploys": cmd_deploys, "help": cmd_help, "start": cmd_help}
 
 
@@ -502,6 +645,12 @@ def handle_command(text, user=None, thread=None, message_id=None):
         except Exception as e:
             log.exception("restart failed")
             return f"⚠️ restart failed: {esc(e)}"
+    if cmd == "svc":
+        try:
+            return cmd_svc(parts[1:], user, thread, message_id)
+        except Exception as e:
+            log.exception("svc failed")
+            return f"⚠️ svc failed: {esc(e)}"
     fn = COMMANDS.get(cmd)
     if not fn:
         return None
@@ -663,7 +812,8 @@ def run_commands():
             ("alerts", "Active alerts by node"),
             ("deploys", "Last generation change per node"),
             ("help", "What this bot does"),
-        ] + ([("restart", "Restart docker-rootless/rootful on a node (admins)")] if ADMIN_USER_IDS else []))
+        ] + ([("svc", "On-demand services on the NAS: list, start, stop")] if SVC_NAMES else [])
+          + ([("restart", "Restart docker-rootless/rootful on a node (admins)")] if ADMIN_USER_IDS else []))
     except Exception as e:
         log.warning("getMe/setMyCommands failed: %s", e)
 
@@ -694,7 +844,7 @@ def main():
     if "--selftest" in sys.argv:
         for name, fn in (("status", cmd_status), ("status nas", lambda a: cmd_status(["nas"])),
                          ("status vps full", lambda a: cmd_status(["vps", "full"])), ("alerts", cmd_alerts),
-                         ("deploys", cmd_deploys), ("digest", lambda a: digest_text())):
+                         ("deploys", cmd_deploys), ("digest", lambda a: digest_text()), ("svc", cmd_svc)):
             print(f"===== /{name}\n{fn([])}\n")
         return
     if not TOKEN or not CHAT_ID:
