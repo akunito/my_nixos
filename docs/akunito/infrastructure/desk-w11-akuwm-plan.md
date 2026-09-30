@@ -994,6 +994,28 @@ ShareX and Zebar did not start. Started by hand through their shortcuts;
 `CommandLine.Program` takes an unquoted path that exists as the whole file
 (test with an injected `exists`). Both in `0d74046`, staged signed 13:15.
 
+### 10.41 All green on the signed 13:37 build, and what the suites needed today (2026-09-30 13:50)
+
+Signed `92ffebd` (10.37-10.40 plus the UTF-8 shim): unit 1021/1021,
+`tests/wm` 189/189, `tests/fullscreen` 48/48.
+
+Three things the suites themselves needed, none of them the window manager:
+
+1. **Storage Sense had cleaned `%TEMP%\perf`** (12:27): 37 helper scripts
+   gone, including `win32.ps1` and the display case's own; PowerShell died
+   on the missing `-File` with its banner and no RESULT line, which the
+   suite read as a red case. Both suites copy every helper from the
+   checkout at the start of each run now; the display case copies from the
+   suite's folder rather than the caller's cwd.
+2. **The shim wrote the OEM code page**: an 'í' in a Zen title was byte 0xA1,
+   `tests/fullscreen` could not decode `query monitors` and its first case
+   ran against no monitor. `ConsoleOutput.Utf8()` in Core, called by the
+   three binaries. The AutoHotkey read that output as UTF-8 all along.
+3. **The elevated capture daemon dies with every reboot** (11:32 today) and
+   nothing restarts it; without it PresentMon "gets no frames" and every
+   `.elev` request waits out its timeout. The suite refuses to start without
+   `cap-daemon.alive` and prints the one-UAC command; Diego runs it.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
@@ -2563,6 +2585,7 @@ click on the right Zen tile the Explorer was back over it within 1.5 s
 
 **Every test green on the signed build `4c0db53`, 2026-09-23 11:35:** unit
 1000/1000, `tests/wm` 162/162, `tests/fullscreen` 48/48. Next: the GUI (M5).
+(2026-09-30 13:50: signed `92ffebd`, unit 1021, wm 189/189, fs 48/48 -- 10.41. Next: M6.)
 
 
 ### 10.35 A click holds the tile in front, and a floating window may hang off the screen (2026-09-23 11:40)
