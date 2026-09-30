@@ -45,8 +45,12 @@ let
     ++ lib.optional hasLoginServer "--login-server=${systemSettings.tailscaleLoginServer}"
     ++ lib.optional isSubnetRouter "--advertise-routes=${lib.concatStringsSep "," systemSettings.tailscaleAdvertiseRoutes}"
     ++ lib.optional isExitNode "--advertise-exit-node"
-    ++ lib.optional acceptRoutes "--accept-routes"
-    ++ lib.optional (!acceptDns) "--accept-dns=false"
+    # With the LAN toggle on, `up` must not seed these: `up --accept-routes` at
+    # home routes the home subnet into the tunnel and cuts the LAN (measured on
+    # LAPTOP_YOGA 2026-09-30: SSH over 192.168.8.x dead until the toggle ran),
+    # and no NetworkManager event follows a re-auth to trigger it.
+    ++ lib.optional (acceptRoutes && !lanAutoToggle) "--accept-routes"
+    ++ lib.optional (!acceptDns || lanAutoToggle) "--accept-dns=false"
   );
 in
 lib.mkIf (systemSettings.tailscaleEnable or false) {

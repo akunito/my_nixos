@@ -7,13 +7,8 @@
 # identity (hostname, IPs, metrics label). A software change for Aga's laptops
 # goes into LAPTOP_A-config.nix and reaches both.
 #
-# Pending until the machine has joined the tailnet (its 100.64.x IP is assigned
-# by Headscale on first login, it cannot be known before):
-#   - NAS_PROD export of /mnt/ssdpool/workstation_backups for its tailnet IP
-#     (home backup to NAS fails until then), and ~/myScripts/restic.key on it
-#   - DESK exports of the two Games shares (ro) for its tailnet IP
-#   - prometheus-nas-backup.nix: add nixosyogaaga/home.restic only AFTER the
-#     first backup landed (nas_backup_status == 0 alerts on a missing repo)
+# Tailnet: 100.64.0.16 (Headscale user Yoga_Aga, in group:family). That IP is
+# what NAS_PROD exports workstation_backups to and DESK exports Games (ro) to.
 
 let
   laptopA = import ./LAPTOP_A-config.nix;
