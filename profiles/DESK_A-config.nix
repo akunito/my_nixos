@@ -188,6 +188,21 @@ in
         type = "nfs";
         options = "noatime,ro,rsize=1048576,wsize=1048576,nfsvers=4.2,tcp,soft,retrans=3,timeo=50";
       }
+      # The same two drives when the DESK box is booted into Windows (DESK_W11,
+      # unfs3 inside WSL — see system/app/nfs-userspace.nix). Separate mount
+      # points: NFSv3 on another node, so it cannot share the DESK units. Read-only.
+      {
+        what = "100.64.0.15:/mnt/d/Games";
+        where = "/mnt/DESK_W11_Games_DATA";
+        type = "nfs";
+        options = "ro,noatime,rsize=1048576,wsize=1048576,vers=3,tcp,port=2049,mountport=2049,nolock,soft,retrans=3,timeo=50";
+      }
+      {
+        what = "100.64.0.15:/mnt/e/Games";
+        where = "/mnt/DESK_W11_Games_SATA3";
+        type = "nfs";
+        options = "ro,noatime,rsize=1048576,wsize=1048576,vers=3,tcp,port=2049,mountport=2049,nolock,soft,retrans=3,timeo=50";
+      }
     ];
     nfsAutoMounts = [
       {
@@ -196,6 +211,14 @@ in
       }
       {
         where = "/mnt/DESK_Games_DATA";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_W11_Games_DATA";
+        automountConfig = { TimeoutIdleSec = "600"; };
+      }
+      {
+        where = "/mnt/DESK_W11_Games_SATA3";
         automountConfig = { TimeoutIdleSec = "600"; };
       }
       {

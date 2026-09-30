@@ -555,6 +555,19 @@ closure** after a `flake.lock` update, so the laptops download instead of compil
   why harmonia must not keep the module default `[::]`. After a Windows reboot check
   `netsh interface portproxy show v4tov4` still lists the rule; `Test-NetConnection
   127.0.0.1 -Port 5000` must succeed from PowerShell.
+- **Games over NFS (DESK's exports, from Windows):** `unfs3Enable` serves `/mnt/d/Games`
+  and `/mnt/e/Games` (D: = DESK's `/mnt/DATA`, E: = `/mnt/DATA_SATA3`) read-only on
+  TCP 2049, NFSv3. knfsd cannot do it — drvfs/9p has no file handles
+  (`name_to_handle_at` = ENOTSUP, measured 2026-09-30). Clients (X13, DESK_A) mount
+  `100.64.0.15:/mnt/{d,e}/Games` at `/mnt/DESK_W11_Games_{DATA,SATA3}` with
+  `vers=3,tcp,port=2049,mountport=2049,nolock`. **Windows side, by hand, elevated**, same
+  shape and same two traps as harmonia above:
+  ```powershell
+  netsh interface portproxy add v4tov4 listenaddress=100.64.0.15 listenport=2049 connectaddress=127.0.0.1 connectport=2049
+  New-NetFirewallRule -DisplayName "WSL unfs3 2049 (Tailscale only)" -Direction Inbound -Protocol TCP -LocalPort 2049 -InterfaceAlias Tailscale -Action Allow
+  ```
+  Every client reaches unfsd from the proxy, so the export list cannot tell peers apart:
+  the firewall rule is the access control, which is why the export is read-only.
 - **Builder:** `scripts/build-fleet-closures.sh [filter…]` — toplevel + Home Manager
   `activationPackage` of every evaluable profile (skips KOMI_*, MACBOOK-KOMI, LAPTOP_YOGA,
   DESK_VMDESK). It copies the tree to a temp dir and swaps in the newest committed

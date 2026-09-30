@@ -126,6 +126,15 @@ in
     xboxControllerEnable = false;
     starCitizenModules = false;
     nfsServerEnable = false;
+    # DESK's two Games exports, served from Windows' own NTFS volumes while the
+    # box is booted into Windows: D: is DESK's /mnt/DATA (serial ...B8BD34F2),
+    # E: is /mnt/DATA_SATA3 (...AC289E3E). Read-only fallback for X13 / DESK_A,
+    # mounted as /mnt/DESK_W11_Games_*. knfsd cannot export drvfs, hence unfs3
+    # (system/app/nfs-userspace.nix). Reached like harmonia: Windows portproxy
+    # 100.64.0.15:2049 -> 127.0.0.1:2049, arriving on eth0.
+    unfs3Enable = true;
+    unfs3Exports = [ "/mnt/d/Games" "/mnt/e/Games" ];
+    unfs3Interfaces = [ "eth0" ];
     # Same hardware as DESK, so this is the fleet's second harmonia: the fallback
     # when DESK is booted into Windows, and the builder of every profile's closure
     # after a flake.lock update (scripts/build-fleet-closures.sh). WSL runs in NAT

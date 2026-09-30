@@ -19,6 +19,7 @@ in
     ../../system/security/ssh-agent-windows.nix # sshAgentWindowsBridge: SSH_AUTH_SOCK -> Windows OpenSSH agent (survives a PC restart)
     ../../system/security/firewall.nix
     ../../system/app/nix-binary-cache.nix # Local binary cache server (self-gates on nixBinaryCacheServeEnable)
+    ../../system/app/nfs-userspace.nix # unfs3 (self-gates on unfs3Enable)
     ../../system/app/nix-binary-cache-client.nix # Consume a local binary cache (self-gates on nixBinaryCacheSubstituters)
     ../../system/security/nix-access-token.nix # GitHub PAT → per-user nix.conf
     ../../system/security/restic.nix # restic wrapper + home_backup timer (self-gated on homeBackupEnable)

@@ -442,6 +442,12 @@
       /mnt/example   192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
       /mnt/example2  192.168.8.90(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000) 192.168.8.91(rw,sync,insecure,all_squash,anonuid=1000,anongid=1000)
     '';
+    # Userspace NFSv3 server (unfs3): for paths knfsd cannot export (WSL drvfs/9p).
+    unfs3Enable = false;
+    unfs3Exports = [ ]; # absolute paths
+    unfs3Port = 2049; # NFS + MOUNT, TCP
+    unfs3ReadOnly = true;
+    unfs3Interfaces = [ ]; # firewall interfaces to open the port on
     nfsClientEnable = false;
     nfsMounts = [ ];
     # NOTE: there is no nfsUnmountUnreachable flag any more. Lazily unmounting a
