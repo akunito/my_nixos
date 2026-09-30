@@ -224,6 +224,7 @@ in
     tailscaleAcceptDns = true; # Accept DNS from Tailscale
     tailscaleLanAutoToggle = true; # off at home, on away (owns accept-routes/dns)
     tailscaleGuiAutostart = true; # Start trayscale GUI with Plasma 6
+    tailscaleOperator = "aga"; # Trayscale/CLI control tailscaled without sudo ("User is not Tailscale Operator" otherwise)
 
     # === Development Tools & AI ===
     aichatEnable = false; # Disable aichat CLI tool
