@@ -24,6 +24,18 @@ ok()  { printf '  PASS %s\n' "$1"; pass=$((pass+1)); }
 # PresentMon filters by process name and would add the leftover's frames too.
 # AkuWM's own CLI (the pipe): the application memory (plan 10.26) learns
 # from the windows this suite drives, so it is cleared before every case.
+# Every script this suite drives is copied from the checkout first. Storage
+# Sense cleans %TEMP% (2026-09-30 12:27: 37 of these scripts and win32.ps1
+# were gone while the exes and the newer files stayed), so a copy made once
+# and trusted for ever is a suite that dies with a PowerShell banner and no
+# RESULT line. The exes (fliptest, cloaktest, PresentMon) are not in git:
+# see the README when one of them is missing.
+mkdir -p "$P"
+cp "$(dirname "$0")"/*.ps1 "$P/" 2>/dev/null
+for exe in fliptest.exe cloaktest.exe PresentMon.exe; do
+  [ -f "$P/$exe" ] || echo "WARNING: $P/$exe is missing (README: how to build or fetch it)"
+done
+
 A=""
 for c in /mnt/c/Users/diego/AppData/Local/Programs/AkuWM/akuwm.exe /mnt/c/Users/diego/AppData/Local/Temp/akuwm-m2/akuwm-cli.exe; do
   [ -x "$c" ] && { A="$c"; break; }

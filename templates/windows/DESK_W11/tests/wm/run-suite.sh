@@ -46,9 +46,13 @@ restore_elevated() {
 }
 trap 'sticky on >/dev/null 2>&1; restore_elevated' EXIT
 
-mkdir -p "$WT/tests/wm"
+mkdir -p "$WT/tests/wm" "$P"
 cp "$SRC"/lib-*.ahk "$WT/"
 cp "$HERE"/*.ahk "$WT/tests/wm/"
+# The PowerShell helpers, from the checkout every run: Storage Sense cleans
+# %TEMP% (2026-09-30), and sticky-park, park-elevated and the display test
+# all live there.
+cp "$HERE"/*.ps1 "$(dirname "$HERE")"/fullscreen/*.ps1 "$P/" 2>/dev/null
 
 run_ahk() { # run_ahk <script.ahk> <result-file> <timeout-s>
   local script=$1 result=$2 timeout=$3
@@ -168,7 +172,7 @@ for s in $suites; do
       # alone. Re-applying the same mode does not work: Windows broadcasts
       # nothing at all when the mode does not change.
       echo "== Workspaces go back to their monitor on a display change (fork)"
-      cp display-change-test.ps1 "$P/" 2>/dev/null
+      cp "$HERE/display-change-test.ps1" "$P/" 2>/dev/null
       out=$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
         'C:\Users\diego\AppData\Local\Temp\perf\display-change-test.ps1' 2>/dev/null |
         tr -d '\r' | grep -vE '^\s*\+|CategoryInfo|FullyQualified|^\s*$')
