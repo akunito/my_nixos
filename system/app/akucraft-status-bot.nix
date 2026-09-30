@@ -50,11 +50,11 @@ let
   discordJoinRoles = ifDiscord (secrets.akucraftDiscordJoinRoleIds or "");
   # Invite codes are the last path segment of the discord.gg links in secrets.
   inviteCode = link: lib.last (lib.splitString "/" link);
-  discordInviteCodes = lib.concatStringsSep "," (map inviteCode
+  discordInviteCodes = ifDiscord (lib.concatStringsSep "," (map inviteCode
     (lib.filter (l: l != "") [
       (secrets.akucraftDiscordInviteChat or "")
       (secrets.akucraftDiscordInviteVoice or "")
-    ]));
+    ])));
 
   # /ask needs the gateway reachable AND its bearer token. Both come from the
   # LiteLLM settings so there is one source of truth for the endpoint.
