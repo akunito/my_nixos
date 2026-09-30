@@ -942,6 +942,35 @@ Two of 10.37's findings, closed in `7a8c55c` (1020 tests):
 
 Signed build with 10.37 + 10.38 staged 12:15 in `Temp\akuwm-uia`.
 
+### 10.39 Notepad's classic caption over its own tabs (2026-09-30 12:34 → 12:47)
+
+Diego: Notepad opens fine (tiled, no title bar), and a moment later the top
+of the window is two styles on top of each other -- the classic caption
+("Untitled - Notepad", minimise, maximise, close) drawn over Notepad's tab
+strip. The log: opened 12:34:06, `toggle-floating` 12:35:26, then a resize
+animation and a move; no `TitleBar = True` was ever sent.
+
+Measured on the desk: with WS_CAPTION set, Notepad (WinUI 3), Windows
+Terminal and zen have a non-client height of 8-9 px -- their client area
+fills the frame, the title bar is theirs -- while Notepad++ has ~80. AkuWM
+had stripped WS_CAPTION from all of them (`title_bar: hide`); the strip
+hides nothing on the first three and, on Notepad, leaves WinUI's title bar
+code without the style it is built on: after the next re-layout it painted
+the system caption over its tabs, and giving the style back with
+SWP_FRAMECHANGED did not undo it (the window had to be restarted). Neither
+toggle-floating, a drag by the tab strip nor a double-click reproduced it
+on the vertical monitor on their own; the exact trigger on Diego's window
+is not known. The cause is.
+
+Fix (`4d305b8`): `Caption()` measures the non-client height first and only
+strips a bar that is actually there (`OwnCaptionNonClientPx` = 16). Verified
+on the desk under the dev build: Notepad born on the main monitor keeps
+WS_CAPTION, tiles, floats, drags and maximises with its own buttons in the
+tab row throughout (`np-drag.ps1`, `shot-hwnd.ps1` -- PrintWindow with
+PW_RENDERFULLCONTENT sees a window under others). Notepad++ is still
+stripped. Platform code, no unit test; the GUI's Log section shows it as
+"decorate ... TitleBar = False" with no style change.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
