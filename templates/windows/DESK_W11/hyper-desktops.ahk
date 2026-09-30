@@ -550,11 +550,13 @@ winBare := false
 ; too). Hyper+Shift+CapsLock toggles it, for the day it is wanted on.
 ^!#CapsLock:: {
     SetCapsLockState "Off"
+    Dbg("capslock: forced off, now " (GetKeyState("CapsLock", "T") ? "ON" : "off"))
     ToolTip "Caps Lock off"
     SetTimer () => ToolTip(), -900
 }
 ^!#+CapsLock:: {
     SetCapsLockState GetKeyState("CapsLock", "T") ? "Off" : "On"
+    Dbg("capslock: toggled, now " (GetKeyState("CapsLock", "T") ? "ON" : "off"))
     ToolTip "Caps Lock " (GetKeyState("CapsLock", "T") ? "ON" : "off")
     SetTimer () => ToolTip(), -900
 }
