@@ -76,6 +76,20 @@ de `extpool/vps-backups`).
 - `nas-rtc-wake` programa siempre las 16:00: una suspensión manual deja el NAS fuera hasta el día siguiente.
 - La clave ssh VPS→NAS (sin `command=`) la comparten el bot de AkuCraft y `/restart` del bot de infra. No se toca.
 
+## Estado (2026-09-30 17:00)
+
+| Fase | Estado |
+|---|---|
+| 0 Preparación | hecha |
+| 1 Mecanismo en el NAS | desplegada y probada (`nas-svc`, hook). Falta ver la suspensión real de las 23:00 con servicios encendidos |
+| 2 Datos | **hecha y verificada**: bibliotecas 704 516 ficheros con sha256, propietario, modo y tamaño idénticos (restore local a 630 MiB/s, sin delta: nada cambió desde el domingo); survival 39 380 ficheros idénticos incl. `level.dat`, `playerdata`, `.private`, EasyAuth, `.env`; RomM, UniFi, config de Calibre y el archivo de AkuCraft idénticos en contenido y propietario (los modos difieren solo por la máscara de la ACL de backup). Thumbnails: 1 367 816 entradas copiadas, sin hash |
+| 3 Ingress | NPM (6 proxy hosts) y pfSense hechos; UniFi informando al NAS (2 switches); RomM 18 117 ROMs, Calibre y UniFi responden por `.local`. **Pendiente**: Cloudflare (dashboard) y deploy del VPS |
+| 4 AkuCraft | Headscale hecho (2 nodos y 4 usuarios fuera, política sin `mc-guest` ni Komi); survival arranca en el NAS en 61 s con `addressToSend` corregido. **Pendiente**: deploy del VPS (bot), `sync-user.sh` en DESK y LAPTOP_X13 |
+| 5 Bots y backups | código subido con tests; siembra offsite del mundo hecha (28 G). **Pendiente**: deploy del VPS, Kuma |
+| 6 Limpieza | no empezada; necesita OK |
+
+Mientras el VPS no se despliegue: el bot de AkuCraft está parado a mano, y **un reinicio del VPS volvería a levantar allí unifi/romm/calibre** (dos controladores UniFi).
+
 ## Fases
 
 Trabajo con el NAS: 16:10–23:00.

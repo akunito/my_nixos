@@ -734,8 +734,12 @@ let
   # tuned for exactly the opposite priority.
   # The staging port, named once: it is also what marks an instance as the one
   # trials are allowed to land on.
-  stagingAddress = "100.64.0.6:25599";
-  prodAddress = "100.64.0.6:25565";
+  # Every server is on NAS_PROD (100.64.0.1): staging and solo since 2026-08-25
+  # — these two kept pointing at the VPS until AINF-401 fixed them — and prod
+  # since 2026-09-30. AutoModpack keys knownHosts by hostname: the first
+  # connect after an address change re-asks for the fingerprint once.
+  stagingAddress = "100.64.0.1:25599";
+  prodAddress = "100.64.0.1:25565";
   # AkuCraft Solo (:25567) - a PRIVATE hardcore single-player world. It runs a
   # deliberately smaller server-side mod set (78 against prod's ~104: no teams,
   # chat, claims, shops, tpa, AI-NPC, graves or soulbound), so it must NOT
@@ -747,7 +751,7 @@ let
   # mmc-pack, same JVM args, same Patrix pack order, same shader, same
   # AutoModpack jar - because the whole point of the world is that it should
   # look and feel exactly like what we got right on prod.
-  soloAddress = "100.64.0.6:25567";
+  soloAddress = "100.64.0.1:25567";
   # AkuCraft Creative (:25566) - three people building, private like solo. Its
   # own instance for the same reason: 82 server mods against solo's 78 and
   # prod's ~104, and AutoModpack hands out a different set per server.

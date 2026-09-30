@@ -31,10 +31,10 @@ import pathlib
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 NIX = REPO / "user/app/games/minecraft-client-mods.nix"
-# Staging moved to the NAS on 2026-08-25; the VPS keeps only prod.
+# Staging moved to the NAS on 2026-08-25, prod on 2026-09-30 (AINF-401).
 VPS = ["ssh", "-A", "-p", "56777", "akunito@100.64.0.6"]
 NAS = ["ssh", "-A", "akunito@100.64.0.1"]
-TARGETS = {"prod": ("minecraft", VPS), "staging": ("mc-mca-staging", NAS)}
+TARGETS = {"prod": ("minecraft", NAS), "staging": ("mc-mca-staging", NAS)}
 
 
 def norm(v):

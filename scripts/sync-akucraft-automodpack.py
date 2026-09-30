@@ -59,9 +59,10 @@ NAS = ["ssh", "-A", "akunito@100.64.0.1"]
 
 TARGETS = {
     # container            data dir                    host
-    # Staging and solo moved to the NAS on 2026-08-25 (creative on 08-22):
-    # the VPS keeps only prod.
-    "prod":    ("minecraft",      "~/.homelab/minecraft/data", VPS),
+    # Staging and solo moved to the NAS on 2026-08-25 (creative on 08-22), prod
+    # on 2026-09-30 (AINF-401): nothing is left on the VPS.
+    "prod":    ("minecraft",
+                "/mnt/ssdpool/docker/compose/gameservers/akucraft-survival/data", NAS),
     "staging": ("mc-mca-staging",
                 "/mnt/ssdpool/docker/compose/gameservers/akucraft-staging/data", NAS),
     # Solo runs a SUBSET of staging's jars (78 vs 99, plus chunky), and that

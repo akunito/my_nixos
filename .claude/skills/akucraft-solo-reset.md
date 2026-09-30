@@ -12,7 +12,7 @@ fue una decisión explícita.
 ## El comando
 
 ```bash
-ssh -A -p 56777 akunito@100.64.0.6 'cd ~/.homelab/minecraft-solo && ./reset-run.sh --yes'
+ssh -A akunito@100.64.0.1 'cd /mnt/ssdpool/docker/compose/gameservers/akucraft-solo && ./reset-run.sh --yes'
 ```
 
 Tarda menos de dos minutos. Opciones: `--radio 800` si a 500 m no encuentra
