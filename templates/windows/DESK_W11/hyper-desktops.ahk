@@ -545,19 +545,15 @@ winBare := false
     winBare := false
 }
 ; (no "sticky": GlazeWM workspaces replace Windows virtual desktops here)
-; Hyper+CapsLock forces Caps Lock OFF (2026-09-30: it came on by itself and no
-; key would clear it; keybd_event from PowerShell did, so a chord here does
-; too). Hyper+Shift+CapsLock toggles it, for the day it is wanted on.
-^!#CapsLock:: {
+; Hyper+Shift+M forces Caps Lock OFF (2026-09-30: it came on by itself and no
+; key would clear it; keybd_event did, and so does SetCapsLockState). Not bound
+; on the CapsLock key itself: `^!#CapsLock::` fired once after a reload and
+; never again for injected chords (three probes, 16:48-16:55), so it could not
+; be tested; a letter chord goes the same way as every other Hyper chord.
+^!#+m:: {
     SetCapsLockState "Off"
     Dbg("capslock: forced off, now " (GetKeyState("CapsLock", "T") ? "ON" : "off"))
     ToolTip "Caps Lock off"
-    SetTimer () => ToolTip(), -900
-}
-^!#+CapsLock:: {
-    SetCapsLockState GetKeyState("CapsLock", "T") ? "Off" : "On"
-    Dbg("capslock: toggled, now " (GetKeyState("CapsLock", "T") ? "ON" : "off"))
-    ToolTip "Caps Lock " (GetKeyState("CapsLock", "T") ? "ON" : "off")
     SetTimer () => ToolTip(), -900
 }
 ^!#+r:: Reload
