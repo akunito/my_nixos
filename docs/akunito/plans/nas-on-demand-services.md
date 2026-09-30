@@ -76,19 +76,22 @@ de `extpool/vps-backups`).
 - `nas-rtc-wake` programa siempre las 16:00: una suspensión manual deja el NAS fuera hasta el día siguiente.
 - La clave ssh VPS→NAS (sin `command=`) la comparten el bot de AkuCraft y `/restart` del bot de infra. No se toca.
 
-## Estado (2026-09-30 17:00)
+## Estado (2026-09-30 17:10)
 
 | Fase | Estado |
 |---|---|
 | 0 Preparación | hecha |
-| 1 Mecanismo en el NAS | desplegada y probada (`nas-svc`, hook). Falta ver la suspensión real de las 23:00 con servicios encendidos |
-| 2 Datos | **hecha y verificada**: bibliotecas 704 516 ficheros con sha256, propietario, modo y tamaño idénticos (restore local a 630 MiB/s, sin delta: nada cambió desde el domingo); survival 39 380 ficheros idénticos incl. `level.dat`, `playerdata`, `.private`, EasyAuth, `.env`; RomM, UniFi, config de Calibre y el archivo de AkuCraft idénticos en contenido y propietario (los modos difieren solo por la máscara de la ACL de backup). Thumbnails: 1 367 816 entradas copiadas, sin hash |
-| 3 Ingress | NPM (6 proxy hosts) y pfSense hechos; UniFi informando al NAS (2 switches); RomM 18 117 ROMs, Calibre y UniFi responden por `.local`. **Pendiente**: Cloudflare (dashboard) y deploy del VPS |
-| 4 AkuCraft | Headscale hecho (2 nodos y 4 usuarios fuera, política sin `mc-guest` ni Komi); survival arranca en el NAS en 61 s con `addressToSend` corregido. **Pendiente**: deploy del VPS (bot), `sync-user.sh` en DESK y LAPTOP_X13 |
-| 5 Bots y backups | código subido con tests; siembra offsite del mundo hecha (28 G). **Pendiente**: deploy del VPS, Kuma |
+| 1 Mecanismo en el NAS | desplegada y probada (`nas-svc`, hook). Falta ver la suspensión real de las 23:00 con calibre, romm y unifi encendidos |
+| 2 Datos | **hecha y verificada**: bibliotecas 704 516 ficheros con sha256, propietario, modo y tamaño idénticos (restore local a 630 MiB/s, sin delta); survival 39 380 ficheros idénticos incl. `level.dat`, `playerdata`, `.private`, EasyAuth, `.env`; RomM, UniFi, config de Calibre y el archivo de AkuCraft idénticos en contenido y propietario. Thumbnails: 1 367 816 entradas copiadas, sin hash |
+| 3 Ingress | NPM (6 proxy hosts), pfSense y deploy del VPS hechos; UniFi informando al NAS (2 switches); los tres responden por `.local`. **Pendiente: Cloudflare** (dashboard, hace falta iniciar sesión) |
+| 4 AkuCraft | VPS desplegado: bot solo Telegram y remapeado (probado `/status`, `/start` y `/stop` de staging por el mismo código, deja el NAS sin contenedores); Headscale hecho. **Pendiente**: `sync-user.sh` en DESK y LAPTOP_X13, probar `/start` en el grupo de Telegram y entrar con el cliente |
+| 5 Bots y backups | `/svc` y la línea "on-demand 3/7 on" verificados con `--selftest`; `nas-backup-data` y `nas-backup-akucraft` en verde con 0 avisos y el mundo dentro; 4 monitores de Kuma pausados (Calibre y Emulators, local y global). **Pendiente**: probar `/svc start|stop` con el botón en Telegram, 24 h sin alertas |
 | 6 Limpieza | no empezada; necesita OK |
+| 7 Documentación | hecha salvo el índice (`generate_docs_index.py` arrastra cambios de otra sesión) |
 
-Mientras el VPS no se despliegue: el bot de AkuCraft está parado a mano, y **un reinicio del VPS volvería a levantar allí unifi/romm/calibre** (dos controladores UniFi).
+Lecciones de hoy: `ssh host 'bash -s' < script` se queda sin script en cuanto algo dentro llama a ssh;
+un servidor de Minecraft reescribe `level.dat` como 0600 en cada guardado y enmascara la ACL de backup
+(por eso el refresco extra de las 18:20); `du` y `zdb` se cuelgan minutos con `ssdpool` saturado.
 
 ## Fases
 
