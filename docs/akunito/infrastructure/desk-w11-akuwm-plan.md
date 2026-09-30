@@ -865,6 +865,56 @@ Diego to install the staged signed build (it carries `debug on|off`; the
 running 11:56 one answers "not a command" to the Log switch) and try the
 window by hand.
 
+### 10.37 Telegram's media viewer jumping between two sizes (2026-09-30 11:44 → 11:58)
+
+Diego: opening a picture in Telegram goes fullscreen, flickers for ~3 s
+between two sizes, then settles. Reproduced twice with the log at DBG.
+
+**The trace**: the viewer (`0xec0be0`, "Media viewer") is born borderless at
+0,0 3840x2160. The Telegram rule (float + sticky) makes it sticky, and
+`MakeSticky` demotes Fullscreen to Floating -- the fullscreen slot is a
+workspace's, and a sticky window has none. `FloatingRectOf` then trimmed it
+to the work area (0,42 3840x2118, under the bar), Telegram put itself back
+over the whole monitor, and the placement was asked again every ~75 ms
+(each synchronous SetWindowPos on Telegram's thread cost 70-108 ms) for
+`PlacementPatienceMs` = 2 s -- 27 asks -- before "will not go to ... AkuWM
+has stopped asking". That is the flicker, and the 3 s.
+
+**Fix** (`ef3e4b9`, 1015 tests): a floating rectangle that covers its
+monitor's bounds, within `ShadowModel.FullscreenSlack`, is placed on the
+bounds exactly, as the workspace's fullscreen window is; a rectangle merely
+taller than the work area is still trimmed (the BenQ terminal of 10.x).
+Three tests in `StickyCoveringTheScreenTests`.
+
+**Proven on the desk**, dev build in Programs\AkuWM: a synthetic viewer
+(AutoHotkey64.exe copied as `Telegram.exe`, a caption-less Gui over the main
+monitor) and then the REAL viewer, opened twice by clicking a photo in the
+chat (`tg-open.ps1` / `measure-hwnd.ps1`, per-monitor DPI aware so the
+numbers are physical): 60 readings over 3 s each time, 0,0 3840x2160
+throughout, 0 changes, 0 `place` lines in the log. Before the fix the same
+log carried 27 asks and the warning.
+
+**Found on the way, open**:
+
+1. `ShellExperienceHost "New notification"` was adopted on 2026-09-23 and its
+   hide fails every redraw (`COMException 0x8002802B Element not found`):
+   2150 refusals in the log, one per redraw, 281 redraws in the two minutes
+   of the reproduction. A window whose cloak throws "not found" should be
+   forgotten, not retried for ever.
+2. `akuwm-cli query windows` prints titles with raw control characters (a
+   Discord title starts with BEL): invalid JSON for any strict parser. And
+   the console output mangles non-ASCII (`?Toni`). The GUI reads the pipe
+   directly and is unaffected.
+3. `GetWindowRect` from a PowerShell started by WSL interop answers in
+   150 %-scaled coordinates (system-DPI aware): the first screenshot of
+   Telegram landed 720 px off. `SetProcessDpiAwarenessContext(-4)` first.
+4. `Start-Process ... -ArgumentList 'C:\Program Files\AkuWM'` splits on the
+   space: quote it inside the string, or `akuwm-boot.ps1` dies on parameter
+   binding before its first log line (exit 1, nothing in boot.log).
+
+Signed build with the fix (and `debug on|off`) staged 11:58 in
+`Temp\akuwm-uia`; the desk runs the dev build until it is installed.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
