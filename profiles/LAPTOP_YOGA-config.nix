@@ -38,6 +38,9 @@ in
     # refuses to start ("Fan_control seems disabled") and restart-loops every
     # 30 s. Firmware curve + thermald handle cooling on this model.
     thinkfanEnable = false;
+    # No Minecraft here: UHD 620 + i5-8250U cannot run the AkuCraft packs at a
+    # playable rate. Aga plays on DESK_A / LAPTOP_A.
+    freesmLauncherEnable = false;
     # LUKS UUID of encrypted swap partition (from: sudo cryptsetup luksDump /dev/nvme0n1p2)
     hibernateSwapLuksUUID = "1fbdeb58-e07a-4c7b-81db-d72067ae12cb";
   };
