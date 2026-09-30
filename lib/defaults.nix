@@ -448,6 +448,7 @@
     unfs3Port = 2049; # NFS + MOUNT, TCP
     unfs3ReadOnly = true;
     unfs3Interfaces = [ ]; # firewall interfaces to open the port on
+    unfs3Ipv4Proxy = false; # front unfsd (IPv6 sockets only) with an AF_INET listener — needed behind WSL's localhost relay
     nfsClientEnable = false;
     nfsMounts = [ ];
     # NOTE: there is no nfsUnmountUnreachable flag any more. Lazily unmounting a

@@ -17,7 +17,17 @@
 
 let
   exports = systemSettings.unfs3Exports or [ ];
-  port = toString (systemSettings.unfs3Port or 2049);
+  publicPort = systemSettings.unfs3Port or 2049;
+  # unfsd only opens AF_INET6 sockets (v4-mapped, "[::ffff:0.0.0.0]:2049" in ss
+  # even with -l 0.0.0.0), and WSL's localhost relay forwards AF_INET listeners
+  # only — measured 2026-09-30: Windows -> 127.0.0.1:2049 refused while
+  # 127.0.0.1:5000 (harmonia, AF_INET) and <eth0 ip>:2049 both answered. With
+  # unfs3Ipv4Proxy a systemd socket owns the real IPv4 port and proxies to
+  # unfsd on loopback.
+  ipv4Proxy = systemSettings.unfs3Ipv4Proxy or false;
+  backendPort = if ipv4Proxy then publicPort + 10000 else publicPort;
+  port = toString backendPort;
+  bind = if ipv4Proxy then "127.0.0.1" else "0.0.0.0";
   mode = if (systemSettings.unfs3ReadOnly or true) then "ro" else "rw";
   exportsFile = pkgs.writeText "unfs3-exports" (
     lib.concatMapStrings (p: "${p} 0.0.0.0/0(${mode},insecure)\n") exports
@@ -31,13 +41,23 @@ lib.mkIf ((systemSettings.unfs3Enable or false) && exports != [ ]) {
     serviceConfig = {
       # -s: single-user mode, every request runs as this user (no root needed,
       #     and drvfs maps everything to it anyway).
-      # -l 0.0.0.0: WSL's localhost relay only tracks IPv4 listeners (same
-      #     trap as harmonia, see DESK_W11-config.nix).
-      ExecStart = "${pkgs.unfs3}/bin/unfsd -d -s -p -t -n ${port} -m ${port} -l 0.0.0.0 -e ${exportsFile}";
+      ExecStart = "${pkgs.unfs3}/bin/unfsd -d -s -p -t -n ${port} -m ${port} -l ${bind} -e ${exportsFile}";
       User = userSettings.username;
       Restart = "on-failure";
       RestartSec = 10;
     };
+  };
+
+  systemd.sockets.unfs3-proxy = lib.mkIf ipv4Proxy {
+    description = "IPv4 listener for unfs3";
+    wantedBy = [ "sockets.target" ];
+    listenStreams = [ "0.0.0.0:${toString publicPort}" ];
+  };
+  systemd.services.unfs3-proxy = lib.mkIf ipv4Proxy {
+    description = "IPv4 proxy to unfs3";
+    requires = [ "unfs3.service" "unfs3-proxy.socket" ];
+    after = [ "unfs3.service" "unfs3-proxy.socket" ];
+    serviceConfig.ExecStart = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd 127.0.0.1:${port}";
   };
 
   networking.firewall.interfaces = lib.genAttrs (systemSettings.unfs3Interfaces or [ ]) (_: {

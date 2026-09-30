@@ -135,6 +135,7 @@ in
     unfs3Enable = true;
     unfs3Exports = [ "/mnt/d/Games" "/mnt/e/Games" ];
     unfs3Interfaces = [ "eth0" ];
+    unfs3Ipv4Proxy = true; # the Windows portproxy reaches WSL through the localhost relay: IPv4 sockets only
     # Same hardware as DESK, so this is the fleet's second harmonia: the fallback
     # when DESK is booted into Windows, and the builder of every profile's closure
     # after a flake.lock update (scripts/build-fleet-closures.sh). WSL runs in NAT
