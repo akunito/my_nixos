@@ -617,11 +617,14 @@ HEADER
     };
 
     systemd.timers.nas-backup-acl = lib.mkIf (backupAclPaths != [ ]) {
-      description = "Timer for backup-source ACL refresh (daily 16:10)";
+      description = "Timer for backup-source ACL refresh (daily 16:10 and 18:20)";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        # After the 16:00 RTC wake, before the VPS pulls at 17:30/18:00/18:30.
-        OnCalendar = "*-*-* 16:10:00";
+        # After the 16:00 RTC wake, before the VPS pulls at 17:30/18:00/18:30 — and
+        # again at 18:20: a Minecraft server rewrites level.dat as 0600 on every
+        # save, which masks the inherited ACL entry, so any server run after 16:10
+        # left the 18:30 worlds backup with rsync code 23 (seen 2026-09-30).
+        OnCalendar = [ "*-*-* 16:10:00" "*-*-* 18:20:00" ];
         Persistent = true;
         RandomizedDelaySec = "2min";
       };
