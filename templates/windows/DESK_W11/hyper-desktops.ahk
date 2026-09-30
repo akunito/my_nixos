@@ -545,6 +545,19 @@ winBare := false
     winBare := false
 }
 ; (no "sticky": GlazeWM workspaces replace Windows virtual desktops here)
+; Hyper+CapsLock forces Caps Lock OFF (2026-09-30: it came on by itself and no
+; key would clear it; keybd_event from PowerShell did, so a chord here does
+; too). Hyper+Shift+CapsLock toggles it, for the day it is wanted on.
+^!#CapsLock:: {
+    SetCapsLockState "Off"
+    ToolTip "Caps Lock off"
+    SetTimer () => ToolTip(), -900
+}
+^!#+CapsLock:: {
+    SetCapsLockState GetKeyState("CapsLock", "T") ? "Off" : "On"
+    ToolTip "Caps Lock " (GetKeyState("CapsLock", "T") ? "ON" : "off")
+    SetTimer () => ToolTip(), -900
+}
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 

@@ -31,6 +31,7 @@ it over (or push and pull there) and the daemon picks the file change up itself.
 | Suite | File | What it covers |
 |---|---|---|
 | `toggle` | `apptoggle-test.ahk` | Launch and follow, hide when focused, cycle between windows of one app, a minimised window comes back **to the workspace you are on**, a window parked elsewhere takes you to it, an app launched behind a fullscreen game leaves the game the screen |
+| `capslock` | `capslock-test.ahk` | Hyper+CapsLock forces Caps Lock off (never a toggle), Hyper+Shift+CapsLock toggles it |
 | `sticky` | `sticky-test.ahk` | The flag in `query windows`, carried onto every workspace of its monitor with the same size and position, never dragged to the other monitor, stays under a fullscreen window, `unset-sticky` and `toggle-sticky` |
 | `tiling` | `tiling-test.ahk` | Two and three windows share the workspace, sway's inner gap (8 px, 12 at 150% DPI), closing one re-flows the rest, focus/move/resize/float by direction, the vertical monitor stacks instead of splitting |
 | `rules` | `rules-test.ahk` | The rules ported from sway: the calculator, the file manager and both terminals float and are sticky, an app with no rule tiles |

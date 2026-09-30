@@ -91,7 +91,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="bindings wintap gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings wintap capslock gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -157,6 +157,7 @@ for s in $suites; do
   case "$s" in
     bindings) collect bindings-test.ahk bindings-test.txt 40 "Chords as data: bindings.tsv re-read on WM_APP+1 (plan 10.27)";;
     wintap) collect wintap-test.ahk    wintap-test.txt    40 "Win tapped alone opens the palette; Hyper let go does not";;
+    capslock) collect capslock-test.ahk capslock-test.txt 40 "Hyper+CapsLock forces Caps Lock off; Hyper+Shift+CapsLock toggles it";;
     gui)    collect gui-test.ahk       gui-test.txt       90 "The settings window (M5): Hyper+S, sections by name, the smoke";;
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
     wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;
