@@ -1315,6 +1315,7 @@
     meetingTranscribeEnable = false; # Local meeting recording + whisper.cpp transcription
     meetingWindowsCaptureEnable = false; # NixOS-WSL only: capture through meetcap.exe (WASAPI) on the Windows side, whisper on the WSL CPU
     meetingWindowsWhisperEnable = false; # with the above: whisper on the Windows GPU inside meetcap.exe (Whisper.net, Vulkan) instead of the WSL CPU
+    meetingLocalWhisperOnDemand = false; # whisper loads on this machine's GPU only with `--local`; without it `meeting` records and prints the command (gaming boxes)
     rangerFullPreviewEnable = false; # Enable heavy ranger preview deps (fontforge, djvulibre, calibre, etc.)
     gamesEnable = false; # Master gate for gaming submodules (must be true for any gaming packages)
 

@@ -1,9 +1,29 @@
 # DESK_W11: meeting transcription + live captions for Claude
 
-Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11** (`meeting`, `meeting-record`,
-`meeting-stop`, `meeting-win-install`; sections "M1 as built", "M2 as built"). M3 not started.
-Plan v2, audited (section "Audit" at the end). Numbers are measured on the box unless
-marked otherwise.
+Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11**; direction changed the same
+day (next section): whisper moves to the NAS, the local GPU is opt-in. M3 (NAS service) and
+M4 (live) wait for the hardware. Audited (section "Audit" at the end). Numbers are measured
+on the box unless marked otherwise.
+
+## Direction (decided by Diego, 2026-09-30, after M2)
+
+An RTX 3090 is bought for the NAS and the AI models go there. For this feature:
+
+1. **Whisper runs on the NAS**, for every machine (DESK, X13, DESK_W11), once the card is in.
+2. **The local GPU is never loaded by itself.** W11 and DESK are the gaming box; large-v3
+   holds 4.3 GiB of VRAM. Local transcription exists and stays, behind `--local`.
+3. **When the NAS is not available** (it sleeps 23:00-16:00, or is unreachable): nothing is
+   loaded; the command prints why and the exact `--local` command to run. No queue, no
+   Wake-on-LAN.
+4. **Live captions wait for the NAS.** No live backend on the local GPU.
+5. Until the NAS transcribes, `meeting` on W11 records and stops.
+
+Built for this now: `userSettings.meetingLocalWhisperOnDemand` (on in DESK_W11). With it,
+`meeting` records and prints the command, `meeting --local` records and transcribes on the
+local GPU, `meeting-transcribe [dir]` prints the command and exits 3,
+`meeting-transcribe --local [dir]` transcribes. Checked on the box: without `--local` no
+`meetcap.exe` process starts and VRAM does not move; `meeting` returns 0.3 s after Ctrl-C.
+DESK and X13 keep today's behaviour (local, automatic) until M3 exists.
 
 ## Goal
 
@@ -126,9 +146,35 @@ cannot do: hear Windows, and use the GPU.
 |---|---|---|
 | **M1** | `meetcap record/stop`, nix backend flag, `meeting` works end to end | unchanged `whisper-cli` on the WSL CPU (0.9x realtime, after the call) |
 | **M2** | `meetcap transcribe/detect-lang` on the GPU | switched by a second flag once it passes the parity test against M1's output |
-| **M3** | `record --live`, `meeting-live`, `/call` | live draft on the GPU; final transcript as M2 |
+| **M2b** | `meetingLocalWhisperOnDemand`: `--local` | local GPU only when asked for (done) |
+| **M3** | whisper service on the NAS (RTX 3090), remote backend in `meeting-transcribe` on all machines | NAS by default; `--local` prints-or-runs as above |
+| **M4** | `record --live`, `meeting-live`, `/call` | utterances sent to the NAS during the call; final transcript as M3 |
 
 M1 has no new transcription code, so parity is immediate and M2 gets a same-box baseline.
+M3 and M4 start when the 3090 is installed and the NAS serves models.
+
+## M3 — whisper on the NAS (not started, needs the hardware)
+
+What is fixed by the decisions above and by what M1/M2 measured:
+
+- **Contract**: a channel's 16 kHz mono WAV in, whisper-cli's JSON out (`.result.language`,
+  `.transcription[].offsets`, `.text`), so `probe_lang`, the silence gates and
+  `meeting-merge` stay where they are. `transcribe_one` and `detectLang` get a third
+  implementation next to whisper-cli and `meetcap.exe`.
+- **Availability check before anything is sent**: one short health request. No answer =
+  the message with the `--local` command, exit 3. Same path as today's "no NAS yet".
+- **Address**: the NAS by its Tailscale IP from machines off the LAN (the LAN IP through
+  pfSense subnet routing drops ~10 % of connects, measured 2026-09-18 from the VPS).
+- **Parameters must be the DESK ones**: large-v3, explicit language, beam 5, `-mc 0`,
+  carried prompt. A whisper.cpp server on CUDA takes the same flags as whisper-cli and
+  gets `-sns` back, which the Whisper.net backend cannot have.
+- **Upload size**: 115 MB per channel-hour as WAV. FLAC or Opus before upload if the link
+  is Tailscale rather than LAN; measure first.
+
+To decide when the card is in, by measuring on it: the server (whisper.cpp server vs a
+faster-whisper based one), whether it runs as one of the on-demand NAS stacks (`nas-svc`,
+AINF-401) or stays resident, VRAM next to the other models on the card, and parity against
+the DESK transcript of the same recording.
 
 ## M1 as built
 
@@ -246,7 +292,12 @@ would pass any content test.
   install dir, then copies the model to NTFS when its size differs. Run by hand after a
   change to `win/` (as with AkuWM: NuGet restore is not a pure nix build).
 
-## Live (M3)
+## Live (M4, on the NAS)
+
+Same design as audited, with one change: step 2 does not run whisper in the exe. The exe
+still does the capture and the endpointing (CPU, no VRAM), sends each utterance to the NAS
+service and writes the answer. If the NAS is not reachable at start, `--live` says so and
+the recording goes on without captions; there is no local live mode.
 
 `meetcap record --live`, per channel:
 
@@ -254,8 +305,8 @@ would pass any content test.
    speech starts after 150 ms above the floor, an utterance ends after 600 ms below it, and is
    force-cut at 12 s at the quietest frame of its last 2 s. Dropped if shorter than 1 s or if
    its peak is under −35 dB. Whisper's Silero VAD is not used: it corrupted speech on DESK.
-2. **Queue.** One GPU worker and one `WhisperProcessor` for both channels (`ChangeLanguage`
-   between them), model loaded once. When a channel has more than one utterance pending, the
+2. **Queue.** One worker for both channels, one request at a time to the NAS service
+   (model resident there). When a channel has more than one utterance pending, the
    contiguous ones are concatenated with their gaps, up to 25 s, into one call: one encoder
    pass for several lines, offsets still exact. Beam or greedy for the live pass is decided by
    measuring both.

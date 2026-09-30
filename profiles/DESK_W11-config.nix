@@ -228,6 +228,7 @@ in
     meetingTranscribeEnable = true; # `meeting`: WASAPI capture by meetcap.exe, whisper large-v3 on the WSL CPU (docs/akunito/plans/desk-w11-meeting-captions.md)
     meetingWindowsCaptureEnable = true;
     meetingWindowsWhisperEnable = true; # whisper on the 9070 XT from Windows (WSL has no usable GPU path)
+    meetingLocalWhisperOnDemand = true; # never load the model by itself on the gaming box: only `meeting --local` / `meeting-transcribe --local`
     sshExtraConfig = ''
       # sshd.nix -> programs.ssh.extraConfig
       Host github.com

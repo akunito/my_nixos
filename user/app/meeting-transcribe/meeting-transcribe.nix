@@ -12,9 +12,12 @@
 # Plan + measurements: docs/akunito/plans/desk-w11-meeting-captions.md
 #
 # Commands (gated by userSettings.meetingTranscribeEnable):
-#   meeting              record + auto-transcribe on Ctrl-C (one-shot)
+#   meeting [--local]    record + auto-transcribe on Ctrl-C (one-shot)
 #   meeting-record       start dual capture, Ctrl-C to stop & finalize
-#   meeting-transcribe   whisper.cpp on both WAVs -> JSON/SRT -> merged transcript.txt
+#   meeting-transcribe [--local] [dir]
+#                        whisper.cpp on both WAVs -> JSON/SRT -> merged transcript.txt
+#   With userSettings.meetingLocalWhisperOnDemand, whisper runs on this machine only with
+#   --local; without it both commands print the command to run and load nothing.
 #   meeting-merge        interleave two whisper JSONs into a labeled transcript
 #   meeting-stop         (DESK_W11) stop the running recording from another shell
 #   meeting-win-install  (DESK_W11) test + publish win/ to %LOCALAPPDATA%\MeetCap
@@ -35,6 +38,12 @@ let
   # the WSL CPU. Off = whisper-cli on the CPU, the fallback that needs nothing on Windows
   # but the recorder.
   winWhisper = winCapture && (userSettings.meetingWindowsWhisperEnable or false);
+  # The model loads on this machine's GPU only when asked for with --local (4.3 GiB of
+  # VRAM for large-v3, on a box that is also the gaming box). Without it `meeting` records
+  # and stops, and `meeting-transcribe` prints the command instead of running it. The
+  # default backend will be the whisper service on the NAS once its GPU is in; until then
+  # there is none, so "not available" is the only answer it can give.
+  localOnDemand = (userSettings.meetingLocalWhisperOnDemand or false);
   winDir = "/mnt/c/Users/${systemSettings.wslWindowsUser}/AppData/Local/MeetCap";
   MEETCAP = "${winDir}/meetcap.exe";
 
@@ -347,12 +356,26 @@ let
     ${if winWhisper then "MEETCAP='${MEETCAP}'" else "WHISPER='${WHISPER}'\n    MODEL='${whisperModel}'"}
     FFMPEG='${FFMPEG}'
 
-    DIR="''${1:-}"
+    LOCAL=${if localOnDemand then "0" else "1"}
+    DIR=""
+    for a in "$@"; do
+      case "$a" in
+        --local) LOCAL=1 ;;
+        *) DIR="$a" ;;
+      esac
+    done
     if [ -z "$DIR" ]; then
       DIR="$(ls -dt ${meetingsRoot}/*/ 2>/dev/null | head -n1 || true)"
     fi
     [ -n "$DIR" ] && [ -d "$DIR" ] || { echo "meeting-transcribe: no dir given and none found" >&2; exit 1; }
     DIR="''${DIR%/}"
+
+    if [ "$LOCAL" = 0 ]; then
+      echo "meeting-transcribe: the NAS whisper service is not available; nothing was loaded on this machine." >&2
+      echo "meeting-transcribe: to transcribe here, on the local GPU:" >&2
+      echo "    meeting-transcribe --local '$DIR'" >&2
+      exit 3
+    fi
 
     # Optional initial prompt to prime domain vocabulary (proper nouns, jargon).
     # Priority: $DIR/prompt.txt  >  $MEETING_PROMPT env var  >  none.
@@ -474,12 +497,15 @@ let
     # a `| tail` in the pipe dies too and takes the dir with it (measured on DESK_W11: the
     # recording finalized, `meeting` exited 130, nothing was transcribed). A trapped signal
     # is reset to default in children, so meeting-record still gets it and stops cleanly.
+    LOCAL=""
+    [ "''${1:-}" = "--local" ] && LOCAL="--local"
     trap : INT
     OUT="$(meeting-record)"
     trap - INT
     DIR="$(printf '%s\n' "$OUT" | tail -n1)"
     [ -n "$DIR" ] && [ -d "$DIR" ] || { echo "meeting: recording produced no dir" >&2; exit 1; }
-    meeting-transcribe "$DIR"
+    # Exit 3 = recorded, not transcribed, and the command to do it was printed: not a failure.
+    meeting-transcribe $LOCAL "$DIR" || { rc=$?; [ "$rc" = 3 ] && exit 0; exit "$rc"; }
   '';
 in
 {
