@@ -415,6 +415,24 @@ in
     text = builtins.toJSON settingsJson;
   };
 
+  # Claude in Chrome: Claude Code writes ~/.claude/chrome/chrome-native-host pinned
+  # to its own /nix/store path. After an update + nix GC that path is gone and the
+  # browser extension silently loses its native host (LAPTOP_YOGA 2026-10-01: the
+  # wrapper exec'd claude-code-2.1.283's .claude-wrapped). Re-point it at the
+  # profile's stable `claude` on every switch; only touches an existing wrapper.
+  home.activation.claudeChromeNativeHost = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    host="$HOME/.claude/chrome/chrome-native-host"
+    if [ -f "$host" ]; then
+      for c in "$HOME/.nix-profile/bin/claude" "/etc/profiles/per-user/$USER/bin/claude"; do
+        if [ -x "$c" ]; then
+          printf '#!/bin/sh\n# Chrome native host wrapper, re-pointed by home-manager at the profile path (survives nix GC)\nexec %s --chrome-native-host\n' "$c" > "$host.tmp"
+          chmod 755 "$host.tmp" && mv "$host.tmp" "$host"
+          break
+        fi
+      done
+    fi
+  '';
+
   # Copy settings.json as a writable file (not a symlink) so Claude Code can modify it
   # (e.g., "don't ask again" permissions). Only writes on first setup or migration from symlink.
   # To force-regenerate: rm ~/.claude/settings.json && sync-user.sh
