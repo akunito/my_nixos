@@ -17,7 +17,10 @@ let
         $S stop "$1" || true
       fi
       if ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M "$2" >/dev/null 2>&1; then
-        ${pkgs.util-linux}/bin/umount -f -l "$2" || true
+        # -i: plain umount2(MNT_DETACH), skip the umount.nfs helper. The helper
+        # talks to the server, and with the server gone it held a real suspend
+        # for 2 min (LAPTOP_YOGA 2026-10-01, 11:04:33 -> 11:06:33).
+        ${pkgs.util-linux}/bin/umount -l -i "$2" || true
       fi
     }
   '' + (lib.concatMapStringsSep "\n" (entry:
