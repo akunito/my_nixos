@@ -108,6 +108,14 @@ which never passes TRIM to them (the drives lack DRAT/RZAT), and sustained write
 collapse to 7–20 MB/s (measured 2026-09-30). They are not backed up — re-downloadable.
 `gameservers/akucraft-archive/` holds the retired akucraft-web and akucraft-playermap.
 
+Calibre carries two local customisations, both versioned in `templates/truenas/calibre/`: the
+`custom-services/` scripts (expire_on_commit patch to `cps/db.py`, custom ingest watcher), mounted
+from `/mnt/ssdpool/docker/calibre/config/custom-services/`, and `cwa-init-run`, a patched copy of the
+image's init that honours `SKIP_CHOWN` — stock v4.0.6 ignores it and chowned ~2 M files on every
+start (2 min 45 s; with the patch the container is healthy in 20 s, measured 2026-10-01). The image
+is pinned by digest; regenerate `cwa-init-run` if the digest ever changes. The patched init prints
+"NETWORK_SHARE_MODE=true detected" when it skips — that wording is upstream's, the mode is off.
+
 Compose templates: `templates/truenas/{calibre,romm,unifi}` and
 `templates/truenas/gameservers/akucraft-{survival,solo,creative}` (staging has none: its live
 compose carries a literal RCON password).

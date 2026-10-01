@@ -31,8 +31,7 @@ services:
       - PGID=1000
       - TZ=Europe/Warsaw
       - NETWORK_SHARE_MODE=false
-      # The library is ~57k directories: CWA's recursive chown at start takes minutes
-      # and buys nothing, the tree already belongs to 100999.
+      # Read only by the patched cwa-init (./cwa-init-run): the stock image ignores it.
       - SKIP_CHOWN=true
       - NO_PERMISSIONS_CHECK=true
       - DISABLE_LIBRARY_AUTOMOUNT=true
@@ -43,6 +42,10 @@ services:
       - /mnt/extpool/library/calibre-library:/calibre-library:rw
       - /mnt/ssdpool/docker/calibre/config/custom-services/cwa-ingest-run.sh:/etc/s6-overlay/s6-rc.d/cwa-ingest-service/run:ro
       - /mnt/ssdpool/docker/calibre/config/custom-services/apply-db-patch.sh:/custom-cont-init.d/99-apply-db-patch.sh:ro
+      # Patched init: honours SKIP_CHOWN (the image ignores it and spent 2m45s per start
+      # chowning ~2 M files). Lives next to this file; see its header. The two scripts
+      # above are versioned in the repo under templates/truenas/calibre/custom-services/.
+      - ./cwa-init-run:/etc/s6-overlay/s6-rc.d/cwa-init/run:ro
     restart: "no"
     logging:
       driver: json-file
