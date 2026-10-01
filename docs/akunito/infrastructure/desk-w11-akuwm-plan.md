@@ -1057,8 +1057,10 @@ repositories in a temp dir -- docker 10, prometheus 15, ops 3), GUI 43.
   probes -- and the Monitoring section renders it (VPS and NAS cards, 79 %
   root on the VPS in amber, 85 % memory on the NAS).
 
-Open: the Docker section's list is loaded on a task and rendered when it
-lands (the headless test only proves the daemon list and the parse); Sync
+~~Open~~ (closed 2026-10-01 13:40: `Load` returns the render task -- the
+in-flight one while `Shown`'s load runs -- and the headless test awaits it and
+reads the rendered list and the status line): the Docker section's list is
+loaded on a task and rendered when it lands; Sync
 has not run against the real dotfiles repository from this desk (the
 Windows clone is read-only for the daemon, the WSL one is where commits
 happen -- the Git section commits in whichever checkout the config dir is
@@ -1368,6 +1370,10 @@ displayed workspace (10.49), a stale journal entry (here), a tiled lock
 screen (10.46). The lesson is on record now in memory: when a case fails
 only after others, list what the others leave on the desk and in the
 daemon's state before touching the model.
+
+**wm on 0.2.4, the whole suite**: 206/206 in four foreground chunks
+(63 + 60 + 52 + 31), no audit WARN. The M6 note on the Docker section's
+async load is closed (the GUI test awaits the real load now).
 
 ## 11. Migration, rollback, and getting the desk back
 
