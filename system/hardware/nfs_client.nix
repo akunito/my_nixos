@@ -12,29 +12,22 @@ let
     S=${pkgs.systemd}/bin/systemctl
     parkdir=/run/nfs-automount-parked
     park() { # $1 unit $2 where
-      # A synchronous `systemctl stop` of the trigger while the share is still
-      # mounted waits for systemd's own unmount against the dead server: 2 min,
-      # measured twice on real suspends of LAPTOP_YOGA (2026-10-01, 11:04:33 ->
-      # 11:06:33 and 11:11:50 -> 11:13:50). So queue the stop and detach the
-      # share right behind it; the gap is milliseconds, not the 15 s window of
-      # the old umount-then-stop order. (The stop was not the 2 min — see below.)
+      # Queue the trigger's stop, then detach right behind it: in the old
+      # umount-then-stop order the portal re-triggered the mount in between
+      # (LAPTOP_YOGA 2026-10-01 10:32:00, another 15 s hang).
       if [ -n "$1" ] && $S is-active -q "$1"; then
         ${pkgs.coreutils}/bin/mkdir -p "$parkdir"; : > "$parkdir/$1"
         $S stop --no-block "$1" || true
       fi
       if ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M "$2" >/dev/null 2>&1; then
-        # umount2(MNT_DETACH) itself blocks ~120 s against a dead NFSv4 server
-        # (measured: umount -l -i -c, 120295 ms) — the mount leaves the namespace
-        # at once, then the kernel tears the v4 session down over RPC. So the
-        # syscall runs in its own transient unit and nobody waits for it; the
-        # loop below only waits for the namespace to be clean.
-        ${pkgs.systemd}/bin/systemd-run --no-block --collect --quiet \
-          --unit="nfs-detach-$(${pkgs.coreutils}/bin/date +%s%N)" \
-          ${pkgs.util-linux}/bin/umount -l -i -c "$2" || true
-        for _ in 1 2 3 4 5 6 7 8 9 10; do
-          ${pkgs.gnugrep}/bin/grep -qE " $2 .* - nfs4? " /proc/self/mountinfo || break
-          ${pkgs.coreutils}/bin/sleep 0.3
-        done
+        # -i -c: plain umount2(MNT_DETACH) — no umount.nfs helper, no path
+        # canonicalisation. Fast while the server answers (the normal case: a
+        # suspend with the NAS awake). Against a DEAD v4 server the kernel itself
+        # blocks ~120 s tearing the session down (measured 120295 ms), and any
+        # other umount/path walk of it waits too, so a transient unit does not
+        # help. That only happens if the server died less than one timer period
+        # (2 min) before the suspend; the reaper parks dead shares while awake.
+        ${pkgs.util-linux}/bin/umount -l -i -c "$2" || true
       fi
     }
   '' + (lib.concatMapStringsSep "\n" (entry:
