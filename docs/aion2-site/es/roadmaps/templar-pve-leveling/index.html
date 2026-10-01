@@ -1,0 +1,398 @@
+<!DOCTYPE html><html lang="es" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Templar: qué subir en cada nivel (PvE y leveo) | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/es/roadmaps/templar-pve-leveling/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/roadmaps/templar-pve-leveling/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/roadmaps/templar-pve-leveling/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/roadmaps/templar-pve-leveling/"/><link rel="sitemap" href="/sitemap-index.xml"/><script src="/skill-tooltips.js" defer></script><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Templar: qué subir en cada nivel (PvE y leveo)"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/es/roadmaps/templar-pve-leveling/"/><meta property="og:locale" content="es"/><meta property="og:description" content="Hoja de ruta del Templar del 1 al 45 en el cliente global: qué se desbloquea en cada nivel, en qué orden gastar los puntos de habilidad, qué especialización elegir, qué stigma coger y qué hacer con el tablero Daevanion, con el porqué de cada decisión."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Hoja de ruta del Templar del 1 al 45 en el cliente global: qué se desbloquea en cada nivel, en qué orden gastar los puntos de habilidad, qué especialización elegir, qué stigma coger y qué hacer con el tablero Daevanion, con el porqué de cada decisión."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.DOd4Xg1l.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Ir al contenido</a><script>document.body.dataset.skillClass="templar"</script><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/es/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Buscar&quot;,&quot;clear_search&quot;:&quot;Limpiar&quot;,&quot;load_more&quot;:&quot;Cargar más resultados&quot;,&quot;search_label&quot;:&quot;Buscar página&quot;,&quot;filters_label&quot;:&quot;Filtros&quot;,&quot;zero_results&quot;:&quot;Ningún resultado para: [SEARCH_TERM]&quot;,&quot;many_results&quot;:&quot;[COUNT] resultados para: [SEARCH_TERM]&quot;,&quot;one_result&quot;:&quot;[COUNT] resultado para: [SEARCH_TERM]&quot;,&quot;alt_search&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Mostrando resultados para: [DIFFERENT_TERM]&quot;,&quot;search_suggestion&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Prueba alguna de estas búsquedas:&quot;,&quot;searching&quot;:&quot;Buscando [SEARCH_TERM]...&quot;}"><button data-open-modal disabled aria-label="Buscar" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Buscar</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Buscar" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancelar</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/roadmaps/templar-pve-leveling/" selected class="astro-2z5xp7gb">Español</option><option value="/en/roadmaps/templar-pve-leveling/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Primario"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menú</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0tmoa0n" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Empezar</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/start/launch-checklist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Checklist del lanzamiento</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Lanzamiento, servidores y qué comprar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ajustes, controles y ping</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Jugar en KR/TW, el anti-cheat y llegar listo al acceso anticipado</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Clases</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visión general</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Templar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: todas las skills y combos</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Rutas de clase</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/roadmaps/templar-pve-leveling/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: qué subir en cada nivel (PvE y leveo)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/templar-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: rotación y macros (PvE)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progresión</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 y primeros días</span></a></li><li class="astro-rmhv4bp6"><a href="/es/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Rutina diaria y semanal</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sistemas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Equipo</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats y fórmulas de combate</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sistemas de personaje: pets, Genus Insight, Closet y títulos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combate, macros, targeting y controles</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mazmorras y raids</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Abyss y puntos de Abyss</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Asedios, artefactos y legión</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas y Battlefield</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economía y rutina</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetización, Kinah y gasto</span></a></li><li class="astro-rmhv4bp6"><a href="/es/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering y Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versiones</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versiones y regiones</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Referencia</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/reference/open-questions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Qué comprobar el día 30</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glosario</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fuentes y método</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Herramientas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/tools/stigma-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Planificador de stigmas</span></a></li><li class="astro-rmhv4bp6"><a href="/es/tools/skills-browser/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Explorador de skills</span></a></li><li class="astro-rmhv4bp6"><a href="/es/tools/skill-point-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Planificador de puntos de skill</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Notas de vídeos</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/videos/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Notas de vídeos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/videos/first-day-cahos-2026-09-25/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Primer día sin perder progreso (CAHOS GAMING)</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/roadmaps/templar-pve-leveling/" selected class="astro-2z5xp7gb">Español</option><option value="/en/roadmaps/templar-pve-leveling/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">En esta página<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#las-cuatro-reglas-que-explican-todo-lo-demás" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Las cuatro reglas que explican todo lo demás</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#el-orden-de-gasto-en-una-lista" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">El orden de gasto, en una lista</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#la-hoja-de-ruta-nivel-a-nivel" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">La hoja de ruta, nivel a nivel</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#especializaciones-cuál-elegir" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Especializaciones: cuál elegir</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#stigmas-cuáles-cuándo-y-hasta-dónde" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Stigmas: cuáles, cuándo y hasta dónde</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tablero-daevanion" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tablero Daevanion</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-no-conviene-hacer" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que no conviene hacer</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">En esta página</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#las-cuatro-reglas-que-explican-todo-lo-demás" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Las cuatro reglas que explican todo lo demás</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#el-orden-de-gasto-en-una-lista" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">El orden de gasto, en una lista</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#la-hoja-de-ruta-nivel-a-nivel" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">La hoja de ruta, nivel a nivel</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#especializaciones-cuál-elegir" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Especializaciones: cuál elegir</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#stigmas-cuáles-cuándo-y-hasta-dónde" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Stigmas: cuáles, cuándo y hasta dónde</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#tablero-daevanion" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Tablero Daevanion</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#lo-que-no-conviene-hacer" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Lo que no conviene hacer</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="es" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Templar: qué subir en cada nivel (PvE y leveo)</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Región:</b> global · <b>Versión:</b> cliente global en español del acceso anticipado (30-09 y 01-10-2026), con un Templar subido de 1 a 23 · <b>Revisado:</b> 2026-10-01 · <b>Confianza:</b> media. Los niveles de desbloqueo, los textos y los números salen del cliente; el <b>orden de prioridades</b> es nuestra recomendación, razonada abajo, y se apoya en las guías de leveo del test global. Lo que pasa del nivel 23 todavía no lo hemos visto en el juego.</div>
+<p>Esta página es para tenerla abierta mientras subes. Cada vez que subas de nivel: abre <strong>Habilidades</strong>, gasta los puntos en el orden de abajo hasta que el juego no te deje más, y mira la fila de tu nivel en la tabla. La rotación (qué pulsar y en qué orden) está en la página hermana, <a href="/es/roadmaps/templar-pve-rotation/">Templar: rotación y macros (PvE)</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="las-cuatro-reglas-que-explican-todo-lo-demás">Las cuatro reglas que explican todo lo demás</h2><a class="sl-anchor-link" href="#las-cuatro-reglas-que-explican-todo-lo-demás"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Las cuatro reglas que explican todo lo demás»</span></a></div>
+<ol>
+<li><strong>El juego limita cada skill por tu nivel, no sólo por tus puntos.</strong> En la ficha verás “Adquirible en el nv. X” cuando una habilidad ya no puede subir más a tu nivel. Lo medido: Estacazo impetuoso pidió nivel 7 para su rango 4 y Favor de condena nivel 15 para su rango 4, es decir, unos <strong>6 niveles después de desbloquearse</strong>; para los rangos altos no tenemos medidas, pero el ritmo es de <strong>un rango cada 2-3 niveles</strong>. En la práctica, al principio te <strong>sobran puntos</strong> (a nivel 14 llevábamos 18 sin gastar): el orden de abajo dice dónde va el sobrante cuando las principales ya están al tope. Es una deducción de pocas medidas, no una regla publicada.</li>
+<li><strong>Los puntos de habilidad se reinician gratis.</strong> Equivocarte no cuesta nada: reparte, prueba y, si no te gusta, reinicia. Los nodos Daevanion se compran con cristales, pero <strong>devolver</strong> uno cuesta 5.000 Kinah en el global; el coste de reiniciar stigmas no se sabe.</li>
+<li><strong>Coste por rango:</strong> del 2 al 4 cuesta 1 punto por rango, del 5 al 7 cuesta 2 y del 8 al 10 cuesta 4. Llevar una habilidad de 1 a 8 son <strong>13 puntos</strong>; de 1 a 10, <strong>21</strong>. Las pasivas cuestan igual. Con puntos llegas a <strong>10</strong>; por encima sólo se sube con los nodos “+1” del tablero Daevanion, las cartas Arcana y el soulbind. Por eso las especializaciones de 12 y 16 son cosa del endgame, no del leveo.</li>
+<li><strong>De dónde salen los puntos:</strong> cada mazmorra sellada (la interrogación amarilla del mapa) da <strong>+2 de habilidad y +2 de Daevanion</strong>, y cada misión secundaria regional (verde) <strong>+1 y +1</strong>. No te saltes las verdes.</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="el-orden-de-gasto-en-una-lista">El orden de gasto, en una lista</h2><a class="sl-anchor-link" href="#el-orden-de-gasto-en-una-lista"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «El orden de gasto, en una lista»</span></a></div>
+<p>Cuando subas de nivel, recorre esta lista de arriba abajo y sube cada una hasta que el juego no te deje más:</p>
+<ol>
+<li><strong>Estacazo impetuoso</strong> (Fierce Strike, clic izquierdo). Tu ataque básico en área y tu fuente de maná: cada golpe de su cadena te devuelve maná. Como lo pulsas todo el rato, cada rango se nota en todo lo que haces.</li>
+<li><strong>Azotamiento continuo</strong> (Continuous Flurry, clic derecho). Tu otro ataque de relleno en área. Gasta el maná que te da el izquierdo y su especialización de 12 acorta el enfriamiento de Castigo.</li>
+<li><strong>Castigo</strong> (Punishment), desde el nivel 14. Tu golpe más grande, en área y a distancia, y te da <strong>Ejecutante</strong>: +20 % de daño durante 20 s cada 30 s. Con su enfriamiento de 30 s, si lo lanzas cada vez que vuelve llevas el bufo dos tercios del tiempo.</li>
+<li><strong>Juicio</strong> (Judgment). Sólo se puede usar en una ventana corta que abren tus habilidades de escudo, pero en esa ventana es tu golpe más fuerte contra un solo objetivo: en el mismo personaje de nivel 23, unos 2.000 de daño, frente a 850-1.170 por objetivo de cada golpe de la cadena de Estacazo impetuoso.</li>
+<li><strong>Golpe de escudo</strong> (Shield Smite). Aturde a todo lo que golpea (a los mobs siempre), <strong>abre Juicio</strong> y deja a los mobs listos para Aniquilación. Es el botón que pone en marcha todo el combo.</li>
+<li><strong>Aniquilación</strong> (Annihilation), desde el 12. Golpe enorme contra un enemigo aturdido o derribado: en ese mismo personaje, unos 2.800. Enfriamiento 20 s. Golpe de escudo y Escudo de perdición le preparan el terreno.</li>
+<li><strong>Estacazo de amparo</strong> (Protective Strike), desde el 8. Daño en área, te cura, te da un escudo de tolerancia y <strong>abre Juicio</strong>. Es tu curación de combate.</li>
+<li><strong>Pasivas</strong>, en este orden según se abren: <strong>Favor de condena</strong> (9) → <strong>Acierto de impacto</strong> (15) → <strong>Rugido agravante</strong> (17) → <strong>Arrebato</strong> (21, pasa a ser la primera) → <strong>Mejora física</strong>. Las demás pasivas y activas, al final de la cola: sólo cuando todo lo anterior esté al tope de tu nivel.</li>
+</ol>
+<p>Si mueres a menudo o pasas el día bebiendo pociones, sube <strong>Mejora física</strong> antes que las pasivas de daño: más vida y más curación recibida, y a rango 7 ya da +1.750 de vida plana y +22,5 % de vida máxima.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="la-hoja-de-ruta-nivel-a-nivel">La hoja de ruta, nivel a nivel</h2><a class="sl-anchor-link" href="#la-hoja-de-ruta-nivel-a-nivel"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «La hoja de ruta, nivel a nivel»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Nivel</th>
+<th>Se abre</th>
+<th>Qué hacer</th>
+<th>Por qué</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td>Estacazo impetuoso, Azotamiento continuo, Aprisionamiento, Golpe de escudo, Juicio, Desenfreno de destello; pasivas Mejora física y Escudo de amparo</td>
+<td>Estacazo impetuoso y Azotamiento continuo al tope en cada nivel. El sobrante, a Juicio y Golpe de escudo</td>
+<td>Los dos clics son el 80 % de lo que pulsas al principio. Juicio y Golpe de escudo son el combo que más daño hace en cuanto lo aprendes a usar</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td>Embestida decadente</td>
+<td>Al final de la cola</td>
+<td>Se ilumina después de bloquear y la pulsas tú (o la saca la macro). Su trabajo, bajar un 25 % la defensa del enemigo, ya lo hace a rango 1</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td>Estacazo de amparo</td>
+<td>Súbela después de Golpe de escudo</td>
+<td>Curación, escudo de tolerancia y otra ventana de Juicio en un solo botón</td>
+</tr>
+<tr>
+<td><strong>9</strong></td>
+<td>Favor de condena</td>
+<td>Primera pasiva en la que meter puntos</td>
+<td>Es la única pasiva de daño que tienes tan pronto: más crítico, y al golpear un 50 % de probabilidad de daño extra (como mucho una vez por segundo)</td>
+</tr>
+<tr>
+<td><strong>10</strong></td>
+<td>Asalto con escudo</td>
+<td>Rango 1</td>
+<td>Sólo funciona después de esquivar o en vuelo. Es movilidad, no daño</td>
+</tr>
+<tr>
+<td><strong>11</strong></td>
+<td>Defensa de tenacidad</td>
+<td>Rango 1</td>
+<td>Defensa pura; mientras subes solo no hace falta</td>
+</tr>
+<tr>
+<td><strong>12</strong></td>
+<td>Aniquilación; <strong>tablero Daevanion Nezekan</strong></td>
+<td>Aniquilación detrás de Golpe de escudo. Empieza el tablero por los nodos “+1” de habilidad</td>
+<td>Aniquilación es el segundo golpe más grande del kit. El tablero: ver la sección Daevanion</td>
+</tr>
+<tr>
+<td><strong>13</strong></td>
+<td>Sello de protección</td>
+<td>Rango 1</td>
+<td>Escudo automático cuando bajas del 50 % de vida; a rango 1 ya salva vidas</td>
+</tr>
+<tr>
+<td><strong>14</strong></td>
+<td><strong>Castigo</strong></td>
+<td>Directo a la cabeza de la lista, al tope cada nivel</td>
+<td>Tu golpe más grande y +20 % de daño durante 20 s</td>
+</tr>
+<tr>
+<td><strong>15</strong></td>
+<td>Acierto de impacto</td>
+<td>Segunda pasiva de daño</td>
+<td>Más precisión de tipo impacto y más <strong>Golpe</strong> (Smite: un golpe que pega doble). Es la pasiva de daño que mejor escala</td>
+</tr>
+<tr>
+<td><strong>16</strong></td>
+<td>Eliminación de impacto</td>
+<td>Rango 1</td>
+<td>Te quita un aturdimiento o un derribo. Un botón de emergencia, no se sube</td>
+</tr>
+<tr>
+<td><strong>Rango 8</strong> (no es un nivel fijo)</td>
+<td>Estacazo impetuoso y Azotamiento continuo llegan a <strong>rango 8</strong>; los nodos “+1” del tablero cuentan (la ficha muestra “(+1)”)</td>
+<td>Elige su <strong>especialización</strong> (tabla de abajo) y colócala</td>
+<td>La especialización de 8 es el mayor salto de poder de una habilidad mientras subes</td>
+</tr>
+<tr>
+<td><strong>17</strong></td>
+<td>Rugido agravante</td>
+<td>Tercera pasiva</td>
+<td>+100 % de amenaza y +5,5 % de ataque al pegar de frente</td>
+</tr>
+<tr>
+<td><strong>20</strong></td>
+<td>Tablero Daevanion <strong>Zikel</strong></td>
+<td>Ver la sección Daevanion</td>
+<td>Su núcleo es amplificación de daño y tolerancia al daño</td>
+</tr>
+<tr>
+<td><strong>21</strong></td>
+<td><strong>Arrebato</strong></td>
+<td>Pasa a ser tu primera pasiva: reinicia y reparte (es gratis)</td>
+<td>Cada bloqueo te da a ti <strong>y a tu grupo</strong> +5,5 % de daño JcE durante 20 s (rango 1; a rango 7, +8,5 %)</td>
+</tr>
+<tr>
+<td><strong>22</strong></td>
+<td><strong>Ranura de stigma 1</strong>; misión de <strong>Ascensión</strong> (bloquea la historia hasta llenar la barra); la energía Odyle empieza a acumularse</td>
+<td>Stigma: <strong>Escudo de perdición</strong>, hasta nivel 5</td>
+<td>Ver la sección de stigmas</td>
+</tr>
+<tr>
+<td><strong>23</strong></td>
+<td>Voluntad de supervivencia</td>
+<td>Rango 1</td>
+<td>Resistencia a aturdimientos; importa contra jefes, no en el mundo abierto</td>
+</tr>
+<tr>
+<td><strong>25</strong></td>
+<td>Restricción de dolor</td>
+<td>Rango 1</td>
+<td>Tolerancia al daño al recibir golpes; defensiva</td>
+</tr>
+<tr>
+<td><strong>27</strong></td>
+<td><strong>Ranura de stigma 2</strong></td>
+<td><strong>Castigo empíreo</strong>, hasta nivel 5</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>30</strong></td>
+<td>Tablero Daevanion <strong>Vaizel</strong></td>
+<td>Déjalo para el final</td>
+<td>Su núcleo es daño crítico; según una guía del test global, el crítico del Templar no da para que rinda (fuente única)</td>
+</tr>
+<tr>
+<td><strong>32</strong></td>
+<td><strong>Ranura de stigma 3</strong>; segunda <strong>Ascensión</strong></td>
+<td><strong>Espada de ejecución</strong>, hasta nivel 5</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>37</strong></td>
+<td><strong>Ranura de stigma 4</strong></td>
+<td><strong>Armadura doble</strong> si juegas solo, <strong>Escudo de Nezekan</strong> si vas en grupo</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>40</strong></td>
+<td>Tablero Daevanion <strong>Triniel</strong></td>
+<td>Antes que Vaizel</td>
+<td>Su núcleo es el multigolpe, que tus especializaciones ya potencian</td>
+</tr>
+<tr>
+<td><strong>45</strong></td>
+<td>Tablero <strong>Azphel</strong> (sólo PvP)</td>
+<td>Reinicia los puntos de habilidad para el endgame (gratis)</td>
+<td>Lo que subiste para sobrevivir solo (robo de vida, curaciones) se cambia por daño</td>
+</tr>
+</tbody>
+</table>
+<aside aria-label="Lo que no hemos visto todavía" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"/></svg>Lo que no hemos visto todavía</p><div class="starlight-aside__content"><p>Los desbloqueos del 1 al 25 están leídos en el cliente. Los de stigma (22/27/32/37) y tableros (12/20/30/40/45) salen del propio cliente y del test global. Las filas de 27 en adelante son recomendación sobre datos de las fichas, no algo que hayamos jugado.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="especializaciones-cuál-elegir">Especializaciones: cuál elegir</h2><a class="sl-anchor-link" href="#especializaciones-cuál-elegir"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Especializaciones: cuál elegir»</span></a></div>
+<p>A rango 8 cada habilidad te ofrece <strong>tres</strong> opciones y eliges una; a rango 12 y 16 entra una sola, fija, pero esos rangos sólo se alcanzan con los extras del tablero, Arcanas y soulbind: mientras subes, lo que eliges es la de 8. Elegir y <strong>colocar</strong> son dos pasos: después de elegirla, arrástrala al hueco de la estrella. Se cambia gratis con el reinicio de puntos.</p>
+<table>
+<thead>
+<tr>
+<th>Habilidad</th>
+<th>Para subir de nivel solo</th>
+<th>Contra jefes / en grupo</th>
+<th>Por qué</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Estacazo impetuoso</strong></td>
+<td>+50 % de <strong>multigolpe</strong> al acertar</td>
+<td>igual</td>
+<td>Las otras dos son maná (te sobra con este botón) y un 1 % de robo de vida. El multigolpe es daño puro en tu botón más usado. A 12 recorta 2 s el enfriamiento de Estacazo de amparo; a 16 añade el cuarto golpe de la cadena, «Embestida amenazante»</td>
+</tr>
+<tr>
+<td><strong>Azotamiento continuo</strong></td>
+<td><strong>3 % de robo de vida</strong> en Estacazo de amonestación</td>
+<td>“cuantos menos objetivos, más daño” (hasta +12 %)</td>
+<td>Contra grupos de 3-4 mobs el bonus por pocos objetivos casi no entra; el robo de vida te ahorra pociones y paradas. Contra un solo jefe, cámbialo. Si te quedas sin maná, la tercera (-20 % de coste)</td>
+</tr>
+<tr>
+<td><strong>Castigo</strong></td>
+<td><strong>10 % de robo de vida</strong></td>
+<td>+30 % de velocidad de habilidad, o daño continuo</td>
+<td>Es un golpe de área enorme: un 10 % de lo que hace a 4 mobs es media barra de vida. En jefes no hace falta y la velocidad o el daño continuo rinden más</td>
+</tr>
+<tr>
+<td><strong>Juicio</strong></td>
+<td>daño adicional contra objetivos en estado de <strong>tipo impacto</strong></td>
+<td>daño adicional al acertar</td>
+<td>Golpe de escudo aturde a los mobs siempre, así que el estado de impacto está casi siempre puesto. Los jefes son inmunes al aturdimiento: ahí, la incondicional. Más adelante (endgame): a 12, crítico garantizado; a 16, Juicio pierde el enfriamiento</td>
+</tr>
+<tr>
+<td><strong>Golpe de escudo</strong></td>
+<td><strong>quita el coste de maná</strong> y devuelve 200 al acertar</td>
+<td>igual</td>
+<td>Lo pulsas cada 10 s y es el que abre todo; que dé maná en vez de gastarlo arregla el problema de maná de la clase</td>
+</tr>
+<tr>
+<td><strong>Aniquilación</strong></td>
+<td>+50 % de multigolpe</td>
+<td>+100 % de daño contra objetivos inmunes al control</td>
+<td>Contra jefes (inmunes) Aniquilación sólo sale con un 5 % de probabilidad; esta opción no la hace salir más, sólo dobla el daño cuando sale</td>
+</tr>
+<tr>
+<td><strong>Estacazo de amparo</strong></td>
+<td><strong>-5 s de enfriamiento</strong></td>
+<td>curación continua durante Amparo</td>
+<td>Menos enfriamiento son más curaciones y más ventanas de Juicio. Si vas justo de vida, la curación continua</td>
+</tr>
+<tr>
+<td><strong>Aprisionamiento</strong></td>
+<td><strong>reinicio del enfriamiento al matar</strong></td>
+<td>-20 % de resistencia a estados</td>
+<td>Es la especialización de farmeo: atraes, matas, atraes al siguiente</td>
+</tr>
+<tr>
+<td><strong>Asalto con escudo</strong></td>
+<td>+10 m de alcance</td>
+<td>igual</td>
+<td>Lo convierte en un acercamiento de 20 m</td>
+</tr>
+<tr>
+<td><strong>Embestida decadente</strong></td>
+<td>+3 s de Decadencia</td>
+<td>igual</td>
+<td>Más tiempo con la defensa del enemigo un 25 % más baja</td>
+</tr>
+<tr>
+<td><strong>Eliminación de impacto</strong></td>
+<td>recupera un 20 % de vida</td>
+<td>añade [Captura]</td>
+<td>Si la usas es porque te han aturdido en mal momento: que además te cure</td>
+</tr>
+</tbody>
+</table>
+<p>Las que no son principales no llegarán a rango 8 mientras subes; elige sólo la de las que lleguen. Las guías coreanas dicen “todas las activas a 8 primero”, pero en el global el tope por nivel no lo permite hasta tarde, así que aquí van primero las siete principales.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="stigmas-cuáles-cuándo-y-hasta-dónde">Stigmas: cuáles, cuándo y hasta dónde</h2><a class="sl-anchor-link" href="#stigmas-cuáles-cuándo-y-hasta-dónde"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Stigmas: cuáles, cuándo y hasta dónde»</span></a></div>
+<p>Se abren cuatro ranuras: 22, 27, 32 y 37. Se suben con <strong>fragmentos de stigma</strong> (aproximadamente uno por nivel desde el 22, más los de otras fuentes), no con puntos, y su reinicio puede costar: <strong>elige y no cambies</strong>.</p>
+<ul>
+<li><strong>Cuánto subirlas:</strong> primero <strong>nivel 5</strong> en cada una. Del 1 al 5 cuestan 1 fragmento por nivel; del 6 al 10, 2. Los efectos extra saltan a 5, 10, 15 y 20, y el daño y la duración suben en cada nivel (Escudo de perdición pasa de ~2.050 a ~4.150 de daño). Lleva las cuatro a 5 antes de subir ninguna más allá.</li>
+<li><strong>No repartas</strong> los fragmentos entre las cuatro a la vez. Termina una y pasa a la siguiente.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Ranura</th>
+<th>Stigma (cliente ES)</th>
+<th>Qué hace</th>
+<th>Por qué esta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>22</strong></td>
+<td><strong>Escudo de perdición</strong> (Shield of Ruin)</td>
+<td>Carga hasta 20 m, derriba al objetivo (a los mobs siempre), te pone una barrera y <strong>abre Juicio 3 s</strong>, la ventana más larga. Enfriamiento 30 s</td>
+<td>Te mete en el grupo, prepara Aniquilación (derribo) y Juicio en un solo botón. A nivel 5, al acertar reinicia un enfriamiento: el de Aniquilación según la base de datos coreana (el cliente lo muestra cortado)</td>
+</tr>
+<tr>
+<td><strong>27</strong></td>
+<td><strong>Castigo empíreo</strong> (Sovereign’s Punishment)</td>
+<td>Área de 4 m a 20 m de distancia que aturde a los 4 objetivos (a los mobs siempre). Enfriamiento 1 min</td>
+<td>Abrir un grupo grande aturdiéndolo entero deja a todos listos para Aniquilación y te da tiempo</td>
+</tr>
+<tr>
+<td><strong>32</strong></td>
+<td><strong>Espada de ejecución</strong> (Executioner’s Sword)</td>
+<td>Área frontal que baja un 30 % la defensa 5 s y pega un 20 % más a objetivos aturdidos o derribados. Enfriamiento 45 s</td>
+<td>Daño y rotura de defensa, y tu combo ya deja a los mobs aturdidos</td>
+</tr>
+<tr>
+<td><strong>37</strong></td>
+<td><strong>Armadura doble</strong> (solo) o <strong>Escudo de Nezekan</strong> (grupo)</td>
+<td>Armadura doble: +30 % de tolerancia al daño JcE 10 s. Escudo de Nezekan: barrera del 41 % de vida para ti y el grupo durante 3 s, para un golpe fuerte concreto</td>
+<td>La cuarta es la de supervivencia. Solo, la tuya; en grupo, la del grupo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Por qué difieren de <a href="/es/classes/templar-leveling-plan/">Templar: qué subir y cuándo</a>:</strong> aquella página da también la lectura de <strong>tanque de grupo</strong>; esta es para subir <strong>solo</strong> matando grupos de mobs, y por eso las de 27 y 32 son de daño y control. <strong>Si tanqueas mazmorras en grupo fijo</strong>, la lectura coreana de tanque cambia la 27 por <strong>Escudo de protección</strong> (bloqueo garantizado) o <strong>Provocación</strong>. Ojo: en el global Provocación no tiene amenaza fija, sólo provoca de verdad a jugadores, así que en PvE vale por su daño y su debilitamiento.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="tablero-daevanion">Tablero Daevanion</h2><a class="sl-anchor-link" href="#tablero-daevanion"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Tablero Daevanion»</span></a></div>
+<p>Se abren cinco tableros: <strong>Nezekan</strong> a 12, <strong>Zikel</strong> a 20, <strong>Vaizel</strong> a 30, <strong>Triniel</strong> a 40 y <strong>Azphel</strong> a 45 (sólo PvP). Los nodos se compran con <strong>cristales Daevanion</strong>, que salen de las mismas mazmorras selladas y misiones verdes que los puntos de habilidad. El coste de cada nodo sube según avanzas (de 2 a 15 cristales) y devolver uno cuesta <strong>5.000 Kinah</strong> en el global.</p>
+<p>Orden de prioridad dentro de cada tablero:</p>
+<ol>
+<li><strong>Nodos “+1 de nivel de habilidad”</strong> de tus habilidades principales: Estacazo impetuoso, Azotamiento continuo, Juicio, Castigo, Golpe de escudo, Aniquilación, Estacazo de amparo, y de pasivas como Favor de condena o Arrebato. Un nodo así es un rango más sin gastar puntos, cuenta para llegar a las especializaciones (lo vimos en Estacazo impetuoso: “(+1)” y la de 8 desbloqueada) y es una de las vías para pasar de 10. Si además se salta el tope por nivel no está comprobado.</li>
+<li><strong>Ataque adicional</strong> y <strong>amplificación de daño</strong> que te queden de camino.</li>
+<li><strong>Reducción de enfriamiento</strong> y <strong>velocidad de combate</strong> (el núcleo de Nezekan): más Golpes de escudo, más ventanas de Juicio.</li>
+<li><strong>Vida, defensa y maná</strong> sólo como paso para llegar a un nodo bueno.</li>
+<li><strong>El daño crítico (Vaizel), lo último.</strong> Una guía del test global dice que el crítico del Templar no da para que rinda; es fuente única, y Favor de condena (+crítico) y el crítico garantizado de Juicio a 12 podrían cambiarlo en el endgame.</li>
+</ol>
+<p>Gasta los cristales el mismo día que los ganas: el tablero es una parte grande de tu poder temprano.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="lo-que-no-conviene-hacer">Lo que no conviene hacer</h2><a class="sl-anchor-link" href="#lo-que-no-conviene-hacer"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Lo que no conviene hacer»</span></a></div>
+<ul>
+<li><strong>Dejar puntos sin gastar.</strong> Si tus principales están al tope, el sobrante va a la siguiente de la lista; es gratis cambiarlo luego.</li>
+<li><strong>Subir Aprisionamiento, Asalto con escudo, Eliminación de impacto o las pasivas defensivas</strong> mientras puedas subir alguna de daño. Son utilidades: a rango 1 ya hacen su trabajo, y sólo reciben el sobrante.</li>
+<li><strong>Esquivar los golpes normales.</strong> Bloquearlos activa Arrebato (daño para el grupo), Escudo de amparo (curación) y Embestida decadente (rotura de defensa).</li>
+<li><strong>Repartir fragmentos de stigma</strong> entre varias a la vez, o subir una más allá de 5 antes de tener las cuatro a 5.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="fuentes">Fuentes</h2><a class="sl-anchor-link" href="#fuentes"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Fuentes»</span></a></div>
+<p>Cliente global en español, acceso anticipado: capturas propias de las fichas de habilidades, stigmas y tableros Daevanion del 30-09 y 01-10-2026 (nota de investigación <code dir="auto">research/notes/global-client/templar-es-client-2026-09-30.md</code> y sesión de captura del 01-10-2026). Costes por rango de la base de datos de skills de Inven (KR, 22-09-2026). Reglas del marco global (4 stigmas, fragmentos 1/2/4/8, reinicio gratis de puntos) del Launch Scale Test (17-21-09-2026). Orden de leveo y especializaciones de leveo de las guías del test global <code dir="auto">K4ugOm_tUWI</code> y <code dir="auto">IAdq5uXPXuQ</code>, contrastadas con <a href="/es/classes/templar-leveling-plan/">Templar: qué subir y cuándo</a>, que sigue siendo la página de referencia con las cifras coreanas y taiwanesas.</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/es/classes/chanter-skills-guide/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Página anterior<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Chanter: todas las skills y combos</span></span></a><a href="/es/roadmaps/templar-pve-rotation/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Siguiente página<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Templar: rotación y macros (PvE)</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

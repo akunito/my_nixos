@@ -253,7 +253,8 @@
     if (document.querySelector('[data-skill]')) bind();
 
     // Prose matching needs the class payload up front, and only class pages get it.
-    var root = pageSlug && path.indexOf('/classes/') !== -1
+    // Class pages, plus any page that names its class in frontmatter (roadmaps/).
+    var root = pageSlug && (path.indexOf('/classes/') !== -1 || document.body.dataset.skillClass)
       ? document.querySelector('.sl-markdown-content') : null;
     if (!root) return;
     load(pageSlug).then(function (cls) {
