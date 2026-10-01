@@ -416,7 +416,6 @@ in
       freshrss   = { port = 8084; };
       nextcloud  = { port = 8089; };
       pictures   = { port = 2283; maxBodySize = "4G"; };  # Immich (large photo/video uploads)
-      syncthing  = { port = 8384; };
       status     = { port = 3009; };
       plane      = { port = 3003; };
       plane-dev  = { port = 3007; maxBodySize = "50M"; };  # isolated Plane dev/test clone (own pg/redis/mq/minio)
@@ -601,7 +600,9 @@ in
       # matrix (synapse + element-web + matrix-redis) ARCHIVED 2026-09-15: not used; `docker compose down`
       # run by hand (bind-mounted data + matrix_redis-data volume + pg db "matrix" kept). Re-add to reinstate.
       { name = "nextcloud"; path = "nextcloud"; }
-      { name = "syncthing"; path = "syncthing"; }
+      # syncthing RETIRED 2026-10-01: phones moved to Immich/Nextcloud (last device seen
+      # 2026-07-29, last file 2026-07-11). `docker compose down` by hand; ~/.homelab/syncthing
+      # (config, device keys) kept. Synced data lives in Nextcloud's data dirs and stays.
       { name = "uptime-kuma"; path = "uptime-kuma"; }
       # unifi, romm, calibre: moved to the NAS as on-demand stacks 2026-09-30
       # (AINF-401) — `nas-svc` there, /svc in the infra bot here.
