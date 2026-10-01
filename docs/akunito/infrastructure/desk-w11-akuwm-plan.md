@@ -1186,6 +1186,46 @@ Driven case `fsdrag` (a borderless monitor-sized window does not move, an
 ordinary one does). Shipped by reloading only the script (19:39:31), the
 daemon untouched, Aion 2 alive throughout.
 
+### 10.46 0.2.1: the lock screen was being tiled; the suites on the release (2026-10-01 10:15 → 11:00)
+
+**What the full `tests/wm` run found.** First run on 0.2.0 at 10:17: 195/204,
+the failures being my two new cases and four checks of `tiling` ("they fill
+the monitor": the two windows laid out in the right two thirds of a
+workspace `EmptyWs` had called empty). `tiling` alone passed, so the stranger
+came with the desk's state: `glazewm query workspaces` listed **LockApp,
+"Windows Default Lock Screen", 3840 wide, tiling, on workspace 20**, and the
+daemon's geometry journal had it -- AkuWM had tiled the lock screen at the
+10:15 resume. The lock screen is a visible, titled, uncloaked top-level
+CoreWindow while the desk is locked; at unlock the shell cloaks it, the window
+is refused as CloakedElsewhere (a *temporary* reason, by design: a window on
+another virtual desktop keeps its slot) and the tiling slot stays behind.
+Fix in `3822696`: `UnmanagedReason.Shell`, `ShadowModel.IsShellSurface`
+(top-level `Windows.UI.Core.CoreWindow`, plus LockApp, ShellExperienceHost,
+StartMenuExperienceHost, SearchHost, TextInputHost by process), permanent, so
+nothing of the shell ever enters a layout. `ShellSurfaceTests`. Released as
+**v0.2.1** with the pipe-listener fix from 10.44; installed through the
+public bootstrap one-liner at 10:58 (UAC by Diego); after it every shell
+window reads `reason=Shell`, the start has no pipe ERR, the compat view has
+no LockApp.
+
+**The two new cases, and what they taught about the harness.**
+`capslock`: the chord fired from the first version; AutoHotkey's `Send`
+turns Caps Lock off for its own duration and puts it **back** afterwards
+(`SetStoreCapsLockMode`, default on), undoing the handler 600 ms after the
+trace had logged "now off". The test sends with it off. The detour through
+a `Hotkey()` registration was reverted. `fsdrag`: the gesture cannot be
+driven (it polls the physical button, as `tiledrag` already said), so the
+case checks `FullscreenUnderMouse()` -- moved into `lib-layout-journal.ahk`
+-- by its three routes with a journal of its own; the daemon places a new
+window on the focused workspace's monitor shortly after it appears, so the
+case compares against the monitor the window lands on and makes sure the
+pointer is on its window before asking. Three green runs in a row.
+
+**`tests/fullscreen` on 0.2.0**: 47/48, case 11b "present modes with the
+chat window on the same workspace: no frames" -- PresentMon captured nothing
+that once; rerun by hand through the capture daemon: 100% direct (471
+frames). Noted as a capture flake, not a regression.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
