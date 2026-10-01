@@ -85,6 +85,12 @@ ${onDemandCases}
   # Trees the VPS backup puller must be able to read even though a rootless
   # container owns them. See the nas-backup-acl service below.
   backupAclPaths = systemSettings.nasBackupAclPaths or [ ];
+  # NVIDIA dGPU (system/hardware/nvidia.nix). Resume units wait for the driver's
+  # own resume before starting containers that may open the GPU.
+  nvidiaGpu = (systemSettings.gpuType or "none") == "nvidia";
+  nvidiaPm = nvidiaGpu && (systemSettings.nvidiaPowerManagementEnable or false);
+  afterNvidiaResume = lib.optional nvidiaPm "nvidia-resume.service";
+  dockerBin = "${config.virtualisation.docker.package}/bin/docker";
 in
 {
   config = lib.mkIf nasEnabled {
@@ -738,10 +744,56 @@ HEADER
       '';
     };
 
+    # GPU guard: last thing before nvidia-suspend. The compose lists above stop
+    # every stack they name, but a GPU container started by hand (`docker run
+    # --device nvidia.com/gpu=all`) belongs to no list and would ride into S3
+    # holding VRAM, which PreserveVideoMemoryAllocations then dumps to
+    # /var/tmp (up to 24 GB) and restores on resume. Stop any container on
+    # either daemon whose HostConfig asks for the GPU, then log whatever still
+    # has a CUDA context so it shows up in the journal and on the textfile.
+    # Never fails: a wanted unit failing does not stop the suspend anyway, and
+    # this one must not delay it past its timeout.
+    systemd.services.nas-gpu-pre-suspend = lib.mkIf nvidiaGpu {
+      description = "Stop GPU containers and report leftover CUDA processes before suspend";
+      before = [ "sleep.target" "nvidia-suspend.service" ];
+      after = [
+        "nas-docker-pre-suspend.service"
+        "nas-docker-rootless-pre-suspend.service"
+        "nas-docker-ondemand-pre-suspend.service"
+      ];
+      wantedBy = [ "sleep.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        TimeoutSec = 90;
+      };
+      path = [ pkgs.coreutils pkgs.gnugrep pkgs.util-linux ];
+      script = ''
+        stop_gpu_containers() {
+          for id in $("$@" ps -q 2>/dev/null); do
+            if "$@" inspect -f '{{json .HostConfig}}' "$id" 2>/dev/null | grep -q -e 'nvidia.com/gpu' -e '"Capabilities":\[\["gpu"'; then
+              echo "  stopping GPU container $id ($("$@" inspect -f '{{.Name}}' "$id"))"
+              "$@" stop -t 30 "$id" || true
+            fi
+          done
+        }
+        stop_gpu_containers ${dockerBin}
+      '' + lib.optionalString isRootless ''
+        stop_gpu_containers runuser -u ${username} -- env XDG_RUNTIME_DIR=/run/user/1000 DOCKER_HOST=unix:///run/user/1000/docker.sock ${dockerBin}
+      '' + ''
+        left=$(${config.hardware.nvidia.package.bin}/bin/nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv,noheader 2>/dev/null || true)
+        n=$(printf '%s' "$left" | grep -c . || true)
+        [ "$n" -gt 0 ] && printf 'nas-gpu-pre-suspend: %s CUDA process(es) still on the GPU:\n%s\n' "$n" "$left"
+        printf '# HELP nas_gpu_presuspend_leftover_procs CUDA processes alive at the last pre-suspend check\n# TYPE nas_gpu_presuspend_leftover_procs gauge\nnas_gpu_presuspend_leftover_procs %s\n' "$n" \
+          > /var/lib/prometheus-node-exporter/textfile/nas_gpu_presuspend.prom.tmp \
+          && mv /var/lib/prometheus-node-exporter/textfile/nas_gpu_presuspend.prom.tmp /var/lib/prometheus-node-exporter/textfile/nas_gpu_presuspend.prom
+        exit 0
+      '';
+    };
+
     # Docker post-resume (root daemon): start rootful compose projects
     systemd.services.nas-docker-post-resume = {
       description = "Start root Docker Compose projects after resume";
-      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ] ++ afterNvidiaResume;
       wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
       serviceConfig = {
         Type = "oneshot";
@@ -763,7 +815,7 @@ HEADER
     # Docker post-resume (rootless daemon): start rootless compose projects
     systemd.services.nas-docker-rootless-post-resume = lib.mkIf isRootless {
       description = "Start rootless Docker Compose projects after resume";
-      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
+      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ] ++ afterNvidiaResume;
       wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" ];
       serviceConfig = {
         Type = "oneshot";

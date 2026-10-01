@@ -15,8 +15,15 @@ in
     profile = "homelab";
     envProfile = "NAS_PROD";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles NAS_PROD -s -u";
-    gpuType = "none";
-    nouveauBlacklistEnable = true; # RTX 3090 going in before its driver ticket (nas-3090-storage-rework)
+    # The 3090 is the only GPU anything here configures. The 5600G iGPU needs no
+    # settings: amdgpu binds by modalias and keeps renderD128 for Jellyfin, because
+    # nvidia.nix keeps nvidia_drm unloaded (no second /dev/dri node).
+    gpuType = "nvidia";
+    nvidiaPersistencedEnable = true;
+    nvidiaPowerManagementEnable = true;   # nightly S3 23:00 -> 16:00
+    nvidiaContainerToolkitEnable = true;  # AI stacks (llama.cpp / vLLM / whisper) in rootless + rootful docker
+    nvidiaPowerLimitWatts = 300;          # ESTIMATE, not measured. Stock cap: read "Default Power Limit" in `nvidia-smi -q -d POWER`; re-tune from measured tok/s per W.
+    nvidiaGpuExporterEnable = true;       # :9835, scraped by VPS Prometheus over tailscale0
 
     # ============================================================================
     # HEADLESS SERVER — disable GUI/desktop features

@@ -24,6 +24,15 @@
     # GPU defaults
     gpuType = "intel"; # Options: "amd", "intel", "nvidia", "none" (for VMs/containers)
     nouveauBlacklistEnable = false; # dGPU present but no driver wanted yet (homelab profile)
+    # NVIDIA (system/hardware/nvidia.nix, only read when gpuType = "nvidia"; headless compute)
+    nvidiaDriverChannel = "production";     # attr of boot.kernelPackages.nvidiaPackages; 25.11: stable == production == 580.142
+    nvidiaOpenKernelModule = true;          # Turing+ (RTX 20xx and newer); false only for Pascal and older
+    nvidiaPersistencedEnable = false;       # headless: keep the GPU initialised with no client attached
+    nvidiaPowerManagementEnable = false;    # NVreg_PreserveVideoMemoryAllocations + nvidia-suspend/resume (boxes that S3)
+    nvidiaContainerToolkitEnable = false;   # CDI for docker (root + rootless): --device nvidia.com/gpu=all
+    nvidiaPowerLimitWatts = null;           # int = `nvidia-smi -pl` at boot and after every resume; null = leave the VBIOS default
+    nvidiaGpuExporterEnable = false;        # prometheus nvidia_gpu_exporter (nvidia-smi based)
+    nvidiaGpuExporterPort = 9835;
 
     # Kernel defaults
     kernelPackages = pkgs.linuxPackages_latest;

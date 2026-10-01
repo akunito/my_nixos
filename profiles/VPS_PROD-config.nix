@@ -562,6 +562,8 @@ in
       { name = "radarr";    host = "100.64.0.1";      port = 9708; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
       { name = "prowlarr";  host = "100.64.0.1";      port = 9709; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
       { name = "bazarr";    host = "100.64.0.1";      port = 9710; node = "nas"; scrapeInterval = "60s"; scrapeTimeout = "30s"; }
+      # NAS RTX 3090 (nvidia_gpu_exporter, runs nvidia-smi per scrape: 30s is plenty)
+      { name = "nvidia_gpu"; host = "100.64.0.1";     port = 9835; node = "nas"; scrapeInterval = "30s"; scrapeTimeout = "20s"; }
     ];
 
     # Blackbox exporter (HTTP probes for public services)

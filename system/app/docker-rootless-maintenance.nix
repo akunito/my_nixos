@@ -66,8 +66,25 @@ let
     exit 0
   '';
 
+  # Same bug class for /run (also --copy-up'd): /run/opengl-driver is a symlink
+  # into the store, so the daemon keeps the generation it started with. The
+  # NVIDIA CDI spec bind-mounts /run/opengl-driver into every GPU container, so
+  # after a driver bump + nix-gc the rootless GPU containers would get a dangling
+  # driver dir. Re-point it through the live bind of the real /run.
+  fixRunOpenglDriver = pkgs.writeShellScript "docker-rootless-fix-run-opengl-driver" ''
+    [ -L /run/opengl-driver ] || exit 0
+    for ro in /run/.ro*/; do
+      ro=''${ro%/}
+      if [ -e "$ro/opengl-driver" ]; then
+        ${coreutils}/ln -sfn "''${ro#/run/}/opengl-driver" /run/opengl-driver
+        exit 0
+      fi
+    done
+    exit 0
+  '';
   dockerdChild = pkgs.writeShellScript "dockerd-rootless-child" ''
     ${fixEtcStatic}
+    ${fixRunOpenglDriver}
     exec ${docker}/bin/dockerd "$@"
   '';
 in

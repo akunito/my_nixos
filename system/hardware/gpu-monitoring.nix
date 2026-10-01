@@ -33,10 +33,20 @@
       intel-gpu-tools
     ])
     
-    # --- Fallback / Generic (NVIDIA, unknown, etc.) ---
-    (lib.mkIf (systemSettings.gpuType != "amd" && systemSettings.gpuType != "intel") [
+    # --- NVIDIA ---
+    # nvidia-smi itself comes with the driver (hardware.nvidia adds its .bin).
+    # nvtopPackages.nvidia is NOT in cache.nixos.org (its CUDA deps are unfree):
+    # small local build.
+    (lib.mkIf (systemSettings.gpuType == "nvidia") [
       btop
-      nvtopPackages.modelling  # Generic fallback
+      nvtopPackages.nvidia
+    ])
+
+    # --- No GPU / unknown ---
+    # Was `nvtopPackages.modelling`, an attribute 25.11 does not have: every
+    # profile reaching this branch with gpuMonitoringEnable = true failed to eval.
+    (lib.mkIf (!(lib.elem systemSettings.gpuType [ "amd" "intel" "nvidia" ])) [
+      btop
     ])
   ];
   
