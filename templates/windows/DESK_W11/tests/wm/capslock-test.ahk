@@ -5,6 +5,11 @@
 ; shell.
 ; Run: AutoHotkey64.exe capslock-test.ahk -> %TEMP%\perf\capslock-test.txt
 SendLevel 1
+; Send turns Caps Lock off for the duration of a Send and puts it BACK
+; afterwards (SetStoreCapsLockMode, default on): with it the chord's handler
+; ran, logged "now off", and the test read Caps Lock on again 600 ms later
+; (2026-10-01 10:25, trace). The test must not restore what it is testing.
+SetStoreCapsLockMode false
 out := "", fails := 0
 Check(name, got, want) {
     global out, fails

@@ -31,8 +31,15 @@ MonitorGet 1, &L, &T, &R, &B
 fs := Gui("-Caption +AlwaysOnTop -DPIScale", "fsdrag fullscreen")
 fs.BackColor := "202020"
 fs.Show(Format("x{1} y{2} w{3} h{4} NoActivate", L, T, R - L, B - T))
-Sleep 500
-WinGetPos &x, &y, &w, &h, fs.Hwnd
+; The daemon places a new window once it sees it (a floating one covering the
+; monitor is given the whole monitor); wait for the rectangle to settle.
+Loop 50 {
+    Sleep 100
+    WinGetPos &x, &y, &w, &h, fs.Hwnd
+    if (x = L && y = T && w = R - L && h = B - T)
+        break
+}
+out .= Format("     window {1},{2} {3}x{4} monitor {5},{6} {7}x{8}`n", x, y, w, h, L, T, R - L, B - T)
 Check("0 setup: the window is the monitor's size", (x = L && y = T && w = R - L && h = B - T) ? 1 : 0, 1)
 Check("1 a monitor-sized window is fullscreen", Over(fs.Hwnd), 1)
 fs.Destroy()

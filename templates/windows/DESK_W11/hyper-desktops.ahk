@@ -550,17 +550,15 @@ winBare := false
 ; on the CapsLock key itself: `^!#CapsLock::` fired once after a reload and
 ; never again for injected chords (three probes, 16:48-16:55), so it could not
 ; be tested; a letter chord goes the same way as every other Hyper chord.
-; Registered with Hotkey() rather than `::`: the static form never fired for
-; injected chords (tests/wm capslock, 2026-09-30/10-01) while every Hotkey()-
-; registered chord from bindings.tsv did; Diego's physical press worked both
-; ways.
-CapsOff(*) {
+; The driven test for this chord sends with SetStoreCapsLockMode OFF: a Send
+; otherwise puts Caps Lock back the way it found it, undoing the handler
+; (2026-10-01: handler ran and logged "now off", test read it on again).
+^!#+m:: {
     SetCapsLockState "Off"
     Dbg("capslock: forced off, now " (GetKeyState("CapsLock", "T") ? "ON" : "off"))
     ToolTip "Caps Lock off"
     SetTimer () => ToolTip(), -900
 }
-Hotkey "^!#+m", CapsOff, "On"
 ^!#+r:: Reload
 ^!#+Escape:: Suspend
 
