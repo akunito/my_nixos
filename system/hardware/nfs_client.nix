@@ -17,14 +17,24 @@ let
       # measured twice on real suspends of LAPTOP_YOGA (2026-10-01, 11:04:33 ->
       # 11:06:33 and 11:11:50 -> 11:13:50). So queue the stop and detach the
       # share right behind it; the gap is milliseconds, not the 15 s window of
-      # the old umount-then-stop order.
+      # the old umount-then-stop order. (The stop was not the 2 min — see below.)
       if [ -n "$1" ] && $S is-active -q "$1"; then
         ${pkgs.coreutils}/bin/mkdir -p "$parkdir"; : > "$parkdir/$1"
         $S stop --no-block "$1" || true
       fi
       if ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M "$2" >/dev/null 2>&1; then
-        # -i: plain umount2(MNT_DETACH), no umount.nfs helper (it talks to the server).
-        ${pkgs.util-linux}/bin/umount -l -i "$2" || true
+        # umount2(MNT_DETACH) itself blocks ~120 s against a dead NFSv4 server
+        # (measured: umount -l -i -c, 120295 ms) — the mount leaves the namespace
+        # at once, then the kernel tears the v4 session down over RPC. So the
+        # syscall runs in its own transient unit and nobody waits for it; the
+        # loop below only waits for the namespace to be clean.
+        ${pkgs.systemd}/bin/systemd-run --no-block --collect --quiet \
+          --unit="nfs-detach-$(${pkgs.coreutils}/bin/date +%s%N)" \
+          ${pkgs.util-linux}/bin/umount -l -i -c "$2" || true
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          ${pkgs.gnugrep}/bin/grep -qE " $2 .* - nfs4? " /proc/self/mountinfo || break
+          ${pkgs.coreutils}/bin/sleep 0.3
+        done
       fi
     }
   '' + (lib.concatMapStringsSep "\n" (entry:
