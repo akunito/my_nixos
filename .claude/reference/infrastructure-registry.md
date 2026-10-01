@@ -53,7 +53,7 @@ All doc paths relative to `docs/akunito/infrastructure/`.
 | miniflux | freshrss.akunito.com | 8084 | pg:miniflux | `miniflux` |
 | miniflux-ai | — | — | — | `miniflux-ai` |
 | nextcloud | nextcloud.akunito.com | 8089 | maria:nextcloud, redis:db1 | `nextcloud` |
-| syncthing | syncthing.akunito.com | 8384 | — | `syncthing` |
+| ~~syncthing~~ | RETIRED 2026-10-01 (compose down, `~/.homelab/syncthing` kept) | — | — | — |
 | obsidian-remote | obsidian.akunito.com | 8090 | — | `obsidian-remote` |
 | uptime-kuma | status.akunito.com | 3009 | — | `uptime-kuma` |
 | cloudflared | — | — | — | NixOS native |

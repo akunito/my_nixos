@@ -50,7 +50,8 @@
 
   home.packages = userSettings.homePackages;
 
-  services.syncthing.enable = true;
+  # Retired 2026-10-01 (see syncthingEnable in lib/defaults.nix).
+  services.syncthing.enable = userSettings.syncthingEnable or false;
 
   xdg.enable = true;
   xdg.userDirs = {

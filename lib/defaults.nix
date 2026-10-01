@@ -1309,6 +1309,7 @@
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userThunderbirdEnable = true; # Thunderbird mail client (part of userBasicPkgs; opt out per profile)
+    syncthingEnable = false; # RETIRED 2026-10-01: Nextcloud + Immich + Plane replaced it; the VPS instance's phones last synced 2025-12 / 2026-07. true = user service + package back
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     openCodeEnable = false;   # OpenCode terminal coding agent, driven by the local GPU — see user/app/opencode/opencode.nix
     userMediaRecordingEnable = false; # OBS Studio, HandBrake, ffmpeg-full (screen recording)

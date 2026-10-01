@@ -708,11 +708,6 @@
             isFolderCollapsed = true;
             editedTitle = true;
             pins = {
-              "(unknown device) | Syncthing" = {
-                id = "72789936-e859-513e-8e36-359d20a87b40";
-                url = "https://syncthing.local.akunito.com/";
-                position = 144;
-              };
               "Vaultwarden Admin Panel" = {
                 id = "c8ca700c-5d2c-55ea-9653-000de562f1a5";
                 url = "https://vault.akunito.com/admin/users/overview";

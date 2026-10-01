@@ -30,7 +30,6 @@
       pkgs.bfg-repo-cleaner # Git history cleaner (BFG Repo-Cleaner)
 
       # Cloud & Sync
-      pkgs.syncthing
       pkgs-unstable.nextcloud-client
 
       # Communication & Messaging
@@ -61,7 +60,8 @@
     ]
     # Thunderbird: opt-out per profile (userThunderbirdEnable). Aga's LAPTOP_A
     # does not use it, and it is one of the heavier things in this list.
-    ++ lib.optional (userSettings.userThunderbirdEnable or true) pkgs-unstable.thunderbird;
+    ++ lib.optional (userSettings.userThunderbirdEnable or true) pkgs-unstable.thunderbird
+    ++ lib.optional (userSettings.syncthingEnable or false) pkgs.syncthing;
 
     # Pin the Nextcloud account's server URL.
     #

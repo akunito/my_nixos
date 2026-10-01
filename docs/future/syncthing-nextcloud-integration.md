@@ -1,3 +1,9 @@
+> **RETIRED 2026-10-01.** Syncthing is off everywhere: the VPS container is down
+> (config + device keys kept in `~/.homelab/syncthing`), desktops have
+> `syncthingEnable = false`. Phones moved to Immich (photos) and Nextcloud; the
+> last device was seen 2026-07-29 and the last file arrived 2026-07-11. Notes
+> live in Plane, Obsidian is only a fallback. Kept for history.
+
 # Syncthing + Nextcloud Integration - Analysis & Plan
 
 ## Status: ✅ FIXED (2026-01-29)
