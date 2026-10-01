@@ -16,7 +16,7 @@ related_files:
   - scripts/nas-docker-startup.sh
   - lib/defaults.nix
 date: 2026-09-30
-status: draft
+status: published
 ---
 
 # Servicios bajo demanda en el NAS
@@ -76,18 +76,19 @@ de `extpool/vps-backups`).
 - `nas-rtc-wake` programa siempre las 16:00: una suspensión manual deja el NAS fuera hasta el día siguiente.
 - La clave ssh VPS→NAS (sin `command=`) la comparten el bot de AkuCraft y `/restart` del bot de infra. No se toca.
 
-## Estado (2026-09-30 17:10)
+## Estado (2026-10-01 — CERRADO)
 
 | Fase | Estado |
 |---|---|
 | 0 Preparación | hecha |
-| 1 Mecanismo en el NAS | desplegada y probada (`nas-svc`, hook). Falta ver la suspensión real de las 23:00 con calibre, romm y unifi encendidos |
+| 1 Mecanismo en el NAS | hecha: la suspensión de las 23:00 bajó calibre, romm y unifi en 3 s y el NAS despertó sin contenedores sueltos |
 | 2 Datos | **hecha y verificada**: bibliotecas 704 516 ficheros con sha256, propietario, modo y tamaño idénticos (restore local a 630 MiB/s, sin delta); survival 39 380 ficheros idénticos incl. `level.dat`, `playerdata`, `.private`, EasyAuth, `.env`; RomM, UniFi, config de Calibre y el archivo de AkuCraft idénticos en contenido y propietario. Thumbnails: 1 367 816 entradas copiadas, sin hash |
-| 3 Ingress | NPM (6 proxy hosts), pfSense y deploy del VPS hechos; UniFi informando al NAS (2 switches); los tres responden por `.local`. **Pendiente: Cloudflare** (dashboard, hace falta iniciar sesión) |
+| 3 Ingress | NPM (6 proxy hosts), pfSense y deploy del VPS hechos; UniFi informando al NAS (2 switches); los tres responden por `.local`. Cloudflare movido por Diego (origen NPM), las tres públicas probadas de extremo a extremo |
 | 4 AkuCraft | VPS desplegado: bot solo Telegram y remapeado (probado `/status`, `/start` y `/stop` de staging por el mismo código, deja el NAS sin contenedores); Headscale hecho. **Pendiente**: `sync-user.sh` en DESK y LAPTOP_X13, probar `/start` en el grupo de Telegram y entrar con el cliente |
 | 5 Bots y backups | `/svc` y la línea "on-demand 3/7 on" verificados con `--selftest`; `nas-backup-data` y `nas-backup-akucraft` en verde con 0 avisos y el mundo dentro; 4 monitores de Kuma pausados (Calibre y Emulators, local y global). **Pendiente**: probar `/svc start|stop` con el botón en Telegram, 24 h sin alertas |
-| 6 Limpieza | no empezada; necesita OK |
-| 7 Documentación | hecha salvo el índice (`generate_docs_index.py` arrastra cambios de otra sesión) |
+| 6 Limpieza | hecha con OK de Diego: VPS 800 → 415 G usados (se conservan los 18 ficheros versionados en `VPS_services`); `services.restic` 332 G → 4,2 G con `restic check` sin errores (44 snapshots); `_old-2026-03` borrado. Los ~330 G de `extpool` quedan retenidos por los auto-snapshots de `extpool/vps-backups` hasta que caduquen (≈7 días) |
+| 7 Documentación | hecha. Extra: Calibre arranca en 20 s (init parcheado que respeta `SKIP_CHOWN`) |
+| Fuera de este ticket | `ssdpool` sin TRIM: Diego moverá los 4 SSD a puertos SATA de la placa; DESK y LAPTOP_X13 recogen las direcciones nuevas de Minecraft en su próxima actualización |
 
 Lecciones de hoy: `ssh host 'bash -s' < script` se queda sin script en cuanto algo dentro llama a ssh;
 un servidor de Minecraft reescribe `level.dat` como 0600 en cada guardado y enmascara la ACL de backup
