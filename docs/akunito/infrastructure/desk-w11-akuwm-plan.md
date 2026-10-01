@@ -1293,6 +1293,8 @@ floated where it is and the tree closes over the slot. The stubborn-window
 tests changed meaning accordingly: the refusal resolves itself, so the flag
 clears once the window is where it should be. Defect B of that handoff (the
 empty app list) is NordVPN's own race; "Browse apps" is the way round it.
+Diego, 2026-10-01 12:50: "nordvpn add apps tested funciona bien" -- the
+window floats, the modal shows, Defect A is closed.
 
 **Also in 0.2.3**: `git commit -m` (10.47 addendum).
 
