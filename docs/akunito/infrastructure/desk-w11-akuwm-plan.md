@@ -1259,6 +1259,16 @@ Unit 1101, GUI 43, CI and Release green. The commit message of `7aa24c6`
 lost a backticked phrase to zsh's command substitution (double-quoted
 `git commit -m`): single quotes or a heredoc for messages with backticks.
 
+**The Git path, live (12:05).** A notes edit in the Windows clone's
+`common.json`, then through the daemon: `git commit -m ...` → `c7feb036`,
+`git sync` → rebased over the six commits WSL had pushed meanwhile and pushed
+(`46c373e0` on origin; `behind 6, ahead 1, pushed`). Native git.exe from the
+Windows clone, no WSL hop: the 10.42 note is closed. One bug on the way: the
+commit read "akuwm: -m akuwm: k-sound notes": the shared parser only knows
+`--key`, so `-m` was a word of the message. Fixed in `edfc00d` with a
+real-repo test through the router; the GUI's section calls `GitSync.Commit`
+directly and never had the problem.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
