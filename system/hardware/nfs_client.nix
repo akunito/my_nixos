@@ -12,14 +12,18 @@ let
     S=${pkgs.systemd}/bin/systemctl
     parkdir=/run/nfs-automount-parked
     park() { # $1 unit $2 where
+      # A synchronous `systemctl stop` of the trigger while the share is still
+      # mounted waits for systemd's own unmount against the dead server: 2 min,
+      # measured twice on real suspends of LAPTOP_YOGA (2026-10-01, 11:04:33 ->
+      # 11:06:33 and 11:11:50 -> 11:13:50). So queue the stop and detach the
+      # share right behind it; the gap is milliseconds, not the 15 s window of
+      # the old umount-then-stop order.
       if [ -n "$1" ] && $S is-active -q "$1"; then
         ${pkgs.coreutils}/bin/mkdir -p "$parkdir"; : > "$parkdir/$1"
-        $S stop "$1" || true
+        $S stop --no-block "$1" || true
       fi
       if ${pkgs.util-linux}/bin/findmnt -t nfs,nfs4 -M "$2" >/dev/null 2>&1; then
-        # -i: plain umount2(MNT_DETACH), skip the umount.nfs helper. The helper
-        # talks to the server, and with the server gone it held a real suspend
-        # for 2 min (LAPTOP_YOGA 2026-10-01, 11:04:33 -> 11:06:33).
+        # -i: plain umount2(MNT_DETACH), no umount.nfs helper (it talks to the server).
         ${pkgs.util-linux}/bin/umount -l -i "$2" || true
       fi
     }
