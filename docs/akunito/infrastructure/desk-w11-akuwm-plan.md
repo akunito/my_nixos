@@ -1353,6 +1353,15 @@ too, every recall is logged at debug level, and `RecycledHandleTests` fails
 without the line (checked by removing it). Shipped as **v0.2.4** with the
 installer patience of 10.48 and the fingerprint seed.
 
+**Installing 0.2.4 took three tries.** The bootstrap read `/releases/latest`
+in the same minute the release was published and got v0.2.3 back (GitHub's
+"latest" lags), so Diego's UAC reinstalled 0.2.3. The bootstrap now lists the
+releases and takes the newest published, non-draft, non-prerelease -- and the
+first version of that failed with "no published release found" because
+PowerShell 5.1 hands a JSON array to the pipeline as one object (`@()` unrolls
+it; `a9f47d2`). Third UAC: 0.2.4 on the desk at 13:04, `tests/fullscreen`
+**48/48** (gamelike 100 % direct again), wm `toggle` + `tiling` green on it.
+
 The pattern of the day, three times: a case that passes alone and fails in
 sequence, and in all three the sequence had left something behind -- a
 displayed workspace (10.49), a stale journal entry (here), a tiled lock
