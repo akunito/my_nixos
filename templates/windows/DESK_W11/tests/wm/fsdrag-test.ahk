@@ -27,20 +27,30 @@ Over(hwnd) {
 JournalFile := A_Temp "\fsdrag-journal.tsv"
 try FileDelete JournalFile
 MonitorGet 1, &L, &T, &R, &B
-; 1. a borderless window exactly the monitor's size
+; 1. a borderless window exactly the monitor's size. The daemon places a new
+; window once it sees it -- and on the monitor of the focused workspace, not
+; necessarily monitor 1 (2026-10-01: it landed on the vertical one in the full
+; run); whichever monitor it ends up on, it must cover exactly that one.
 fs := Gui("-Caption +AlwaysOnTop -DPIScale", "fsdrag fullscreen")
 fs.BackColor := "202020"
 fs.Show(Format("x{1} y{2} w{3} h{4} NoActivate", L, T, R - L, B - T))
-; The daemon places a new window once it sees it (a floating one covering the
-; monitor is given the whole monitor); wait for the rectangle to settle.
+Covers(hwnd) {
+    WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
+    mon := DllCall("MonitorFromWindow", "Ptr", hwnd, "UInt", 2, "Ptr")
+    mi := Buffer(40, 0), NumPut("UInt", 40, mi)
+    DllCall("GetMonitorInfo", "Ptr", mon, "Ptr", mi)
+    mL := NumGet(mi, 4, "Int"), mT := NumGet(mi, 8, "Int"), mR := NumGet(mi, 12, "Int"), mB := NumGet(mi, 16, "Int")
+    global note := Format("window {1},{2} {3}x{4} its monitor {5},{6} {7}x{8}", x, y, w, h, mL, mT, mR - mL, mB - mT)
+    return (x = mL && y = mT && w = mR - mL && h = mB - mT) ? 1 : 0
+}
+note := ""
 Loop 50 {
     Sleep 100
-    WinGetPos &x, &y, &w, &h, fs.Hwnd
-    if (x = L && y = T && w = R - L && h = B - T)
+    if Covers(fs.Hwnd)
         break
 }
-out .= Format("     window {1},{2} {3}x{4} monitor {5},{6} {7}x{8}`n", x, y, w, h, L, T, R - L, B - T)
-Check("0 setup: the window is the monitor's size", (x = L && y = T && w = R - L && h = B - T) ? 1 : 0, 1)
+out .= "     " note "`n"
+Check("0 setup: the window covers the monitor it is on", Covers(fs.Hwnd), 1)
 Check("1 a monitor-sized window is fullscreen", Over(fs.Hwnd), 1)
 fs.Destroy()
 Sleep 300

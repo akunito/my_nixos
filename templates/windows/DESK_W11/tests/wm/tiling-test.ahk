@@ -129,6 +129,13 @@ b := StartTiled(&pb)
 Check("1 both are tiling", WinRec(a)["state"] "/" WinRec(b)["state"], "tiling/tiling")
 ra := WRect(a), rb := WRect(b)
 Note("1 rects " Rs(a) " | " Rs(b))
+; Who else is on the workspace: twice (2026-10-01) the two windows were laid
+; out in the right two thirds of a workspace EmptyWs had called empty.
+others := ""
+for w in GlazeWins()
+    if (w["ws"] = home && w["hwnd"] != a && w["hwnd"] != b)
+        others .= " " w["proc"] "/" w["state"] "/" w["display"]
+Note("1 also on " home ":" (others = "" ? " nobody (per the compat view)" : others))
 Check("1 they do not overlap", Overlap(a, b), 0)
 ; Within 2 px: an application rounds its own frame (2119 against 2118 on
 ; this desk, 2026-09-23), and the layout asked for the same height of both.
