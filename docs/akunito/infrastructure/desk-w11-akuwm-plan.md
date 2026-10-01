@@ -1269,6 +1269,33 @@ commit read "akuwm: -m akuwm: k-sound notes": the shared parser only knows
 real-repo test through the router; the GUI's section calls `GitSync.Commit`
 directly and never had the problem.
 
+### 10.48 0.2.3: the daemon did not watch its files; stubborn tiles float; NordVPN (2026-10-01 11:40 → 12:30)
+
+**The watcher that was not there.** Adding the NordVPN rule by `git pull` into
+the Windows clone changed nothing: no "configuration reloaded" in the log
+until `glazewm command wm-reload-config` was sent by hand. `Reload` had one
+caller, the compat command, which the settings window sends after its own
+edits -- and the README, the runbook and the suite README all said the daemon
+watched its files. Now it does (`ConfigWatcher`, Core, inotify/ReadDirectory
+underneath): one reload per burst of events (400 ms debounce; git and
+editors write a temp file and rename it), `Reload` fingerprints the effective
+configuration so the settings window's own reload right behind is a no-op.
+Unit-tested with a real watcher on a temp directory (burst → one callback;
+non-JSON ignored).
+
+**A tile that refuses its rectangle floats.** The handoff of 2026-09-22
+(filed now under `docs/handoffs/akunito/`) had NordVPN's fixed-size WPF
+window tiled at 1230x952 inside a 1914x2118 slot, its Split-tunneling modal
+cloaked under it, hit-testable and unpainted. Two fixes: the rule `r-nordvpn`
+(float) in `common.json`, and the generic one -- when a tile has refused its
+placement (`PlacementRefused`, 2 s of patience) and is not a game, it is
+floated where it is and the tree closes over the slot. The stubborn-window
+tests changed meaning accordingly: the refusal resolves itself, so the flag
+clears once the window is where it should be. Defect B of that handoff (the
+empty app list) is NordVPN's own race; "Browse apps" is the way round it.
+
+**Also in 0.2.3**: `git commit -m` (10.47 addendum).
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
