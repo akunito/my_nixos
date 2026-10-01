@@ -47,6 +47,14 @@ in
         # NVreg_PreserveVideoMemoryAllocations=1 + nvidia-{suspend,resume,hibernate}.service.
         powerManagement.enable = pm;
       };
+
+      # modesetting.enable = false is NOT enough: udev autoloads nvidia_drm (and with it
+      # nvidia_modeset) by PCI alias right after nvidia binds, the 3090 takes renderD128
+      # and the iGPU drops to renderD129 (measured on the NAS, 2026-10-01). blacklist does
+      # not stop alias loads; `install … false` stops every load. CUDA never needs it.
+      boot.extraModprobeConfig = ''
+        install nvidia_drm ${pkgs.coreutils}/bin/false
+      '';
     }
 
     (lib.mkIf pm {
