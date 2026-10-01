@@ -274,6 +274,21 @@ GlazeWins() => GlazeWinsFrom(GlazeQuery("workspaces"))
 GlazeAnswered(j) => InStr(j, '"clientMessage"') > 0
 GlazeWss() => GlazeWssFrom(GlazeQuery("workspaces"))
 
+; Focus a workspace, but never ask for the one already displayed: with
+; toggle_workspace_on_refocus that jumps to the PREVIOUS one instead. The
+; tiling case asked for 14 while 14 was already on screen (left there by the
+; case before it), landed on 12 next to Notepad++, and failed "they fill the
+; monitor" in every full run of 2026-10-01 while passing alone -- a day was
+; spent on the daemon's trees before the log said "closed ... (workspace 12)".
+GlazeFocusWs(ws, settleMs := 1200) {
+    wss := GlazeWss()
+    if (wss.Has(ws) && wss[ws])
+        return false
+    Glaze("focus --workspace " ws)
+    Sleep settleMs
+    return true
+}
+
 GlazeWinsFrom(j) {
     out := [], wsName := "", pos := 1
     pat := '"type":"workspace","id":"[^"]+","name":"([^"]+)"'

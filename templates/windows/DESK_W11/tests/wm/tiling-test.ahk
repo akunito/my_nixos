@@ -117,8 +117,7 @@ EmptyWs(prefix) {
 KillFlips()
 startWs := GlazeFocusedWs()
 home := EmptyWs("1")
-Glaze("focus --workspace " home)
-Sleep 1200
+GlazeFocusWs(home)     ; guarded: asking for the displayed one toggles to the previous (see lib-glaze)
 DllCall("SetCursorPos", "Int", 30, "Int", 1000)     ; parked: no pointer focus changes
 ParkOnMain()
 Note("home " home ", started on " startWs)
@@ -213,8 +212,7 @@ Check("7 and tiling again", WinRec(leftHwnd)["state"], "tiling")
 ; --- the vertical monitor stacks instead of splitting ----------------------
 KillFlips()
 vert := EmptyWs("2")
-Glaze("focus --workspace " vert)
-Sleep 1200
+GlazeFocusWs(vert)
 ParkOnVertical()
 d := StartTiled(&pd)
 e := StartTiled(&pe)

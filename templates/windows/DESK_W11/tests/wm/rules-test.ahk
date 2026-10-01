@@ -54,8 +54,7 @@ Kill(name) {
 
 startWs := GlazeFocusedWs()
 home := EmptyWs("1")
-Glaze("focus --workspace " home)
-Sleep 1200
+GlazeFocusWs(home)     ; guarded: asking for the displayed one toggles to the previous (see lib-glaze)
 Note("home " home ", started on " startWs)
 
 ; --- the calculator: sway floats it and makes it sticky --------------------
