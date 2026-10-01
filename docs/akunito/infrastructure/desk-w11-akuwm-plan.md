@@ -1296,6 +1296,43 @@ empty app list) is NordVPN's own race; "Browse apps" is the way round it.
 
 **Also in 0.2.3**: `git commit -m` (10.47 addendum).
 
+### 10.49 The `tiling` failure, finally: the test asked for the workspace it was on (2026-10-01 12:15 → 12:40)
+
+On 0.2.3, with the one-tree audit live, `tiling` failed again in the chunked
+run and the daemon logged **no** WARN. `debug layout` and the compat view
+agreed: Notepad++ in one tree, 12. The debug log then said the plain thing:
+`closed 0x411130 fliptest (workspace 12)` -- the test's windows had opened on
+**12**, beside Notepad++, not on the 14 the test had asked for. Probe on the
+live desk: with 14 displayed and empty, `focus --workspace 14` displays 12;
+`focus --workspace 12` displays 14 again. That is `toggle_workspace_on_refocus`
+doing its job: asking for the workspace already on screen jumps to the
+previous one. `stacking` leaves the main monitor on 14; `EmptyWs("1")` picks
+14 because it is empty; the test focuses 14 and lands on 12. Alone, the main
+monitor shows something else and the switch is real -- which is why the case
+passed solo every time and failed in every full run. `apptoggle`, `stacking`,
+`sticky`, `tiledrag` and `repair` already carried a guarded `FocusWs`;
+`tiling` and `rules` did not. `GlazeFocusWs` in `lib-glaze.ahk` is the one
+guard now, and both use it: `tiling` 19/19 with 14 already displayed.
+
+**Correction of 10.47.** There was no window in two trees. "Laid out with
+14's windows" was wrong: the windows were 12's. The one-tree-per-window
+eviction and audit of 0.2.2 stay -- the invariant is right and now holds
+by construction -- but they fixed nothing, and the `WARN`s they would have
+written are the proof: none, in two full runs. The cost of the wrong
+diagnosis was a release and half a day; the lesson is the one already on
+record: read the daemon's debug log for the windows in question before
+theorising about the model, and when a case passes alone and fails in
+sequence, suspect what the sequence leaves behind (here: which workspace is
+on screen).
+
+**0.2.3 suites**: `tests/wm` 206/206 in five foreground chunks (50 + 46 +
+27 + 19 (tiling, after the fix) + 14 (tiledrag) + 45 + display); all green,
+no audit WARN. The 0.2.3 install itself went wrong once: the installer died
+copying `akuwm-cli.exe` while a script of mine was running it every five
+seconds, and the desk had no window manager from 11:51 to 12:02 (10.48 has
+the installer fixes; the lesson -- never poll the exe being replaced, read
+the log -- is in memory).
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
