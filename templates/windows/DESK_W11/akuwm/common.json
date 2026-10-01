@@ -1058,7 +1058,7 @@
       "category": "System",
       "name": "Sound settings (output and input devices)",
       "enabled": true,
-      "notes": "sway's Hyper+Shift+A is pavucontrol; the System > Sound page, not the volume flyout",
+      "notes": "sway's Hyper+Shift+A is pavucontrol; the System > Sound page, not the volume flyout; the Git section's push was verified from here on 2026-10-01",
       "updated_at": 1790161461
     }
   ],
