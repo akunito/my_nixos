@@ -149,3 +149,11 @@ Solo si el paso 11 demostró escrituras sostenidas sanas: mover `/mnt/extpool/li
 ## Rollback (cualquier fase)
 
 PSU OFF → 980 desconectado → 840 EVO a un SATA → HBA al PCIEX16 con los 870 EVO en sus cables SAS → arrancar. El 840 nunca se escribe tras el clon. `ssdpool` sí se escribe desde el paso 10 (Docker, snapshots, TRIM, prueba), pero sigue siendo importable por el sistema del 840 (mismo hostid, mismo ZFS) mientras no se haga `zpool upgrade`. Estado consistente, no idéntico: lo escrito en el root del 980 se pierde.
+
+## Resultado (2026-10-01)
+
+- Fases 0-2 hechas. `dd` 840→980 sin errores (500107862016 B, ~88 MB/s por la lentitud de lectura de datos viejos del 840 EVO); `cmp` sustituido por `sgdisk -v` + UUID + `fsck.ext4 -fn` limpio. Arranca del 980; HBA y KIOXIA fuera; 840 EVO guardado como rollback.
+- **No previsto**: quitar el HBA renumeró los buses PCI y la X520 pasó de `enp8s0f*` a `enp3s0f*` → `bond0` sin esclavos. Arreglado con `networkBondingInterfaceMacs` (nombres `tengbe0/1` por MAC, 570d50ff), aplicado en vivo.
+- TRIM OK (DISC-MAX 2G, `writesame_16`, NCQ 32), primer trim ~14 min, `autotrim=on`. Prueba de 40 GB: 43/58/56/128 MiB/s — el límite es el disco S5Y4R020A077877 (10 s de espera, los otros tres ociosos).
+- **Los 4 "870 EVO" son falsificados** (ya sospechado; reclamación en Allegro aparte): firmware `W0724A0`/`W0814A0`, ~200 MB escritos de por vida según SMART, valores todos 100, series consecutivas, uno de 2,048 TB. Scrub del día limpio; capacidad real más allá de ~1,1 TB/disco sin verificar → no llenar ssdpool.
+- Consumo en reposo y RGB de la 3090: AINF-403.
