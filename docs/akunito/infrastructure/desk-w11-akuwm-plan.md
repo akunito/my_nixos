@@ -1226,6 +1226,39 @@ chat window on the same workspace: no frames" -- PresentMon captured nothing
 that once; rerun by hand through the capture daemon: 100% direct (471
 frames). Noted as a capture flake, not a regression.
 
+### 10.47 0.2.2: a window in two tiling trees, and the suites green on it (2026-10-01 11:00 → 12:00)
+
+The `tiling` failure of 10.46 survived 0.2.1: third full run, same four
+checks, and the new note in the case said "also on 14: nobody (per the compat
+view)". The daemon's debug log had the answer: at 11:02:38 it laid out
+**Notepad++ (0x390e7c) together with the test windows on 14** -- the same
+Notepad++ the compat view listed under 12 (hidden). One handle in two tiling
+trees: `GlazeView.Ordered` dedupes with a `seen` set, so the second tree
+showed nobody and the stale slot ate a third of the monitor. No event of the
+window between the 10:58 start and the test, so the duplicate was born at
+adoption or lived on from the previous run's placements; no unit scenario
+reproduces it (the fixture now asserts one-tree-per-window after every
+compute, 1101 green with it). So 0.2.2 (`7aa24c6`) enforces the invariant
+where it can be broken and says so when it finds it broken: `Place` and the
+float→tile toggle evict the handle from every other tree; every `Sync` audits
+the trees and removes handles that are no window or say another workspace;
+each case logs a WARN naming the window and both workspaces. `akuwm-cli debug
+layout` dumps every workspace's layers with what each window says, the view
+the compat protocol cannot give. Installed 11:15 through the bootstrap (UAC
+by Diego); the dump right after the start was clean, and the full `tests/wm`
+run on 0.2.2 produced **no WARN at all**, so the path did not recur this time
+-- if it does, the log now names it.
+
+**The suites.** `tests/wm` on 0.2.2: **206/206** across the 12 suites (the
+background run was killed by the harness during `stacking` -- "low on
+memory", with 16 GB free in WSL; the remaining suites ran in foreground
+chunks of two: `stacking tiling` 30, `tiledrag rules` 33, `repair display`
+31, on top of the 112 of the first nine). Lesson for the runner: long driven
+suites go in foreground chunks under ten minutes, not as one background job.
+Unit 1101, GUI 43, CI and Release green. The commit message of `7aa24c6`
+lost a backticked phrase to zsh's command substitution (double-quoted
+`git commit -m`): single quotes or a heredoc for messages with backticks.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
