@@ -1157,6 +1157,35 @@ rerun after 0.2.0 -- nothing in the WM path changed, but the standing rule is
 green suites, so they run at Diego's next quiet moment; the Git section's
 real push from the GUI still wants one live run; trimming the release.
 
+### 10.45 Caps Lock stuck, and Alt+drag over a game (2026-09-30 16:45 → 19:40)
+
+**Caps Lock came on by itself** while Aion 2 started (game mode 16:49:59) and
+no key cleared it. `SendKeys("{CAPSLOCK}")` from a WSL-spawned PowerShell did
+nothing (no foreground window of its own); `keybd_event` did. Chord added:
+**Hyper+Shift+M** forces Caps Lock off (`SetCapsLockState "Off"`, tooltip,
+`Dbg` line under `hyper-debug.on`), plus `caps-off.ps1` for when the script is
+not running. The first attempt bound the CapsLock key itself
+(`^!#CapsLock::`): it fired once right after a reload and never again for
+injected chords (three probes, 16:48-16:55, SendInput and SendEvent, UIA and
+not), so it was dropped for a letter chord. Diego confirmed the chord by hand
+at 19:30. Driven case `capslock` in `tests/wm`. Lesson recorded: with the
+game running, the `wintap` case fails too (the anti-cheat sits on the input
+path), so the driven suites are not a signal while a game is open -- and they
+were being run on a desk that was in a login queue, which is the worse fault.
+
+**Alt+drag pulled Aion 2 out of fullscreen.** Aion frees the pointer with Alt
+held; Alt+click on the game window started the move gesture (a borderless
+fullscreen window is not maximised, so the maximised skip did not apply), and
+the window came back as a maximised one. The hotkeys `!LButton`/`!RButton`
+now sit under `#HotIf !FullscreenUnderMouse()`: the window under the pointer
+is fullscreen when the daemon's journal (`layout.tsv`, state column) says so
+on any monitor, or when its rectangle is exactly its monitor's. With the
+hotkey off the click reaches the game untouched. Decided at press time in the
+hook thread; the journal is read once per press and cached by stamp+size.
+Driven case `fsdrag` (a borderless monitor-sized window does not move, an
+ordinary one does). Shipped by reloading only the script (19:39:31), the
+daemon untouched, Aion 2 alive throughout.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
