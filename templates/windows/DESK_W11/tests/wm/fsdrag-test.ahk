@@ -17,11 +17,22 @@ Check(name, got, want) {
     if !ok
         fails++
 }
+; The daemon places a new window shortly after it appears (another monitor,
+; another rectangle): put the pointer on the window as it is NOW and make sure
+; it is still the window under the pointer before asking (2026-10-01: check 3
+; read the desktop once, the test window had just been moved).
 Over(hwnd) {
-    WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
-    MouseMove x + w // 2, y + h // 2, 0
-    Sleep 120
-    return FullscreenUnderMouse() ? 1 : 0
+    Loop 10 {
+        WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
+        MouseMove x + w // 2, y + h // 2, 0
+        Sleep 150
+        MouseGetPos , , &under
+        if (under = hwnd)
+            return FullscreenUnderMouse() ? 1 : 0
+    }
+    global out
+    out .= Format("     pointer at {1},{2} is over {3} [{4}] '{5}', not the test window{6}`n", x + w // 2, y + h // 2, ExeOf(under), WinGetClass("ahk_id " under), WinGetTitle("ahk_id " under), DllCall("IsWindowVisible", "Ptr", hwnd) ? "" : " (which is not visible)")
+    return -1
 }
 ; a journal of this test's own, never the desk's
 JournalFile := A_Temp "\fsdrag-journal.tsv"
@@ -56,8 +67,10 @@ fs.Destroy()
 Sleep 300
 ; 2. an ordinary window is not
 win := Gui("+AlwaysOnTop -DPIScale", "fsdrag ordinary")
-win.Show(Format("x{1} y{2} w600 h400 NoActivate", L + 200, T + 200))
-Sleep 500
+win.Show(Format("x{1} y{2} w600 h400", L + 200, T + 200))
+Sleep 1500
+WinActivate win.Hwnd
+Sleep 300
 Check("2 an ordinary window is not fullscreen", Over(win.Hwnd), 0)
 ; 3. the same window, once the journal says fullscreen for its process|class
 key := StrLower(RegExReplace(ExeOf(win.Hwnd), "i)\.exe$", "")) "|" WinGetClass("ahk_id " win.Hwnd)
