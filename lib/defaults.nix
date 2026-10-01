@@ -23,6 +23,7 @@
 
     # GPU defaults
     gpuType = "intel"; # Options: "amd", "intel", "nvidia", "none" (for VMs/containers)
+    nouveauBlacklistEnable = false; # dGPU present but no driver wanted yet (homelab profile)
 
     # Kernel defaults
     kernelPackages = pkgs.linuxPackages_latest;

@@ -16,6 +16,7 @@ in
     envProfile = "NAS_PROD";
     installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles NAS_PROD -s -u";
     gpuType = "none";
+    nouveauBlacklistEnable = true; # RTX 3090 going in before its driver ticket (nas-3090-storage-rework)
 
     # ============================================================================
     # HEADLESS SERVER — disable GUI/desktop features

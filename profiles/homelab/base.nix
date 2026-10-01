@@ -48,6 +48,7 @@ in
   ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
   ++ lib.optional (systemSettings.infraRestartEnable or false) ../../system/app/infra-restart.nix # bot's /restart target (sudoers-scoped)
   ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # LACP bond
+  ++ lib.optional (systemSettings.nouveauBlacklistEnable or false) ../../system/hardware/nouveau-blacklist.nix # driverless dGPU
   ++ lib.optional (systemSettings.tailscaleEnable or false) ../../system/app/tailscale.nix; # Tailscale mesh VPN
 
   # Disable documentation to reduce build time (headless servers)

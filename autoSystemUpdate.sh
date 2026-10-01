@@ -99,7 +99,7 @@ PYEOF
     if [ -s "$HW_CONFIG_NEW" ]; then
         REQUIRED_MARKERS=""
         case "$ACTIVE_PROFILE" in
-            NAS_PROD) REQUIRED_MARKERS="mpt3sas cryptroot ssdpool extpool" ;;
+            NAS_PROD) REQUIRED_MARKERS="nvme cryptroot ssdpool extpool" ;;
             # Add other physical-host anchors here as new failure modes surface.
         esac
         MISSING=""
