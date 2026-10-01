@@ -526,6 +526,21 @@
       "updated_at": 1790106284
     },
     {
+      "id": "r-nordvpn",
+      "name": "NordVPN",
+      "match": [
+        {
+          "process": "NordVPN"
+        }
+      ],
+      "actions": [
+        "float"
+      ],
+      "enabled": true,
+      "notes": "A fixed-size WPF window: tiled, it refused the tile rectangle (\"will not go to 1914x2118\") and its Split-tunneling modal ended cloaked and hit-testable but unpainted (handoff 2026-09-22). Floating keeps it on its workspace without ever sizing it. Its empty app list in that modal is NordVPN's own race (ArgumentException in PopulateProcessesInChunks); use Browse apps.",
+      "updated_at": 1790847601
+    },
+    {
       "id": "r-akuwm-gui",
       "name": "AkuWM settings window",
       "enabled": true,
