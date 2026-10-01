@@ -12,6 +12,13 @@
         "PLANE_BASE_URL": "${PLANE_BASE_URL}",
         "PLANE_WORKSPACE_SLUG": "${PLANE_WORKSPACE_SLUG}"
       }
+    },
+    "browser": {
+      "type": "stdio",
+      "command": "${HOME}/.nix-profile/bin/claude",
+      "args": [
+        "--claude-in-chrome-mcp"
+      ]
     }
   }
 }

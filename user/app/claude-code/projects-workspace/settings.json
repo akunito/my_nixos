@@ -19,7 +19,8 @@
       "Bash(./tools/new-research.sh:*)",
       "Bash(babydocs/tools/sync.sh:*)",
       "Bash(homedocs/tools/sync.sh:*)",
-      "Bash(python3 tools/build-site.py)"
+      "Bash(python3 tools/build-site.py)",
+      "mcp__browser__*"
     ]
   }
 }

@@ -16,6 +16,15 @@
 # in subdirectories load on demand when Claude reads files there. So the router here
 # and each project's own CLAUDE.md both apply, in that order.
 #
+# BROWSER: the VS Code panel only attaches Claude in Chrome after `@browser`, once
+# per conversation, and has no setting for it ("Enabled by default" only covers
+# sessions started outside the editor). The attach is nothing but an MCP server
+# running `claude --claude-in-chrome-mcp`, so mcp.json declares it — under the
+# name "browser": a server named "claude-in-chrome" in a config file is dropped
+# (reserved), measured 2026-10-01 on LAPTOP_YOGA. The browser extension's own
+# per-site permissions still apply; mcp__browser__* is allowed so the panel does
+# not prompt per click.
+#
 # Flags: claudeProjectsWorkspaceEnable, claudeProjectsWorkspaceDir (default "Projects").
 
 { config, lib, pkgs, systemSettings, ... }:
