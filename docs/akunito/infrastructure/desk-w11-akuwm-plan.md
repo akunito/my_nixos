@@ -1335,6 +1335,31 @@ seconds, and the desk had no window manager from 11:51 to 12:02 (10.48 has
 the installer fixes; the lesson -- never poll the exe being replaced, read
 the log -- is in memory).
 
+### 10.50 0.2.4: a recycled handle recalled a dead window's place (2026-10-01 12:30 → 13:10)
+
+`tests/fullscreen` on 0.2.3: 44/48, the four red all in `8-gamelike` -- the
+game-like fliptest at `3840,-991 1440x2560` (the vertical monitor), 0 %
+direct. The suite parks the pointer on the primary before every case and the
+cycle script parks it again before starting the window, and `TargetWorkspace`
+asks the monitor under the pointer first, so the pointer was not it. The
+daemon's log for the adoption: "adopting fliptest now that it is no longer
+OtherVirtualDesktop" and then placements on 23. The path that bypasses the
+pointer is the **placement journal**: `Adopt` recalls what "the previous run"
+had for this handle and process -- and `Desk.Forget` never dropped a closed
+window's entry, while Windows recycles handles within seconds. The wm suite
+had left fliptests on 2x; the next fliptest with one of those handles was
+recalled to the vertical monitor. `Desk.Forget` now forgets the journal entry
+too, every recall is logged at debug level, and `RecycledHandleTests` fails
+without the line (checked by removing it). Shipped as **v0.2.4** with the
+installer patience of 10.48 and the fingerprint seed.
+
+The pattern of the day, three times: a case that passes alone and fails in
+sequence, and in all three the sequence had left something behind -- a
+displayed workspace (10.49), a stale journal entry (here), a tiled lock
+screen (10.46). The lesson is on record now in memory: when a case fails
+only after others, list what the others leave on the desk and in the
+daemon's state before touching the model.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
