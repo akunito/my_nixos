@@ -139,7 +139,7 @@ fuera           → HBA 9300-16i, KIOXIA 2TB, 840 EVO (queda como rollback)
 
 19. Docs: `.claude/commands/unlock-nas.md` (sdd2 / 840 EVO), `docs/akunito/infrastructure/services/nas-services.md:106`, `docs/akunito/plans/nas-on-demand-services.md:62`, comentario en `system/app/nas-services.nix:557` (mpt3sas). `python3 scripts/generate_docs_index.py`.
 20. Memorias: X520/PCIe, ssdpool TRIM (resuelto), local AI box (3090 instalada).
-21. Ticket aparte: `gpuType = "nvidia"` headless en NAS_PROD, límite de potencia, hooks pre-suspend para servicios de IA, retirar el blacklist de nouveau.
+21. Ticket aparte: `gpuType = "nvidia"` headless en NAS_PROD, límite de potencia, hooks pre-suspend para servicios de IA, retirar el blacklist de nouveau. Borrador listo (2026-10-01, sin desplegar). Decisiones de Diego: driver **production** (el más estable), módulo open; servicios de IA **bajo demanda** (`nas-svc`) por ahora — se pulirá en una entrevista; límite **300 W** para empezar, a medir.
 22. **Nunca `zpool upgrade`** mientras el 840 EVO sea la vía de rollback (arranca con el mismo paquete ZFS).
 
 ## Fase 5 (opcional, AINF-402) — biblioteca de vuelta a ssdpool

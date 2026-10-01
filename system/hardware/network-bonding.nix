@@ -35,6 +35,8 @@ let
   vlans = cfg.networkBondingVlans or [];
   macAddress = cfg.networkBondingMacAddress or "";
   ringBufferSize = cfg.networkBondingRingBufferSize or null;
+  # { name = "permanent MAC"; } — pins slave names to the NIC, not its PCI path.
+  interfaceMacs = cfg.networkBondingInterfaceMacs or {};
 
   # Detect which network manager is active
   useNetworkManager = cfg.networkManager or false;
@@ -105,6 +107,14 @@ in
   config = lib.mkIf (bondingEnabled && interfaces != []) {
     # Load bonding and 802.1Q VLAN kernel modules
     boot.kernelModules = [ "bonding" ] ++ lib.optional (vlans != []) "8021q";
+
+    # Predictable names follow the PCI bus number, which shifts whenever a card is added
+    # or removed upstream: pulling the NAS HBA renamed the X520 enp8s0f* → enp3s0f* and
+    # left bond0 with no slaves (2026-10-01). Name the slaves by permanent MAC instead.
+    systemd.network.links = lib.mapAttrs' (name: mac: lib.nameValuePair "10-${name}" {
+      matchConfig.PermanentMACAddress = mac;
+      linkConfig.Name = name;
+    }) interfaceMacs;
 
     # Configure the bond interface (kernel-level bond creation)
     # Only use networking.bonds when systemd-networkd is managing networking

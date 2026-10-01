@@ -174,6 +174,7 @@
     networkBondingEnable = false; # Enable network bonding (requires switch LAG configuration)
     networkBondingMode = "802.3ad"; # Bonding mode: "802.3ad" (LACP), "balance-rr", "active-backup", etc.
     networkBondingInterfaces = []; # List of interfaces to bond (e.g., ["enp11s0f0" "enp11s0f1"])
+    networkBondingInterfaceMacs = {}; # Rename NICs by permanent MAC: { tengbe0 = "aa:bb:…"; } (names immune to PCI renumbering)
     networkBondingDhcp = true; # Use DHCP for bond interface
     networkBondingStaticIp = null; # Static IP config: { address = "192.168.8.96/24"; gateway = "192.168.8.1"; }
     networkBondingLacpRate = "fast"; # LACP rate: "fast" (1s) or "slow" (30s)

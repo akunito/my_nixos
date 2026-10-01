@@ -58,7 +58,8 @@ in
     # Bond0 gets 192.168.20.200 directly (same as TrueNAS config).
     networkBondingEnable = true;
     networkBondingMode = "802.3ad";
-    networkBondingInterfaces = [ "enp8s0f0" "enp8s0f1" ];
+    networkBondingInterfaces = [ "tengbe0" "tengbe1" ];
+    networkBondingInterfaceMacs = { tengbe0 = "90:e2:ba:86:a2:a0"; tengbe1 = "90:e2:ba:86:a2:a1"; }; # X520 ports
     networkBondingDhcp = false;
     networkBondingLacpRate = "slow"; # TODO: switch to "fast" after confirming Unifi switch LAG is in fast mode
     networkBondingRingBufferSize = 8192; # Max for Intel X520 — prevents rx_missed_errors (NIC-001 from TrueNAS audit)
