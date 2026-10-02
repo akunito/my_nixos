@@ -13,6 +13,7 @@
 DllCall("SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")
 SendLevel 1
 CoordMode "Mouse", "Screen"   ; the default is the ACTIVE WINDOW's client area: a "main monitor" point landed on the terminal's monitor (2026-10-02)
+CoordMode "Pixel", "Screen"
 out := "", fails := 0
 Check(name, got, want) {
     global out, fails
@@ -36,9 +37,27 @@ KillZenity() {
     try RunWait('wsl.exe -d NixOS -- bash -lc "pkill -f [z]enity.*akuwm-wslg"', , "Hide")
     Sleep 800
 }
+; Sixteen screen pixels around a point: a painted dialog changes most of them,
+; an empty surface none. WSLg in "copy mode" (its shared memory failed to
+; mount at boot: weston.log "rdp_allocate_shared_memory: Failed to open",
+; titles tagged [WARN:COPY MODE]) shows every window transparent -- right
+; place, right size, nothing drawn (2026-10-02 15:17, Diego: "sale una ventana
+; transparente, solo los bordes morados").
+Samples(cx, cy) {
+    a := []
+    Loop 4 {
+        row := A_Index
+        Loop 4
+            a.Push(PixelGetColor(cx - 150 + A_Index * 60, cy - 120 + row * 48))
+    }
+    return a
+}
 Scenario(label, px, py) {
     global out
     title := "akuwm-wslg-" label
+    mon0 := MonOf(px, py)
+    MonitorGet mon0, &l0, &t0, &r0, &b0
+    before := Samples((l0 + r0) // 2, (t0 + b0) // 2)
     DllCall("SetCursorPos", "Int", px, "Int", py)
     Sleep 300
     MouseGetPos &ax, &ay
@@ -49,6 +68,14 @@ Scenario(label, px, py) {
     Check(label ": the window appeared", hwnd ? 1 : 0, 1)
     if !hwnd
         return
+    ; A hand on the mouse between the launch and the adoption sends the
+    ; window to another monitor, and that is not the daemon's fault.
+    MouseGetPos &hx, &hy
+    if (Abs(hx - px) > 4 || Abs(hy - py) > 4) {
+        out .= Format("     {1}: DISTURBED -- the pointer was left at {2},{3} and is at {4},{5}; somebody moved the mouse, scenario not judged`n", label, px, py, hx, hy)
+        KillZenity()
+        return
+    }
     Sleep 2500   ; the daemon's placement, and WSLg following it
     WinGetPos &x, &y, &w, &h, "ahk_id " hwnd
     want := MonOf(px, py)
@@ -58,6 +85,12 @@ Scenario(label, px, py) {
     Check(label ": it is whole on the monitor the pointer is on", (x >= l && y >= t && x + w <= r && y + h <= b) ? 1 : 0, 1)
     cx := x + w // 2, cy := y + h // 2
     Check(label ": and near its centre", (Abs(cx - (l + r) // 2) < 200 && Abs(cy - (t + b) // 2) < 200) ? 1 : 0, 1)
+    after := Samples((l + r) // 2, (t + b) // 2), changed := 0
+    Loop 16
+        changed += (before[A_Index] != after[A_Index]) ? 1 : 0
+    copyMode := InStr(WinGetTitle("ahk_id " hwnd), "COPY MODE") ? " -- WSLg is in COPY MODE: restart WSL (wsl --shutdown)" : ""
+    out .= Format("     {1}: {2} of 16 sampled pixels changed when the dialog appeared{3}`n", label, changed, copyMode)
+    Check(label ": it is painted", changed >= 8 ? 1 : 0, 1)
     KillZenity()
 }
 KillZenity()
