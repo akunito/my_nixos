@@ -34,6 +34,7 @@ ssh -A user@<IP> "cd ~/.dotfiles && git fetch origin && git reset --hard origin/
 **Workflow**: Make changes locally -> commit and push -> SSH to remote and run `git fetch && git reset --hard origin/main && ./install.sh ...`. NEVER edit files on the remote directly.
 
 **Flags**: `-s` = silent (always), `-d` on docker hosts (VPS/NAS/LXC), `-h` on LXC. `-u` **updates flake.lock** — never by default. **Never pipe the deploy chain through `tail`** (masks a failed `git fetch` as EXIT=0): log to a file, then check the node's `git rev-parse HEAD` == `origin/main`. One deploy per machine at a time. Details: `.claude/rules/deployment.md`.
+**DESK_W11 from Windows** (Claude on Windows calling `wsl.exe`): `install.sh` must be launched detached (`setsid -f … < /dev/null`) or `sudo` reads a dead pseudo-TTY and times out after 5 min without ever showing the zenity askpass; the askpass window lands on the portrait second monitor. Exact command: runbook `docs/akunito/infrastructure/desk-w11-wsl.md`, "The restart loop of 2026-10-02".
 
 ## How code gets written (all repos, not just this one)
 

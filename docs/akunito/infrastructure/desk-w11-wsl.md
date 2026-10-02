@@ -651,6 +651,25 @@ unknown (the previous life's journal was lost with it).
 (12G, 6s), `systemctl show init.scope -p OOMPolicy` (continue),
 `systemctl show nix-daemon -p MemoryMax` (10G), `free -g` (16 total).
 
+**Deploying from a Windows-side session (Claude Code on Windows, PowerShell, a script):
+the sudo prompt never shows.** Measured 2026-10-02, three failed runs in a row.
+`wsl.exe -d NixOS -- bash -lc './install.sh …'` gives the Linux process a pseudo-TTY
+(the Windows console), so `sudo -v` reads the password from that TTY -- which nobody can
+type into -- and fails after sudo's 5-minute `passwd_timeout` with "sudo authentication
+failed"; `SUDO_ASKPASS` (zenity via WSLg) is only used when there is **no** controlling
+terminal. Launch it detached instead:
+
+```powershell
+wsl.exe -d NixOS -- bash -lc "setsid -f bash -lc '~/.dotfiles/install.sh ~/.dotfiles DESK_W11 -s -d > /tmp/install-w11.log 2>&1 < /dev/null'"
+# then: wsl.exe -d NixOS -- tail -f /tmp/install-w11.log
+```
+
+Then the zenity window *"sudo: Authentication Required (NixOS)"* appears -- **on the
+portrait second monitor (DISPLAY2, 3072,-326), sized to the whole screen**, because WSLg
+RAIL windows (`msrdc`) are placed by AkuWM there; it is easy to miss. Look there, or move
+it from PowerShell: `Get-Process msrdc | Select MainWindowHandle` and `SetWindowPos` it
+onto the primary. From a WSL terminal none of this applies: sudo asks in the terminal.
+
 **If it ever loops again**: `wsl --shutdown` from PowerShell is the whole cure; then
 look for who keeps relaunching `wsl.exe` (`Get-CimInstance Win32_Process -Filter
 "Name='wsl.exe'"` with `ParentProcessId`), and read `dmesg` inside for the
