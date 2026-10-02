@@ -50,6 +50,7 @@ Code here is read by Claude and the compiler, not by people. Write it that way.
   restatement of the line below, not essays in doc comments.
 - **Keep every measured gotcha verbatim.** Those are the comments that pay for themselves.
 - Measure before optimising, and say which numbers are measured and which are estimated.
+- **Never hard-wrap prose in files you generate** (emails, messages, docs, PR/issue text, Markdown): one paragraph = one line, and let the viewer wrap it. Text cut at ~72 columns ends up with mid-sentence breaks when pasted into Gmail, GitHub or a phone. Code keeps its normal line length.
 
 ## Testing discipline (every change)
 
