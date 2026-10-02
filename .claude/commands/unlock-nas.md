@@ -4,7 +4,7 @@ The NAS (`nas-aku`, 192.168.20.200) runs **NixOS** (migrated from TrueNAS in AIN
 
 ## Architecture
 
-1. **Boot drive** is LUKS-encrypted (`cryptroot` on `sdd2`). LUKS passphrase must be entered at the **physical / IPMI console** at boot. There is **no** initrd-SSH (no Dropbear) configured — remote unlock is not possible.
+1. **Boot drive** is LUKS-encrypted (`cryptroot` on `nvme0n1p2`, Samsung 980 in M2B_SB since 2026-10-01). LUKS passphrase must be entered at the **physical / IPMI console** at boot. There is **no** initrd-SSH (no Dropbear) configured — remote unlock is not possible.
 2. **ZFS pools** (`ssdpool`, `extpool`) are encrypted; their key files live at `/etc/zfs/keys/<pool>` on the encrypted root. Once LUKS is open, the `nas-zfs-unlock.service` (oneshot, before `zfs-mount.service`) calls `zfs load-key -L file://...` automatically. See `system/app/nas-services.nix:252-279`.
 3. `boot.zfs.requestEncryptionCredentials = false` — the boot process never prompts interactively for ZFS keys; it relies on the key file or the explicit unlock service.
 
@@ -25,7 +25,7 @@ ssh -A akunito@192.168.20.200 'sudo zpool status; echo ===; sudo zfs get -H keys
 Healthy output:
 - `pool: ssdpool` / `state: ONLINE` (and same for `extpool`)
 - `keystatus = available` for both pools
-- `cryptroot` listed under `sdd2`, mounted at `/`
+- `cryptroot` listed under `nvme0n1p2`, mounted at `/`
 
 ## Manual unlock (only if `nas-zfs-unlock.service` failed)
 
@@ -54,5 +54,5 @@ If you need remote unlock for the future, add `boot.initrd.network` + `boot.init
 
 - Profile: `profiles/NAS_PROD-config.nix`
 - Module: `system/app/nas-services.nix` (auto-unlock service definition)
-- Hardware: `cryptroot` on Samsung 840 EVO 500GB (`/dev/sdd2`)
+- Hardware: `cryptroot` on Samsung 980 500GB NVMe (`/dev/nvme0n1p2`, M2B_SB), cloned from the old 840 EVO on 2026-10-01 (840 EVO kept offline as rollback; same LUKS UUID — never connect both)
 - Migration history: `memory/project_truenas_to_nixos.md`

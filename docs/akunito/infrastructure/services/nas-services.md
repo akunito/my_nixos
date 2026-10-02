@@ -103,9 +103,10 @@ the AkuCraft bot's `/start` and idle-stop drive the game servers. Only reachable
 NAS is awake (16:00–23:00). Switches keep forwarding without the UniFi controller; no
 statistics are collected while it is off.
 
-The libraries are on **extpool**, not ssdpool: ssdpool's 870 EVOs sit behind the LSI SAS3008,
-which never passes TRIM to them (the drives lack DRAT/RZAT), and sustained writes there
-collapse to 7–20 MB/s (measured 2026-09-30). They are not backed up — re-downloadable.
+The libraries are on **extpool**, not ssdpool. Until 2026-10-01 ssdpool's SSDs sat behind an
+LSI SAS3008 that never passed TRIM (sustained writes collapsed to 7–20 MB/s); they are on the
+board's AHCI ports now with TRIM and autotrim, but the drives are counterfeit 870 EVOs that still
+write at ~50 MiB/s sustained, so bulk data stays on extpool (AINF-402). They are not backed up — re-downloadable.
 `gameservers/akucraft-archive/` holds the retired akucraft-web and akucraft-playermap.
 
 Calibre carries two local customisations, both versioned in `templates/truenas/calibre/`: the

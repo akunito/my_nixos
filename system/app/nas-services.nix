@@ -75,7 +75,7 @@ ${onDemandCases}
     DOCKER_HOST = "unix:///run/user/1000/docker.sock";
   };
   # Minimum time after a resume before a suspend may be honoured. The post-resume
-  # Docker units alone take ~15s+, and the HBAs/NICs need longer than that.
+  # Docker units alone take ~15s+, and the NICs need longer than that.
   settleSeconds = 600;
   # Mountpoints of the ZFS datasets the generated hardware-config puts in fstab
   # (profile: nasZfsMountPoints). Used to give them zfsutil/nofail and to order the
@@ -431,6 +431,12 @@ HEADER
       '';
     };
 
+    # The fstab .mount units and `zfs mount -a` race for the same datasets: whichever
+    # loses gets "mountpoint or dataset is busy" and zfs-mount.service fails on some
+    # boots (ssdpool/workstation_backups, 2026-10-01/02) with everything mounted fine.
+    # `zfs mount -a` skips datasets already mounted, so run it after the fstab units.
+    systemd.services.zfs-mount.after = nasZfsMountUnits;
+
     # ZFS auto-scrub (monthly)
     services.zfs.autoScrub = {
       enable = true;
@@ -560,7 +566,7 @@ HEADER
     };
 
     # Record when the machine last came back from S3, so nas-suspend can refuse
-    # to re-suspend a machine whose devices (mpt3sas HBAs, ixgbe, ZFS) are still
+    # to re-suspend a machine whose devices (ixgbe, ZFS) are still
     # re-initializing — doing so wedges the box on the following resume.
     systemd.services.nas-resume-marker = {
       description = "Record last resume timestamp";

@@ -115,6 +115,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `isRootless && onDemandProjects != [ ]`
    - `seq 1 30`
    - `!isRootless`
+- **system/app/nfs-userspace.nix**: Userspace NFSv3 server (unfs3) — for paths the kernel server cannot export. *Enabled when:*
+   - `(systemSettings.unfs3Enable or false) && exports != [ ]`
+   - `systemSettings.unfs3Interfaces or [ ]`
 - **system/app/nginx-local.nix**: Nginx Local Access — Tailscale-only vhosts for *.local.akunito.com *Enabled when:* `systemSettings.nginxLocalEnable or false`
 - **system/app/nix-binary-cache-client.nix**: Consume a local Nix binary cache (see system/app/nix-binary-cache.nix). *Enabled when:* `not replacing`
 - **system/app/nix-binary-cache.nix**: Local Nix binary cache (harmonia) — serve DESK's /nix/store to the other machines. *Enabled when:* `cat ${pubKey}`
@@ -225,7 +228,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/hardware/gpu-monitoring.nix**: GPU Monitoring Packages based on GPU type *Enabled when:*
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.gpuType == "intel"`
-   - `systemSettings.gpuType != "amd" && systemSettings.gpuType != "intel"`
+   - `systemSettings.gpuType == "nvidia"`
+   - `!(lib.elem systemSettings.gpuType [ "amd" "intel" "nvidia" ])`
 - **system/hardware/hibernate.nix**: Hibernation support for laptops with LUKS-encrypted swap *Enabled when:* `(systemSettings.hibernateEnable or false) && (systemSettings.hibernateSwapLuksUUID or null) != null`
 - **system/hardware/inhibit-auto-suspend.nix**: Prevent AUTOMATIC (idle) system suspend on always-on desktops. *Enabled when:* `systemSettings.autoSuspendInhibit or false`
 - **system/hardware/io-scheduler.nix**: Consolidated I/O scheduler optimization for all profile types *Enabled when:*
@@ -245,8 +249,18 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `lib.stringAfter [ "etc" ] '' if ${pkgs.systemd}/bin/systemctl is-active --quiet NetworkManager; then ${pkgs.networkmanager}/bin/nmcli connection reload || true fi ''`
    - `ringBufferSize != null`
    - `priority 100`
-- **system/hardware/nfs_client.nix**: You need to install pkgs.nfs-utils *Enabled when:* `systemSettings.nfsClientEnable == true`
+- **system/hardware/nfs_client.nix**: `reap`: drop what is dead, restore what this script parked and is back. *Enabled when:*
+   - `systemSettings.nfsClientEnable == true`
+   - `(systemSettings.nfsClientEnable == true) && (systemSettings.networkManager or false)`
 - **system/hardware/nfs_server.nix**: NFS *Enabled when:* `systemSettings.nfsServerEnable == true`
+- **system/hardware/nouveau-blacklist.nix**: A dGPU with no driver configured: keep nouveau off it. Unbound, the card stays in
+- **system/hardware/nvidia.nix**: Headless NVIDIA compute (CUDA in containers), no X, no display on the card. *Enabled when:*
+   - `(s.gpuType or "none") == "nvidia"`
+   - `the NAS's docker-stop units # included`
+   - `powerLimit != null`
+   - `docker 25+`
+   - `ctk && rootless`
+   - `s.nvidiaGpuExporterEnable or false`
 - **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.amdLACTdriverEnable == true`
@@ -640,10 +654,12 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-staging-error-audit.md**: Error audit of mc-mca-staging (2026-08-20) — ranked list of real issues vs benign noise, for fixing later
 - **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
 - **docs/akunito/plans/akucraft-worlds-and-maps.md**: Research into what extra worlds, community map downloads and dimension mods can be added to AkuCraft, given that Multiworld and ShadowBorders are already in production
+- **docs/akunito/plans/desk-w11-meeting-captions.md**: Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11**; direction changed the same
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
+- **docs/akunito/plans/nas-3090-storage-rework.md**: Liberar el PCIEX16 del NAS para la RTX 3090 — sistema del 840 EVO (SATA) a un Samsung 980 500GB en M2B_SB por clonado dd, ssdpool del HBA LSI a los 4 SATA de la placa (TRIM por fin), HBA fuera, KIOXIA fuera
 - **docs/akunito/plans/nas-on-demand-services.md**: AkuCraft hibernado (bot solo Telegram, Discord e invitados fuera) y Minecraft survival + Calibre + RomM + UniFi mudados del VPS al NAS como servicios bajo demanda, con limpieza de copias y monitorización alineada
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
 - **docs/akunito/plans/plane-telegram-bot.md**: Status: **F1 + F2 + F3 deployed 2026-09-11** (notifications, buttons, reply=comment, write commands, scheduled reports, Plane webhook; infra-bot on tgcommon.py) · service doc: `../infrastructure/se...
@@ -676,7 +692,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Future
 
 - **docs/future/README.md**: This directory contains temporary documentation for planning, analysis, design ideas, recommendations, bug fixes, and other topics that are under consideration and may be deleted after implementati...
-- **docs/future/syncthing-nextcloud-integration.md**: The Syncthing to Nextcloud integration was not working. Files synced from phones via Syncthing were not appearing in Nextcloud's web interface or mobile apps.
+- **docs/future/syncthing-nextcloud-integration.md**: > **RETIRED 2026-10-01.** Syncthing is off everywhere: the VPS container is down
 - **docs/future/waybar-drawer-and-idle-toggle.md**: Notes on Waybar group drawer usage for tray+notifications and a custom idle-inhibit toggle (keybinding + Waybar module) used in SwayFX.
 
 ### Future / Archived
