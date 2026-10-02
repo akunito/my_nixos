@@ -24,9 +24,10 @@ in
     nvidiaContainerToolkitEnable = true;  # AI stacks (llama.cpp / vLLM / whisper) in rootless + rootful docker
     nvidiaPowerLimitWatts = 300;          # ESTIMATE, not measured. Stock cap: read "Default Power Limit" in `nvidia-smi -q -d POWER`; re-tune from measured tok/s per W.
     nvidiaGpuExporterEnable = true;       # :9835, scraped by VPS Prometheus over tailscale0
-    # AINF-403: 3090 has a native Off mode; the IT5702 (RGB Fusion 2) has none → static black.
-    # The front power LED is on F_PANEL, not on these controllers.
-    rgbOffOpenrgbArgs = [ "-d" "RTX 3090" "-m" "off" "-d" "B550" "-m" "static" "-c" "000000" ];
+    # AINF-403: the 3090's own "off" mode leaves a white LED lit (measured 2026-10-02); direct
+    # black turns everything off but is volatile, hence rgb-off re-runs at boot + resume.
+    # IT5702 (RGB Fusion 2) has no Off mode → static black. Front power LED is on F_PANEL.
+    rgbOffOpenrgbArgs = [ "-d" "RTX 3090" "-m" "direct" "-c" "000000" "-d" "B550" "-m" "static" "-c" "000000" ];
 
     # ============================================================================
     # HEADLESS SERVER — disable GUI/desktop features

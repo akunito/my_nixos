@@ -26,7 +26,7 @@ from the screen on 2026-10-01/02. "Keep" means it is load-bearing — changing i
 
 | Option | Value | Why |
 |---|---|---|
-| LEDs in System Power On State | **Off** | power/RGB (AINF-403) |
+| LEDs in System Power On State | **Off** | board accent LEDs (AINF-403). Verified 2026-10-02: the **front power LED stays on** (it is on F_PANEL, not on this option) |
 | LEDs in Sleep, Hibernation, and Soft Off States | Off | why the box shows **no LEDs in S3** — it is suspended, not off; never pull power at night |
 | PCIEX16 / PCIe Slot Configuration | Auto | |
 | PCIe ASPM Mode | **Disabled** | keep: RTL8125 and X520 have link-drop history with ASPM; saving would be 1-5 W (estimate) |
@@ -61,4 +61,6 @@ to avoid another variable. Storage/Other PCI ROM = UEFI Only.
 
 ## Not in the firmware
 
-No RGB control for the 3090 or RGB headers here — that is OpenRGB from Linux (AINF-403).
+No RGB control for the 3090 or the RGB headers here. Linux does it: `system/hardware/rgb-off.nix`
+runs OpenRGB at boot and after every resume (3090 = MSI i2c on the NVIDIA adapter, `direct` black;
+board = IT5702 USB `048d:5702`, `static` black). The 3090's native `off` mode left a white LED on.
