@@ -1375,6 +1375,45 @@ daemon's state before touching the model.
 (63 + 60 + 52 + 31), no audit WARN. The M6 note on the Docker section's
 async load is closed (the GUI test awaits the real load now).
 
+### 10.51 The "Open with" dialog closed before the pointer reached it (2026-10-02 13:05 → 13:50)
+
+Diego, on the main monitor: opening an image brings up "How do you want to
+open this file?", and moving the mouse towards it closes it before the
+pointer arrives. Reproduced in a probe at 13:12: `OpenWith.exe`, class
+"Open With", 672x936 centred, gone the instant the pointer parked over
+another window. The mechanism is not AkuWM's code: **Windows' own
+active-window tracking** (on since the GlazeWM days, raise off, delay 0;
+`focus-follows-mouse.ps1`) activates whatever the pointer crosses, and a
+light-dismiss surface closes when it loses the activation. The daemon only
+ever observed the foreground. Same family as the 2026-09-15 note "with
+focus_follows_cursor on, UAC and consent prompts could not be clicked".
+
+**Fix (0.2.5).** `LightDismissGuard` (Core): when the foreground moves to an
+unmanaged window with the light-dismiss shape -- top-level, no owner,
+`WS_EX_TOPMOST` and `WS_EX_TOOLWINDOW` -- the native tracking is switched
+off (`SPI_SETACTIVEWINDOWTRACKING`, session only, so the registry keeps
+Diego's setting); the next foreground change to anything else, the popup's
+destruction or the daemon's exit switches it back; a desk with the tracking
+off is never touched. Menus and the shell's flyouts have the same shape.
+Two measured corrections on the way: the dialog is not a `WS_POPUP` (style
+0x14c00000 = VISIBLE|CLIPSIBLINGS|CAPTION; the first shape test asked for
+POPUP and never matched), and at the foreground event it is **not yet
+visible** (style 0x4c00000; `IsWindowVisible` false, so the early return
+had to go). Unit: `LightDismissGuardTests`. Driven: `tests/wm openwith`
+(11 checks: opens, stays while nothing moves, tracking paused in front, the
+pointer parks and trembles over Notepad and walks to the dialog, it is still
+there and in front, a click elsewhere still dismisses it, tracking back on).
+On 0.2.4: 7/11, closed at the park; on the fix: 11/11, three runs.
+
+**Harness lessons.** AutoHotkey's `WinExist`/`WinGetList` do not enumerate
+this dialog at all (visible, foreground, class "Open With", and absent from
+the list), so every early probe reported it dead when it was alive; it is
+found as the ACTIVE window and watched through `IsWindow`. `rundll32
+OpenAs_RunDLL` showed it once and never again in this session; an
+unassociated extension (`.akuwmtest`) is the reliable trigger. And Diego's
+hand on the mouse during a probe is indistinguishable from the bug: the test
+logs where the pointer was when the dialog died.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
