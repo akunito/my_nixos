@@ -6,7 +6,13 @@
 ; 1440x2525") and Diego never saw the password box: a deploy waited on sudo
 ; for five minutes, three times (2026-10-02). Rule `msrdc -> center`.
 ; Run: AutoHotkey64.exe wslg-test.ahk -> %TEMP%\perf\wslg-test.txt
+; Per-monitor DPI awareness for this thread: without it this process sees
+; the portrait monitor (125 %) scaled to the main one's 150 % -- [4608,-490
+; 1728x3072] instead of [3840,-408 1440x2560] -- and a point "on monitor 2"
+; in that space is not on monitor 2 for anybody else (2026-10-02).
+DllCall("SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")
 SendLevel 1
+CoordMode "Mouse", "Screen"   ; the default is the ACTIVE WINDOW's client area: a "main monitor" point landed on the terminal's monitor (2026-10-02)
 out := "", fails := 0
 Check(name, got, want) {
     global out, fails
@@ -30,11 +36,13 @@ KillZenity() {
     try RunWait('wsl.exe -d NixOS -- bash -lc "pkill -f [z]enity.*akuwm-wslg"', , "Hide")
     Sleep 800
 }
-Case(label, px, py) {
+Scenario(label, px, py) {
     global out
     title := "akuwm-wslg-" label
-    MouseMove px, py, 0
+    DllCall("SetCursorPos", "Int", px, "Int", py)
     Sleep 300
+    MouseGetPos &ax, &ay
+    out .= Format("     {1}: pointer asked {2},{3}, is at {4},{5}`n", label, px, py, ax, ay)
     Zenity(title)
     SetTitleMatchMode 2
     hwnd := WinWait(title " ahk_class RAIL_WINDOW", , 10)
@@ -54,10 +62,10 @@ Case(label, px, py) {
 }
 KillZenity()
 MonitorGet 1, &L1, &T1, &R1, &B1
-Case("main", L1 + (R1 - L1) // 3, T1 + (B1 - T1) // 3)
+Scenario("main", L1 + (R1 - L1) // 3, T1 + (B1 - T1) // 3)
 if (MonitorGetCount() >= 2) {
     MonitorGet 2, &L2, &T2, &R2, &B2
-    Case("second", L2 + (R2 - L2) // 2, T2 + (B2 - T2) // 3)
+    Scenario("second", L2 + (R2 - L2) // 2, T2 + (B2 - T2) // 3)
 }
 MouseMove L1 + (R1 - L1) // 2, T1 + (B1 - T1) // 2, 0
 FileAppend out, A_Temp "\perf\wslg-test.txt"

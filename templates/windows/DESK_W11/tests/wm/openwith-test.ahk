@@ -8,6 +8,7 @@
 ; popup has the foreground and resumes it when the foreground moves on.
 ; Run: AutoHotkey64.exe openwith-test.ahk -> %TEMP%\perf\openwith-test.txt
 SendLevel 1
+CoordMode "Mouse", "Screen"   ; the default is the ACTIVE WINDOW's client area: a "main monitor" point landed on the terminal's monitor (2026-10-02)
 out := "", fails := 0
 Check(name, got, want) {
     global out, fails

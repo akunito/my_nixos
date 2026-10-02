@@ -9,6 +9,7 @@
 ; Run: AutoHotkey64.exe fsdrag-test.ahk -> %TEMP%\perf\fsdrag-test.txt
 #Include ..\..\lib-layout-journal.ahk
 SendLevel 1
+CoordMode "Mouse", "Screen"   ; the default is the ACTIVE WINDOW's client area: a "main monitor" point landed on the terminal's monitor (2026-10-02)
 out := "", fails := 0
 Check(name, got, want) {
     global out, fails
