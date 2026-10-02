@@ -61,6 +61,7 @@
     # GUI askpass: show password dialog for non-TTY sudo (e.g., Claude Code)
     # Installs lxqt-openssh-askpass and sets SUDO_ASKPASS environment variable
     sudoAskpassEnable = false; # Default off (LXC/WSL have no display); profiles enable explicitly
+    sudoAskpassWindowsNative = false; # NixOS-WSL only: the askpass is a native Windows dialog started through interop (zenity stays as the fallback). WSLg on DESK_W11 paints one window per boot and no other (2026-10-02)
     sshAgentSudoAuthorizedKeysFiles = [ "/etc/ssh/authorized_keys.d/%u" ];
     sudoCommands = [
       {

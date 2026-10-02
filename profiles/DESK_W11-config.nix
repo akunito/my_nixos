@@ -51,7 +51,8 @@ in
     doasEnable = false;
     wrappSudoToDoas = false;
     sudoNOPASSWD = false;
-    sudoAskpassEnable = true; # zenity through WSLg for non-TTY sudo (Claude Code), like DESK
+    sudoAskpassEnable = true; # non-TTY sudo (Claude Code) gets a password box, like DESK
+    sudoAskpassWindowsNative = true; # ...a native Windows one: WSLg here paints only the first window of a boot (2026-10-02)
     sudoTimestampTimeoutMinutes = 180; # global ticket, like DESK: one interactive `sudo true` primes every pane
     # Passwordless sudo through a key held by an ssh-agent, same pattern as
     # NAS_PROD and VPS_PROD. Here the agent is local rather than forwarded, so

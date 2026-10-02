@@ -36,9 +36,26 @@
 
   environment.variables = lib.mkIf (systemSettings.sudoAskpassEnable or false) {
     SUDO_ASKPASS = let
-      askpass-script = pkgs.writeShellScript "sudo-askpass" ''
-        ${pkgs.zenity}/bin/zenity --password --title="sudo: Authentication Required"
+      zenity-askpass = ''${pkgs.zenity}/bin/zenity --password --title="sudo: Authentication Required"'';
+      # NixOS-WSL: a native Windows password box through interop. WSLg on
+      # DESK_W11 (no usable vGPU, copy mode) paints the first Linux window
+      # after a boot and no other -- an empty surface, with the window manager
+      # stopped too (measured 2026-10-02) -- so a zenity askpass is invisible
+      # from the second sudo on. The .ps1 is read by Windows from the store
+      # through \\wsl.localhost; zenity stays as the fallback for a boot that
+      # lost the WSLInterop binfmt entry.
+      windows-askpass = ''
+        ps=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+        script=${./sudo-askpass-windows.ps1}
+        if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ] && [ -x "$ps" ]; then
+          win="\\\\wsl.localhost\\''${WSL_DISTRO_NAME:-NixOS}$(printf '%s' "$script" | ${pkgs.coreutils}/bin/tr '/' '\\')"
+          exec "$ps" -NoProfile -ExecutionPolicy Bypass -File "$win" -Prompt "''${1:-sudo: authentication required}" 2>/dev/null
+        fi
+        exec ${zenity-askpass}
       '';
+      askpass-script = pkgs.writeShellScript "sudo-askpass" (
+        if (systemSettings.sudoAskpassWindowsNative or false) then windows-askpass else zenity-askpass
+      );
     in "${askpass-script}";
   };
 

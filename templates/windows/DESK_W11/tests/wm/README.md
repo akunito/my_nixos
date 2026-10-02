@@ -35,6 +35,7 @@ it over (or push and pull there) and the daemon picks the file change up itself.
 | `fsdrag` | `fsdrag-test.ahk` | Alt+drag leaves a fullscreen window alone and still moves an ordinary one |
 | `openwith` | `openwith-test.ahk` | The "Open with" dialog (a light-dismiss popup) survives the pointer crossing other windows; a click elsewhere still dismisses it |
 | `wslg` | `wslg-test.ahk` | A WSLg dialog (zenity through msrdc, the sudo askpass) appears at its own size, whole, centred on the monitor under the pointer -- on both monitors |
+| `askpass` | `askpass-test.ahk` | The native Windows sudo askpass (`system/security/sudo-askpass-windows.ps1`): painted, small, whole on the pointer monitor on both screens, and the text typed comes back byte for byte |
 | `sticky` | `sticky-test.ahk` | The flag in `query windows`, carried onto every workspace of its monitor with the same size and position, never dragged to the other monitor, stays under a fullscreen window, `unset-sticky` and `toggle-sticky` |
 | `tiling` | `tiling-test.ahk` | Two and three windows share the workspace, sway's inner gap (8 px, 12 at 150% DPI), closing one re-flows the rest, focus/move/resize/float by direction, the vertical monitor stacks instead of splitting |
 | `rules` | `rules-test.ahk` | The rules ported from sway: the calculator, the file manager and both terminals float and are sticky, an app with no rule tiles |
