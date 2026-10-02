@@ -596,6 +596,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/desk-w11-akuwm-plan.md**: **Status**: plan v2, audited 2026-09-20 and again 2026-09-22 (10.14). **M0 and M1 landed 2026-09-20** (see
 - **docs/akunito/infrastructure/desk-w11-glazewm-testing.md**: Knowledge base started 2026-09-17 when Aion 2 ran badly under GlazeWM. Two uses:
 - **docs/akunito/infrastructure/desk-w11-wsl.md**: DESK_W11 runbook — Windows 11 dual boot on the DESK box with NixOS-WSL; what lives on the Windows side, what lives in WSL, and the exact bootstrap order
+- **docs/akunito/infrastructure/nas-bios-b550-aorus-elite-v2.md**: NAS_PROD firmware settings (Gigabyte B550 AORUS ELITE V2) — where each option lives and why it has its value; the iGPU-forced setup for the RTX 3090
 - **docs/akunito/infrastructure/services/akucraft-ai.md**: LiteLLM gateway on VPS_PROD and the Discord /ask support assistant it serves
 - **docs/akunito/infrastructure/services/akucraft-audit-2026-08-16.md**: Audit of the AkuCraft servers - mod conflicts, configuration, security posture and resource risk
 - **docs/akunito/infrastructure/services/akucraft-manifest.md**: Single source of truth describing the AkuCraft Minecraft server - mods, rules, commands and tunables, generated from the live server
