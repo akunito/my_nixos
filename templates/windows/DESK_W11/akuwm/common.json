@@ -541,6 +541,21 @@
       "updated_at": 1790847601
     },
     {
+      "id": "r-wslg",
+      "name": "WSLg windows (the sudo askpass)",
+      "match": [
+        {
+          "process": "msrdc"
+        }
+      ],
+      "actions": [
+        "center"
+      ],
+      "enabled": true,
+      "notes": "WSLg shows Linux windows through msrdc (class RAIL_WINDOW). The sudo askpass (zenity, 370x317) was born at the corner of the portrait monitor and tiled to the whole screen, and was never seen (2026-10-02). center = floats at its own size in the middle of the monitor the pointer is on. Needs AkuWM 0.2.6 or later: an older daemon rejects the action.",
+      "updated_at": 1790946706
+    },
+    {
       "id": "r-akuwm-gui",
       "name": "AkuWM settings window",
       "enabled": true,
