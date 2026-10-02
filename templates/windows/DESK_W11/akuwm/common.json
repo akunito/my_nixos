@@ -556,6 +556,21 @@
       "updated_at": 1790946706
     },
     {
+      "id": "r-credential-ui",
+      "name": "Windows Security prompts (credentials, Windows Hello)",
+      "match": [
+        {
+          "process": "CredentialUIBroker"
+        }
+      ],
+      "actions": [
+        "ignore"
+      ],
+      "enabled": true,
+      "notes": "The system credential prompt is born centred on the primary monitor and topmost. Managed, it became a floating window of the workspace under the pointer, was dragged to the other monitor and fought over its size for as long as it lived (684x550 asked, 570x459 taken at the other scale, 2026-10-02). Ignored, Windows keeps it where it put it and it shows on every workspace.",
+      "updated_at": 1790951291
+    },
+    {
       "id": "r-akuwm-gui",
       "name": "AkuWM settings window",
       "enabled": true,

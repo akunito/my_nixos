@@ -91,7 +91,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="bindings wintap capslock fsdrag openwith wslg askpass gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings wintap capslock fsdrag openwith wslg askpass credui gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -188,6 +188,34 @@ for s in $suites; do
       echo
       ;;
     rules)  collect rules-test.ahk     rules-test.txt     120 "Window rules ported from sway";;
+    credui)
+      echo "== The system credential prompt is left where Windows put it"
+      out=$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
+        'C:\Users\diego\AppData\Local\Temp\perf\credui-test.ps1' 2>&1 | tr -d '\r')
+      echo "$out" | sed 's/^/    /'
+      while IFS= read -r line; do
+        case "$line" in
+          PASS*) ok "${line#PASS }";;
+          FAIL*) ko "${line#FAIL }";;
+        esac
+      done <<< "$out"
+      echo
+      ;;
+    uac)
+      # Person-assisted (the secure desktop cannot be driven), so not in `all`.
+      echo "== A UAC prompt asked for from the background comes to the front by itself"
+      echo "    >>> ANSWER THE UAC PROMPT WHEN IT APPEARS (No is fine) <<<"
+      out=$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \
+        'C:\Users\diego\AppData\Local\Temp\perf\uac-raise-test.ps1' 2>&1 | tr -d '\r')
+      echo "$out" | sed 's/^/    /'
+      while IFS= read -r line; do
+        case "$line" in
+          PASS*) ok "${line#PASS }";;
+          FAIL*) ko "${line#FAIL }";;
+        esac
+      done <<< "$out"
+      echo
+      ;;
     *)      echo "unknown suite: $s" >&2; exit 2;;
   esac
 done

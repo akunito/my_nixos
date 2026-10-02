@@ -55,6 +55,9 @@ $controls = New-Object System.Collections.ArrayList
 function AddLabel([string] $text, [System.Drawing.Color] $colour) {
     $l = New-Object System.Windows.Forms.Label
     $l.Text = $text; $l.ForeColor = $colour; $l.AutoSize = $false
+    # Measured with the form's font, not the control default it has until it
+    # gets a parent: the form's is larger and the descenders were cut off.
+    $l.Font = $form.Font
     $l.MaximumSize = New-Object System.Drawing.Size (S ($width - 32)), 0
     $size = $l.GetPreferredSize((New-Object System.Drawing.Size (S ($width - 32)), 0))
     $h = [Math]::Max((S 22), $size.Height)

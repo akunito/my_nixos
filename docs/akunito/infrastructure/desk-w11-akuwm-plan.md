@@ -1510,6 +1510,105 @@ Authentication` at 15:48:10, the native box on screen (captured: 1603,960
 **Still exposed**: `gpgPinentryWslg` (pinentry-qt through WSLg) for gpg and
 ssh passphrases has the same failure mode from the second window on.
 
+### 10.54 The gpg/ssh pinentry leaves WSLg too (2026-10-02 15:50 → 16:26)
+
+Closed the exposure above: `gpgPinentryWindowsNative` (DESK_W11 only, default
+false). `system/security/pinentry-windows.sh` speaks Assuan to gpg-agent and
+shows the same `windows-password-box.ps1` for GETPIN (description, error,
+repeat) and CONFIRM; without interop it `exec`s the WSLg pinentry-qt as
+before. Two things that cost time: `powershell.exe` inherits the Assuan pipe
+as its stdin and ate the `BYE` (started with `< /dev/null`), and the script
+finds interop by itself (`WSL_INTEROP` from `/run/WSL/*_interop`) because
+gpg-agent's environment has none.
+
+**Tests.** `scripts/tests/pinentry-windows-test.sh` 9/9 (greeting, GETPIN as a
+data line, percent-escaping with UTF-8, repeat, CONFIRM, options, the
+fallback). Against the real agent: `GET_PASSPHRASE` returned `D frase-de-prueba
+ñ` with the box painted. Deployed with `install.sh`.
+
+**The cut-off descenders.** The description label was measured with the
+control's default font and then inherited the form's larger one: g, p, q, y
+lost their tails. `AddLabel` now measures with `$form.Font` (captured: both
+lines whole). A side note for whoever captures it again: started with
+`Start-Process -WindowStyle Hidden` the box never shows (the hidden show
+command is applied to the process's first window) -- the real callers start
+it through interop, where it does.
+
+### 10.55 0.2.7: the UAC prompts nobody saw (2026-10-02 15:55 → 16:25)
+
+Diego: "las ventanas UAC a veces no salen en primer plano, y no llego a
+verlas ... unas veces se quedan escondidas y las veo en la barra de tareas
+(creo que solo en un WS) y otras veces no sale nada".
+
+**Four attempts that did not reproduce it**, all with `Start-Process -Verb
+RunAs` from a hidden PowerShell (which passes hwnd 0): terminal in front,
+desktop in front, a person typing in Notepad, and the request made 20 s after
+the process was born. Every one went to the secure desktop in 380-420 ms.
+
+**The one that did**: `ShellExecuteEx(runas)` with `hwnd` = a window of the
+asking process that is **not the foreground window** -- what an installer or
+an updater working behind you does. consent.exe then stays on the default
+desktop with a MINIMISED window, class `$$$Secure UAP Dummy Window Class For
+Interim Dialog`, iconic at -21333,-21333, style 0xb4c80000, and the only sign
+is a shield button on the taskbar of the **primary** monitor
+(`MMTaskbarMode=2`) while Diego works on the second one. It waits for ever and
+**outlives the process that asked** (two of them piled up; Diego: "esos UAC se
+quedaron escondidos"). "Only in one WS" was "only on one monitor's taskbar".
+
+**What raises it** (measured on the pending ones): `SetForegroundWindow` and
+`ShowWindow(SW_RESTORE)` do nothing, with or without uiAccess (the first even
+reports the window as active). `PostMessage(WM_SYSCOMMAND, SC_RESTORE)` -- what
+a click on the shield sends -- brings the secure desktop in 250 ms, from a
+plain medium-integrity process too. Two posted back to back are queued by
+Windows (one secure desktop, answered at 4.9 s and 7.0 s).
+
+**Fix (AkuWM 0.2.7).** `ElevationPromptRaiser`: on a show or minimise-start
+event for an iconic window of that class the daemon posts the restore, once
+per handle; a prompt parked before the daemon started is raised at adoption;
+while a game has the foreground it is held back and raised when the game lets
+go (the desktop switch would take the person out of it). Live: raised 72 ms
+after the request, the prompt in front at 250 ms.
+
+**Tests.** Unit: `ElevationPromptRaiserTests` (6). Driven: `tests/wm uac`
+(`uac-raise-test.ps1` + `uac-request-hwnd.ps1`), person-assisted because the
+secure desktop cannot be driven, so not in `all`: 0.2.6 **fails** it ("the
+prompt stayed parked"), signed 0.2.7 passes 4/4. The first version of the case
+passed on a daemon that did nothing: the suite's reset leaves the bare desktop
+in front, and with the desktop in front Windows raises the prompt itself -- the
+case now puts another application in front and requires the daemon's own
+"raised" line in the log.
+
+**CI.** The 0.2.6 and 0.2.7 commits were red on two different tests of the
+classes that probe a free loopback port and bind it a moment later (`Address
+already in use`; a subscription count off): four classes did that in
+parallel. They share an xunit collection now; the next run was green.
+
+### 10.56 The "Windows Security" prompt was dragged across monitors (2026-10-02 16:27 → 16:30)
+
+The other system prompt, found while looking at the UAC ones: the credential
+prompt (`CredentialUIBroker.exe`, "Windows Security": Windows Hello, saved
+credentials) is an ordinary window on the default desktop. It is born cloaked
+over the whole work area, uncloaks centred on the **primary** monitor
+(1578,805 684x550, topmost) -- and the daemon adopted it ("adopting
+CredentialUIBroker now that it is no longer SelfCloaked") as a floating window
+of the workspace under the pointer. With the pointer on the second monitor it
+was taken there and the two fought over its size for as long as it lived
+(`place -> 3840,805 684x550`, `moved ... -> 570x459`, every half second: the
+prompt re-scales itself to the other monitor's DPI). As a workspace's window
+it also disappeared with the workspace.
+
+**Fix**: rule `r-credential-ui` in `common.json`, `CredentialUIBroker` →
+`ignore`. Windows keeps it where it put it; unmanaged, it is never cloaked and
+shows on every workspace. Config only (the watcher reloaded it at 16:29:21).
+
+**Test**: `tests/wm credui` (automatic, in `all`): `credui-ask.ps1` calls
+`CredUIPromptForWindowsCredentialsW`, the pointer is parked on the other
+monitor first, and the prompt must keep one rectangle for three seconds on
+the primary monitor, be absent from `debug layout`, visible and not cloaked.
+Without the rule 2 of 4 fail (`1578,805 684x550 -> 3840,805 570x459`, "holds
+it as a window of a workspace"); with it 4/4. `Get-Credential` does not
+produce this prompt from a hidden PowerShell; the API call does.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
