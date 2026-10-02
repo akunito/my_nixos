@@ -1497,6 +1497,16 @@ gained the same "it is painted" check and a DISTURBED verdict when somebody
 moves the mouse mid-scenario (Diego did, twice). Capturing a layered window
 needs `BitBlt(SRCCOPY|CAPTUREBLT)`; `Graphics.CopyFromScreen` rejects the flag.
 
+**The real sudo, and why two attempts showed nothing.** In a session that has
+`SSH_AUTH_SOCK`, sudo never asks: `pam_ssh_agent_auth: Authenticated (agent)`
+(journal 15:47:06), so `sudo -k; sudo -A true` returned OK with no box and
+Diego rightly said "no vi nada" -- twice I took a valid ticket or the agent
+for a typed password. The askpass is only reached where there is no agent,
+which is exactly the Windows-side `wsl.exe` session that hung the deploy.
+Forced with `env -u SSH_AUTH_SOCK`: `pam_ssh_agent_auth: Failed
+Authentication` at 15:48:10, the native box on screen (captured: 1603,960
+634x272, painted), the password typed by Diego, `sudo` OK at 15:48:16.
+
 **Still exposed**: `gpgPinentryWslg` (pinentry-qt through WSLg) for gpg and
 ssh passphrases has the same failure mode from the second window on.
 
