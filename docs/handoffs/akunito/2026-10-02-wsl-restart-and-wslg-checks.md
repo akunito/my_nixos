@@ -60,3 +60,24 @@ If WSLg is in copy mode again: `wsl --shutdown` once more (it is a boot-time mou
   (`wslg` reports DISTURBED scenarios instead of judging them).
 - `system/hardware-configuration.nix` is modified in the WSL clone (per-machine
   regeneration); `install.sh` resets it.
+
+## Result of the restart (15:28, from the Windows session)
+
+Steps 1-3 done: generation 14 carries the limits, `.wslconfig` copied, `wsl --shutdown`
++ boot. Checks after it: `WSLInterop` present and `cmd.exe /c ver` answers;
+`user-1000.slice MemoryMax=12G`, `init.scope OOMPolicy=continue`, `free -g` 15 total,
+`oom_kill 0`. The askpass worked for Diego (window seen, password accepted).
+
+**Copy mode is NOT cured by a new VM.** The fresh boot's `/mnt/wslg/weston.log` has the
+same line again, 15:28:54: `rdp_allocate_shared_memory: Failed to open
+"/mnt/shared_memory/{fa6c95d0-…}" with error: Input/output error`, and the test window
+`zenity --password --title=check` came up as `[WARN:COPY MODE] check (NixOS)` -- but
+sized 296x254 and centred on the pointer (3500,585 on DISPLAY2), i.e. placed right and
+painted. So the empty surfaces Diego then saw in the AkuWM tests are not explained by
+copy mode alone; copy mode has been the steady state of this desk (every boot), it only
+costs performance. Context for whoever digs: WSLg 1.0.73.2, `/dev/dxg` exists but the
+kernel logs `dxgk: dxgkio_query_adapter_info: Ioctl failed: -22/-2` at every boot (no
+usable vGPU from the RX 9070 XT / Radeon iGPU, AMD driver 32.0.31041.1004), and
+`/mnt/shared_memory` is not mounted in the user distro (the system distro is where
+weston opens it; not inspected). The 0 in my first grep was a race: the check ran at
+15:28:15, weston wrote the line at 15:28:54.
