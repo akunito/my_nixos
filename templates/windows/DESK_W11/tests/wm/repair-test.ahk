@@ -11,6 +11,7 @@
 #Include ..\..\lib-app-toggle.ahk
 
 DetectHiddenWindows true
+CoordMode "Mouse", "Screen"   ; the default is the ACTIVE WINDOW's client area: with the last active window on the vertical monitor, "400,600" parked the pointer there and every window of the case opened on the wrong screen (2026-10-02, 2 checks red)
 flip := A_Temp "\perf\fliptest.exe"
 out := "", fails := 0
 Check(name, got, want) {
