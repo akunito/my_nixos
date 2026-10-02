@@ -1453,6 +1453,53 @@ true` makes it declarative at the next deploy. Every `dotnet` from this
 session now runs under `systemd-run --user --scope -p MemoryMax=8G`, one at a
 time.
 
+### 10.53 The askpass was two faults; the second is WSLg's, and the fix leaves WSLg (2026-10-02 15:17 → 15:50)
+
+With 0.2.6 the askpass was in the right place at the right size, and Diego saw
+"a transparent window, only AkuWM's purple border". What followed is recorded
+because three conclusions were wrong before the right one:
+
+1. *"AkuWM's decoration blanks a layered window"* -- no: the opacity guard for
+   self-layered windows already exists (NordVPN, 10.48), and the window was
+   empty with the rule set to `ignore`.
+2. *"WSLg is in copy mode from the degraded 14:47 boot; a clean restart cures
+   it"* -- no: the host session restarted WSL at 15:28, copy mode was still
+   there (it is permanent on this machine: `rdp_allocate_shared_memory ...
+   Input/output error` at every boot, `dxgkio_query_adapter_info` failing, no
+   vGPU), and one window painted.
+3. *"My capture is blind to RAIL windows"* -- no: Diego confirmed every window
+   after the first was transparent.
+
+The facts that held: the **first** Linux window after a boot paints, every
+later one is an empty surface; a new `msrdc.exe` does not help; and at 15:40,
+with the **AkuWM daemon stopped** and a fresh `msrdc`, the dialog was still
+empty (capture shows what is behind it, no border). It is WSLg on this
+machine, not the window manager, and nothing in user space cured it
+(`GSK_RENDERER=cairo`, `GDK_BACKEND=x11`, `wsl.exe bash -lc`, no
+`LD_LIBRARY_PATH`).
+
+**Fix: the askpass does not go through WSLg.** `system/security/
+sudo-askpass-windows.ps1`, behind `sudoAskpassWindowsNative` (DESK_W11 only):
+a WinForms password box started with `powershell.exe` on the store path
+through `\\wsl.localhost`, per-monitor DPI aware, centred on the monitor
+under the pointer at that monitor's scale (634x272 at 150 %, 531x236 at
+125 %), `FixedDialog` so AkuWM floats it, password out as UTF-8 with a bare
+LF (`pässw0rd €ñ "x" $y` back byte for byte). zenity stays as the fallback for
+a boot that lost the `WSLInterop` binfmt entry -- which is declarative since
+this deploy (`/etc/binfmt.d/nixos.conf`). Deployed with `install.sh` at 15:46
+(generation 15); `/etc/set-environment` exports the new script.
+
+**Tests.** `tests/wm askpass` 13/13: on both monitors the box appears, is
+painted (16 of 16 sampled screen pixels change), small, whole on the pointer's
+monitor, and hands back what was put in its field -- filled through its own
+controls (`ControlSetText`/`ControlClick`), never global keystrokes. `wslg`
+gained the same "it is painted" check and a DISTURBED verdict when somebody
+moves the mouse mid-scenario (Diego did, twice). Capturing a layered window
+needs `BitBlt(SRCCOPY|CAPTUREBLT)`; `Graphics.CopyFromScreen` rejects the flag.
+
+**Still exposed**: `gpgPinentryWslg` (pinentry-qt through WSLg) for gpg and
+ssh passphrases has the same failure mode from the second window on.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
