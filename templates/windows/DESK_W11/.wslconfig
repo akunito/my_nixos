@@ -1,15 +1,23 @@
 # %USERPROFILE%\.wslconfig - global WSL2 settings for DESK_W11
 # Comments MUST use '#'. WSL's parser does not accept ';' and reports every such
 # line as "invalid key name" (verified on WSL 2.7.14).
-# mirrored: WSL shares the Windows interfaces, so it rides the Windows
-# Tailscale tunnel (100.64.x, MagicDNS) and is reachable on the LAN by hostname.
+# Applied by bootstrap.ps1 (copy), then `wsl --shutdown`: a running VM keeps its old size.
+# NAT, not mirrored: this is what the desk has run since September (mirrored was the
+# plan, `ip route get` showed the Hyper-V vSwitch, see the runbook's Known limits). WSL
+# still reaches the tailnet through the Windows stack. dnsTunneling off because
+# NixOS owns /etc/resolv.conf (MagicDNS at 100.100.100.100, see profiles/wsl).
 [wsl2]
-networkingMode=mirrored
-dnsTunneling=true
+networkingMode=NAT
+dnsTunneling=false
 firewall=true
 autoProxy=true
-memory=24GB
-processors=12
+# 2026-10-02: with memory=24GB a runaway dotnet build took 22.8 GB, left Windows
+# (32 GB) with 9 and the desk crawled; its OOM kill then looped the distro for an
+# hour. Half the box for WSL: the host keeps 16 GB and 8 of the 16 threads
+# (7800X3D) whatever happens inside. The slice caps in the NixOS profile
+# (resourceLimitsEnable) split these 16 GB so a runaway dies before the VM is full.
+memory=16GB
+processors=8
 swap=0
 # localhostForwarding is deliberately absent: WSL warns that it "has no effect
 # when using mirrored networking mode".

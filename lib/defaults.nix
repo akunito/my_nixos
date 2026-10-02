@@ -888,6 +888,20 @@
     nixMaxJobs = null;
     nixBuildCores = null;
 
+    # === Resource guards (system/hardware/resource-limits.nix) ===
+    # false = nothing applied. true = DefaultOOMPolicy=continue (an OOM kill no longer
+    # stops the unit -- on WSL that unit was init.scope, i.e. the distro) + cgroup caps on
+    # user-<uid>.slice (shell work: builds, tests, Claude) and on nix-daemon (deploys).
+    # Sized per profile against the memory the machine really has for them; nixMaxJobs /
+    # nixBuildCores above cap the parallelism of the deploy half.
+    resourceLimitsEnable = false;
+    limitsUserMemoryHigh = "10G";   # throttle (reclaim) above this
+    limitsUserMemoryMax = "12G";    # kill the largest process in the slice above this
+    limitsUserCpuQuota = "600%";    # 6 CPUs worth, leaves the rest to services and the host
+    limitsNixMemoryHigh = "8G";
+    limitsNixMemoryMax = "10G";
+    limitsNixCpuQuota = "600%";
+
     # === Nix store housekeeping (workstation profiles) ===
     nixGcAutomatic = true;
     nixGcDates = "weekly";

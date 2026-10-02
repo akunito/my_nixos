@@ -26,7 +26,7 @@ same shortcuts. Decisions below come from the 2026-09-13 interview.
 | NAS | `\\wsl$\NixOS\mnt\NFS_*` in Explorer | NFS 4.2 automounts `/mnt/NFS_media`, `NFS_Backups`, `NFS_downloads` like DESK |
 | NTFS data drives (DATA, DATA_SATA3) | native drive letters | `/mnt/d`, `/mnt/e` via WSL automount |
 | SSH to VPS / NAS / pfSense / X13 | – | `~/.ssh/config` managed (`sshHostsManaged`), gpg-agent as ssh agent, **pinentry-qt as a WSLg window** (`gpgPinentryWslg`) |
-| Git, git-crypt, dotfiles | VS Code (Remote-WSL) | the repo, `install.sh DESK_W11 -s -h -d` |
+| Git, git-crypt, dotfiles | VS Code (Remote-WSL) | the repo, `install.sh DESK_W11 -s -d` (no `-h`: the WSL hardware config is regenerated each run) |
 | Claude Code | native install: bootstrap + elevated (admin) tasks only | the real one, from tmux: `claude` wrapper, claude-sync identity `DESK_W11`, `ENV_PROFILE=DESK_W11`; drives Windows through interop (`pwsh.exe`, `winget.exe`) |
 | Docker | – | native `virtualisation.docker` (rootful), no Docker Desktop |
 | Local LLM | none (VRAM stays for games) | none |
@@ -596,6 +596,58 @@ closure** after a `flake.lock` update, so the laptops download instead of compil
   deploy. First run for LAPTOP_X13: 909 s, 628 packages built, store 22 → 60 GB; a cached
   re-run 37 s. Verified from X13: `nix-store -r <W11's X13 toplevel>` pulled 22 paths from
   `http://100.64.0.15:5000`, none from cache.nixos.org.
+
+## The restart loop of 2026-10-02, and the resource guards
+
+**What happened.** A `dotnet` build of AkuWM inside WSL ran away to **22.8 GB** of the
+VM's 24 GB (`/sys/fs/cgroup/init.scope/memory.peak`; swap=0, so no warning, just a
+crawl). Windows was left with 9 of its 32 GB and slowed with it. The kernel OOM-killed
+the build -- and from then on the distro died 17-90 s after every start, for about an
+hour, every ~34 s: `dmesg` showed `init.scope: A process of this unit has been killed
+by the OOM killer` at each boot, then a full shutdown, and in one captured life
+`init.scope: Stopping timed out. Killing process 2 (init-systemd)`. The terminal
+profile (`wsl-or-pwsh.ps1`) fell back to PowerShell on every tab, and `wsl.exe`
+answered `Wsl/Service/E_UNEXPECTED` mid-restart.
+
+**Why it looped.** The cgroup tree belongs to the VM kernel and survives a distro
+restart. Every new systemd found `oom_kill 1` in the old `init.scope` and, with
+`DefaultOOMPolicy=stop`, stopped that unit -- which holds WSL's own `/init` (PID 2), so
+stopping it is terminating the distro. Nothing inside the distro can reset the counter;
+only `wsl --shutdown` (new VM, fresh cgroups) breaks the loop, and it did. An orphan
+VS Code window (Remote-WSL, opened on a `.md` by a session in WSL) was relaunching
+`wsl.exe` every 34 s to reconnect to a server that had died with the distro, which is
+what made the loop continuous rather than one death per tab.
+
+**What was ruled out.** The build itself and the test suite, re-run under a GC cap with
+memory sampled every 2 s: `dotnet build AkuWM.sln -c Release` 9 s / 2.9 GB system-wide,
+`dotnet test` (1153 tests) 6 s / 1.4 GB. The 22.8 GB peak was a one-off runaway, cause
+unknown (the previous life's journal was lost with it).
+
+**The fix, three layers** (`system/hardware/resource-limits.nix`, flag
+`resourceLimitsEnable`, values in `profiles/DESK_W11-config.nix`):
+
+1. `DefaultOOMPolicy=continue`: an OOM kill no longer stops the unit it happened in.
+   For `init.scope` that unit is the distro; for `session-N.scope` it is the terminal.
+2. `user-.slice` drop-in -- `MemoryHigh=10G`, `MemoryMax=12G`, `CPUQuota=600%`. Every
+   login shell, so every build, test run or Claude session, sits in `user-1000.slice`
+   (`cat /proc/self/cgroup`); `sudo` does not move cgroups, so `install.sh`'s
+   `nixos-rebuild` evaluation is covered too. Above MemoryHigh the slice is throttled,
+   above MemoryMax the kernel kills its largest process. .NET reads the cgroup limit and
+   sizes its GC heap from it.
+3. `nix-daemon` -- `MemoryHigh=8G`, `MemoryMax=10G`, `CPUQuota=600%`, `max-jobs=2`,
+   `cores=3`: the build half of a deploy.
+4. On the Windows side `.wslconfig` now gives WSL **half the box**: `memory=16GB`,
+   `processors=8` (of 32 GB / 16 threads). Whatever happens inside, the host keeps the
+   other half. Applied with `bootstrap.ps1`'s copy + `wsl --shutdown`.
+
+**Check after a deploy**: `systemctl show user-1000.slice -p MemoryMax -p CPUQuotaPerSecUSec`
+(12G, 6s), `systemctl show init.scope -p OOMPolicy` (continue),
+`systemctl show nix-daemon -p MemoryMax` (10G), `free -g` (16 total).
+
+**If it ever loops again**: `wsl --shutdown` from PowerShell is the whole cure; then
+look for who keeps relaunching `wsl.exe` (`Get-CimInstance Win32_Process -Filter
+"Name='wsl.exe'"` with `ParentProcessId`), and read `dmesg` inside for the
+`init.scope` lines.
 
 ## Known limits
 

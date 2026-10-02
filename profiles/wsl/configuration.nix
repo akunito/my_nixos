@@ -14,6 +14,7 @@ in
     inputs.nixos-wsl.nixosModules.default
     ../../system/shell/env-profile.nix # ENV_PROFILE=DESK_W11
     ../../system/hardware/systemd.nix # journald limits
+    ../../system/hardware/resource-limits.nix # resourceLimitsEnable: OOMPolicy=continue + cgroup caps for shell work and nix-daemon (2026-10-02 restart loop)
     ../../system/security/sudo.nix
     ../../system/security/gpg.nix # gpg-agent as ssh agent (pinentry-qt as a WSLg window via gpgPinentryWslg)
     ../../system/security/ssh-agent-windows.nix # sshAgentWindowsBridge: SSH_AUTH_SOCK -> Windows OpenSSH agent (survives a PC restart)

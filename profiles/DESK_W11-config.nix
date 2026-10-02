@@ -13,9 +13,11 @@ in
     hostname = "nixosw11aku";
     profile = "wsl";
     envProfile = "DESK_W11"; # Claude Code + claude-sync machine identity
-    # -h: NixOS-WSL brings its own hardware config; install.sh must not regenerate one.
+    # No -h: install.sh resets to origin/main, whose hardware-configuration.nix is the last
+    # machine that pushed it (DESK, LUKS); its -h guard then aborts, and without -h it
+    # regenerates the WSL one (ext4 root, 9p mounts) every run, which is what the tree holds.
     # -d: docker is native inside WSL, never stop it for a rebuild.
-    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_W11 -s -h -d";
+    installCommand = "$HOME/.dotfiles/install.sh $HOME/.dotfiles DESK_W11 -s -d";
     bootMode = "bios"; # unused: NixOS-WSL disables the boot loader
     grubDevice = "/dev/";
     gpuType = "none"; # no GPU passthrough needed (no local LLM on W11)
@@ -29,6 +31,20 @@ in
     gpgMaxCacheTtlSeconds = 34560000;
     gpgPinentryWslg = true; # pinentry-qt window through WSLg (2026-09-16); curses drew the ssh passphrase prompt over Claude Code's TUI, typed blind
     sshAgentWindowsBridge = true; # 2026-09-21: the Windows agent holds the key across reboots; gpg-agent lost it on every `wsl --shutdown`
+
+    # Resource guards (2026-10-02): a build peaked at 22.8 GB of the VM, Windows crawled and
+    # the OOM kill in init.scope looped the distro for an hour (system/hardware/resource-limits.nix).
+    # The VM itself is capped in templates/windows/DESK_W11/.wslconfig (16 GB, 8 of 16 threads);
+    # these split that 16 GB: shell work 10/12 GB, nix-daemon 8/10 GB, docker + system the rest.
+    resourceLimitsEnable = true;
+    limitsUserMemoryHigh = "10G";
+    limitsUserMemoryMax = "12G";
+    limitsUserCpuQuota = "600%"; # of the VM's 8
+    limitsNixMemoryHigh = "8G";
+    limitsNixMemoryMax = "10G";
+    limitsNixCpuQuota = "600%";
+    nixMaxJobs = 2; # 2 x 3 threads for deploys; a runaway cannot pin all 8 anyway (CPUQuota)
+    nixBuildCores = 3;
 
     # === Security ===
     fuseAllowOther = false;
