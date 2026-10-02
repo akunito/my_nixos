@@ -89,6 +89,6 @@ paints, every later one is an empty surface -- measured with the AkuWM daemon
 stopped and a fresh `msrdc.exe` (15:40). No user-space setting cured it. The
 sudo askpass therefore no longer uses WSLg: `sudoAskpassWindowsNative`, a
 native Windows password box through interop (`system/security/
-sudo-askpass-windows.ps1`), deployed 15:46 (generation 15). `tests/wm askpass`
+windows-password-box.ps1`), deployed 15:46 (generation 15). `tests/wm askpass`
 13/13. Plan 10.53. Still exposed: pinentry-qt through WSLg (gpg/ssh).
 

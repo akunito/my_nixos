@@ -30,6 +30,7 @@ in
     gpgCacheTtlSeconds = 34560000; # 400 d: ask the ssh passphrase once per WSL boot (2026-09-16)
     gpgMaxCacheTtlSeconds = 34560000;
     gpgPinentryWslg = true; # pinentry-qt window through WSLg (2026-09-16); curses drew the ssh passphrase prompt over Claude Code's TUI, typed blind
+    gpgPinentryWindowsNative = true; # ...and since 2026-10-02 a native Windows box: WSLg here paints only the first window of a boot; the WSLg wrapper above is its fallback
     sshAgentWindowsBridge = true; # 2026-09-21: the Windows agent holds the key across reboots; gpg-agent lost it on every `wsl --shutdown`
 
     # Resource guards (2026-10-02): a build peaked at 22.8 GB of the VM, Windows crawled and

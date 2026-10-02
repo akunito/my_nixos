@@ -19,9 +19,8 @@
     # wrapper pins them and opens pinentry-qt as a window on the Windows desktop;
     # if WSLg is not there (no X socket) it falls back to pinentry-curses.
     pinentryPackage =
-      if (systemSettings.gpgPinentryCurses or false) then pkgs.pinentry-curses
-      else if (systemSettings.gpgPinentryWslg or false) then
-        pkgs.writeShellScriptBin "pinentry" ''
+      let
+        wslgPinentry = pkgs.writeShellScriptBin "pinentry" ''
           if [ -S /tmp/.X11-unix/X0 ] || [ -S /mnt/wslg/.X11-unix/X0 ]; then
             export DISPLAY="''${DISPLAY:-:0}"
             export WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
@@ -29,7 +28,22 @@
             exec ${pkgs.pinentry-qt}/bin/pinentry-qt "$@"
           fi
           exec ${pkgs.pinentry-curses}/bin/pinentry-curses "$@"
-        ''
+        '';
+        # gpgPinentryWindowsNative (NixOS-WSL): the passphrase box is a native
+        # Windows window through interop. WSLg on DESK_W11 paints only the
+        # first Linux window of a boot; every later pinentry-qt is an empty
+        # surface (measured 2026-10-02, window manager stopped). The WSLg
+        # wrapper stays as the fallback for a boot without interop.
+        windowsPinentry = pkgs.writeShellScriptBin "pinentry" ''
+          export PB_SCRIPT=${./windows-password-box.ps1}
+          export PB_FALLBACK=${wslgPinentry}/bin/pinentry
+          export PATH=${pkgs.coreutils}/bin:$PATH
+          exec ${pkgs.bash}/bin/bash ${./pinentry-windows.sh} "$@"
+        '';
+      in
+      if (systemSettings.gpgPinentryCurses or false) then pkgs.pinentry-curses
+      else if (systemSettings.gpgPinentryWindowsNative or false) then windowsPinentry
+      else if (systemSettings.gpgPinentryWslg or false) then wslgPinentry
       else pkgs.pinentry-qt;
 
     settings = let

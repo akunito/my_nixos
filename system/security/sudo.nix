@@ -46,10 +46,10 @@
       # lost the WSLInterop binfmt entry.
       windows-askpass = ''
         ps=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
-        script=${./sudo-askpass-windows.ps1}
+        script=${./windows-password-box.ps1}
         if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ] && [ -x "$ps" ]; then
           win="\\\\wsl.localhost\\''${WSL_DISTRO_NAME:-NixOS}$(printf '%s' "$script" | ${pkgs.coreutils}/bin/tr '/' '\\')"
-          exec "$ps" -NoProfile -ExecutionPolicy Bypass -File "$win" -Prompt "''${1:-sudo: authentication required}" 2>/dev/null
+          exec "$ps" -NoProfile -ExecutionPolicy Bypass -File "$win" -Prompt "''${1:-sudo: authentication required}" 2>/dev/null < /dev/null
         fi
         exec ${zenity-askpass}
       '';

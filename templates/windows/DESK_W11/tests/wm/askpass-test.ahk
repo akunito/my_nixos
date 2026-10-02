@@ -1,7 +1,7 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 ; The sudo askpass of NixOS-WSL is a native Windows box (system/security/
-; sudo-askpass-windows.ps1) because WSLg on this desk paints only the first
+; windows-password-box.ps1) because WSLg on this desk paints only the first
 ; Linux window of a boot: every later zenity was an empty surface with AkuWM's
 ; border round it (2026-10-02). The box must be PAINTED, small, whole on the
 ; monitor the pointer is on, and hand back exactly what was typed.
@@ -35,7 +35,7 @@ Samples(cx, cy) {
     }
     return a
 }
-script := EnvGet("USERPROFILE") "\.dotfiles\system\security\sudo-askpass-windows.ps1"
+script := EnvGet("USERPROFILE") "\.dotfiles\system\security\windows-password-box.ps1"
 Check("0 setup: the askpass script is in the Windows clone", FileExist(script) ? 1 : 0, 1)
 Scenario(label, px, py, secret) {
     global out, script

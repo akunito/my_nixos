@@ -1479,7 +1479,7 @@ machine, not the window manager, and nothing in user space cured it
 `LD_LIBRARY_PATH`).
 
 **Fix: the askpass does not go through WSLg.** `system/security/
-sudo-askpass-windows.ps1`, behind `sudoAskpassWindowsNative` (DESK_W11 only):
+windows-password-box.ps1`, behind `sudoAskpassWindowsNative` (DESK_W11 only):
 a WinForms password box started with `powershell.exe` on the store path
 through `\\wsl.localhost`, per-monitor DPI aware, centred on the monitor
 under the pointer at that monitor's scale (634x272 at 150 %, 531x236 at
