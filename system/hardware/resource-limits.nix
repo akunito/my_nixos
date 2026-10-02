@@ -19,7 +19,7 @@ in
   config = lib.mkIf (s.resourceLimitsEnable or false) {
     # A process OOM-killed inside a unit no longer stops the unit: for init.scope the unit
     # is the whole distro, for session-N.scope it is the terminal the build ran in.
-    systemd.extraConfig = "DefaultOOMPolicy=continue";
+    systemd.settings.Manager.DefaultOOMPolicy = "continue";
 
     # Everything started from a login shell (builds, tests, Claude Code) sits in
     # user-<uid>.slice; sudo does not move cgroups, so a `sudo nixos-rebuild` evaluation
