@@ -37,6 +37,20 @@ in
       '';
     };
 
+    # `wsl.exe -e <cmd>` (VS Code Remote, Windows-side scripts, a Claude session started that
+    # way) skips login and runs straight under WSL's /init, i.e. in init.scope, outside every
+    # user slice: the 21 GB node test of 2026-10-02 14:36 was exactly that (task_memcg=/init.scope,
+    # uid 1000). Same caps there; /init itself is a few MB, so the kill lands on the runaway.
+    systemd.units."init.scope" = {
+      overrideStrategy = "asDropin";
+      text = ''
+        [Scope]
+        MemoryHigh=${s.limitsUserMemoryHigh}
+        MemoryMax=${s.limitsUserMemoryMax}
+        CPUQuota=${s.limitsUserCpuQuota}
+      '';
+    };
+
     # Deploys: nix-daemon runs every build (install.sh, nix build, home-manager). Upstream
     # already ships OOMPolicy=continue on it; the caps are ours.
     systemd.services.nix-daemon.serviceConfig = {

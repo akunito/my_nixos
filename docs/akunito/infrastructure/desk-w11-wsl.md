@@ -618,6 +618,13 @@ VS Code window (Remote-WSL, opened on a `.md` by a session in WSL) was relaunchi
 `wsl.exe` every 34 s to reconnect to a server that had died with the distro, which is
 what made the loop continuous rather than one death per tab.
 
+**Caught live at 14:36, before the guards were deployed.** A second session started
+the Zen side-panel tests: `Out of memory: Killed process 15227 (node) ... anon-rss:21234836kB`,
+`task_memcg=/init.scope`, uid 1000 -- a **node** process, in `init.scope` because it was
+started through `wsl.exe -e` (no login, straight under `/init`), so no user slice would have
+caught it. Hence the `init.scope` drop-in. The oom_kill counter went to 1 again and the
+loop would have restarted; `wsl --shutdown` cleared it and the guards went in.
+
 **What was ruled out.** The build itself and the test suite, re-run under a GC cap with
 memory sampled every 2 s: `dotnet build AkuWM.sln -c Release` 9 s / 2.9 GB system-wide,
 `dotnet test` (1153 tests) 6 s / 1.4 GB. The 22.8 GB peak was a one-off runaway, cause
@@ -628,8 +635,8 @@ unknown (the previous life's journal was lost with it).
 
 1. `DefaultOOMPolicy=continue`: an OOM kill no longer stops the unit it happened in.
    For `init.scope` that unit is the distro; for `session-N.scope` it is the terminal.
-2. `user-.slice` drop-in -- `MemoryHigh=10G`, `MemoryMax=12G`, `CPUQuota=600%`. Every
-   login shell, so every build, test run or Claude session, sits in `user-1000.slice`
+2. `user-.slice` and `init.scope` drop-ins -- `MemoryHigh=10G`, `MemoryMax=12G`,
+   `CPUQuota=600%` each. Every login shell, so every build, test run or Claude session, sits in `user-1000.slice`
    (`cat /proc/self/cgroup`); `sudo` does not move cgroups, so `install.sh`'s
    `nixos-rebuild` evaluation is covered too. Above MemoryHigh the slice is throttled,
    above MemoryMax the kernel kills its largest process. .NET reads the cgroup limit and
