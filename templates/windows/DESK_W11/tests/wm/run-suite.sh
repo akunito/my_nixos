@@ -91,7 +91,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="bindings wintap capslock fsdrag openwith gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings wintap capslock fsdrag openwith wslg gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -160,6 +160,7 @@ for s in $suites; do
     capslock) collect capslock-test.ahk capslock-test.txt 40 "Hyper+Shift+M forces Caps Lock off";;
     fsdrag) collect fsdrag-test.ahk   fsdrag-test.txt    60 "Alt+drag leaves a fullscreen window alone (a game's Alt is its own)";;
     openwith) collect openwith-test.ahk openwith-test.txt 60 "A light-dismiss dialog survives the pointer crossing other windows";;
+    wslg) collect wslg-test.ahk       wslg-test.txt      90 "A WSLg dialog (the sudo askpass) shows small and whole on the pointer's monitor";;
     gui)    collect gui-test.ahk       gui-test.txt       90 "The settings window (M5): Hyper+S, sections by name, the smoke";;
     toggle) collect apptoggle-test.ahk apptoggle-test.txt 180 "Hyper+<letter>: Sway's app-toggle decision table";;
     wskeys) collect wskeys-test.ahk    wskeys-test.txt    150 "Workspace keys act on the monitor under the pointer";;

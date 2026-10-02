@@ -43,6 +43,12 @@ in
     defaultUser = userSettings.username;
     startMenuLaunchers = false;
     interop.includePath = true; # explorer.exe, wt.exe, clip.exe from the shell
+    # Register WSLInterop through systemd-binfmt instead of trusting /init's own
+    # registration: after the 2026-10-02 restarts the distro came up with an
+    # empty binfmt_misc (`powershell.exe: cannot execute binary file`, no
+    # WSLInterop entry, proc-sys-fs-binfmt_misc.mount remounted at boot), and
+    # every .exe call from WSL was dead until root re-registered it by hand.
+    interop.register = true;
     wslConf = {
       network.hostname = systemSettings.hostname;
       network.generateHosts = true;
