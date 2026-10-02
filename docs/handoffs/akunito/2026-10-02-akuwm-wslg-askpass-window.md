@@ -61,3 +61,27 @@ zenity 4.2.1 running.
 - Runbook `docs/akunito/infrastructure/desk-w11-wsl.md`, "The restart loop of
   2026-10-02" (why the deploy was running from Windows, and the `setsid` rule).
 - `docs/handoffs/akunito/2026-09-22-akuwm-nordvpn-modal.md`.
+
+## Resolved 2026-10-02 15:16 (from the WSL session)
+
+Step 1 reproduced it and settled the open question in one log read: **AkuWM
+moved it, and it did log** -- `place 0x600cec msrdc -> 3840,-373 1440x2525`,
+then `will not go to ... (it is at 3840,-373 1440x2160)`. The window is born
+370x317; AkuWM tiled it like any other window. (The 14:48 trace had no `place`
+line only because that build's log was read for one handle after the fact.)
+
+Fix, AkuWM **0.2.6**: rule action `center` (implies float, skips the placement
+journal and the app memory, centres at the window's own size on the monitor
+under the pointer), and rule `r-wslg` (`msrdc` -> `center`) in `common.json`.
+Unit `CenterRuleTests`; driven `tests/wm wslg` 8/8 on the signed build: with
+the pointer on the main monitor the window is at 1735,942 370x317 (workspace
+11), with it on the portrait one at 4375,731 370x317 (workspace 22).
+
+Also found on the way: WSL came back from the 14:47 restart without the
+`WSLInterop` binfmt entry (every `.exe` from WSL: "cannot execute binary
+file"). Restored from PowerShell with `wsl.exe -u root` (no password);
+declarative from the next deploy (`wsl.interop.register = true`).
+
+The sudo ticket was primed at 15:16 (the old askpass closed). The deploy of
+the resource guards is still the Windows-side session's to finish.
+

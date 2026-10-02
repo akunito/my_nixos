@@ -1414,6 +1414,45 @@ unassociated extension (`.akuwmtest`) is the reliable trigger. And Diego's
 hand on the mouse during a probe is indistinguishable from the bug: the test
 logs where the pointer was when the dialog died.
 
+### 10.52 0.2.6: the WSLg sudo askpass was tiled to a whole monitor (2026-10-02 14:55 → 15:20)
+
+Handoff from a Windows-side session: `install.sh` waited on sudo three times
+for five minutes because nobody saw the zenity askpass (WSLg, hosted by
+`msrdc.exe`, class `RAIL_WINDOW`). Reproduced from WSL with
+`setsid -f zenity --password`: born 370x317 at the corner of the portrait
+monitor, and the daemon's log: `place msrdc -> 3840,-373 1440x2525` -- tiled
+like any window, stretched to the whole screen, then floated there by 0.2.3's
+"stubborn tile" rule at 1440x2160. Not WSLg's doing.
+
+**Fix.** A rule action, `center`: implies float; the window keeps its own
+size (cut to the screen if larger) and is centred on the monitor under the
+pointer; the placement journal and the app memory are skipped (a dialog
+belongs where the person is, not where the last one was). Rule `r-wslg`:
+process `msrdc` -> `center`. The order of shipping mattered: an action the
+daemon does not know is a validation ERROR, so the rule went into
+`common.json` only after 0.2.6 was running (the watcher reloaded it on the
+`git pull`, 15:12:10).
+
+**Tests.** Unit `CenterRuleTests` (both monitors, larger-than-screen, the
+validator). Driven `tests/wm wslg`: zenity with the pointer on each monitor,
+8/8. Two harness faults found by it and fixed in the three new cases:
+AutoHotkey's `MouseMove` is relative to the ACTIVE WINDOW's client area by
+default (`CoordMode "Mouse", "Screen"`), and an AutoHotkey process is only
+system-DPI aware, so the portrait monitor read `[4608,-490 1728x3072]`
+instead of `[3840,-408 1440x2560]` (`SetThreadDpiAwarenessContext(-4)`).
+`Case` is a reserved word. `openwith` 10/10 and `fsdrag` 5/5 on the signed
+0.2.6; Diego confirmed the real "Open with" dialog holds.
+
+**The day's outages, for the record.** The session that built 0.2.5 died at
+14:05: the kernel OOM-killed a `node` of 8.2 GB (Claude Code itself; the 14
+`dotnet` processes alive at that moment held 1 GB together), and another
+session's Zen tests took the VM down twice more. WSL then came back at 14:47
+without the `WSLInterop` binfmt entry -- no `.exe` ran from WSL until
+`wsl.exe -u root` re-registered it from PowerShell; `wsl.interop.register =
+true` makes it declarative at the next deploy. Every `dotnet` from this
+session now runs under `systemd-run --user --scope -p MemoryMax=8G`, one at a
+time.
+
 ## 11. Migration, rollback, and getting the desk back
 
 Between M1 and M4 both stacks are installed, and the rule that makes that
