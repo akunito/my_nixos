@@ -1583,6 +1583,18 @@ classes that probe a free loopback port and bind it a moment later (`Address
 already in use`; a subscription count off): four classes did that in
 parallel. They share an xunit collection now; the next run was green.
 
+**The full suites on the signed 0.2.7 (2026-10-02 16:45 → 17:35, with Diego's
+go).** `tests/wm`, 17 cases in six foreground blocks: 238 pass, 4 fail on the
+first pass -- 2 are `wslg` "it is painted" (WSLg's own defect, 10.53; place
+and size pass), 2 were `repair`, the harness and not the manager:
+`repair-test.ahk` moved the pointer in the active window's client coordinates,
+the last active window was on the vertical monitor, and every window of the
+case opened on the wrong screen (`CoordMode "Mouse", "Screen"`; `repair`
+alone 29/29 after it). `tests/fullscreen`: 47 passed, 0 failed, and case 1
+(present mode of the fullscreen window) SKIPPED in that run -- the first
+PresentMon capture got no frames; run alone twice afterwards it read
+`Hardware Composed: Independent Flip` both times.
+
 ### 10.56 The "Windows Security" prompt was dragged across monitors (2026-10-02 16:27 → 16:30)
 
 The other system prompt, found while looking at the UAC ones: the credential
