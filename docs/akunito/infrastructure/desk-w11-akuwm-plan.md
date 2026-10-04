@@ -645,7 +645,7 @@ bind; the engine supports all of them):
 | Hyper+Up / Down | focus output up / down | only two monitors side by side; skip unless the TV is on |
 | Hyper+S / Hyper+` | sway-apps GUI / its monitors section | AkuWM GUI / Monitors section |
 | Hyper+A, Hyper+Shift+A | blueman, pavucontrol | `ms-settings:bluetooth`, SndVol |
-| Hyper+M | Mission Center | Task Manager |
+| Hyper+M | Mission Center | microphone mute toggle since 0.2.8 (10.57); Task Manager was the candidate |
 | Hyper+G / N / B | chromium, nwg-look, bottles | none / none / none |
 | Hyper+Shift+E | ranger in kitty | a terminal in the home dir? |
 | Hyper+Shift+T | Trayscale | Tailscale tray |
@@ -1620,6 +1620,14 @@ the primary monitor, be absent from `debug layout`, visible and not cloaked.
 Without the rule 2 of 4 fail (`1578,805 684x550 -> 3840,805 570x459`, "holds
 it as a window of a workspace"); with it 4/4. `Get-Credential` does not
 produce this prompt from a hidden PowerShell; the API call does.
+
+### 10.57 0.2.8: Hyper+M mutes the microphone (2026-10-04)
+
+Asked for "una tecla para activar y desactivar el micrófono, en plan hyper+shift+m, y que esté disponible en la GUI para cambiarlo". `Hyper+Shift+M` is the Caps Lock rescue (10.47), so the chord is **Hyper+M**, which was free (the plan's table had it pencilled for Task Manager, never bound).
+
+**Where each half lives.** Windows has no key and no on-screen sign for the microphone: `Win+Alt+K` only mutes inside a call app that opted into the call-mute API, and the mixer draws nothing when the capture device is muted. So the switch is a daemon command, `toggle-mic` (`Win32Audio.cs`: `MMDeviceEnumerator` → default capture endpoint → `IAudioEndpointVolume.SetMute`, both the console and the communications role when they are different devices; the new state is read back after the write and answered as `data.muted`), and the feedback is the AutoHotkey's: `Glaze()` now reads the reply of every pipe command and, when `data.osd` is present, shows it for 1.1 s (`Osd()` in `lib-glaze.ahk`: one Gui for the life of the script, tool window, no focus, clicks go through, centred low on the monitor under the pointer; a failed `toggle-mic` shows its error the same way, every other command still fails quietly). The chord itself is data: `k-mic` in `common.json`, kind `wm`, command `toggle-mic`, category System — which is what puts it in the GUI's Shortcuts section with an editable chord like the rest.
+
+**Tests**: 2 unit tests (`CompatTests`: the flip and the two osd texts; the failure with the reason when there is no capture device) and `tests/wm mic` (in `all`): reads the mixer through Core Audio on its own (`ComCall` on `IAudioEndpointVolume.GetMute`, not through the daemon), presses Hyper+M twice, and requires the mute to flip each time, the OSD to read "Microphone off" then "Microphone on" and to be gone within 3 s, the pipe reply to carry `muted`, and the desktop to keep the focus. Leaves the microphone as it found it. Written with Aion 2 open, so: unit tests and `/validate` only; the live run, the daemon switch and the 0.2.8 install wait for a quiet moment with Diego's go.
 
 ## 11. Migration, rollback, and getting the desk back
 

@@ -91,7 +91,7 @@ collect() { # collect <script> <result> <timeout> <title>
 }
 
 case "${1:-all}" in
-  all)       suites="bindings wintap capslock fsdrag openwith wslg askpass credui gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
+  all)       suites="bindings wintap capslock mic fsdrag openwith wslg askpass credui gui toggle wskeys sticky stacking tiling tiledrag rules repair display";;
   *)         suites="$*";;
 esac
 
@@ -158,6 +158,7 @@ for s in $suites; do
     bindings) collect bindings-test.ahk bindings-test.txt 40 "Chords as data: bindings.tsv re-read on WM_APP+1 (plan 10.27)";;
     wintap) collect wintap-test.ahk    wintap-test.txt    40 "Win tapped alone opens the palette; Hyper let go does not";;
     capslock) collect capslock-test.ahk capslock-test.txt 40 "Hyper+Shift+M forces Caps Lock off";;
+    mic)    collect mic-test.ahk       mic-test.txt       40 "Hyper+M mutes and unmutes the microphone, with an OSD";;
     fsdrag) collect fsdrag-test.ahk   fsdrag-test.txt    60 "Alt+drag leaves a fullscreen window alone (a game's Alt is its own)";;
     openwith) collect openwith-test.ahk openwith-test.txt 60 "A light-dismiss dialog survives the pointer crossing other windows";;
     wslg) collect wslg-test.ahk       wslg-test.txt      90 "A WSLg dialog (the sudo askpass) shows small and whole on the pointer's monitor";;

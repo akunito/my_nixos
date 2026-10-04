@@ -32,6 +32,7 @@ it over (or push and pull there) and the daemon picks the file change up itself.
 |---|---|---|
 | `toggle` | `apptoggle-test.ahk` | Launch and follow, hide when focused, cycle between windows of one app, a minimised window comes back **to the workspace you are on**, a window parked elsewhere takes you to it, an app launched behind a fullscreen game leaves the game the screen |
 | `capslock` | `capslock-test.ahk` | Hyper+Shift+M forces Caps Lock off (never a toggle) |
+| `mic` | `mic-test.ahk` | Hyper+M mutes/unmutes the default microphone (`toggle-mic`, Core Audio read back independently) and the hotkey script shows "Microphone off / on" for a moment |
 | `fsdrag` | `fsdrag-test.ahk` | Alt+drag leaves a fullscreen window alone and still moves an ordinary one |
 | `openwith` | `openwith-test.ahk` | The "Open with" dialog (a light-dismiss popup) survives the pointer crossing other windows; a click elsewhere still dismisses it |
 | `wslg` | `wslg-test.ahk` | A WSLg dialog (zenity through msrdc, the sudo askpass) appears at its own size, whole, centred on the monitor under the pointer -- on both monitors |

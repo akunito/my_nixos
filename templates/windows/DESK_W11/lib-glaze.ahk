@@ -198,8 +198,15 @@ Glaze(args) {
     global glazeExe, wmPipe
     WmResolve()
     t := A_TickCount
-    if (wmPipe && WmPipeAsk("compat command " args) != "") {
+    if (wmPipe && (reply := WmPipeAsk("compat command " args)) != "") {
         Dbg(Format("glaze {1} ({2} ms, pipe)", args, A_TickCount - t))
+        ; A reply may carry a line for the person ("osd" in its data): the
+        ; chord did something Windows gives no sign of (toggle-mic). Only those
+        ; commands show their failure too; the others fail quietly, as always.
+        if RegExMatch(reply, '"osd":"((?:[^"\\]|\\.)*)"', &m)
+            Osd(m[1])
+        else if (InStr(args, "toggle-mic") && RegExMatch(reply, '"error":"((?:[^"\\]|\\.)*)"', &m))
+            Osd("Microphone: " m[1])
         return
     }
     ; The CLI fallback. GlazeWM is uninstalled on this desk, so in the seconds
@@ -213,6 +220,30 @@ Glaze(args) {
     catch as e
         Dbg(Format("glaze {1}: {2}", args, e.Message))
     Dbg(Format("glaze {1} ({2} ms)", args, A_TickCount - t))
+}
+
+; A short message over the monitor under the pointer, gone after a moment. A
+; tool window that takes no focus and no clicks (WS_EX_TOOLWINDOW without
+; WS_EX_APPWINDOW is one AkuWM never manages; E0x20 = WS_EX_TRANSPARENT).
+; One Gui for the life of the script, re-shown with the new text; one timer,
+; so a second message within the moment just extends it.
+Osd(text, ms := 1100) {
+    static osd := 0, hide := 0
+    if !osd {
+        osd := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20 +Owner", "AkuWM OSD")
+        osd.BackColor := "1f1d2e"
+        osd.MarginX := 30, osd.MarginY := 16
+        osd.SetFont("s16 cE0DEF4", "Segoe UI")
+        osd.AddText("vMsg Center w400", text)
+        hide := (*) => osd.Hide()
+    } else
+        osd["Msg"].Text := text
+    MouseGetPos &mx, &my
+    mon := MonitorAt(mx, my)
+    osd.Show("NoActivate Hide")
+    osd.GetPos(, , &w, &h)
+    osd.Show(Format("NoActivate x{1} y{2}", mon.l + (mon.r - mon.l - w) // 2, mon.b - (mon.b - mon.t) // 5 - h))
+    SetTimer hide, -ms
 }
 
 ; Same, but aimed at one container instead of whatever has the focus. Without

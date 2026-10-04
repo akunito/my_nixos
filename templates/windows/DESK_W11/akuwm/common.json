@@ -1105,6 +1105,17 @@
       "enabled": true,
       "notes": "sway's Hyper+Shift+A is pavucontrol; the System > Sound page, not the volume flyout; the Git section's push was verified from here on 2026-10-01",
       "updated_at": 1790161461
+    },
+    {
+      "id": "k-mic",
+      "keys": "Hyper+M",
+      "kind": "wm",
+      "command": "toggle-mic",
+      "category": "System",
+      "name": "Microphone mute (toggle)",
+      "enabled": true,
+      "notes": "the default capture device (console and communications roles) through Core Audio in the daemon; the AutoHotkey shows the reply's osd text (Microphone off / on) since Windows draws no sign of its own. Hyper+Shift+M stays Caps Lock off",
+      "updated_at": 1791100000
     }
   ],
   "startup": [
