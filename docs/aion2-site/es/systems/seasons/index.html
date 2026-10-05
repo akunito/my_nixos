@@ -1,0 +1,416 @@
+<!DOCTYPE html><html lang="es" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Temporadas | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/es/systems/seasons/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/systems/seasons/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/systems/seasons/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/systems/seasons/"/><link rel="sitemap" href="/sitemap-index.xml"/><script src="/skill-tooltips.js" defer></script><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Temporadas"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/es/systems/seasons/"/><meta property="og:locale" content="es"/><meta property="og:description" content="Qué es una temporada en Aion 2, qué se reinicia al cambiar (sólo los rankings) y qué se queda, qué pasa con la tienda y las monedas de temporada, cómo se pagan los rankings, el calendario coreano y taiwanés, los topes de AP por temporada y qué hacer antes de que termine la temporada 1 del global."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="Qué es una temporada en Aion 2, qué se reinicia al cambiar (sólo los rankings) y qué se queda, qué pasa con la tienda y las monedas de temporada, cómo se pagan los rankings, el calendario coreano y taiwanés, los topes de AP por temporada y qué hacer antes de que termine la temporada 1 del global."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.DOd4Xg1l.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Ir al contenido</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/es/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Buscar&quot;,&quot;clear_search&quot;:&quot;Limpiar&quot;,&quot;load_more&quot;:&quot;Cargar más resultados&quot;,&quot;search_label&quot;:&quot;Buscar página&quot;,&quot;filters_label&quot;:&quot;Filtros&quot;,&quot;zero_results&quot;:&quot;Ningún resultado para: [SEARCH_TERM]&quot;,&quot;many_results&quot;:&quot;[COUNT] resultados para: [SEARCH_TERM]&quot;,&quot;one_result&quot;:&quot;[COUNT] resultado para: [SEARCH_TERM]&quot;,&quot;alt_search&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Mostrando resultados para: [DIFFERENT_TERM]&quot;,&quot;search_suggestion&quot;:&quot;Ningún resultado para [SEARCH_TERM]. Prueba alguna de estas búsquedas:&quot;,&quot;searching&quot;:&quot;Buscando [SEARCH_TERM]...&quot;}"><button data-open-modal disabled aria-label="Buscar" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Buscar</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Buscar" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancelar</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/systems/seasons/" selected class="astro-2z5xp7gb">Español</option><option value="/en/systems/seasons/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Primario"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menú</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="1g5a8a9" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Empezar</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/start/launch-checklist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Checklist del lanzamiento</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Lanzamiento, servidores y qué comprar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ajustes, controles y ping</span></a></li><li class="astro-rmhv4bp6"><a href="/es/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Jugar en KR/TW, el anti-cheat y llegar listo al acceso anticipado</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Clases</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visión general</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/templar-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Templar</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric en PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/cleric-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills de Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/gladiator-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/assassin-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/sorcerer-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/ranger-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/spiritmaster-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: todas las skills y combos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: qué subir y cuándo (1-45 y endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/classes/chanter-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: todas las skills y combos</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Rutas de clase</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/roadmaps/templar-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: qué subir en cada nivel (PvE y leveo)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/templar-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: rotación y macros (PvE)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/chanter-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: qué subir en cada nivel (PvE y leveo)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/chanter-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: rotación y macros (PvE)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/cleric-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Clérigo: qué subir en cada nivel (PvE y leveo)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/roadmaps/cleric-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Clérigo: rotación y macros (PvE)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progresión</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 y primeros días</span></a></li><li class="astro-rmhv4bp6"><a href="/es/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Rutina diaria y semanal</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sistemas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Equipo</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats y fórmulas de combate</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sistemas de personaje: pets, Genus Insight, Closet y títulos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combate, macros, targeting y controles</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/account-utilities/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Utilidades de cuenta y personaje</span></a></li><li class="astro-rmhv4bp6"><a href="/es/systems/seasons/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Temporadas</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Mazmorras y raids</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pve/party-and-loot/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Grupo, emparejamiento y botín</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pve/solo-content/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Contenido en solitario</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Abyss y puntos de Abyss</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Asedios, artefactos y legión</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas y Battlefield</span></a></li><li class="astro-rmhv4bp6"><a href="/es/pvp/pvp-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Reglas del combate PvP</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economía y rutina</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetización, Kinah y gasto</span></a></li><li class="astro-rmhv4bp6"><a href="/es/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering y Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versiones</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versiones y regiones</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Referencia</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/reference/open-questions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Qué comprobar el día 30</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glosario</span></a></li><li class="astro-rmhv4bp6"><a href="/es/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Fuentes y método</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Herramientas</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/tools/stigma-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Planificador de stigmas</span></a></li><li class="astro-rmhv4bp6"><a href="/es/tools/skills-browser/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Explorador de skills</span></a></li><li class="astro-rmhv4bp6"><a href="/es/tools/skill-point-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Planificador de puntos de skill</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Notas de vídeos</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/es/videos/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Notas de vídeos</span></a></li><li class="astro-rmhv4bp6"><a href="/es/videos/first-day-cahos-2026-09-25/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Primer día sin perder progreso (CAHOS GAMING)</span></a></li><li class="astro-rmhv4bp6"><a href="/es/videos/gs-1400-day-one-kira-2026-10-04/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1.400 de GS el día uno sin gastar Odyle (KiraSaveTheWorld)</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar tema</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Oscuro</option><option value="light" class="astro-2z5xp7gb">Claro</option><option value="auto" selected class="astro-2z5xp7gb">Automático</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Seleccionar idioma</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/systems/seasons/" selected class="astro-2z5xp7gb">Español</option><option value="/en/systems/seasons/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">En esta página<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#qué-pasa-con-cada-cosa-al-cambiar-de-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Qué pasa con cada cosa al cambiar de temporada</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#tienda-de-temporada-precios-de-referencia" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Tienda de temporada: precios de referencia</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#rankings-de-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Rankings de temporada</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#calendario-krtw" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Calendario KR/TW</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#temporada-1-del-global" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Temporada 1 del global</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#topes-de-ap-por-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Topes de AP por temporada</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#antes-de-que-acabe-la-temporada" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Antes de que acabe la temporada</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">En esta página</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sinopsis</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#resumen" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Resumen</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#cómo-funciona" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Cómo funciona</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#datos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Datos</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#qué-pasa-con-cada-cosa-al-cambiar-de-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Qué pasa con cada cosa al cambiar de temporada</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#tienda-de-temporada-precios-de-referencia" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Tienda de temporada: precios de referencia</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#rankings-de-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Rankings de temporada</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#calendario-krtw" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Calendario KR/TW</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#temporada-1-del-global" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Temporada 1 del global</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#topes-de-ap-por-temporada" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Topes de AP por temporada</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#antes-de-que-acabe-la-temporada" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Antes de que acabe la temporada</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#errores-y-trampas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Errores y trampas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#preguntas-abiertas" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Preguntas abiertas</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#fuentes-principales" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Fuentes principales</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="es" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Temporadas</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Región:</b> Corea, Taiwán y global · <b>Versión:</b> reglas de cambio de temporada KR/TW de enero a julio de 2026 + lo que enseñó el LST global del 17-19/09/2026 · <b>Revisado:</b> 2026-10-05 · <b>Confianza:</b> media. NCsoft no ha publicado las reglas de temporada del global; casi todo lo de esta página es el precedente coreano y taiwanés, y la fecha de fin de la temporada 1 del global es una lectura de la caducidad de objetos, no un anuncio.</div>
+<div class="sl-heading-wrapper level-h2"><h2 id="resumen">Resumen</h2><a class="sl-anchor-link" href="#resumen"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Resumen»</span></a></div>
+<ul>
+<li><strong>Una temporada no es un wipe.</strong> En Corea y Taiwán un cambio de temporada sólo reinicia los <strong>rankings</strong> de PvE y PvP. Personaje, equipo, Kinah, Arcana, Daevanion y Abyss Points se quedan (KR/TW, 2026-06-09).</li>
+<li>Lo que trae una temporada es <strong>contenido</strong>: mazmorras nuevas, sets de Arcana nuevos (a veces una ranura más), un piso nuevo de Nightmare y una <strong>moneda de temporada</strong> que se gana con misiones de temporada y se gasta en una <strong>tienda de temporada</strong>.</li>
+<li><strong>Lo único que sí se pierde es la tienda de temporada y su moneda (Oath Coins).</strong> En el paso de la temporada 1 a la 2 la tienda se cerró entera y la moneda caducó; las tiendas de Abyss, Nightmare, Shugo y del pase siguieron abiertas con su historial de compras (KR/TW, 2026-01-19).</li>
+<li>Los rankings de temporada pagan por <strong>mejor marca dentro de tu clase</strong>, no por puntuación acumulada, desde la temporada 2 coreana (KR/TW, 2026-01-21). Los títulos de ranking son de temporada: desaparecen del equipo cuando caducan (KR, 2026-07-01).</li>
+<li>Las temporadas coreanas duraron <strong>9, 11 y 12 semanas</strong>, y el Chapter 1 unas 18. La temporada 2 se alargó dos semanas porque “el 90 % de los jugadores no estaba listo” (KR/TW, 2026-03-04).</li>
+<li><strong>Global:</strong> la temporada 1 empieza el 05-10-2026. Tres fuentes del Launch Scale Test leen el <strong>16-12-2026</strong> como fecha de fin en la caducidad de objetos de energía (GLOBAL, 2026-09-18/19): unas <strong>10 semanas</strong>. NCsoft no lo ha anunciado. La temporada 2 del global no tiene fecha ni contenido.</li>
+<li><strong>Qué hacer:</strong> gasta la moneda de temporada antes de que acabe; no tengas miedo de invertir en equipo, Arcana o Daevanion al final de una temporada, porque nada de eso se reinicia.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="cómo-funciona">Cómo funciona</h2><a class="sl-anchor-link" href="#cómo-funciona"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Cómo funciona»</span></a></div>
+<ul>
+<li><strong>Qué se reinicia:</strong> los rankings de PvE (Nightmare, etc.) y de PvP. Nada más. El creador que lo explica con 900 horas en KR/TW insiste en que “ni siquiera es un soft reset” (KR/TW, 2026-06-09).</li>
+<li><strong>Qué se queda:</strong> nivel, equipo y su mejora, Kinah, Arcana, Abyss Points, el tablero de <a href="/es/systems/daevanion/">Daevanion</a>, stigmas y sus niveles (<a href="/es/systems/stigma/">Stigma</a>), mascotas y alas. Los puntos de Daevanion se compran con monedas de Nightmare y Shugo, y esas dos monedas pasaron enteras de la temporada 1 a la 2 (KR/TW, 2026-01-19).</li>
+<li><strong>Qué llega:</strong> en Corea cada temporada trajo mazmorras de expedición nuevas, una mazmorra de trascendencia con sets de Arcana nuevos, un jefe final de Nightmare nuevo (Zikel en la 1, Kaisinel en la 2, Tyrant en la 3) y misiones de temporada. El contenido viejo no se borra: los jefes de Nightmare de la temporada 1 siguieron en su propio piso (KR/TW, 2026-01-21).</li>
+<li><strong>Misiones de temporada:</strong> se completan una vez por temporada (más una parte semanal) y dan cristales de Daevanion, AP, medallas PvP, materiales de Arcana y <strong>puntos de temporada</strong> para la tienda (KR/TW, 2026-07-06). El tablón de Supply Requests tiene una pestaña de temporada con su propio reset (KR, 2026-01-14).</li>
+<li><strong>Tienda de temporada:</strong> vende materiales de crafteo, alas, mascotas, piedras de resurrección y cosméticos por puntos de temporada. Cada temporada abre una tienda nueva y cierra la anterior.</li>
+<li><strong>Global:</strong> una fuente del LST describe el mismo modelo, misiones de temporada cada ~3 meses que dan Oath Coins, piedras de amplificación y medallas, y una tienda de temporada con materiales de crafteo, alas, almas de mascota y skins (GLOBAL, 2026-09-19). Es una sola fuente y en el test el contenido de temporada estaba cerrado, así que el catálogo del global está sin ver.</li>
+<li><strong>Equipo entre temporadas:</strong> la <a href="/es/systems/gear/">herencia</a> pasa la mejora de una pieza a su sustituta. Corea la limitaba a unas 6 transferencias por temporada, con fallo posible, hasta que el Chapter 1 la hizo ilimitada al 100 % (KR/TW, 2026-06-16). El global la tiene al 100 %; si tiene un tope por temporada no está dicho.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="datos">Datos</h2><a class="sl-anchor-link" href="#datos"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Datos»</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="qué-pasa-con-cada-cosa-al-cambiar-de-temporada">Qué pasa con cada cosa al cambiar de temporada</h3><a class="sl-anchor-link" href="#qué-pasa-con-cada-cosa-al-cambiar-de-temporada"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Qué pasa con cada cosa al cambiar de temporada»</span></a></div>
+<p>Precedente: el paso de la temporada 1 a la 2, mantenimiento del 2026-01-21, según el plan de NCsoft resumido por la comunidad (KR/TW, 2026-01-19).</p>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Al cambiar de temporada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rankings PvE y PvP</td>
+<td><strong>se reinician</strong></td>
+</tr>
+<tr>
+<td>Oath Coins (moneda de temporada)</td>
+<td><strong>caducan</strong>: las de la temporada 1 sólo valían hasta el 2026-01-21; se reparten nuevas para la 2</td>
+</tr>
+<tr>
+<td>Tienda de temporada</td>
+<td><strong>se cierra entera</strong>; abre una nueva para la temporada siguiente</td>
+</tr>
+<tr>
+<td>Tienda del pase (Daeva Pass)</td>
+<td>sigue abierta; la del pase viejo convive con la del nuevo</td>
+</tr>
+<tr>
+<td>Tiendas de Nightmare, Abyss y Shugo Festival</td>
+<td>siguen abiertas, sin reiniciar el historial de compras (algunos objetos cambian)</td>
+</tr>
+<tr>
+<td>Abyss Points</td>
+<td>se quedan</td>
+</tr>
+<tr>
+<td>Abyss Rift Stones</td>
+<td>se quedan; las nuevas de temporada caducan al final de la siguiente, pero las compradas en el intercambio del Abyss no caducan</td>
+</tr>
+<tr>
+<td>Phantasmal Fragments (Nightmare)</td>
+<td>se quedan</td>
+</tr>
+<tr>
+<td>Century Root Emblems (Shugo)</td>
+<td>se quedan</td>
+</tr>
+<tr>
+<td>Tickets de expedición y trascendencia</td>
+<td>se quedan sin caducidad; se reparten además tickets nuevos de temporada que sí caducan</td>
+</tr>
+<tr>
+<td>Tickets de Ascension Trial y conquista</td>
+<td>se quedan; los nuevos de temporada caducan</td>
+</tr>
+<tr>
+<td>Equipo, Kinah, Arcana, Daevanion</td>
+<td>se quedan (KR/TW, 2026-06-09)</td>
+</tr>
+<tr>
+<td>Transferencias de herencia</td>
+<td>el contador por temporada se reiniciaba (KR/TW, 2026-01-21); desde el Chapter 1 no hay contador</td>
+</tr>
+</tbody>
+</table>
+<p>En el global los tickets ya no existen: la <a href="/es/progression/routine/">Odyle Energy</a> los sustituye. Qué caduca en el global al acabar la temporada 1 no está publicado.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="tienda-de-temporada-precios-de-referencia">Tienda de temporada: precios de referencia</h3><a class="sl-anchor-link" href="#tienda-de-temporada-precios-de-referencia"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Tienda de temporada: precios de referencia»</span></a></div>
+<p>Todo KR/TW. Sirve para saber qué comprar primero, no como lista de precios del global.</p>
+<table>
+<thead>
+<tr>
+<th>Objeto</th>
+<th>Precio o límite</th>
+<th>Región y fecha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mysterious Crystal (para craftear Arcana Unique)</td>
+<td>25.000 puntos de temporada</td>
+<td>KR, 2026-01-19</td>
+</tr>
+<tr>
+<td>Piedra de resurrección</td>
+<td>6.000; el creador tenía ~30.000 tras mucho contenido de temporada y lo llamó “no vale la pena”</td>
+<td>KR, 2025-11-30</td>
+</tr>
+<tr>
+<td>Alas de la tienda</td>
+<td>~210.000, compra por servidor, no por personaje</td>
+<td>KR, 2026-02-20</td>
+</tr>
+<tr>
+<td>Alas Talisra (4 % de reducción de enfriamiento, la elección fija de varias builds)</td>
+<td>salen de esta tienda o de las recompensas de crecimiento</td>
+<td>KR, 2026-08-07</td>
+</tr>
+<tr>
+<td>Magical Breath (núcleos para un crafteo garantizado)</td>
+<td>5 por temporada <strong>por servidor</strong>, no transferible entre personajes</td>
+<td>KR/TW, 2026-07-06 y 2026-08-03</td>
+</tr>
+<tr>
+<td>Mascotas Coni, Ferra y Natura</td>
+<td>a la venta; el creador prioriza los materiales de crafteo</td>
+<td>TW, 2026-08-31</td>
+</tr>
+<tr>
+<td>Caja de Oath Coins (tienda de dinero)</td>
+<td>100.000 por compra, hasta 4 (400.000)</td>
+<td>KR, 2026-04-08</td>
+</tr>
+</tbody>
+</table>
+<p>Desde la temporada 3 coreana la moneda de temporada es <strong>por servidor</strong>: puedes volcarla en tu principal o repartirla entre alts (KR, 2026-04-08). Los objetos de la tienda que se ligan al personaje (Magical Breath, el equipo crafteado con él) se compran y se usan en el principal (KR, 2026-02-20).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="rankings-de-temporada">Rankings de temporada</h3><a class="sl-anchor-link" href="#rankings-de-temporada"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Rankings de temporada»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+<th>Región y fecha</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cálculo del ranking</td>
+<td><strong>mejor marca</strong>, no acumulado</td>
+<td>KR/TW, desde 2026-01-21</td>
+</tr>
+<tr>
+<td>Reparto de recompensas</td>
+<td>por <strong>ranking dentro de tu clase</strong>, no por puntuación global</td>
+<td>KR/TW, desde 2026-01-21</td>
+</tr>
+<tr>
+<td>Recompensas de ranking de Nightmare</td>
+<td>sólo cosméticas (skins y títulos sin stats); antes un título daba poder PvE real y se quitó</td>
+<td>GLOBAL, 2026-09-18</td>
+</tr>
+<tr>
+<td>Títulos de ranking de temporada</td>
+<td>caducan: tras el parche del 2026-07-01 desaparecieron del equipo y un creador perdió ~100.000 de rating del Abyss hasta sustituirlos</td>
+<td>KR, 2026-07-01</td>
+</tr>
+<tr>
+<td>Ranking del Abyss</td>
+<td>se recalcula cada hora por puntos ganados; alimenta el rango militar</td>
+<td>TW, 2025-09-14 (anterior al lanzamiento)</td>
+</tr>
+<tr>
+<td>Pisos de Nightmare</td>
+<td>temporada 2: había que volver a matar al jefe de la 1 para abrir el piso nuevo; temporada 3: basta con el nivel 1 del piso anterior</td>
+<td>TW 2026-01-22 / KR 2026-04-08</td>
+</tr>
+</tbody>
+</table>
+<p>Cómo se reinicia el ranking de arena entre temporadas no lo cuenta ninguna fuente. Detalle de escalas y medallas en <a href="/es/pvp/abyss/">Abyss</a> y <a href="/es/pvp/arena/">arena</a>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="calendario-krtw">Calendario KR/TW</h3><a class="sl-anchor-link" href="#calendario-krtw"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Calendario KR/TW»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Temporada</th>
+<th>Inicio</th>
+<th>Duración</th>
+<th>Qué trajo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2025-11-19</td>
+<td>9 semanas</td>
+<td>lanzamiento; Nightmare con Zikel</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2026-01-21</td>
+<td>11 semanas</td>
+<td>Dead Dramata’s Nest y otras mazmorras nuevas; ranking por mejor marca y por clase; Battlefield 8v8; Nightmare con Kaisinel. Iba a acabar el 2026-03-25 y el 2026-03-04 se alargó al 2026-04-08</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2026-04-08</td>
+<td>12 semanas, “casi tres meses, largo a propósito para que el jugador medio alcance”</td>
+<td>Middle Abyss sin vuelo, Corridor of Illusion, tablero Yustiel, Nightmare con Tyrant; trascendencia de 10 niveles a 4. El medidor de DPS y el buff de Cleric llegaron una semana antes, el 2026-04-01</td>
+</tr>
+<tr>
+<td>Chapter 1 (= temporada 4)</td>
+<td>2026-07-01</td>
+<td>~18 semanas</td>
+<td>Brawler, nivel 50, Stigma a 25, Morheim y Eltnen, Odyle Energy en vez de tickets, grupos de 5</td>
+</tr>
+<tr>
+<td>Chapter 2</td>
+<td>2026-11-05</td>
+<td>—</td>
+<td>el Chapter 1 acaba el 2026-11-04; sin contenido anunciado (KR, 2026-09-20, una sola fuente)</td>
+</tr>
+</tbody>
+</table>
+<p>Fuentes de las fechas: KR/TW 2026-01-19 (fin de la temporada 2), KR/TW 2026-03-04 (prórroga), KR 2026-03-31 y 2026-04-07/09 (temporada 3 el 04-08). Algunas páginas y guías antiguas dan el 2026-04-01 para la temporada 3: ese día fue el parche previo. Historial completo de parches en <a href="/es/versions/regions-and-patches/">regiones y parches</a>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="temporada-1-del-global">Temporada 1 del global</h3><a class="sl-anchor-link" href="#temporada-1-del-global"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Temporada 1 del global»</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Qué</th>
+<th>Valor</th>
+<th>Fuente</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inicio</td>
+<td>2026-10-05; el progreso del Advanced Access (desde el 30-09) pasa al lanzamiento</td>
+<td>GLOBAL, 2026-09-21 y 2026-09-22</td>
+</tr>
+<tr>
+<td>Fin probable</td>
+<td><strong>2026-12-16</strong> (miércoles): fecha de caducidad de objetos de energía vista en el cliente del LST; NCsoft no lo ha anunciado</td>
+<td>GLOBAL, 2026-09-18 (dos creadores) y 2026-09-19</td>
+</tr>
+<tr>
+<td>Duración resultante</td>
+<td>~10 semanas (72 días), más corta que la temporada 3 coreana y parecida a la 1-2</td>
+<td>derivado</td>
+</tr>
+<tr>
+<td>Duración prevista de las temporadas del global</td>
+<td>~2 meses, más cortas que las de Taiwán, para alcanzar su ritmo</td>
+<td>GLOBAL, 2026-09-19, una sola fuente</td>
+</tr>
+<tr>
+<td>Equivalencia con Corea</td>
+<td>≈ contenido de las temporadas 1-2 + el rework de marzo, sin Heroic; ver <a href="/es/versions/regions-and-patches/">regiones y parches</a></td>
+<td>inferencia</td>
+</tr>
+<tr>
+<td>Lo que se espera “en una temporada posterior”</td>
+<td>Stigma a 25 (el cliente lo dice), mazmorra de mascotas, más mazmorras diarias; Heroic, Brawler y nivel 50 son candidatos sin anuncio</td>
+<td>GLOBAL, 2026-09</td>
+</tr>
+<tr>
+<td>Moneda y tienda de temporada</td>
+<td>descritas por una fuente (Oath Coins por misiones de temporada); catálogo sin ver</td>
+<td>GLOBAL, 2026-09-19</td>
+</tr>
+<tr>
+<td>Alas de la tienda de Nightmare</td>
+<td>160.000 puntos, ~dos temporadas de acumulación</td>
+<td>GLOBAL, 2026-09-18</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h3"><h3 id="topes-de-ap-por-temporada">Topes de AP por temporada</h3><a class="sl-anchor-link" href="#topes-de-ap-por-temporada"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Topes de AP por temporada»</span></a></div>
+<p>Los AP se dividen en <strong>topados</strong> (muertes PvP en mundo abierto y farmeo de mobs en el Abyss) y <strong>sin tope</strong> (Abyss Corridors, Shugo, invasiones, Battlefield, arenas, Supply Requests, misiones). El tope es lo que tiene forma de temporada. Cómo llegó Corea a su forma actual:</p>
+<table>
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Regla</th>
+<th>Región</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2025-12-03</td>
+<td>200.000 por semana de caza + 200.000 de PvP; <strong>2.500.000 por temporada</strong> combinados</td>
+<td>TW</td>
+</tr>
+<tr>
+<td>2025-12-24</td>
+<td>400.000 por semana combinados; los AP de PvP en mundo abierto dejan de contar para el tope, sólo cuentan los ganados dentro del Abyss</td>
+<td>KR/TW</td>
+</tr>
+<tr>
+<td>2026-01-07</td>
+<td>tope semanal <strong>quitado</strong>: un tope de temporada que empieza bajo y sube cada semana (lo que no usas se acumula)</td>
+<td>TW</td>
+</tr>
+<tr>
+<td>2026-03-11</td>
+<td>ya no es un muro: pasado el tope sigue cayendo una cantidad reducida</td>
+<td>KR/TW</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Global:</strong> sin cifra fiable. Un probador dio 5.000.000 para la primera semana sin poder enseñarlo (GLOBAL, 2026-09-17); otros estimaban 200.000-500.000, y el Abyss estuvo cerrado todo el test. Lo que todas las fuentes repiten es que se acumula semana a semana. Detalle y fuentes de AP en <a href="/es/pvp/abyss/">Abyss</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="antes-de-que-acabe-la-temporada">Antes de que acabe la temporada</h2><a class="sl-anchor-link" href="#antes-de-que-acabe-la-temporada"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Antes de que acabe la temporada»</span></a></div>
+<p>Asumiendo que el global copia las reglas coreanas, que es lo único que hay. Repasa la semana del 2026-12-09 cuando NCsoft publique las notas del cambio.</p>
+<ol>
+<li><strong>Gasta los puntos de temporada.</strong> Es lo único que se pierde. Orden de compra según las guías coreanas: Magical Breath (crafteo garantizado, en el principal) → Mysterious Crystals para tu primera carta Unique de Arcana → alas de la tienda si tu clase vive de la reducción de enfriamiento → el resto. Las piedras de resurrección de esta tienda son caras.</li>
+<li><strong>Termina las misiones de temporada</strong> que te quedan: dan moneda de temporada, medallas y cristales que no vuelven.</li>
+<li><strong>Cierra tu marca de ranking</strong> si vas a por recompensa: cuenta la mejor marca dentro de tu clase, así que un buen intento basta, no hace falta grindear volumen.</li>
+<li><strong>No guardes la moneda de temporada “para la siguiente”.</strong> No pasa.</li>
+<li><strong>Todo lo demás puedes guardarlo sin miedo:</strong> AP, fragmentos de Nightmare, emblemas de Shugo y Kinah pasaron enteros en Corea. Si dudas entre gastar AP en una pieza ahora o esperar, el cambio de temporada no es motivo para correr.</li>
+<li><strong>No frenes la inversión en equipo, Arcana, Daevanion o stigmas</strong> por miedo a un reset: no lo hay.</li>
+<li><strong>Revisa los títulos equipados</strong> el día del cambio: si llevas un título de ranking de temporada, puede desaparecer y llevarse sus stats.</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="errores-y-trampas">Errores y trampas</h2><a class="sl-anchor-link" href="#errores-y-trampas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Errores y trampas»</span></a></div>
+<ul>
+<li>Creer que una temporada es un wipe y dejar de progresar las últimas semanas. Sólo se reinician los rankings.</li>
+<li>Acumular Oath Coins “por si acaso” y perderlas con la tienda.</li>
+<li>Tomar el 2026-04-01 como inicio de la temporada 3 coreana: fue el parche previo; la temporada empezó el 2026-04-08.</li>
+<li>Leer una guía coreana de “qué hacer en la temporada X” como plan del global: la temporada 1 del global no coincide con la temporada 1 coreana; es una mezcla con el rework de marzo y sin Heroic.</li>
+<li>Racionar transferencias de herencia por temporada siguiendo guías anteriores a julio de 2026: Corea quitó el tope y el global sale al 100 %.</li>
+<li>Contar con que los títulos de ranking de temporada son permanentes.</li>
+<li>Comprar en la tienda de temporada con un alt lo que se liga al personaje (Magical Breath): el resultado se queda en el alt.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="preguntas-abiertas">Preguntas abiertas</h2><a class="sl-anchor-link" href="#preguntas-abiertas"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Preguntas abiertas»</span></a></div>
+<ul>
+<li>¿Acaba de verdad la temporada 1 del global el 2026-12-16? Es una fecha leída en la caducidad de objetos, no un anuncio.</li>
+<li>¿Qué contiene la temporada 2 del global? Stigma a 25 está anunciado en el cliente como “temporada posterior”; Heroic, Brawler, nivel 50 y la mazmorra de mascotas son candidatos sin confirmar.</li>
+<li>¿Existen en el global la tienda de temporada y las Oath Coins con el mismo modelo, y qué vende? Una sola fuente del LST, con el contenido de temporada cerrado.</li>
+<li>¿Caduca algo más en el global al cambiar de temporada, sin tickets que caducar? ¿La Odyle Energy almacenada?</li>
+<li>¿Cuál es el tope de AP del global y cómo crece por semana?</li>
+<li>¿Qué recompensas da el ranking de temporada del global, y cómo se reinicia el ranking de arena?</li>
+<li>¿Tiene la herencia del global algún tope por temporada?</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="fuentes-principales">Fuentes principales</h2><a class="sl-anchor-link" href="#fuentes-principales"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Sección titulada «Fuentes principales»</span></a></div>
+<p><code dir="auto">kp0zvmHEWLs</code> (qué se reinicia, KR/TW 2026-06-09), <code dir="auto">DE3Gp6KNsv4</code> (monedas y tiendas al pasar de la temporada 1 a la 2, KR/TW 2026-01-19), <code dir="auto">6OZuV44OeCY</code> y <code dir="auto">0X0KwpEJtAI</code> (notas de la temporada 2: ranking por mejor marca y por clase, pisos de Nightmare), <code dir="auto">40r0g2ao6zE</code> (prórroga de la temporada 2), <code dir="auto">nOS6XAMm-eM</code>, <code dir="auto">4nBxASUkWYM</code>, <code dir="auto">Z5sSH7sElSk</code> y <code dir="auto">TkNQiLpdTek</code> (temporada 3), <code dir="auto">dRwgwfBiN50</code> (Chapter 2), <code dir="auto">GcUSdRZoT3A</code>, <code dir="auto">g2AoP299Jn0</code>, <code dir="auto">3Qo7dKLMVxY</code>, <code dir="auto">ViW7LeKcs2I</code>, <code dir="auto">eGO8zTYSBmk</code>, <code dir="auto">aJdxEVxXv0Q</code> (tienda de temporada), <code dir="auto">8DlOzT8RE8w</code> (títulos que caducan), <code dir="auto">uAEtf9Ju4p4</code> (Nightmare global), <code dir="auto">TjqlRQ35dLc</code>, <code dir="auto">qTd0UGo0O3w</code>, <code dir="auto">vaFtNKYnLjI</code>, <code dir="auto">rc33isxWdRA</code>, <code dir="auto">IRMFnzgm9j8</code> y <code dir="auto">9g5L52EkGaM</code> (topes de AP), <code dir="auto">6dz-CwB65jI</code>, <code dir="auto">WkI1rIjsawo</code>, <code dir="auto">5klnmd6NXYU</code>, <code dir="auto">W6GD8M2LlY4</code> e <code dir="auto">iNwrM2kGriY</code> (temporada 1 del global).</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/es/systems/account-utilities/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Página anterior<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Utilidades de cuenta y personaje</span></span></a><a href="/es/pve/dungeons/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Siguiente página<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Mazmorras y raids</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
