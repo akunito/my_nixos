@@ -8,7 +8,7 @@
 # places the same files by hand — taken from the SAME pinned sources:
 #
 #   Sine manager + bootloader  <- revs in the zen-browser input's sources.json
-#   sine-web-panels            <- the `sine-web-panels` flake input (our fork)
+#   sine-web-panels            <- the `sine-web-panels` flake input (upstream, pinned rev)
 #
 # so both sides run identical revisions. It deliberately does NOT use Sine's
 # Windows installer: that one fetches whatever is newest (currently a
@@ -190,7 +190,7 @@ mkdir -p "$DEST"
 # (tidy-pinned-folders) and a test suite that must not ship to the browser.
 chmod -R u+w "$DEST"
 rm -rf "${DEST:?}"/{theme.json,preferences.json,userChrome.css,scripts,assets}
-cp -r --no-preserve=mode "$SRC/theme.json" "$SRC/preferences.json" "$SRC/userChrome.css" \
+cp -r --no-preserve=mode "$SRC/theme.json" "$SRC/preferences.json" \
       "$SRC/scripts" "$SRC/assets" "$DEST/"
 rm -rf "$DEST/scripts/tests"
 
@@ -230,12 +230,19 @@ import io, json, sys
 mods_path, theme_path, mod_id = sys.argv[1:4]
 mods = json.load(io.open(mods_path, encoding="utf-8"))
 entry = json.load(io.open(theme_path, encoding="utf-8"))
+raw = entry.get("style") or {}
+if isinstance(raw, str):
+    raw = {"chrome": raw}
+local = lambda p: (p or "").rsplit("/", 1)[-1] if (p or "").startswith(("http://", "https://")) else (p or "")
+style = {"chrome": local(raw.get("chrome")), "content": local(raw.get("content"))}
 entry.update({
     "id": mod_id,
     "enabled": True,
     "origin": "store",
     "no-updates": True,
-    "style": {"chrome": "userChrome.css", "content": ""},
+    # The stylesheet comes from theme.json, as the Nix module does: upstream
+    # dropped userChrome.css on 2026-10-03 and loads scripts/web-panels.css.
+    "style": style,
     "preferences": "preferences.json",
 })
 mods[mod_id] = entry

@@ -1082,17 +1082,17 @@
     "sine-web-panels": {
       "flake": false,
       "locked": {
-        "lastModified": 1789042848,
-        "narHash": "sha256-4351PJHt6aVcudvRcmvIz0/SmUWn1xlqWxqkGm+2e9g=",
-        "owner": "akunito",
+        "lastModified": 1791016287,
+        "narHash": "sha256-7PDcgQ/if2eVGhw4Y/sq7gwyD2q+0kaNBSK2XeS+LOg=",
+        "owner": "dehyde",
         "repo": "sine-web-panels",
-        "rev": "f7005666e51a4c7b1c84236ccfb2ecca3a0a3429",
+        "rev": "8d1cfd8c61dcacb6bffccb68e1b878f32d50debe",
         "type": "github"
       },
       "original": {
-        "owner": "akunito",
-        "ref": "akunito/local",
+        "owner": "dehyde",
         "repo": "sine-web-panels",
+        "rev": "8d1cfd8c61dcacb6bffccb68e1b878f32d50debe",
         "type": "github"
       }
     },

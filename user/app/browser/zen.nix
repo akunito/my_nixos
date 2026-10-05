@@ -33,11 +33,11 @@ let
   # Flatpak-era name). Fresh machines keep the default and let Zen create it.
   profileDir = userSettings.zenProfileDir or "default";
 
-  # Our fork of the sine-web-panels mod, pinned by the `sine-web-panels` flake
-  # input. Shipping it from the store (rather than copying it into the profile
-  # by hand) is what makes it reproducible: every machine with zenSineEnable
-  # gets the same audited revision, and our local patches land without waiting
-  # on upstream.
+  # The sine-web-panels mod, pinned by the `sine-web-panels` flake input
+  # (upstream dehyde/sine-web-panels at a fixed rev). Shipping it from the store
+  # rather than copying it into the profile by hand is what makes it
+  # reproducible: every machine with zenSineEnable gets the same audited
+  # revision.
   #
   # Only the files the mod actually declares are copied — the repo also holds a
   # second, unrelated mod (tidy-pinned-folders) and a test suite.
@@ -65,7 +65,6 @@ let
     mkdir -p $out
     cp -r ${inputs.sine-web-panels}/theme.json \
           ${inputs.sine-web-panels}/preferences.json \
-          ${inputs.sine-web-panels}/userChrome.css \
           ${inputs.sine-web-panels}/scripts \
           ${inputs.sine-web-panels}/assets \
           $out/

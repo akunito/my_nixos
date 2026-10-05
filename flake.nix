@@ -120,15 +120,16 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Our fork of the sine-web-panels Zen mod (restores Vivaldi-style sidebar
-    # web panels). Tracks the `akunito/local` branch, which carries the local
-    # patches on top of upstream: the panel-tab-active fix (sent upstream as
-    # dehyde/sine-web-panels#2) and the configurable panel shortcut.
-    # Consumed by user/app/browser/zen.nix; `flake = false` because the repo is
-    # a plain mod, not a flake. Bump with:
+    # The sine-web-panels Zen mod (restores Vivaldi-style sidebar web panels),
+    # straight from upstream: since 2026-10-03 our fork's work is merged there
+    # (#5, #7) and Diego is a collaborator, so there is no fork branch to track.
+    # Pinned to a rev, never a branch: a branch input re-locks per machine to a
+    # rev no binary cache has. Consumed by user/app/browser/zen.nix and
+    # scripts/zen-webpanels-install-windows.sh; `flake = false` because the
+    # repo is a plain mod, not a flake. Bump by editing the rev, then
     #   nix flake update sine-web-panels
     sine-web-panels = {
-      url = "github:akunito/sine-web-panels/akunito/local";
+      url = "github:dehyde/sine-web-panels/8d1cfd8c61dcacb6bffccb68e1b878f32d50debe";
       flake = false;
     };
 
