@@ -1,0 +1,894 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Templar: crafting and farming route | Aion 2 Guides</title><link rel="canonical" href="https://aion2.akunito.com/en/roadmaps/templar-crafting-route/"/><link rel="alternate" hreflang="es" href="https://aion2.akunito.com/es/roadmaps/templar-crafting-route/"/><link rel="alternate" hreflang="en" href="https://aion2.akunito.com/en/roadmaps/templar-crafting-route/"/><link rel="alternate" hreflang="x-default" href="https://aion2.akunito.com/es/roadmaps/templar-crafting-route/"/><link rel="sitemap" href="/sitemap-index.xml"/><script src="/skill-tooltips.js" defer></script><link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.3.2"/><meta name="generator" content="Starlight v0.42.1"/><meta property="og:title" content="Templar: crafting and farming route"/><meta property="og:type" content="article"/><meta property="og:url" content="https://aion2.akunito.com/en/roadmaps/templar-crafting-route/"/><meta property="og:locale" content="en"/><meta property="og:description" content="What to craft and in what order as a Templar on the global client (longsword, accessories, guard, armor), how to do each step in the client, where to farm each material as Elyos, what to buy on the Market, how to pay for it, and a week-by-week plan through the end of Season 1."/><meta property="og:site_name" content="Aion 2 Guides"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="What to craft and in what order as a Templar on the global client (longsword, accessories, guard, armor), how to do each step in the client, where to farm each material as Elyos, what to buy on the Market, how to pay for it, and a week-by-week plan through the end of Season 1."/><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/_astro/common.DOd4Xg1l.css"><style>@layer starlight.components{.card:where(.astro-oag6qnet){--sl-card-border:var(--sl-color-purple);--sl-card-bg:var(--sl-color-purple-low);border:1px solid var(--sl-color-gray-5);background-color:var(--sl-color-black);flex-direction:column;gap:clamp(.5rem,.125rem + 1vw,1rem);padding:clamp(1rem,.125rem + 3vw,2.5rem)}.card:where(.astro-oag6qnet):nth-child(4n+1){--sl-card-border:var(--sl-color-orange);--sl-card-bg:var(--sl-color-orange-low)}.card:where(.astro-oag6qnet):nth-child(4n+3){--sl-card-border:var(--sl-color-green);--sl-card-bg:var(--sl-color-green-low)}.card:where(.astro-oag6qnet):nth-child(4n+4){--sl-card-border:var(--sl-color-red);--sl-card-bg:var(--sl-color-red-low)}.card:where(.astro-oag6qnet):nth-child(4n+5){--sl-card-border:var(--sl-color-blue);--sl-card-bg:var(--sl-color-blue-low)}.title:where(.astro-oag6qnet){font-weight:600;font-size:var(--sl-text-h4);color:var(--sl-color-white);line-height:var(--sl-line-height-headings);align-items:center;gap:1rem}.card:where(.astro-oag6qnet) .icon:where(.astro-oag6qnet){border:1px solid var(--sl-card-border);background-color:var(--sl-card-bg);border-radius:.25rem;flex-shrink:0;padding:.2em}.card:where(.astro-oag6qnet) .body:where(.astro-oag6qnet){font-size:clamp(var(--sl-text-sm), calc(.5rem + 1vw), var(--sl-text-body));margin:0}.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/_astro/page.Dwipeu-R.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><script>document.body.dataset.skillClass="templar"</script><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-by6fddyj"><div class="title-wrapper sl-flex astro-by6fddyj"><a href="/en/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Aion 2 Guides</span></a></div><div class="sl-flex print:hidden astro-by6fddyj"><site-search class="astro-by6fddyj astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/_astro/Search.astro_astro_type_script_index_0_lang.DZqJ8Bdf.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-by6fddyj"><div class="sl-flex social-icons astro-by6fddyj"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/roadmaps/templar-crafting-route/" class="astro-2z5xp7gb">Español</option><option value="/en/roadmaps/templar-crafting-route/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="1q6hvl3" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/start/launch-checklist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Launch checklist</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/launch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Launch, servers and what to buy</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/settings/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Settings, controls and ping</span></a></li><li class="astro-rmhv4bp6"><a href="/en/start/krtw-playtest-anticheat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Playing on KR/TW, the anti-cheat and getting ready for Early Access</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Classes</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/classes/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Overview</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-vs-cleric/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar vs Cleric</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/templar-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pve/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvE</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-pvp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric in PvP</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/cleric-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-skills/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter skills</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/gladiator-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gladiator: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/assassin-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Assassin: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/sorcerer-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sorcerer: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/ranger-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Ranger: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/spiritmaster-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Spiritmaster: every skill and every combo</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-leveling-plan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: what to level and when (1-45 and endgame)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/classes/chanter-skills-guide/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: every skill and every combo</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Class roadmaps</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/roadmaps/templar-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: what to level at each level (PvE and leveling)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/templar-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: rotation and macros (PvE)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/templar-crafting-route/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Templar: crafting and farming route</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/chanter-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: what to level at each level (PvE and leveling)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/chanter-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Chanter: rotation and macros (PvE)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/cleric-pve-leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: what to level at each level (PvE and leveling)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/roadmaps/cleric-pve-rotation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cleric: rotation and macros (PvE)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Progression</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/progression/leveling/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Leveling 1-45 and the first days</span></a></li><li class="astro-rmhv4bp6"><a href="/en/progression/routine/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daily and weekly routine</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Systems</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/systems/stigma/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/daevanion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Daevanion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/gear/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gear</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stats and combat formulas</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/character-systems/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Character systems: pets, Genus Insight, the Closet and titles</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/macros-combat/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Combat, macros, targeting and controls</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/account-utilities/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Account and character utilities</span></a></li><li class="astro-rmhv4bp6"><a href="/en/systems/seasons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Seasons</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvE</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pve/dungeons/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Dungeons and raids</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pve/party-and-loot/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Party, matchmaking and loot</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pve/solo-content/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Solo content</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">PvP</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/pvp/abyss/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">The Abyss and Abyss Points</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/siege-legion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sieges, artifacts and the legion</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/arena/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Arenas and battlefield</span></a></li><li class="astro-rmhv4bp6"><a href="/en/pvp/pvp-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">PvP Combat Rules</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Economy and routine</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/economy/monetization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Monetization, Kinah and spending</span></a></li><li class="astro-rmhv4bp6"><a href="/en/economy/crafting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Crafting, gathering and Supply Requests</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Versions</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/versions/regions-and-patches/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Versions and regions</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/reference/open-questions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">What to check on day one</span></a></li><li class="astro-rmhv4bp6"><a href="/en/reference/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li><li class="astro-rmhv4bp6"><a href="/en/reference/sources/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Sources and method</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Tools</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/tools/stigma-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Stigma planner</span></a></li><li class="astro-rmhv4bp6"><a href="/en/tools/skills-browser/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skills browser</span></a></li><li class="astro-rmhv4bp6"><a href="/en/tools/skill-point-planner/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Skill-point planner</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Video notes</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/en/videos/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Video notes</span></a></li><li class="astro-rmhv4bp6"><a href="/en/videos/first-day-cahos-2026-09-25/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">First day without losing progress (CAHOS GAMING)</span></a></li><li class="astro-rmhv4bp6"><a href="/en/videos/gs-1400-day-one-kira-2026-10-04/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1,400 GS on day one with no Odyle spent (KiraSaveTheWorld)</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" selected class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/es/roadmaps/templar-crafting-route/" class="astro-2z5xp7gb">Español</option><option value="/en/roadmaps/templar-crafting-route/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-short-answer" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The short answer</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-the-longsword-first" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why the longsword first</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-to-equip-in-each-slot-by-item-level" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What to equip in each slot by item level</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-chain-as-it-shows-up-in-the-client" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The chain, as it shows up in the client</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#which-profession-makes-each-slot" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Which profession makes each slot</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-tiers-and-their-names" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The tiers and their names</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#recipes-and-quantities" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Recipes and quantities</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#probability-combo-and-how-many-attempts" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Probability, Combo and how many attempts</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#step-by-step-in-the-client" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Step by step in the client</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#1-blacksmithing-from-novice-1-to-50" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">1. Blacksmithing from Novice 1 to 50</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#2-the-promotion-to-professional" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">2. The promotion to Professional</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#3-experts-the-money-and-leveling-engine" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">3. Expert’s: the money and leveling engine</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#4-artisans" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">4. Artisan’s</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#5-truestar-dragon-lord-gold" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">5. True/Star Dragon Lord (gold)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#6-transfer-crafting" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">6. Transfer Crafting</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#materials-where-each-one-comes-from" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Materials: where each one comes from</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#where-to-farm-as-elyos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Where to farm as Elyos</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#essence-extraction-already-professional" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Essence Extraction (already Professional)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#caps-that-slow-you-down" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Caps that slow you down</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#market-or-farming-with-membership" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Market or farming (with membership)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-pay-for-it-the-kinah-plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to pay for it: the Kinah plan</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#week-by-week-plan-3-4-h-a-day" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Week-by-week plan (3-4 h a day)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mistakes-and-traps" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mistakes and traps</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#open-questions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Open questions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#related" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Related</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sources</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.BcSo_yiZ.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-short-answer" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The short answer</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#why-the-longsword-first" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Why the longsword first</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-to-equip-in-each-slot-by-item-level" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What to equip in each slot by item level</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#the-chain-as-it-shows-up-in-the-client" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">The chain, as it shows up in the client</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#which-profession-makes-each-slot" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Which profession makes each slot</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#the-tiers-and-their-names" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">The tiers and their names</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#recipes-and-quantities" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Recipes and quantities</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#probability-combo-and-how-many-attempts" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Probability, Combo and how many attempts</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#step-by-step-in-the-client" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Step by step in the client</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#1-blacksmithing-from-novice-1-to-50" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">1. Blacksmithing from Novice 1 to 50</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#2-the-promotion-to-professional" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">2. The promotion to Professional</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#3-experts-the-money-and-leveling-engine" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">3. Expert’s: the money and leveling engine</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#4-artisans" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">4. Artisan’s</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#5-truestar-dragon-lord-gold" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">5. True/Star Dragon Lord (gold)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#6-transfer-crafting" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">6. Transfer Crafting</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#materials-where-each-one-comes-from" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Materials: where each one comes from</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#where-to-farm-as-elyos" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Where to farm as Elyos</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#essence-extraction-already-professional" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Essence Extraction (already Professional)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#caps-that-slow-you-down" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Caps that slow you down</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#market-or-farming-with-membership" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Market or farming (with membership)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#how-to-pay-for-it-the-kinah-plan" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">How to pay for it: the Kinah plan</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#week-by-week-plan-3-4-h-a-day" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Week-by-week plan (3-4 h a day)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#mistakes-and-traps" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Mistakes and traps</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#open-questions" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Open questions</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#related" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Related</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#sources" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Sources</span></a></li></ul></nav></starlight-toc><script type="module" src="/_astro/TableOfContents.astro_astro_type_script_index_0_lang.Csloo1VZ.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Templar: crafting and farming route</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><div class="meta-box"><b>Region:</b> global (anything that comes from Korea or Taiwan is flagged on its line) · <b>Version:</b> global client between the September test and the 2026-10-05 launch · <b>Reviewed:</b> 2026-10-06 · <b>Confidence:</b> medium. The mechanics (chain, Combo, Transfer) are seen on screen across several global sources; the <b>prices</b> are from one or two servers in the first days of early access and will come down. Our own calculations are marked as <b>estimate</b>. The crafting order is our recommendation, reasoned below.</div>
+<p>This page is the practical plan for a Templar on global who already has level 45, is around 1,450 gear score, plays Elyos, has membership (and therefore the Market), has already taken Essence Extraction to Professional and is about to start Blacksmithing, with 3-4 hours a day. If your case is different, the order changes little; the Kinah numbers, a lot. The general system (professions, Substance Morph, Supply Requests) is in <a href="/en/economy/crafting/">Crafting, gathering and Supply Requests</a> and gear by slot in <a href="/en/systems/gear/">Gear</a>.</p>
+<p>Recipe and material names are in English, as they appear in the global client’s English-language videos; a client in another language may translate them. Before buying anything, compare the name against your own client’s recipe list.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-short-answer">The short answer</h2><a class="sl-anchor-link" href="#the-short-answer"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The short answer”</span></a></div>
+<ol>
+<li><strong>Order: longsword → the five accessories (necklace, 2 earrings, 2 rings) → guard → armor.</strong> Armor stays with whatever drops from Vakron’s Sky Island and Ferocious Horn Den.</li>
+<li><strong>The global chain:</strong> Orichalcum (white) → Expert’s (green) → Artisan’s (blue) → True/Star Dragon Lord (gold, Unique, item level 62). Each step consumes the <em>Splendent</em> result of the previous step, and Splendent only comes from the <strong>25% Combo</strong>. After that, <strong>Transfer Crafting</strong> at 100%: Splendent Dragon Lord (70) → White/Dark Dragon (78) → Splendent (86) → Ice/Wise/Ebony Dragon (94) → Splendent (102) (Global, 09-20 to 10-04).</li>
+<li><strong>Real cost of a gold piece:</strong> about <strong>4.3 attempts per Splendent</strong>, so if you do it all yourself that’s ~18-20 Expert’s crafts per gold piece, or ~80 white crafts if there’s a white step underneath (estimate based on Aragon, Global 10-04, and IruMinaTi, TW 09-27). One global crafter needed ~80 attempts for their Splendent True Dragon Lord Longsword (Global, 10-04).</li>
+<li><strong>The money goes into refining stones and Wrathful materials</strong>, not the ore.</li>
+<li><strong>It pays for itself if your server’s Market is moving:</strong> non-Splendent Expert’s guards sold for 2,750,000 and Artisan’s greatswords for 5,000,000 in early access (Global, 10-03 and 10-04). Those are day 3-4 prices and will come down.</li>
+<li><strong>Projected income:</strong> about 13-15 million free Kinah per week with 3-4 h a day and membership (estimate). The longsword up to Splendent Dragon Lord: 15-25 million at early-access prices (estimate).</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="why-the-longsword-first">Why the longsword first</h2><a class="sl-anchor-link" href="#why-the-longsword-first"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Why the longsword first”</span></a></div>
+<p>What the global guides say:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Order</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grogn (Global, 10-05)</td>
+<td>weapon → accessories → guard → armor</td>
+<td>the weapon is the biggest offensive jump; accessories are many slots; dungeon armor holds up</td>
+</tr>
+<tr>
+<td>IruMinaTi (TW, 09-27)</td>
+<td>weapon &gt; accessories &gt; guard &gt; armor</td>
+<td>the weapon has the highest soulbind value</td>
+</tr>
+<tr>
+<td>Aragon, 12-step plan (Global, 09-29)</td>
+<td>5 crafted accessories + weapon to True/Star Dragon in the 1,269 → 1,400 stretch; weapon to Splendent + accessories to 1,600; guard and dungeon armor</td>
+<td>62 item level per accessory</td>
+</tr>
+<tr>
+<td>Aragon, crafting and Kinah (Global, 10-03 and 10-04)</td>
+<td>accessories before the weapon</td>
+<td>5 slots against 1; the weapon costs about twice the materials of one accessory</td>
+</tr>
+<tr>
+<td>SywoGG (Global, 10-04)</td>
+<td>only craft in the 2,100-2,800 band: necklace → ring → weapon</td>
+<td>crafting exceeds Expedition’s (86) ceiling</td>
+</tr>
+<tr>
+<td>Spid (Global, 10-01)</td>
+<td>craft the weapon instead of chasing the Fire Temple one</td>
+<td>the Fire Temple one asks for three times the voucher pity</td>
+</tr>
+</tbody>
+</table>
+<p>The global consensus is <strong>weapon and accessories before the guard, with armor last</strong>. The only debate is weapon or accessories first, and it depends on what you’re after: accessories give more item level per Kinah (5 × 62), the weapon gives more damage per piece.</p>
+<p>For this Templar we picked the weapon for four reasons:</p>
+<ol>
+<li><strong>You’re going to level Blacksmithing anyway</strong>, and the longsword and the guard come from that same profession. Accessories are Handicrafting.</li>
+<li><strong>It’s the biggest damage jump from a single piece:</strong> a +10 Spiritforged story greatsword (item level 45) deals 195-263 attack; a Splendent Star Dragon Lord (item level 70), 305-413 (Global, 10-03).</li>
+<li><strong>The Templar’s PvE problem is its own damage against enrage timers</strong> (Global, 10-05).</li>
+<li><strong>The dungeon alternative is slow:</strong> Fire Temple’s guaranteed class weapon asks for three 28-clear pity cycles (Global, 09-20 and 10-01).</li>
+</ol>
+<aside aria-label="The Korean order was different" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg aria-hidden="true" class="starlight-aside__icon astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"/></svg>The Korean order was different</p><div class="starlight-aside__content"><p>A Korean guide put the guard second (weapon → guard → accessories → armor). Global guides put it behind the accessories, and <a href="/en/economy/crafting/">Crafting</a> and <a href="/en/systems/gear/">Gear</a> already follow the global order.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="what-to-equip-in-each-slot-by-item-level">What to equip in each slot by item level</h2><a class="sl-anchor-link" href="#what-to-equip-in-each-slot-by-item-level"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “What to equip in each slot by item level”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Longsword</th>
+<th>Guard</th>
+<th>Accessories (necklace, 2 earrings, 2 rings)</th>
+<th>Armor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>~1,000</strong></td>
+<td>Spiritforged story weapon, item level 45, at +10 (Global, 10-03)</td>
+<td>free Spirit Forge Guard from the Abyss NPC at 1,000 item level (Global, 10-01)</td>
+<td>blues from regional quests; 2 Clash Runes (+40 each, don’t go past +1); the story bracelet at +10/+11, kept “for a few months” (Global, 10-01 and 10-04)</td>
+<td>Draupnir Exploration ×3 pity (yellow item level 54, pants) (Global, 10-01 and 10-04)</td>
+</tr>
+<tr>
+<td><strong>~1,400 (you now)</strong></td>
+<td>starts the chain: Expert’s and Artisan’s aren’t upgrades, just steps; Urugugu Canyon (2★) drops weapons for every class, diluted (Global, 10-01)</td>
+<td>the one from the Abyss</td>
+<td><strong>True/Star Dragon Lord accessories, item level 62 each</strong> (Global, 09-29); Market; Abyss shop for ~200,000 AP (KR/TW, 09-23)</td>
+<td>Vakron’s Sky Island: chest with 3 Explorations, gloves and boots with the 21-run Conquest pity (Global, 10-02); Vakron set, item level 76</td>
+</tr>
+<tr>
+<td><strong>~1,800</strong></td>
+<td><strong>True/Star Dragon Lord Longsword item level 62 → Transfer → Splendent item level 70</strong> (Global, 10-03 and 10-04)</td>
+<td>Vakron’s “Vron” guard asks for the pity twice: not worth the Odyle (Global, 10-01)</td>
+<td>Transfer the accessories to Splendent (70) (Global, 09-29)</td>
+<td>Vakron Conquest pieces; the Vakron cloak gives +20-32 score over a +10 blue (Global, 10-04)</td>
+</tr>
+<tr>
+<td><strong>~2,200</strong></td>
+<td>Transfer to White/Dark Dragon (78) → Splendent (86); needs Wrathful Will (2★+) (Global, 09-20 and 09-29). The Fire Temple weapon stays at ~86 (Global, 10-04)</td>
+<td>“Nuakum” guard from Ferocious Horn Den, or the crafted Dragon Lord (62 → 70) (Global, 10-04)</td>
+<td>Fire Temple accessories, “the best PvE ones at this stage” (KR/TW, 09-23)</td>
+<td>Ferocious Horn Den “Nuakum” (3★, 2,100 gate on global) (Global, 09-20)</td>
+</tr>
+<tr>
+<td><strong>~2,700</strong></td>
+<td>Wise/Ice/Ebony Dragon (94) → Splendent (102); 3★ Wrathful Ego (Global, 09-29 and 10-04)</td>
+<td>the dungeon one is enough to enter the raid (Global, 09-29)</td>
+<td>Wise/Ebony tier (Global, 09-29)</td>
+<td>dungeon armor to +11, Amplify Stones for +15 → +20 (Global, 09-29 and 10-04)</td>
+</tr>
+</tbody>
+</table>
+<p>The raid (Abyssal Forge: Ludra) asks for 2,800 according to two sources (Global, 10-02; KR/TW, 09-23) and 2,700 according to a pre-launch forecast (Global, 09-29); plan for 2,800.</p>
+<p><strong>Why crafted gear wins at the top:</strong> it reaches item level 102 against ~86 for Expedition gear (Global, 10-03 and 10-04); it has one more soulbind line, 5 against 4 (Global, 10-03; TW, 09-27); and a crafted earring’s Potential reaches 2.5% PvE damage against 1.25% for the dungeon one (Global, 09-23). The fixed PvE damage line that crafted gear had in Korea and Taiwan <strong>does not exist on global</strong>: you have to build it with Potential (Global, 10-03).</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="the-chain-as-it-shows-up-in-the-client">The chain, as it shows up in the client</h2><a class="sl-anchor-link" href="#the-chain-as-it-shows-up-in-the-client"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The chain, as it shows up in the client”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="which-profession-makes-each-slot">Which profession makes each slot</h3><a class="sl-anchor-link" href="#which-profession-makes-each-slot"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Which profession makes each slot”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Profession</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Longsword, greatsword, dagger, mace</td>
+<td>Blacksmithing</td>
+</tr>
+<tr>
+<td>Guard (every class’s left hand)</td>
+<td>Blacksmithing</td>
+</tr>
+<tr>
+<td>Necklace, earrings, rings; bow, staff</td>
+<td>Handicrafting</td>
+</tr>
+<tr>
+<td>Armor (7 pieces)</td>
+<td>Armorsmithing</td>
+</tr>
+<tr>
+<td>Orb/book, manastones (Lesser → Intermediate), potions, scrolls</td>
+<td>Alchemy</td>
+</tr>
+<tr>
+<td>Food</td>
+<td>Cooking</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: Aragon and others (Global, 09-29 to 10-05). The bracelet does <strong>not</strong> belong to the five crafted pieces: the story one is kept for the raid (Global, 10-02 and 10-04). All professions level in parallel on the same character, each at its own rank (Global, 09-28 and 10-03).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="the-tiers-and-their-names">The tiers and their names</h3><a class="sl-anchor-link" href="#the-tiers-and-their-names"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “The tiers and their names”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Rarity</th>
+<th>Guard line (filmed)</th>
+<th>Weapon line</th>
+<th>IL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>white</td>
+<td>Orichalcum Guard (~30,000 on the Market)</td>
+<td>Orichalcum Greatsword</td>
+<td>?</td>
+</tr>
+<tr>
+<td>green</td>
+<td>Expert’s Orichalcum Guard (Novice 20 recipe) → 25% → Expert’s Splendent Guard</td>
+<td>Expert’s</td>
+<td>?</td>
+</tr>
+<tr>
+<td>blue</td>
+<td>Artisan’s Orichalcum Guard → 25% → Artisan’s Splendent Guard</td>
+<td>Artisan’s (Splendent) Orichalcum Greatsword</td>
+<td>?</td>
+</tr>
+<tr>
+<td>gold (Unique)</td>
+<td>Star Dragon Lord Guard → 25% → Splendent Star Dragon Lord Guard</td>
+<td>Star Dragon Lord Greatsword; <strong>Splendent True Dragon Lord Longsword</strong></td>
+<td>62 / 70</td>
+</tr>
+<tr>
+<td>Transfer, tier 2</td>
+<td>White Dragon / Dark (Black) Dragon → Splendent</td>
+<td></td>
+<td>78 / 86</td>
+</tr>
+<tr>
+<td>Transfer, tier 3</td>
+<td>Ice / Wise Dragon / Ebony → Splendent</td>
+<td></td>
+<td>94 / 102</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: GAC (Global, 10-04), Global 10-02, 10-03 and 09-20; IruMinaTi (TW, 09-27).</p>
+<ul>
+<li><strong>True and Star are the same item with a faction name</strong>, “mechanically identical” (Aragon, Global 09-29). The pairs: True ↔ Star, White ↔ Black/Dark, Wise (or Ice) ↔ Ebony. <strong>No source says which one drops as Elyos.</strong> That the “light” line (True/White) is the Elyos one is our own assumption: check it in your own recipe list.</li>
+<li>The white → green → blue step in the table is reconstructed: GAC says the guard chain “starts” at Expert’s and doesn’t film a white step. Confirm it in your own client.</li>
+<li><strong>On global “Dragon Lord” is the crafted gold tier</strong>, not Heroic content. There’s no Heroic tier in launch global (Global, 09-28).</li>
+<li>Materials follow their own ladder: normal → Fine → Pure → Radiant (Pure/Radiant Orichalcum Ore, Pure/Radiant Odyle, Fine Thick Balaur Horns) (Global, 09-30 and 10-04).</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="recipes-and-quantities">Recipes and quantities</h2><a class="sl-anchor-link" href="#recipes-and-quantities"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Recipes and quantities”</span></a></div>
+<p>Everything filmed is from the <strong>guard line</strong> (GAC, Global 10-04) and from a greatsword (Global, 10-03). <strong>Nobody has filmed the longsword’s recipe.</strong> Aragon says a weapon costs roughly twice the materials of an accessory (Global, 10-04); whether the longsword uses the guard’s quantities, double them, or something else is still open.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Materials</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orichalcum Ingot</td>
+<td>Orichalcum Ore + Oricalcum Solvent (town vendors or the membership menu); in batches of 10 from profession level 25</td>
+<td>Blacksmithing’s base material (Global, 09-28 and 10-03)</td>
+</tr>
+<tr>
+<td>Expert’s Orichalcum Guard</td>
+<td>not filmed; Novice 20 recipe</td>
+<td>GAC made 11 and sold the non-Splendent ones for 2,750,000 each</td>
+</tr>
+<tr>
+<td>Artisan’s Orichalcum Guard</td>
+<td>1 Expert’s Splendent Guard + 5 Artisan’s Refining Stones (~370,000 each) + 8 Pure Orichalcum Ore + 4 Pure Odyle</td>
+<td>got the Combo on the first try</td>
+</tr>
+<tr>
+<td>Star Dragon Lord Guard (item level 62, 127 attack)</td>
+<td>1 Artisan’s Splendent Guard + 4 Artisan’s Ultimate Refining Stones + 22 Fine Thick Balaur Horns + 10 Wrathful Mind + 9 Radiant Orichalcum Ore + 5 Radiant Odyle</td>
+<td>buying the materials dropped their Kinah from ~4 million to under 2</td>
+</tr>
+<tr>
+<td>Transfer → Splendent Star Dragon Lord Guard (item level 70, 144 attack at +7)</td>
+<td>11 Fine Thick Balaur Horns + 4 Wrathful Mind (the 4 Mind, “a bit over a million”)</td>
+<td>guaranteed; keeps the enhancement and soulbind</td>
+</tr>
+<tr>
+<td>Star Dragon Lord Greatsword (Splendent, item level 70, 305-413 attack, 4 manastone slots + 1 Theostone)</td>
+<td>Artisan’s Splendent Orichalcum Greatsword + (the rest isn’t shown)</td>
+<td>Combo straight to Splendent; paid for by selling 2 of their 5 Artisan’s greatswords at 5,000,000 (Global, 10-03)</td>
+</tr>
+<tr>
+<td>Fine Thick Balaur Horns</td>
+<td>selection chest that asks for Balaur’s Essence (comes from Conquest)</td>
+<td>(Aragon, Global 09-29)</td>
+</tr>
+<tr>
+<td>Transfer tier 1 → 2 (Star → Dark Dragon)</td>
+<td>14 Wrathful Mind (TW: 10); Dark Dragon and its Splendent: 20 Wrathful Will (15 + 5) (TW: 14)</td>
+<td>data read from the global test by IruMinaTi; transcript partly garbled (TW, 09-27)</td>
+</tr>
+<tr>
+<td>Full chain up to Ebony</td>
+<td>~20 Wrathful Mind (TW ~6), 23 Wrathful Will (TW 11)</td>
+<td>global-Taiwan comparison from the same crafter</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="probability-combo-and-how-many-attempts">Probability, Combo and how many attempts</h2><a class="sl-anchor-link" href="#probability-combo-and-how-many-attempts"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Probability, Combo and how many attempts”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Value</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Base success at difference 0 (your level = the recipe’s level)</td>
+<td>67%</td>
+<td>KR/TW, 09-25</td>
+</tr>
+<tr>
+<td>Base success at the minimum level</td>
+<td>74%</td>
+<td>TW, 09-27</td>
+</tr>
+<tr>
+<td>Difference +25 / +45</td>
+<td>90% / 94%</td>
+<td>KR/TW, 09-25</td>
+</tr>
+<tr>
+<td>Difference 32 (Blacksmithing 37 with a tier-5 recipe)</td>
+<td>90.97%</td>
+<td>Global, 10-03</td>
+</tr>
+<tr>
+<td>Difference 33 (Professional 18 with a Novice 35 recipe)</td>
+<td>94%</td>
+<td>Aragon, Global 10-04</td>
+</tr>
+<tr>
+<td>Small difference (what Aragon regretted)</td>
+<td>77.5%</td>
+<td>Aragon, Global 10-04</td>
+</tr>
+<tr>
+<td>Ceiling</td>
+<td>93% at +99, never 100%</td>
+<td>TW, 09-27</td>
+</tr>
+<tr>
+<td>Failure at global’s top tier</td>
+<td>~6% with enough level (Taiwan, ~25%)</td>
+<td>TW, 09-27</td>
+</tr>
+<tr>
+<td><strong>Combo</strong> (“Combo Activation Chance”)</td>
+<td><strong>25%</strong>, a separate roll after a success; the same at every tier and for every class</td>
+<td>Global, 10-03 to 10-05</td>
+</tr>
+<tr>
+<td>Failed craft</td>
+<td>all materials are lost, no refund</td>
+<td>KR/TW 09-25; Global 10-04</td>
+</tr>
+<tr>
+<td>Getting hit during the animation</td>
+<td>the craft fails and you lose the materials: craft in Safe Haven</td>
+<td>Global, 10-03</td>
+</tr>
+<tr>
+<td>Average with Combos only</td>
+<td>64 whites → 16 greens → 4 blues → 1 gold; counting failures, 69 / 17 / 4 / 1.06</td>
+<td>Aragon, Global 10-04</td>
+</tr>
+<tr>
+<td>Average with Combos only (Taiwan)</td>
+<td>~93 whites per gold</td>
+<td>TW, 09-27</td>
+</tr>
+<tr>
+<td>Seen</td>
+<td>~80 attempts for one Splendent True Dragon Lord Longsword</td>
+<td>Global, 10-04</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Estimate, per gold piece and doing every step yourself:</strong> at ~93% success × 25% Combo you get a Splendent about 23% of the time, i.e. <strong>~4.3 attempts per Splendent</strong>. One Dragon Lord attempt spends 1 Artisan’s Splendent (≈ 4.3 Artisan’s attempts), each of which spends 1 Expert’s Splendent (≈ 18.5 Expert’s attempts), and if there’s a white step underneath, ≈ 80 whites. Just in refining stones: ~4.3 × 5 ≈ <strong>21-22 Artisan’s Refining Stones ≈ 8 million</strong> at 370,000 each. The gold step only needs one success, because the guaranteed Transfer gives you the Splendent: ~1.06 attempts.</p>
+<p><strong>Profession level needed:</strong> the weapon’s high-end chain asks for at least Professional 5 and “is really worth it” by around Professional 50 (Global, 10-05); Aragon says Professional 15-20 as a floor, and the more the better (Global, 10-04). Practical target (estimate): <strong>about 30 levels above the Dragon Lord recipe</strong>, i.e. Professional ~35 if the recipe is Professional 5 (with a 20-25 difference, Professional 25-30, around 90%). The client shows the percentage before you confirm: check it. That the gap between ranks counts as “Professional n = 50 + n” is a deduction from Aragon’s numbers, not something published.</p>
+<p><strong>Can the Combo fail on its own and eat the materials?</strong> One source says yes (KR/TW, 09-25), another says the base craft and the Combo can each fail independently (Global, 10-05), and no global video shows an item lost to a failed Combo. Open.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="step-by-step-in-the-client">Step by step in the client</h2><a class="sl-anchor-link" href="#step-by-step-in-the-client"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Step by step in the client”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="1-blacksmithing-from-novice-1-to-50">1. Blacksmithing from Novice 1 to 50</h3><a class="sl-anchor-link" href="#1-blacksmithing-from-novice-1-to-50"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “1. Blacksmithing from Novice 1 to 50”</span></a></div>
+<ol>
+<li>Buy whatever’s cheapest that works as a base resource. In one Market screenshot, Orichalcum Ingot was at 496 and Strong Leather at 6,500 (Global, 10-04); on some servers the ingot sells <strong>below</strong> what it costs to make (Global, 10-02 and 10-04).</li>
+<li>If you make the ingots yourself: Orichalcum Ore + Oricalcum Solvent; from level 25 they come in batches of 10.</li>
+<li>Spam your level’s cheapest recipe in batches of 20-40 (Global, 10-05). That’s how Professional 20 is reached, with the cheapest item (Aragon, Global 10-03).</li>
+<li>Always craft in <strong>Safe Haven</strong>: getting hit during the animation loses the materials.</li>
+<li><strong>Keep your failed crafts and the ones you don’t need:</strong> half of the daily Supply Requests and at least half of the weekly ones ask for crafted items, and they pay Abyss Points (Global, 10-02).</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="2-the-promotion-to-professional">2. The promotion to Professional</h3><a class="sl-anchor-link" href="#2-the-promotion-to-professional"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “2. The promotion to Professional”</span></a></div>
+<ol>
+<li>On reaching Novice 50 a regional quest appears that opens Professional, same as gathering (Aragon, Global 10-04). The next rank caps again at 50 and the quest asks for a material from the tier above (TW, 10-05).</li>
+<li><strong>No source gives the name, NPC or material for the Blacksmithing quest.</strong> Essence Extraction’s, which you already did, was a Splendent Ruby for Korius in Verteron.</li>
+<li>Do it the moment it appears: until you do, Blacksmithing stays stuck at Novice 50.</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="3-experts-the-money-and-leveling-engine">3. Expert’s: the money and leveling engine</h3><a class="sl-anchor-link" href="#3-experts-the-money-and-leveling-engine"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “3. Expert’s: the money and leveling engine”</span></a></div>
+<ol>
+<li>From Novice 20, craft <strong>Expert’s Orichalcum Guards</strong> in batches (the filmed recipe). For the longsword, look up its Expert’s recipe in your own recipe list: level and materials are unfilmed.</li>
+<li>The ones that come out <strong>Splendent</strong> (Combo) are the next step’s material: <strong>don’t sell or dismantle them.</strong> Each line consumes its own Splendent (the Artisan’s Guard asks for an Expert’s Splendent <em>Guard</em>), so for the longsword you need Expert’s Splendent <em>longswords</em>: ~4-5, around 20 attempts (estimate). The guards are good for leveling, for selling, and for the guard chain later on.</li>
+<li>The non-Splendent ones sell: GAC got 2,750,000 per guard (Global, 10-04). Sell one at a time, because on the Market the buyer takes the whole batch.</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="4-artisans">4. Artisan’s</h3><a class="sl-anchor-link" href="#4-artisans"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “4. Artisan’s”</span></a></div>
+<ol>
+<li>Per attempt: 1 Expert’s Splendent + 5 Artisan’s Refining Stones + 8 Pure Orichalcum Ore + 4 Pure Odyle (the guard recipe).</li>
+<li>Make the attempts with the biggest level difference you can: every point of success you give up is a whole attempt thrown away.</li>
+<li>Plan for ~4-5 attempts per Splendent (estimate). The Splendent goes to the gold step; the ~3 non-Combo successes sell (5,000,000 per greatsword in early access, Global 10-03).</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="5-truestar-dragon-lord-gold">5. True/Star Dragon Lord (gold)</h3><a class="sl-anchor-link" href="#5-truestar-dragon-lord-gold"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “5. True/Star Dragon Lord (gold)”</span></a></div>
+<ol>
+<li>1 Artisan’s Splendent + 4 Artisan’s Ultimate Refining Stones + 22 Fine Thick Balaur Horns + 10 Wrathful Mind + 9 Radiant Orichalcum Ore + 5 Radiant Odyle (the guard recipe).</li>
+<li>Here a plain success is enough: the next Transfer gives you the Splendent at 100%. If the Combo lands, you skip that Transfer.</li>
+<li>If you can wait, level the profession before this attempt: 77.5% against 94% (Aragon, Global 10-04).</li>
+</ol>
+<div class="sl-heading-wrapper level-h3"><h3 id="6-transfer-crafting">6. Transfer Crafting</h3><a class="sl-anchor-link" href="#6-transfer-crafting"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “6. Transfer Crafting”</span></a></div>
+<ol>
+<li>It has its own tab, with endgame materials (Global, 10-03). The first step accepts the plain Unique, no Splendent needed.</li>
+<li>First Transfer on the guard: 11 Fine Thick Balaur Horns + 4 Wrathful Mind (Global, 10-04). The Kinah fee doesn’t show in that video; the site read 1,000,000 in the September test and Taiwan charges ~1,000,000.</li>
+<li>100% success, never destroys the base item. There’s also a 25% Combo inside the Transfer, which skips that step’s Splendent (up to ~3 rolls across the whole chain), but “don’t build your plan around it” (Grogn, Global 10-05).</li>
+<li>Before confirming, check what you lose (table below).</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>In the Transfer</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enhancement (Growth), breakthrough/amplification</td>
+<td><strong>kept</strong></td>
+</tr>
+<tr>
+<td>Soulbind</td>
+<td><strong>kept</strong>, but the percentage is recalculated against the new cap: 91.5% → 67.5%, and GAC leveled it back up to 93.5% (Global, 10-04)</td>
+</tr>
+<tr>
+<td>Socketed manastones, Potential, Theostone</td>
+<td><strong>lost</strong> (Global, 10-04 and 10-05; TW, 09-27)</td>
+</tr>
+<tr>
+<td>Can you sell it?</td>
+<td><strong>no</strong>: whatever comes out of a Transfer is bound. Plain crafted items and their Splendents can be sold (Global, 10-03)</td>
+</tr>
+<tr>
+<td>Can you buy the finished piece?</td>
+<td>no, only the materials (Global, 09-20)</td>
+</tr>
+</tbody>
+</table>
+<p>Aragon says soulbind is lost in the Transfer (Global, 10-04); GAC films it being kept with the percentage recalculated, and three other global sources agree. We’re going with GAC.</p>
+<p><strong>Enhancement:</strong> +1 to +10 always succeeds and is fully recovered with Extract below +11; +10 to +15 can fail without breaking; +15 to +20 is a breakthrough with Amplify Stones, ~+1% stat per level (Global, 09-23 and 10-04). Since the Transfer keeps the level, <strong>enhancing the Dragon Lord to +10 early isn’t wasted.</strong> Soulbind, only once the piece is a keeper (GAC); Spid says wait until ~2,100 (Global, 10-01).</p>
+<p><strong>Potential:</strong> on crafted gear it’s added by hand with Potential stones, which come from Substance Morph on spare gear (TW, 09-27) and, per one hedged source, from the Abyss shop with a weekly cap (Global, 10-03). Since it doesn’t survive the Transfer, only put it on the tier you’re going to keep for a while.</p>
+<p><strong>Don’t confuse this with Equipment Transfer</strong> (dropped gear to dropped gear): it moves enhancement and soulbinds, destroys Potential, manastones and Theostones, and on global it costs 0 Kinah and one Transfer Stone made from Transfer Fragments off spare gear (Global, 09-23; TW, 09-27).</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="materials-where-each-one-comes-from">Materials: where each one comes from</h2><a class="sl-anchor-link" href="#materials-where-each-one-comes-from"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Materials: where each one comes from”</span></a></div>
+<p>Before you farm blind, hit the material’s <strong>Source</strong> button in the client (Global, 09-28 and 10-03).</p>
+<table>
+<thead>
+<tr>
+<th>Material</th>
+<th>Where it comes from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orichalcum Ore (normal → Fine → Pure → Radiant)</td>
+<td>mining nodes; gathering crits pull higher quality; sellable (Global, 09-30 and 10-03)</td>
+</tr>
+<tr>
+<td>Orichalcum Ingot</td>
+<td>Ore + Solvent; ~496 on the Market (Global, 10-04)</td>
+</tr>
+<tr>
+<td>Odyle (normal/green/blue/Radiant)</td>
+<td>nodes in the sky and on cliffs (fly and look up); settlements; the Abyss (“one every metre and a half,” nearly empty); nodes that appear after Conquest’s final boss; hidden cubes (low Odyle energy) (Global, 09-30 to 10-05)</td>
+</tr>
+<tr>
+<td>Radiant Odyle</td>
+<td>Abyss sky nodes; dungeon final boss floor drops (3 per player, 15 per run on Taiwan); Shugo rewards; <strong>purchasable on global</strong> (not on Taiwan) (Global, 09-20; TW, 09-27)</td>
+</tr>
+<tr>
+<td>Gems (Ruby, Sapphire, Diamond)</td>
+<td>gem nodes; nobody gives the Elyos node names (Global, 10-04)</td>
+</tr>
+<tr>
+<td>Artisan’s Refining Stone (~370,000 on the early-access Market)</td>
+<td>dungeons, Expedition and Conquest; low-tier field bosses; pets; Shugo Merchant; alts (bound, pass through the warehouse); the Verteron grind spot (Global, 09-28 to 10-05)</td>
+</tr>
+<tr>
+<td>Artisan’s Ultimate Refining Stone</td>
+<td>dungeons and raids; Shugo chest openings; profession achievements (on Taiwan, reaching Professional in Armorsmithing gives 2); seasonal shop (Taiwan) (TW, 09-27)</td>
+</tr>
+<tr>
+<td>Balaur Horn / Fine Thick Balaur Horns</td>
+<td>per Source: Safe Haven, Nornir Assembly, Cromede Island; the Fine Thick ones from a selection chest that asks for Balaur’s Essence from Conquest (Global, 09-28 and 09-29)</td>
+</tr>
+<tr>
+<td>Wrathful Mind</td>
+<td>1★ Conquest (Krao/Crow Cave, Draupnir); a ~700 item-level alt can farm it (Global, 09-20 and 09-29)</td>
+</tr>
+<tr>
+<td>Wrathful Will</td>
+<td>2★ (Urugugu Canyon, Vakron’s Sky Island), more likely there than the Mind (Global, 09-20 and 09-29)</td>
+</tr>
+<tr>
+<td>Wrathful Ego</td>
+<td>3★ (Ferocious Horn Den, Fire Temple) (Global, 09-20 and 09-29)</td>
+</tr>
+<tr>
+<td>Wrathful drop chance</td>
+<td>5.4% per clear in the global test (Taiwan 3%); sellable on global; doesn’t scale with stars, it scales with rarity (site 10-05; TW, 09-27)</td>
+</tr>
+<tr>
+<td>“Gold items” from field mobs</td>
+<td>open-world mobs up to the daily loot cap; 50,000 baseline, up to ~1 million at launch (Global, 09-28)</td>
+</tr>
+<tr>
+<td>Spirit Stones</td>
+<td>Verteron grind spot, 7 every 35-40 min (Global, 10-03)</td>
+</tr>
+<tr>
+<td>Tier-1 catalysts</td>
+<td>NPC next to every crafting table (Global, 10-05)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Substance Morph and Odyle on global:</strong> Odyle can still be converted into other base materials, but <strong>converting it across tiers (Radiant → blue) was removed</strong> on global (Global, 10-03); it was still possible on Taiwan (TW, 09-27). Don’t stockpile Radiant Odyle expecting to split it down.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="where-to-farm-as-elyos">Where to farm as Elyos</h2><a class="sl-anchor-link" href="#where-to-farm-as-elyos"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Where to farm as Elyos”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Route</th>
+<th>What it gives</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Verteron grind spot</strong></td>
+<td>Kinah, Spirit Stones, Refining Stones, pet souls, gear up to Unique</td>
+<td>below Altamia Canyon, next to Verteron Fortress, in a small crevice beside a lake; heavy mob density and fast respawn; 7 Spirit Stones + 3-4 Refining Stones in 35-40 min; mob level unknown (Global, 10-03)</td>
+</tr>
+<tr>
+<td><strong>Low-Kinah Elyos island</strong> (the twin of the Asmodian “Immortal Island”)</td>
+<td>“gold items” before the daily cap</td>
+<td>teleport from Alulu Village opened by the story, plus a wind current; level-49 mobs at ~300-400 Kinah per kill (sometimes 186): the 1-million cap takes longer to hit and you throw more rolls at “gold items,” around 10-15 (Global, 09-28)</td>
+</tr>
+<tr>
+<td><strong>Abyss</strong></td>
+<td>Odyle nodes, AP (17-25 per kill on level-46 mobs), uncapped Kinah</td>
+<td>PvP risk; Abyss time is weekly and limited (one creator had 1 h 05 min left after a siege) (Global, 09-28 to 10-05)</td>
+</tr>
+<tr>
+<td><strong>Abyss corridors</strong></td>
+<td>15,000-20,000 AP per clear</td>
+<td>reset every 3-4 days (Global, 10-03)</td>
+</tr>
+<tr>
+<td><strong>Low-tier field bosses</strong></td>
+<td>Refining Stones; trash gear goes to Supply Requests for AP and an almost-guaranteed stigma shard fragment</td>
+<td>short respawn; one Legion clears them in under a day (Global, 10-05)</td>
+</tr>
+<tr>
+<td><strong>Space-Time Rift</strong> (every 3 h, 1 h inside)</td>
+<td>sealed dungeons in the enemy map: ~2,500 enhancement stones each; Abyss Points</td>
+<td>the angel-marked guards one-shot you (Global, 10-02 and 10-04)</td>
+</tr>
+<tr>
+<td><strong>Verteron ruby veins</strong></td>
+<td>ruby and gems</td>
+<td>outer edge of Verteron Fortress Ruins’ wall, Ellun River Midstream, Destroyed Abyss Gate, Kraka Footpath (<a href="/en/progression/leveling/">leveling</a>)</td>
+</tr>
+<tr>
+<td><strong>Hidden cubes</strong></td>
+<td>crystals, resurrection stones, a bit of Odyle energy</td>
+<td>the filmed route (Immortal Isle, 4-6 per pass) is on the Asmodian side; follow the sound (Global, 10-03)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Templar farming setup</strong> (Global, 10-06): Poach set to reset on hit, without the life-shield option, and maxed on pulls/mana. The Templar handles open-world trash with room to spare. Farming specializations are on <a href="/en/roadmaps/templar-pve-leveling/">Templar: what to level at each level</a>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="essence-extraction-already-professional">Essence Extraction (already Professional)</h3><a class="sl-anchor-link" href="#essence-extraction-already-professional"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Essence Extraction (already Professional)”</span></a></div>
+<ul>
+<li>Max out two materials; points reset fully for 50,000 Kinah (KR/TW, 09-25).</li>
+<li><strong>Odyle first</strong>, every source agrees: minimap detection → 1 to 3-4 per node → 10% quality reroll (Global, 09-28). For Blacksmithing, the second line is <strong>Ore</strong> (Orichalcum); Gem only if you’re also doing Handicrafting (Global, 09-20).</li>
+<li>Common nodes: Delicate Touch outperformed Lady Luck in a 40-minute A/B test (Global, 10-04). The caps on those nodes contradict each other (“10 / 10 / 5” versus “max 5 each”): read them off your own tree.</li>
+<li>Every node gives 3 attempts; hits drain its life; red-triangle mobs attack; AFK gathering triggers a CAPTCHA; Esc cancels (Global, 10-03 and 10-04).</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="caps-that-slow-you-down">Caps that slow you down</h2><a class="sl-anchor-link" href="#caps-that-slow-you-down"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Caps that slow you down”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Cap</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Continent loot</td>
+<td>1,000,000 Kinah per <strong>account</strong> per day from mobs; past it, gear and “gold items” stop dropping; Kinah and pet souls keep coming; shown top-left; the Abyss doesn’t count (Global, 09-28; KR/TW, 09-26)</td>
+</tr>
+<tr>
+<td>Kinah per character</td>
+<td>1,000,000 (single beta source, unconfirmed) (Global, 09-25)</td>
+</tr>
+<tr>
+<td>Gathering</td>
+<td>no daily energy (Global, 10-03)</td>
+</tr>
+<tr>
+<td>Duties</td>
+<td>20 on the list, 5 turn-ins a day <strong>per server</strong> (Global, 10-05)</td>
+</tr>
+<tr>
+<td>Weekly diminishing returns in dungeons</td>
+<td>~80-83 clears per account across Fire Temple, Urugugu and Crow Cave (test model, Global 09-22)</td>
+</tr>
+<tr>
+<td>Abyss time</td>
+<td>weekly, limited (Global, 10-04 and 10-05)</td>
+</tr>
+</tbody>
+</table>
+<div class="sl-heading-wrapper level-h2"><h2 id="market-or-farming-with-membership">Market or farming (with membership)</h2><a class="sl-anchor-link" href="#market-or-farming-with-membership"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Market or farming (with membership)”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What to do</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orichalcum Ingots to level</td>
+<td>buy</td>
+<td>on some servers they sell below their own cost (Global, 10-02 and 10-04)</td>
+</tr>
+<tr>
+<td>Gems</td>
+<td>buy early in the day</td>
+<td>prices go to 2-3x by day’s end (Aragon, Global 10-03)</td>
+</tr>
+<tr>
+<td>Artisan’s Refining Stones</td>
+<td>farm (grind spot, field bosses, dungeons) and buy the shortfall</td>
+<td>it’s the priciest line in the Artisan’s step (Global, 10-04)</td>
+</tr>
+<tr>
+<td>Wrathful Mind/Will</td>
+<td>farm your Conquests and buy the rest</td>
+<td>sellable on global; ~250,000+ each (4 for “a bit over a million,” Global 10-04)</td>
+</tr>
+<tr>
+<td>Radiant Odyle</td>
+<td>Abyss sky nodes and bosses; buy if short</td>
+<td>purchasable on global (Global, 09-20)</td>
+</tr>
+<tr>
+<td>Gold accessory bases</td>
+<td>buy later, once they drop</td>
+<td>“artisan bases” already made are low item level and still need materials to finish; don’t overpay (Aragon, Global 10-03)</td>
+</tr>
+<tr>
+<td>Weapon materials on a fresh server</td>
+<td>buy early</td>
+<td>cheap at the start (100,000-200,000) and climb fast (Global, 10-03)</td>
+</tr>
+<tr>
+<td>Selling</td>
+<td>non-Splendent intermediates; refined over raw (ingots over ore, per one source); gems one at a time</td>
+<td>the buyer takes the whole batch; 10% tax + listing fee (Global, 09-30 to 10-04)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Watch liquidity:</strong> one Splendent Star Dragon Lord Greatsword sat at 0 sales for 28 days (Global, 10-03); the Market is per server and per faction, and prices will come down as more players and alts come online (Global, 10-02 to 10-05).</p>
+<p><strong>Accessories, bought:</strong> one gold accessory sold for ~30-33 million in early access (Global, 10-04), so all five run ~150 million at launch prices: not realistic today, and it will be once they come down. In the meantime: tier-1 ones from the Abyss shop for ~200,000 AP (KR/TW, 09-23; PvP gear takes a PvE penalty, see <a href="/en/systems/gear/">Gear</a>) or Fire Temple’s from 2,100 onward. The other option is leveling Handicrafting as a second profession.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="how-to-pay-for-it-the-kinah-plan">How to pay for it: the Kinah plan</h2><a class="sl-anchor-link" href="#how-to-pay-for-it-the-kinah-plan"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “How to pay for it: the Kinah plan”</span></a></div>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1★ Crow Cave Conquest</td>
+<td>200,000 per claim (Global, 09-22 and 10-03)</td>
+</tr>
+<tr>
+<td>2★ Vakron / Urugugu Conquest</td>
+<td>300,000 per clear or claim; Vakron’s item pity within 21 runs (Global, 09-22 to 10-04)</td>
+</tr>
+<tr>
+<td>3★ Fire Temple Conquest</td>
+<td>400,000 per claim (Global, 09-22)</td>
+</tr>
+<tr>
+<td>Exploration</td>
+<td>150,000 <strong>bound</strong> per clear; ~72,000 at low item level (Global, 10-03 and 10-05)</td>
+</tr>
+<tr>
+<td>Transcendence (1,600 item level)</td>
+<td>100,000 × 10 runs a week (Global, 10-04)</td>
+</tr>
+<tr>
+<td>Duties</td>
+<td>50,000 (bound per one source) + 1,000 AP each, up to 150,000 with luck; refresh them by hunting Odyle energy (Global, 10-02 and 10-05)</td>
+</tr>
+<tr>
+<td>Open-world mobs</td>
+<td>200-400 free per kill (Global, 10-04)</td>
+</tr>
+<tr>
+<td>7-day attendance</td>
+<td>1,000,000 bound (Global, 10-05)</td>
+</tr>
+<tr>
+<td>Crafting byproducts</td>
+<td>Expert’s guard 2.75 million; Artisan’s sword 5 million; gold accessory 30-33 million; legendary ring 30 million (early access, Global 10-03 and 10-04)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Odyle energy:</strong> 15 every 3 h on global; membership buys the 840 reservoir and the double-80-energy opening (site 10-05; Global, 10-02). <strong>Don’t let it cap out.</strong> Extra energy: Odyle-energy crafts (5 greens + 1 blue + 55 normal Odyle + 50,000 → 40 energy, Global 10-04; another reading: 25 Odyle + 5 greens + 1 blue ≈ 75,000-85,000, Global 10-04), capped at 16 per server + 4 per character a week (Global, 10-03); and the Windbreeze special shop (membership), weekly Odyle for 400,000 (Global, 10-03 and 10-04).</p>
+<p><strong>Weekly budget (estimate, not measured):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Per week</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2★ Conquest claims: 840 energy / 40 = 21 × 300,000</td>
+<td>~6.3 million</td>
+</tr>
+<tr>
+<td>Extra claims from Odyle crafts: ~20 × 300,000 minus ~1.6 million in crafting costs</td>
+<td>~4.4 million</td>
+</tr>
+<tr>
+<td>Transcendence at 1,600+</td>
+<td>1 million</td>
+</tr>
+<tr>
+<td>Duties</td>
+<td>~1.75 million bound</td>
+</tr>
+<tr>
+<td>Open world up to the cap, partly</td>
+<td>1-3 million</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>~13-15 million free (6.3 + 4.4 + 1 + 1-3) + ~2 million bound</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Whether the 300,000 is per claim or per clear isn’t clear: one source multiplies per claim and another talks about 200,000 per pick, two picks per entry (Global, 10-04).</p>
+<p><strong>What the longsword costs (estimate, using the guard recipe as a stand-in and early-access prices):</strong> Artisan’s step ≈ 22 refining stones ≈ 8 million + Pure ore and Odyle; Dragon Lord step: 4 Ultimate stones (price unknown) + 22 Fine Thick Balaur Horns + 10 Wrathful Mind (~2.5 million) + Radiant ore and Odyle; first Transfer: 11 horns + 4 Mind (a bit over 1 million). Add to that ~18-20 Expert’s crafts, of which ~13 succeed without a Combo and get sold, and ~3 non-Combo Artisan’s that also get sold. If the weapon costs twice an accessory, <strong>plan for 15-25 million</strong>, partly offset by what you sell.</p>
+<p><strong>The Abyss Points loop:</strong> put your failed crafts and the non-Combo ones into Supply Requests (TW, 09-27; Global, 10-04 and 10-05); the PvE consensus is to spend AP on stigma shards (Global, 10-02). The AP → manastones → re-craft loop in Alchemy needs a second profession you don’t have.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="week-by-week-plan-3-4-h-a-day">Week-by-week plan (3-4 h a day)</h2><a class="sl-anchor-link" href="#week-by-week-plan-3-4-h-a-day"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Week-by-week plan (3-4 h a day)”</span></a></div>
+<p>The weekly reset is <strong>Wednesday at 05:00</strong> (site 10-05; TW 10-05). Season 1 ends, per one source, on <strong>2026-12-16</strong> (Global, 09-20).</p>
+<p><strong>Typical day (estimate):</strong> 45-60 min of Conquest and energy; 30 min of duties + one Rift (sealed dungeons); 30-45 min of gathering (Odyle + Orichalcum) or the Verteron grind spot up to the loot cap; crafts queued in Safe Haven while you handle the Market and Supply Requests; Abyss time spread against the weekly limit.</p>
+<table>
+<thead>
+<tr>
+<th>Week</th>
+<th>Goal</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong> (Tue 10-06 → reset Wed 10-07)</td>
+<td>spend before the reset</td>
+<td>burn Odyle, finish duties and weekly orders, Nightmare tickets, Ascension</td>
+</tr>
+<tr>
+<td><strong>1</strong> (10-07 → 10-14)</td>
+<td>Blacksmithing Novice 1 → 50 + promotion; 1,457 → 1,600</td>
+<td>buy cheap ingots or ore + solvent, batches of 10 from 25, spam the cheapest recipe; Vakron Exploration ×3 and then Conquest (chest, gloves/boots, Wrathful Mind/Will, 300,000 claims); Abyss feathers (PvP board) and Rift sealed dungeons; keep every failed craft for Supply Requests; promotion quest as soon as it appears</td>
+</tr>
+<tr>
+<td><strong>2</strong> (10-14 → 10-21)</td>
+<td>Professional ~20-30; first Splendents</td>
+<td>Transcendence for Arcana (1,600) (SywoGG, Global 10-04); batch Expert’s guards and longswords until you have ~4-5 Expert’s Splendent longswords, sell the non-Splendent ones; stockpile for week 3 (guard recipe as a reference, estimate): ~22 Artisan’s Refining Stones, ~35 Pure Orichalcum Ore and ~17 Pure Odyle for the Artisan’s; 4 Ultimate Refining Stones, 33 Fine Thick Balaur Horns (Balaur’s Essence), 14 Wrathful Mind, 9 Radiant Orichalcum Ore and 5 Radiant Odyle for the Dragon Lord and the first Transfer</td>
+</tr>
+<tr>
+<td><strong>3</strong> (10-21 → 10-28)</td>
+<td>True/Star Dragon Lord Longsword (62) → Transfer → Splendent (70)</td>
+<td>Artisan’s attempts at the biggest level difference you have; the Dragon Lord only once the client shows ~90% or more (if not, level the profession a few more days); the Transfer; enhance to +10 (carries to the next tier); 1 Intermediate manastone from 1 blue + 1 green (Aragon, Global 09-29)</td>
+</tr>
+<tr>
+<td><strong>4</strong> (10-28 → 11-04)</td>
+<td>accessories; 1,900 → 2,100</td>
+<td>buy or craft Dragon Lord accessories as prices come down; Transcendence phase 2 (blue Arcana); start 3★ at 2,100 for Wrathful Ego</td>
+</tr>
+<tr>
+<td><strong>5-10</strong> (11-04 → 12-16)</td>
+<td>weapon to 78/86 then 94/102; guard chain; Potential on the final tier</td>
+<td>farm Wrathful Will and Ego; Ferocious Horn Den armor; soulbind only on a tier you’re keeping; the raid asks for 2,800</td>
+</tr>
+</tbody>
+</table>
+<p>Weeks 3 onward depend on how many Combos you land: 25% doesn’t mean “one in four,” and someone already needed ~80 attempts. If the longsword falls behind, push the accessories forward: the Abyss shop ones, or the Market ones once they come down.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="mistakes-and-traps">Mistakes and traps</h2><a class="sl-anchor-link" href="#mistakes-and-traps"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Mistakes and traps”</span></a></div>
+<ul>
+<li><strong>Crafting where you can get hit:</strong> the craft fails and eats the materials (Global, 10-03).</li>
+<li><strong>Attempting the gold step with a small level difference:</strong> 77.5% against 94% (Aragon, Global 10-04).</li>
+<li><strong>Selling or dismantling intermediate Splendents:</strong> each one is the next recipe’s input.</li>
+<li><strong>Socketing expensive manastones or setting Potential before a Transfer:</strong> both are lost.</li>
+<li><strong>Counting on selling a Transfer piece:</strong> it comes out bound.</li>
+<li><strong>Soulbinding early:</strong> it blocks selling, and the percentage drops after the Transfer, so you have to level it back up (GAC, Global 10-04).</li>
+<li><strong>Buying a whole batch by accident:</strong> the Market sells the listing’s full quantity.</li>
+<li><strong>Treating 25% as one in four:</strong> plan for the long tail (~80 attempts, Global 10-04).</li>
+<li><strong>Spending Abyss time on Odyle with a siege coming up:</strong> the time is weekly.</li>
+<li><strong>Over-claiming pity chests:</strong> Exploration’s pity is 2-3 clears; more than that just throws Odyle away (Global, 10-01 and 10-02).</li>
+<li><strong>Leveling an equipped Clash Rune:</strong> it can break above +1 (Global, 10-01 and 10-02).</li>
+<li><strong>Taking Korean or Taiwanese prices as global ones:</strong> every absolute figure from IruMinaTi is from Taiwan.</li>
+<li><strong>Splitting Radiant Odyle expecting to downgrade its tier:</strong> no longer possible on global.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="open-questions">Open questions</h2><a class="sl-anchor-link" href="#open-questions"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Open questions”</span></a></div>
+<ol>
+<li>The longsword’s recipe quantities at each step, and whether it really costs double an accessory.</li>
+<li>The Kinah fee for each Transfer on global and the materials for the later Transfers (only the first one is filmed).</li>
+<li>Which Dragon names drop as Elyos: True/White/Wise or Star/Dark/Ebony.</li>
+<li>What profession level unlocks the Dragon Lord Longsword (Novice n or Professional 5?) and what difference is really needed for ~94%.</li>
+<li>The Blacksmithing promotion quest (name, NPC, material), and whether Professional caps at 50 or 70 on global.</li>
+<li>Whether a failed Combo destroys the materials of a craft that otherwise succeeded.</li>
+<li>Whether there’s a white Orichalcum step under Expert’s on global.</li>
+<li>The global price of Artisan’s Ultimate Refining Stones, Fine Thick Balaur Horns and Radiant Orichalcum Ore once the Market settles.</li>
+<li>Whether the 1,000,000 Kinah-per-character cap is real (a single beta source).</li>
+<li>Whether Conquest’s 300,000 Kinah is per claim or per clear.</li>
+<li>Where Potential stones come from on global (the Abyss shop one comes with reservations).</li>
+<li>Whether the Templar’s left hand is Blacksmithing’s “Guard” or a separate shield: the profession table lists Shield and Guard separately, and global videos only ever show the Guard.</li>
+</ol>
+<div class="sl-heading-wrapper level-h2"><h2 id="related">Related</h2><a class="sl-anchor-link" href="#related"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Related”</span></a></div>
+<ul>
+<li><a href="/en/economy/crafting/">Crafting, gathering and Supply Requests</a>: the full system.</li>
+<li><a href="/en/systems/gear/">Gear</a>: enhancement, soulbind, Potential per slot.</li>
+<li><a href="/en/systems/account-utilities/">Account and character utilities</a>: character and server warehouses, what’s per-account and what’s per-server (useful for moving materials from alts).</li>
+<li><a href="/en/classes/templar-pve/">Templar in PvE</a>: kit, tank build and damage build.</li>
+<li><a href="/en/pve/dungeons/">Dungeons and raids</a>: Vakron, Urugugu, Fire Temple, Ferocious Horn Den, gates and pity.</li>
+<li><a href="/en/roadmaps/templar-pve-leveling/">Templar: what to level at each level (PvE and leveling)</a> and <a href="/en/roadmaps/templar-pve-rotation/">Templar: rotation and macros (PvE)</a>.</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="sources">Sources</h2><a class="sl-anchor-link" href="#sources"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Sources”</span></a></div>
+<p>Research dossier from 2026-10-06 covering 54 video notes. Guard chain, recipes and Transfer: GAC (<code dir="auto">a10ZvuTqsSE</code>, Global 10-04). Dragon Lord greatsword: <code dir="auto">sZNPG1OQu1w</code> (Global, 10-03). Longsword at ~80 attempts: <code dir="auto">O3kNgeohxOo</code> (Global, 10-04). Probabilities and order by item level: Aragon (<code dir="auto">hV_0yQgkyYM</code> 10-04, <code dir="auto">C70IXgdByFM</code> 10-03, <code dir="auto">zaTPBotP5ZI</code> 09-29, Global). Global-Taiwan comparison: IruMinaTi (<code dir="auto">qH7PDB9Vg0Y</code>, TW 09-27). Slot order: Grogn (<code dir="auto">MBLY7_5_K2w</code>, Global 10-05), SywoGG (<code dir="auto">J8WVY3FxPQM</code>, Global 10-04), Spid (<code dir="auto">4m0XLtFfCqI</code>, Global 10-01), MaikuNoMi (<code dir="auto">C1qlcgORjuU</code>, Global 10-03). Transfer and tiers: <code dir="auto">qcYGcpTeZsQ</code> (Global, 09-20), <code dir="auto">HN507lXSCVE</code> (Global, 10-03), <code dir="auto">Jcv6n41thb0</code> (Global, 10-05). Routes and Kinah: <code dir="auto">e21pY3yAxpg</code>, <code dir="auto">L7CDysKzkLw</code>, <code dir="auto">_R7q7I1huCs</code>, <code dir="auto">dLBgFuvZgfA</code>, <code dir="auto">1kthuHAq5Y4</code>, <code dir="auto">PNVohWKDfDQ</code>, <code dir="auto">CJLgnqc6fdQ</code>, <code dir="auto">eAHGYqqwcRE</code>, <code dir="auto">5c_cmHJ_MF4</code> (Global, 09-22 to 10-05). Crafting mechanics predating global: <code dir="auto">ewnlIl0_UNo</code> (KR/TW, 09-25). Class: <code dir="auto">TupssWSk8GQ</code>, <code dir="auto">WigCdeqy-bo</code> (Global, 10-05 and 10-06).</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/en/roadmaps/templar-pve-rotation/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Templar: rotation and macros (PvE)</span></span></a><a href="/en/roadmaps/chanter-pve-leveling/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Chanter: what to level at each level (PvE and leveling)</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
