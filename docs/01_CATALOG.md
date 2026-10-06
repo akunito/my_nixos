@@ -277,6 +277,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.servicePrinting == true`
    - `systemSettings.networkPrinters == true`
    - `systemSettings.sharePrinter == true`
+- **system/hardware/resource-limits.nix**: Resource guards for a machine where one runaway process must not take the host or the *Enabled when:*
+   - `s.resourceLimitsEnable or false`
+   - `(s.nixMaxJobs or null) != null`
+   - `(s.nixBuildCores or null) != null`
+- **system/hardware/rgb-off.nix**: One-shot OpenRGB call that switches RGB off, re-run after every resume: the MSI GPU and *Enabled when:* `args != [ ]`
 - **system/hardware/suspend-debug.nix**: Suspend/resume debug instrumentation *Enabled when:* `systemSettings.suspendDebugEnable or false`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware *Enabled when:*
@@ -660,6 +665,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
+- **docs/akunito/plans/nas-3090-ai-presets.md**: Qué hacemos con la RTX 3090 del NAS — presets de IA bajo demanda (nada cargado por defecto), coach de Aion 2 por captura HDMI + voz + panel AkuWM, Pico 2 H como HID para capturar datos del juego, razonador/Hermes local aplazado
 - **docs/akunito/plans/nas-3090-storage-rework.md**: Liberar el PCIEX16 del NAS para la RTX 3090 — sistema del 840 EVO (SATA) a un Samsung 980 500GB en M2B_SB por clonado dd, ssdpool del HBA LSI a los 4 SATA de la placa (TRIM por fin), HBA fuera, KIOXIA fuera
 - **docs/akunito/plans/nas-on-demand-services.md**: AkuCraft hibernado (bot solo Telegram, Discord e invitados fuera) y Minecraft survival + Calibre + RomM + UniFi mudados del VPS al NAS como servicios bajo demanda, con limpieza de copias y monitorización alineada
 - **docs/akunito/plans/plane-fork-customization-inventory.md**: **Built:** 2026-08-13 from `~/Projects/plane-up` @ `akunito/mobile` (`bcb1cfca9`), 26 commits over `v1.3.1`.
@@ -752,6 +758,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/handoffs/akunito/2026-09-02-main.md**: - `lib/defaults.nix` — `swayUseSwayfx` (default `true`), `ollamaServerEvictVram` + 7 knobs, `vramSamplerEnable`
 - **docs/handoffs/akunito/2026-09-22-akuwm-nordvpn-modal.md**: NordVPN 8.11.1.0 → Settings → Split tunneling → **Add apps**. The modal:
+- **docs/handoffs/akunito/2026-10-02-akuwm-wslg-askpass-window.md**: `install.sh` launched from a Windows-side session (Claude Code on Windows calling
+- **docs/handoffs/akunito/2026-10-02-wsl-restart-and-wslg-checks.md**: The VM that booted at 14:47 (after the OOM loop) came up degraded in two ways, both
 
 ### Komi
 

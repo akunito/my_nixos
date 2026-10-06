@@ -335,14 +335,20 @@ let
           ];
         }
       ];
-    } // lib.optionalAttrs cs.enable {
-      # claude-sync: pull before Claude reads memory; push after every turn; flag unpushed code on exit
+
+      # Order matters: claude-sync pulls the hub first so the lint sees current memory.
+      # memory-lint prints MEMORY-LINT WARN lines (index caps, orphans, dead links, project
+      # memories in the wrong directory) into the session context; silent when healthy.
       SessionStart = [
         {
-          matcher = "startup|resume|fork";
-          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ];
+          matcher = "startup|resume|clear|fork";
+          hooks =
+            lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ]
+            ++ [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/memory-lint.sh"; timeout = 10; } ];
         }
       ];
+    } // lib.optionalAttrs cs.enable {
+      # claude-sync: push after every turn; flag unpushed code on exit (hook-start is in SessionStart above)
       Stop = [
         {
           matcher = "";

@@ -71,6 +71,15 @@ without fork, unpushed code on exit, hub unreachable for 6 h while trying.
   paths (`/home/akunito/.dotfiles`, `/home/akunito/Nextcloud/...`). On WSL,
   `~/Nextcloud` must be a symlink to the Windows Nextcloud folder.
 
+## Memory layout (2026-10-06)
+
+Rules live in `~/.claude/CLAUDE.md` (synced by this service) and are enforced at SessionStart by `.claude/hooks/memory-lint.sh`; `/memory-lint` (`~/.claude/commands/memory-lint.md`) is the full fortnightly audit.
+
+- One project = one memory directory: `~/.claude/projects/<slug>/memory/` (slug = clone path with non-alphanumerics replaced by `-`). The whitelist above already syncs every `projects/*/memory/`, so a new project needs nothing on the sync side.
+- The dotfiles memory holds only NixOS/infra facts plus the registry of external projects (`reference_project_locations.md`: clone, memory dir, GitHub, Plane key, memory-name pattern). The lint uses that last column to flag a project memory written into the dotfiles directory.
+- Tiering: `MEMORY.md` is an index of indexes (≤180 lines / 22 KB — Claude Code truncates at 200 lines / 25 KB; on 2026-10-06 the old 264-line index was losing 93 lines every session) → `index_<domain>.md` (one line per memory) → one file per fact (≤8 KB; long logs go to `memory/archive/` or the repo docs, never indexed).
+- Why not an Obsidian vault: the memory directory already is Markdown + `[[wikilinks]]`; every published "Obsidian memory" workflow reads it with grep/Read exactly as Claude Code does, and the graph view is for humans only. Open the memory directory as a vault for a visual audit when wanted; nothing changes for the agent.
+
 ## Security
 
 Each client has a passphrase-less key at `~/.config/claude-sync/key`

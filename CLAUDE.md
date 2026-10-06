@@ -70,6 +70,10 @@ Enforced by deny rules in `~/.claude/settings.json`, hooks in `.claude/hooks/`, 
 
 `~/.claude` is synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD: memory/skills/plans via git, session transcripts via rsync, driven by SessionStart/Stop/SessionEnd hooks, a 15-min timer and a `claude` wrapper that forks sessions owned by another machine. `ENV_PROFILE` tells you which machine you are on; memories are shared, so name the machine when a fact is machine-specific. If the SessionStart context lists `*.conflict-*` files, merge them into the base file first (keep every fact) and delete the `.conflict` file. `claude-sync status` shows hub reachability. Docs: `docs/akunito/infrastructure/services/claude-sync.md`.
 
+## Memory layout (rules in `~/.claude/CLAUDE.md`, Memory section)
+
+The dotfiles memory holds NixOS/infra facts only, tiered: `MEMORY.md` (index of indexes, ≤180 lines) → `index_<domain>.md` (one line per memory) → one file per fact (≤8 KB). Every project with its own repo keeps its memory in its own `~/.claude/projects/<slug>/memory/`; the dotfiles memory only has the registry `reference_project_locations.md` (clone, memory dir, Plane key, name pattern). Working on such a project from here: read its `MEMORY.md` first and write its facts there, never here. `.claude/hooks/memory-lint.sh` runs at SessionStart (silent when healthy, `MEMORY-LINT WARN` otherwise — fix in the same session); `/memory-lint` is the full fortnightly audit.
+
 ## Home Manager updates
 
 Apply user-level changes: `cd /home/akunito/.dotfiles && ./sync-user.sh`
