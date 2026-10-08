@@ -34,5 +34,23 @@
       "notes": "identified on this machine; -1920,-706 1920x1080 at 96 dpi",
       "updated_at": 1790018228
     }
+  ],
+  "rules": [
+    {
+      "id": "r-l9e8kw",
+      "name": "AION2 DPS Meter",
+      "match": [
+        {
+          "process": "AION2DpsMeter"
+        }
+      ],
+      "actions": [
+        "float",
+        "sticky"
+      ],
+      "enabled": true,
+      "notes": "Audited build from ~/Projects/aion2-dps-meter: overlay, timers, atlas and the node-naming prompt float on every workspace, above the game (the windows are Topmost).",
+      "updatedAt": 1791468974378
+    }
   ]
 }
