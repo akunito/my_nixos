@@ -4,9 +4,15 @@
 # shows up in AION 2 as lag (measured 2026-10-09: two capture-wide silences exactly at the publish steps). So WSL never
 # builds locally: the tree is rsynced to the VPS, the command runs there under nice with docker capped at half the cores
 # (RBUILD_CPUS, default = nproc/2 on the VPS), and the listed result paths come back.
+# The remote tree lives on /dev/shm (tmpfs, 16 GB on VPS_PROD): the VPS disk is LUKS on a virtio volume that does ~70 sync
+# IOPS (dsync 4 KiB write = 14 ms, measured 2026-10-09), and the first build's `docker pull` of the 917 MB dotnet SDK
+# extracted at ~1 MB/s for 35 min with the disk 99 % busy — io pressure full 90 %, load 87, SSH unreachable 11:55–12:18,
+# Pocket ID restarted twice. Compiles in RAM never touch that disk; a NEW image pull still does, so pull big images by
+# hand when nobody needs the VPS, never as part of a routine build. rbuild also refuses to start while the VPS reports
+# io pressure (full avg60 > 10 %) or while another build of the same name is still running.
 #
 # usage: rbuild [-n NAME] [-b PATH]... PROJECT_DIR -- COMMAND [ARGS...]
-#   -n NAME   remote folder name (default: basename of PROJECT_DIR) → ~/builds/NAME on the VPS
+#   -n NAME   remote folder name (default: basename of PROJECT_DIR) → /dev/shm/rbuild/NAME on the VPS (~/builds/NAME without tmpfs room)
 #   -b PATH   path (relative to PROJECT_DIR) to copy back after the build; repeatable; default: build/out
 # Secrets never leave: .env*, *.key, secrets/ and workbench/ are excluded from the sync.
 set -euo pipefail
@@ -23,9 +29,10 @@ done
 [ -n "${dir:-}" ] && [ $# -gt 0 ] || { sed -n 2,13p "$0"; exit 2; }
 dir=$(cd "$dir" && pwd); name=${name:-$(basename "$dir")}; [ ${#back[@]} -gt 0 ] || back=(build/out)
 ssh_opts=(-A -p "$port" -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -o ConnectTimeout=20)
-remote="~/builds/$name"
+remote=$(ssh "${ssh_opts[@]}" "$host" "if [ \"\$(df -k --output=avail /dev/shm 2>/dev/null | tail -1)\" -gt 4000000 ] 2>/dev/null; then echo /dev/shm/rbuild/$name; else echo \$HOME/builds/$name; fi")
 echo "== rbuild: $dir → $host:$remote"
-ssh "${ssh_opts[@]}" "$host" "mkdir -p $remote"
+# guard: idle disk (io pressure full avg60 ≤ 10 %) and no build of this name still running
+ssh "${ssh_opts[@]}" "$host" "mkdir -p $remote && cd $remote && io=\$(awk '/^full/{split(\$3,a,\"=\"); print int(a[2])}' /proc/pressure/io 2>/dev/null) && if [ \"\${io:-0}\" -gt 10 ]; then echo \"== VPS io pressure full avg60=\$io % — not starting a build on a stalled disk\"; exit 3; fi; if [ -f .rbuild.pid ] && [ ! -f .rbuild.done ] && kill -0 \"\$(cat .rbuild.pid)\" 2>/dev/null; then echo \"== a build of $name is still running (pid \$(cat .rbuild.pid))\"; exit 4; fi"
 rsync -az --delete --info=stats1 -e "ssh -p $port" \
   --exclude '.env' --exclude '.env.*' --exclude '*.key' --exclude 'secrets/' --exclude 'workbench/' --exclude 'local/' \
   --exclude 'build/out/' --exclude 'build/.nuget/' --exclude '**/bin/' --exclude '**/obj/' --exclude 'node_modules/' --exclude 'gamedb/' \
@@ -34,7 +41,7 @@ printf -v cmd '%q ' "$@"
 # The build runs detached on the VPS (a dropped Tailscale/SSH session must not kill a 6-minute docker build); this side
 # polls the remote log over fresh connections until the done marker appears.
 log="$remote/.rbuild.log"
-ssh "${ssh_opts[@]}" "$host" "cd $remote && rm -f .rbuild.log .rbuild.done && export RBUILD_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} && export DOCKER_CPUS=\$RBUILD_CPUS && echo \"== remote: \$(nproc) cores, docker capped at \$DOCKER_CPUS\" > .rbuild.log && setsid nohup bash -c 'nice -n 10 ionice -c3 bash -lc $(printf '%q' "$cmd") >> .rbuild.log 2>&1; echo \$? > .rbuild.done' > /dev/null 2>&1 < /dev/null &"
+ssh "${ssh_opts[@]}" "$host" "cd $remote && rm -f .rbuild.log .rbuild.done && export RBUILD_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} && export DOCKER_CPUS=\$RBUILD_CPUS && echo \"== remote: \$(nproc) cores, docker capped at \$DOCKER_CPUS\" > .rbuild.log && rm -f .rbuild.pid && setsid nohup bash -c 'nice -n 10 ionice -c3 bash -lc $(printf '%q' "$cmd") >> .rbuild.log 2>&1; echo \$? > .rbuild.done' > /dev/null 2>&1 < /dev/null & echo \$! > .rbuild.pid"
 shown=0
 for ((i = 0; i < 360; i++)); do
   sleep 10
