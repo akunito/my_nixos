@@ -36,7 +36,7 @@ ssh "${ssh_opts[@]}" "$host" "mkdir -p $remote && cd $remote && io=\$(awk '/^ful
 rsync -az --delete --info=stats1 -e "ssh -p $port" \
   --exclude '.env' --exclude '.env.*' --exclude '*.key' --exclude 'secrets/' --exclude 'workbench/' --exclude 'local/' \
   --exclude 'build/out/' --exclude 'build/.nuget/' --exclude '**/bin/' --exclude '**/obj/' --exclude 'node_modules/' --exclude 'gamedb/' \
-  "$dir/" "$host:$remote/" | grep -i 'transferred\|total size' | head -2
+  "$dir/" "$host:$remote/" | { grep -i 'transferred\|total size' || true; } | head -2
 printf -v cmd '%q ' "$@"
 # The build runs detached on the VPS (a dropped Tailscale/SSH session must not kill a 6-minute docker build); this side
 # polls the remote log over fresh connections until the done marker appears.
@@ -54,6 +54,6 @@ for ((i = 0; i < 360; i++)); do
 done
 for p in "${back[@]}"; do
   mkdir -p "$dir/$p"
-  rsync -az --info=stats1 -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | grep -i 'transferred' | head -1
+  rsync -az --info=stats1 -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | { grep -i 'transferred' || true; } | head -1
 done
 echo "== rbuild done: results in ${back[*]}"
