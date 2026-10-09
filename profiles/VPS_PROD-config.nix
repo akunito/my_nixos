@@ -611,6 +611,9 @@ in
       { name = "n8n"; path = "n8n"; }
       { name = "immich"; path = "immich"; }
       { name = "pocket-id"; path = "pocket-id"; }
+      # solvearr: Cloudflare solver on 100.64.0.6:8191 (Tailscale-only), used by the AION2 DPS meter's
+      # price/leaderboard scrapers — the same bypass the NAS media stack gives Prowlarr. Internal, no proxy vhost.
+      { name = "solvearr"; path = "solvearr"; }
     ];
 
     # ============================================================================
