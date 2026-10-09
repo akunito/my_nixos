@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# rbuild — run a project's build on VPS_PROD instead of this machine.
+# WHY: on DESK_W11 (NixOS-WSL) a docker build stalls Hyper-V's vSwitch for ~2.5 s and freezes every Windows socket, which
+# shows up in AION 2 as lag (measured 2026-10-09: two capture-wide silences exactly at the publish steps). So WSL never
+# builds locally: the tree is rsynced to the VPS, the command runs there under nice with docker capped at half the cores
+# (RBUILD_CPUS, default = nproc/2 on the VPS), and the listed result paths come back.
+#
+# usage: rbuild [-n NAME] [-b PATH]... PROJECT_DIR -- COMMAND [ARGS...]
+#   -n NAME   remote folder name (default: basename of PROJECT_DIR) → ~/builds/NAME on the VPS
+#   -b PATH   path (relative to PROJECT_DIR) to copy back after the build; repeatable; default: build/out
+# Secrets never leave: .env*, *.key, secrets/ and workbench/ are excluded from the sync.
+set -euo pipefail
+host=${RBUILD_HOST:-akunito@100.64.0.6}; port=${RBUILD_PORT:-56777}
+name=""; back=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n) name=$2; shift 2;;
+    -b) back+=("$2"); shift 2;;
+    --) shift; break;;
+    *) if [ -z "${dir:-}" ]; then dir=$1; shift; else break; fi;;
+  esac
+done
+[ -n "${dir:-}" ] && [ $# -gt 0 ] || { sed -n 2,13p "$0"; exit 2; }
+dir=$(cd "$dir" && pwd); name=${name:-$(basename "$dir")}; [ ${#back[@]} -gt 0 ] || back=(build/out)
+ssh_opts=(-A -p "$port" -o ServerAliveInterval=30 -o ConnectTimeout=20)
+remote="~/builds/$name"
+echo "== rbuild: $dir → $host:$remote"
+ssh "${ssh_opts[@]}" "$host" "mkdir -p $remote"
+rsync -az --delete --info=stats1 -e "ssh -p $port" \
+  --exclude '.env' --exclude '.env.*' --exclude '*.key' --exclude 'secrets/' --exclude 'workbench/' --exclude 'local/' \
+  --exclude 'build/out/' --exclude 'build/.nuget/' --exclude '**/bin/' --exclude '**/obj/' --exclude 'node_modules/' --exclude 'gamedb/' \
+  "$dir/" "$host:$remote/" | grep -i 'transferred\|total size' | head -2
+printf -v cmd '%q ' "$@"
+ssh "${ssh_opts[@]}" "$host" "cd $remote && export RBUILD_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} DOCKER_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} && echo \"== remote: \$(nproc) cores, docker capped at \$DOCKER_CPUS\" && nice -n 10 ionice -c3 bash -lc $(printf '%q' "$cmd")"
+for p in "${back[@]}"; do
+  mkdir -p "$dir/$p"
+  rsync -az --info=stats1 -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | grep -i 'transferred' | head -1
+done
+echo "== rbuild done: results in ${back[*]}"

@@ -4,47 +4,78 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports =
-    [ (modulesPath + "/installer/scan/not-detected.nix")
-    ];
+  imports = [ ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "virtio_pci" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
+
+  fileSystems."/mnt/wsl" =
+    { device = "none";
+      fsType = "tmpfs";
+    };
+
+  fileSystems."/usr/lib/wsl/drivers" =
+    { device = "drivers";
+      fsType = "9p";
+    };
+
   fileSystems."/" =
-    { device = "/dev/mapper/luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
-      fsType = "btrfs";
-      options = [ "subvol=@" ];
+    { device = "/dev/disk/by-uuid/39df4472-d7a4-4d65-b1aa-fb2af8bcffb4";
+      fsType = "ext4";
     };
 
-  boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
-
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7620-B197";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
+  fileSystems."/mnt/wslg" =
+    { device = "none";
+      fsType = "tmpfs";
     };
 
-  fileSystems."/home" =
-    { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
-      fsType = "btrfs";
-    };
-
-  boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
-
-  fileSystems."/mnt/DATA" =
-    { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
-      fsType = "ntfs3";
-    };
-
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
-      fsType = "ntfs3";
+  fileSystems."/mnt/wslg/distro" =
+    { device = "";
+      fsType = "none";
+      options = [ "bind" ];
     };
 
 
+  fileSystems."/tmp/.X11-unix" =
+    { device = "/mnt/wslg/.X11-unix";
+      fsType = "none";
+      options = [ "bind" ];
+    };
+
+
+  fileSystems."/mnt/c" =
+    { device = "C:\134";
+      fsType = "9p";
+    };
+
+  fileSystems."/mnt/d" =
+    { device = "D:\134";
+      fsType = "9p";
+    };
+
+  fileSystems."/mnt/e" =
+    { device = "E:\134";
+      fsType = "9p";
+    };
+
+  fileSystems."/mnt/f" =
+    { device = "F:\134";
+      fsType = "9p";
+    };
+
+  fileSystems."/home/akunito/Nextcloud" =
+    { device = "/mnt/c/Users/diego/Nextcloud";
+      fsType = "none";
+      options = [ "bind" ];
+    };
+
+  fileSystems."/mnt/wslg/run/user/1000" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
+    };
 
 
 
@@ -53,13 +84,7 @@
 
 
 
-
-
-
-  swapDevices =
-    [ { device = "/dev/mapper/luks-swap"; }
-    ];
+  swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
