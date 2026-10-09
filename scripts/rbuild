@@ -22,7 +22,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "${dir:-}" ] && [ $# -gt 0 ] || { sed -n 2,13p "$0"; exit 2; }
 dir=$(cd "$dir" && pwd); name=${name:-$(basename "$dir")}; [ ${#back[@]} -gt 0 ] || back=(build/out)
-ssh_opts=(-A -p "$port" -o ServerAliveInterval=30 -o ConnectTimeout=20)
+ssh_opts=(-A -p "$port" -o ServerAliveInterval=15 -o ServerAliveCountMax=8 -o ConnectTimeout=20)
 remote="~/builds/$name"
 echo "== rbuild: $dir → $host:$remote"
 ssh "${ssh_opts[@]}" "$host" "mkdir -p $remote"
@@ -31,7 +31,20 @@ rsync -az --delete --info=stats1 -e "ssh -p $port" \
   --exclude 'build/out/' --exclude 'build/.nuget/' --exclude '**/bin/' --exclude '**/obj/' --exclude 'node_modules/' --exclude 'gamedb/' \
   "$dir/" "$host:$remote/" | grep -i 'transferred\|total size' | head -2
 printf -v cmd '%q ' "$@"
-ssh "${ssh_opts[@]}" "$host" "cd $remote && export RBUILD_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} DOCKER_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} && echo \"== remote: \$(nproc) cores, docker capped at \$DOCKER_CPUS\" && nice -n 10 ionice -c3 bash -lc $(printf '%q' "$cmd")"
+# The build runs detached on the VPS (a dropped Tailscale/SSH session must not kill a 6-minute docker build); this side
+# polls the remote log over fresh connections until the done marker appears.
+log="$remote/.rbuild.log"
+ssh "${ssh_opts[@]}" "$host" "cd $remote && rm -f .rbuild.log .rbuild.done && export RBUILD_CPUS=\${RBUILD_CPUS:-\$(( \$(nproc) / 2 ))} && export DOCKER_CPUS=\$RBUILD_CPUS && echo \"== remote: \$(nproc) cores, docker capped at \$DOCKER_CPUS\" > .rbuild.log && setsid nohup bash -c 'nice -n 10 ionice -c3 bash -lc $(printf '%q' "$cmd") >> .rbuild.log 2>&1; echo \$? > .rbuild.done' > /dev/null 2>&1 < /dev/null &"
+shown=0
+for ((i = 0; i < 360; i++)); do
+  sleep 10
+  out=$(ssh "${ssh_opts[@]}" "$host" "cat $log 2>/dev/null; echo ___; cat $remote/.rbuild.done 2>/dev/null" 2>/dev/null) || continue
+  body=${out%%___*}; done_code=${out##*___}
+  total=$(printf '%s' "$body" | wc -l)
+  if [ "$total" -gt "$shown" ]; then printf '%s\n' "$body" | sed -n "$((shown + 1)),${total}p" | grep -v 'Pulling fs layer\|Waiting\|Verifying Checksum\|Download complete'; shown=$total; fi
+  done_code=$(printf '%s' "$done_code" | tr -d '[:space:]')
+  if [ -n "$done_code" ]; then [ "$done_code" = 0 ] || { echo "== remote command failed with $done_code"; exit "$done_code"; }; break; fi
+done
 for p in "${back[@]}"; do
   mkdir -p "$dir/$p"
   rsync -az --info=stats1 -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | grep -i 'transferred' | head -1
