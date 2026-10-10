@@ -14,6 +14,7 @@
 # usage: rbuild [-n NAME] [-b PATH]... PROJECT_DIR -- COMMAND [ARGS...]
 #   -n NAME   remote folder name (default: basename of PROJECT_DIR) → /dev/shm/rbuild/NAME on the VPS (~/builds/NAME without tmpfs room)
 #   -b PATH   path (relative to PROJECT_DIR) to copy back after the build; repeatable; default: build/out
+#   RBUILD_BWLIMIT  KB/s cap on the copy-back (default 6000): an 89 MB build streaming into WSL2 at line rate coincided with game lag on DESK_W11 (2026-10-10)
 # Secrets never leave: .env*, *.key, secrets/ and workbench/ are excluded from the sync.
 set -euo pipefail
 host=${RBUILD_HOST:-akunito@100.64.0.6}; port=${RBUILD_PORT:-56777}
@@ -54,6 +55,6 @@ for ((i = 0; i < 360; i++)); do
 done
 for p in "${back[@]}"; do
   mkdir -p "$dir/$p"
-  rsync -az --info=stats1 -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | { grep -i 'transferred' || true; } | head -1
+  rsync -az --info=stats1 --bwlimit="${RBUILD_BWLIMIT:-6000}" -e "ssh -p $port" "$host:$remote/$p/" "$dir/$p/" | { grep -i 'transferred' || true; } | head -1
 done
 echo "== rbuild done: results in ${back[*]}"
