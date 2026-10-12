@@ -16,7 +16,9 @@ autoProxy=true
 # hour. Half the box for WSL: the host keeps 16 GB and 8 of the 16 threads
 # (7800X3D) whatever happens inside. The slice caps in the NixOS profile
 # (resourceLimitsEnable) split these 16 GB so a runaway dies before the VM is full.
-memory=16GB
+# 2026-10-12: 16 -> 8 GB. With AION 2 (14 GB private), Zen (16 GB) and ShareX (3 GB)
+# Windows hit 37 MB free RAM and paged at 4-7 k reads/s while WSL sat at PSI 0.
+memory=8GB
 processors=8
 swap=0
 # localhostForwarding is deliberately absent: WSL warns that it "has no effect

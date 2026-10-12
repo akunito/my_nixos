@@ -70,4 +70,12 @@ if (-not (Test-Path $lnk)) {
 }
 Write-Host "  VirtualDesktopAccessor.dll must sit next to the .ahk: https://github.com/Ciantic/VirtualDesktopAccessor/releases"
 
+Step "ShareX watchdog (restart above 1.5 GB private, every 30 min)"
+# conhost --headless: powershell -WindowStyle Hidden still flashes a console over a fullscreen game.
+$act = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$PSScriptRoot\sharex-watchdog.ps1`""
+$trg = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 30)
+$set = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -MultipleInstances IgnoreNew
+$prn = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
+Register-ScheduledTask -TaskName 'ShareX watchdog' -Action $act -Trigger $trg -Settings $set -Principal $prn -Force | Out-Null
+
 Step "done — reboot once, then continue with the runbook (WSL section)"

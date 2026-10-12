@@ -35,14 +35,16 @@ in
 
     # Resource guards (2026-10-02): a build peaked at 22.8 GB of the VM, Windows crawled and
     # the OOM kill in init.scope looped the distro for an hour (system/hardware/resource-limits.nix).
-    # The VM itself is capped in templates/windows/DESK_W11/.wslconfig (16 GB, 8 of 16 threads);
-    # these split that 16 GB: shell work 10/12 GB, nix-daemon 8/10 GB, docker + system the rest.
+    # The VM itself is capped in templates/windows/DESK_W11/.wslconfig (8 GB since 2026-10-12, 8 of 16 threads);
+    # shell work (init.scope + user slice) 6/7 GB, nix-daemon 5/6 GB. init.scope peaked at 4.9 GB over
+    # 3 days of ~9 Claude sessions (measured 2026-10-12). Together the caps exceed the VM: accepted,
+    # heavy builds go to the VPS (rbuild) and install.sh does not run alongside a runaway.
     resourceLimitsEnable = true;
-    limitsUserMemoryHigh = "10G";
-    limitsUserMemoryMax = "12G";
+    limitsUserMemoryHigh = "6G";
+    limitsUserMemoryMax = "7G";
     limitsUserCpuQuota = "600%"; # of the VM's 8
-    limitsNixMemoryHigh = "8G";
-    limitsNixMemoryMax = "10G";
+    limitsNixMemoryHigh = "5G";
+    limitsNixMemoryMax = "6G";
     limitsNixCpuQuota = "600%";
     nixMaxJobs = 2; # 2 x 3 threads for deploys; a runaway cannot pin all 8 anyway (CPUQuota)
     nixBuildCores = 3;
