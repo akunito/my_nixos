@@ -89,8 +89,10 @@ in
     # substring that selects EVERY matching controller (cli.cpp OptionDevice), hence one "Dominator"
     # covers both sticks. The XFX 9070 XT (1eae:8811) has no OpenRGB controller — not in
     # --list-devices as root (measured 2026-10-13); its lighting is hardware-only. Hotplug re-run
-    # because the Tartarus reverts to its onboard effect on re-enumeration. i2c-dev comes from rgb-off.nix.
-    rgbOffOpenrgbArgs = [ "-d" "Dominator" "-m" "direct" "-c" "000000" "-d" "X670E" "-m" "off" "-d" "Tartarus" "-m" "static" "-c" "5A1E96" ];
+    # because the Tartarus reverts to its onboard effect on re-enumeration. `-b 100` is REQUIRED on the
+    # Tartarus: Synapse left its brightness at 0 and OpenRGB keeps it, so static alone shows nothing
+    # (measured 2026-10-13: every mode lit once -b 100 was passed). i2c-dev comes from rgb-off.nix.
+    rgbOffOpenrgbArgs = [ "-d" "Dominator" "-m" "direct" "-c" "000000" "-d" "X670E" "-m" "off" "-d" "Tartarus" "-m" "static" "-c" "5A1E96" "-b" "100" ];
     rgbOffUsbIds = [ "1532:022b" ];
 
     kernelModules = [
