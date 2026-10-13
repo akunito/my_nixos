@@ -47,7 +47,7 @@ pedidos en Botland el 2026-10-01. Contexto previo: memorias `project_local_ai_bo
 | `off` (defecto) | nada | 0 |
 | `aion-coach` | Qwen3-VL-8B (o Gemma 4 12B) + Whisper large-v3-turbo + TTS + embeddings + NVENC grabación | ~15-18 GB |
 | `aion-pico` | `aion-coach` + controlador Pico (CPU) | igual |
-| `reasoner` | Qwen3.8-27B Q4 (o el mejor ≤22 GB del momento) | ~17-20 GB |
+| `reasoner` | **LIVE 2026-10-13**: Qwen3.8-27B abliterated (huihui-ai UD-Q4_K_XL 17,4 GB), `llama-server.nix` backend `docker-cuda`, `http://100.64.0.1:8090` | **18,7 GB medidos** (ctx 32k) |
 | `hermes` | `reasoner` + Hermes (aplazado) | igual |
 | `coder` | modelo de código para OpenCode | ~15-20 GB |
 | `whisper` | solo Whisper (reuniones, `meeting-transcribe` M3) | ~4-5 GB |
@@ -57,6 +57,8 @@ sueño S3 mientras está activo (inhibitor) y se apaga solo tras N min sin uso; 
 se paran todos los servicios de IA (NVIDIA + VRAM cargada + suspend = frágil).
 
 ## Fases
+
+- **Hecho 2026-10-13 — preset `reasoner` a mano** (sin gestor aún): medido CUDA 1 326 pp / 40 tg tok/s; Vulkan sobre el ICD de NVIDIA 48 pp → descartado. Desplegado y medido durante el `zfs send` de la migración sin efecto en su presión de IO (~55 % antes y después).
 
 - **F0 — base (al llegar la Elgato):** AINF-404 kernel ≥6.19 en el NAS; Elgato por USB 3
   al NAS (comprobar Gen 1 vs Gen 2 con `lsusb -t`), 1080p60 por UVC; Samsung pasa a HDMI
