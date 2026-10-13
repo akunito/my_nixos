@@ -36,6 +36,25 @@
       };
     };
 
+    # Razer Tartarus V2 (Aion 2 layout, dictated by Diego 2026-10-13). An explicit id entry replaces
+    # the "*" config for this device, so its key 11 is a plain shift, not the capslock hyper overload.
+    # Left column = what the keypad sends by default (captured with `keyd monitor`): 01-05 = 1-5,
+    # 06 = tab, 07-10 = q w e r, 11 = capslock, 12-15 = a s d f, 16 = leftshift, 17-19 = z x c,
+    # 20 (big thumb) = space, small thumb button = leftalt, d-pad = arrows (diagonals send two arrows,
+    # so W+D etc. come for free). Scroll wheel left untouched.
+    keyboards.razer_tartarus = {
+      ids = [ "1532:022b" ];
+      settings.main = {
+        "1" = "esc"; "2" = "f2"; "3" = "m"; "4" = "i"; "5" = "f3";
+        tab = "f1"; q = "5"; w = "6"; e = "q"; r = "e";
+        capslock = "leftshift"; a = "1"; s = "2"; d = "3"; f = "4";
+        leftshift = "leftcontrol"; z = "x"; x = "c"; c = "v";
+        space = "f";
+        leftalt = "leftalt";
+        up = "w"; down = "s"; left = "a"; right = "d";
+      };
+    };
+
     # Separate entry for mice - keyd's "*" wildcard only matches keyboards, not mice
     # This ensures mouse1 mapping works for actual mouse devices
     # Note: To add more mice, add their vendor:product IDs to the ids list
