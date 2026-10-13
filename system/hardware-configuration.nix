@@ -8,7 +8,7 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
@@ -21,12 +21,6 @@
 
   boot.initrd.luks.devices."luks-9e2c3c08-6ef5-4d3a-9207-db4efd41f33c".device = "/dev/disk/by-uuid/9e2c3c08-6ef5-4d3a-9207-db4efd41f33c";
 
-  fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/7620-B197";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
-
   fileSystems."/home" =
     { device = "/dev/mapper/luks-a40d2e06-e814-4344-99c8-c2e00546beb3";
       fsType = "btrfs";
@@ -34,20 +28,21 @@
 
   boot.initrd.luks.devices."luks-a40d2e06-e814-4344-99c8-c2e00546beb3".device = "/dev/disk/by-uuid/a40d2e06-e814-4344-99c8-c2e00546beb3";
 
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/7620-B197";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+
+  fileSystems."/mnt/DATA_SATA3" =
+    { device = "/dev/disk/by-uuid/7FE94C917A236223";
+      fsType = "ntfs3";
+    };
+
   fileSystems."/mnt/DATA" =
     { device = "/dev/disk/by-uuid/48B8BD48B8BD34F2";
       fsType = "ntfs3";
     };
-
-  fileSystems."/mnt/DATA_SATA3" =
-    { device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
-      fsType = "ntfs3";
-    };
-
-
-
-
-
 
 
 
