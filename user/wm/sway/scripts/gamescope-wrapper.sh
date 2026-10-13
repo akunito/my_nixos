@@ -20,6 +20,8 @@
 #   GAMESCOPE_WLDEBUG=1   run gamescope under WAYLAND_DEBUG=1 into a log file
 #                         (keeps the last 64MB; GAMESCOPE_WLDEBUG_MAX_MB overrides)
 #   GAMESCOPE_UNSHARE_PID=1 give the game its own pid namespace (breaks Steam IPC for AION 2, see below)
+#   GAMESCOPE_OUTPUT=DP-1  sway output to open on (default: the active output with
+#                         the most physical pixels)
 #
 set -euo pipefail
 
@@ -63,6 +65,21 @@ stop_trace() {
 # anything: Proton puts the game in its own session, so a process-group kill on
 # a normal exit cannot reach the game anyway and only risks catching something
 # that is still starting up. Steam and gamescope's reaper handle the Wine side.
+# gamescope goes fullscreen on whichever sway output has FOCUS when it starts.
+# Launched with the vertical DP-2 focused, AION 2 saw a 1152x2048 screen and
+# saved it as its resolution (measured 2026-10-13). Focus the real game output
+# first: GAMESCOPE_OUTPUT, else the active output with the most physical pixels.
+focus_game_output() {
+    command -v swaymsg >/dev/null 2>&1 || return 0
+    local out="${GAMESCOPE_OUTPUT:-}"
+    if [[ -z "$out" ]] && command -v jq >/dev/null 2>&1; then
+        out=$(swaymsg -t get_outputs -r 2>/dev/null | jq -r '[.[] | select(.active)] | max_by(.current_mode.width * .current_mode.height) | .name // empty' 2>/dev/null || true)
+    fi
+    [[ -n "$out" ]] || return 0
+    swaymsg focus output "$out" >/dev/null 2>&1 && log "focused output $out for gamescope" || true
+    return 0
+}
+
 KILLED_BY_SIGNAL=0
 
 cleanup() {
@@ -174,6 +191,7 @@ fi
 # launch, intermittently. The abort itself says nothing; the protocol tail names
 # the request the compositor rejected. The log is large (~35k lines per 10s), so
 # it goes to a file and only on request.
+focus_game_output
 if [[ "${GAMESCOPE_WLDEBUG:-0}" == "1" ]]; then
     WLDEBUG_LOG="${TRACE_DIR}/wldebug-$(date +%Y%m%d-%H%M%S).log"
     mkdir -p "$TRACE_DIR" 2>/dev/null || true
