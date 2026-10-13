@@ -37,9 +37,10 @@ in
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
       unitConfig.ConditionPathExists = "${installDir}/aionmeter-daemon.dll";
-      # SharpPcap dlopens libpcap.so.
+      # SharpPcap dlopens libpcap.so. getLib: libpcap is split and ${pkgs.libpcap}/lib holds only pkgconfig
+      # (measured 2026-10-13: the daemon then reports "No capture (Npcap missing)").
       environment = {
-        LD_LIBRARY_PATH = "${pkgs.libpcap}/lib";
+        LD_LIBRARY_PATH = "${lib.getLib pkgs.libpcap}/lib";
         DOTNET_CLI_TELEMETRY_OPTOUT = "1";
         DOTNET_NOLOGO = "1";
         HOME = home;
