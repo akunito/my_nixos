@@ -54,6 +54,14 @@ let
   # No steam-run / GDK_BACKEND=x11: it must be a Wayland client.
   overlayDir = orDefault (cfg.aion2MeterOverlayInstallDir or null) "${home}/.local/opt/aionmeter-overlay";
   overlayMonitor = cfg.aion2MeterOverlayMonitor or "DP-1";
+  # A2M-50: GTK's own file chooser (Craft "Load market file…" when the portal is down) aborts the whole process without the
+  # org.gtk.gtk4.Settings.FileChooser schema on XDG_DATA_DIRS ("GLib-GIO-ERROR: No GSettings schemas are installed", measured
+  # 2026-10-13 in a nested sway). questlog's skill icons are WebP: gdk-pixbuf has png/jpeg built in but WebP needs the loader, and
+  # GDK_PIXBUF_MODULE_FILE replaces the whole cache, so one file lists the stock loaders plus webp.
+  pixbufLoaders = pkgs.runCommand "aionmeter-pixbuf-loaders" { } ''
+    { cat ${pkgs.gdk-pixbuf}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
+      ${pkgs.gdk-pixbuf.dev}/bin/gdk-pixbuf-query-loaders ${pkgs.webp-pixbuf-loader}/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-webp.so | grep -v '^#'; } > $out
+  '';
   aionmeterOverlay = pkgs.writeShellScriptBin "aionmeter-overlay" ''
     dll=''${AIONMETER_OVERLAY_DIR:-${overlayDir}}/AionMeter.Overlay.dll
     if [ ! -f "$dll" ]; then
@@ -63,6 +71,8 @@ let
     export LD_LIBRARY_PATH=${lib.makeLibraryPath (map lib.getLib (with pkgs; [
       gtk4 gtk4-layer-shell glib cairo pango gdk-pixbuf graphene harfbuzz fontconfig freetype wayland
     ]))}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    export XDG_DATA_DIRS=${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}''${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
+    export GDK_PIXBUF_MODULE_FILE=${pixbufLoaders}
     export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
     exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} --monitor ${overlayMonitor} "$@"
   '';
