@@ -278,6 +278,13 @@
     ollamaServerEvictOnOllamaStart = false;                # OPT-IN hook: run an eviction whenever ollama.service starts. Off because that moment is not guaranteed to be a quiet desktop
     ollamaServerEvictTimerSec = 0;                         # 0 = NO periodic timer (the default), same reason as above. Set e.g. 1800 to opt in.
     ollamaServerEvictTimeoutSec = 60;
+    # --- AION 2 DPS meter daemon (system/app/aion2-meter-daemon.nix) ---
+    # Runs the publish the meter repo copies into the install dir; skipped while it is empty.
+    aion2MeterDaemonEnable = false;
+    aion2MeterDaemonUser = null;                           # null = userSettings.username
+    aion2MeterDaemonInstallDir = null;                     # null = ~user/.local/opt/aionmeter-daemon
+    aion2MeterDaemonDataDir = null;                        # null = ~user/.local/share/AionMeter
+    aion2MeterDaemonExtraArgs = [ ];                       # e.g. [ "--json-events" ] when a UI reads stdout
     # --- VRAM peak sampler ---
     # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY
     # desktop, which is the most favourable reading available rather than a

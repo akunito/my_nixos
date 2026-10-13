@@ -774,6 +774,7 @@ in
     sunshineEnable = true; # Enable Sunshine game streaming
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
+    aion2MeterDaemonEnable = true; # AION 2 DPS meter Linux daemon (A2M-48); publish lives in ~/.local/opt/aionmeter-daemon
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
     bluetoothDisableUsbAutosuspend = true; # MT7922 BT: stop USB runtime-suspend killing the HFP mic
