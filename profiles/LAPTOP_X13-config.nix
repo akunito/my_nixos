@@ -388,6 +388,7 @@ in
   };
 
   userSettings = base.userSettings // {
+    userChromiumEnable = false; # not used any more (2026-10-13)
     username = "akunito";
     name = "akunito";
     email = "diego88aku@gmail.com";

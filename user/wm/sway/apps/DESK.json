@@ -58,7 +58,24 @@
     }
   ],
   "settings": {},
-  "shortcuts": [],
+  "shortcuts": [
+    {
+      "id": "k-5d479a81",
+      "keys": "Hyper+g",
+      "kind": "app",
+      "app_id": "aionmeter",
+      "command": "aionmeter-ui",
+      "name": "AION 2 meter",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "notes": "overlay UI (AionMeter.Linux, XWayland class aionmeter); launcher from system/app/aion2-meter-daemon.nix",
+      "category": "Gaming",
+      "table": "prefix",
+      "updated_at": 1791905020
+    }
+  ],
   "tools": [],
   "nodes": []
 }

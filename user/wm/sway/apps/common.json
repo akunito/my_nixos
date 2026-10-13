@@ -1229,22 +1229,6 @@
       "table": "prefix"
     },
     {
-      "id": "k-5d479a81",
-      "keys": "Hyper+g",
-      "kind": "app",
-      "app_id": "chromium-browser",
-      "command": "chromium",
-      "name": "Chromium",
-      "enabled": true,
-      "release": false,
-      "locked": false,
-      "override": false,
-      "notes": "seeded 2026-09-07 from swayfx-config.nix",
-      "updated_at": 0,
-      "category": "Apps",
-      "table": "prefix"
-    },
-    {
       "id": "k-6fccd600",
       "keys": "Hyper+y",
       "kind": "app",

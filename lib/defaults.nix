@@ -288,6 +288,7 @@
     aion2MeterDaemonInstallDir = null;                     # null = ~user/.local/opt/aionmeter-daemon
     aion2MeterDaemonDataDir = null;                        # null = ~user/.local/share/AionMeter
     aion2MeterDaemonExtraArgs = [ ];                       # e.g. [ "--json-events" ] when a UI reads stdout
+    aion2MeterUiInstallDir = null;                         # null = ~user/.local/opt/aionmeter-ui (AionMeter.Linux publish; launcher `aionmeter-ui`)
     # --- VRAM peak sampler ---
     # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY
     # desktop, which is the most favourable reading available rather than a
@@ -1347,6 +1348,7 @@
     # Package module feature flags
     userBasicPkgsEnable = true; # Enable basic user packages (browsers, office, communication, etc.)
     userThunderbirdEnable = true; # Thunderbird mail client (part of userBasicPkgs; opt out per profile)
+    userChromiumEnable = true; # Chromium (part of userBasicPkgs; opt out per profile)
     syncthingEnable = false; # RETIRED 2026-10-01: Nextcloud + Immich + Plane replaced it; the VPS instance's phones last synced 2025-12 / 2026-07. true = user service + package back
     userAiPkgsEnable = false; # Enable AI & ML packages (lmstudio, ollama-rocm)
     openCodeEnable = false;   # OpenCode terminal coding agent, driven by the local GPU — see user/app/opencode/opencode.nix

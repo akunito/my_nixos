@@ -25,11 +25,29 @@ let
   installDir = orDefault (cfg.aion2MeterDaemonInstallDir or null) "${home}/.local/opt/aionmeter-daemon";
   dataDir = orDefault (cfg.aion2MeterDaemonDataDir or null) "${home}/.local/share/AionMeter";
   extraArgs = cfg.aion2MeterDaemonExtraArgs or [ ];
+  uiDir = orDefault (cfg.aion2MeterUiInstallDir or null) "${home}/.local/opt/aionmeter-ui";
+  # Overlay UI (AionMeter.Linux, Avalonia on XWayland, window class "aionmeter"; Hyper+g in sway-apps).
+  # Reads the daemon's socket ($XDG_RUNTIME_DIR/aionmeter.sock by default) and reconnects while it is away.
+  # Avalonia dlopens the X11/fontconfig/GL libs by soname; NixOS has no /usr/lib, so they go on LD_LIBRARY_PATH.
+  aionmeterUi = pkgs.writeShellScriptBin "aionmeter-ui" ''
+    dll=''${AIONMETER_UI_DIR:-${uiDir}}/AionMeter.Linux.dll
+    if [ ! -f "$dll" ]; then
+      ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter-ui" "Not installed: $dll"
+      exit 1
+    fi
+    export LD_LIBRARY_PATH=${lib.makeLibraryPath (with pkgs; [
+      xorg.libX11 xorg.libICE xorg.libSM xorg.libXi xorg.libXcursor xorg.libXrandr xorg.libXext xorg.libXrender
+      fontconfig freetype libGL
+    ])}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+    exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" "$@"
+  '';
 in
 {
   config = lib.mkIf (cfg.aion2MeterDaemonEnable or false) {
     # Must exist before the unit starts: ReadWritePaths of a missing dir fails the namespace setup.
     systemd.tmpfiles.rules = [ "d ${dataDir} 0755 ${user} users -" ];
+    environment.systemPackages = [ aionmeterUi ];
 
     systemd.services.aion2-meter-daemon = {
       description = "AION 2 DPS meter daemon (headless capture)";

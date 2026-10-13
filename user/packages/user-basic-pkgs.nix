@@ -55,12 +55,12 @@
       pkgs-unstable.moonlight-qt
 
       # Browsers (pre-built from binary cache - no source compilation)
-      pkgs-unstable.chromium
       pkgs-unstable.brave
     ]
     # Thunderbird: opt-out per profile (userThunderbirdEnable). Aga's LAPTOP_A
     # does not use it, and it is one of the heavier things in this list.
     ++ lib.optional (userSettings.userThunderbirdEnable or true) pkgs-unstable.thunderbird
+    ++ lib.optional (userSettings.userChromiumEnable or true) pkgs-unstable.chromium
     ++ lib.optional (userSettings.syncthingEnable or false) pkgs.syncthing;
 
     # Pin the Nextcloud account's server URL.
