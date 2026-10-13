@@ -1113,6 +1113,24 @@
     # SwayFX battery effect reduction (no-op when swayUseSwayfx = false)
     swayBatteryReduceEffects = false;      # Disable blur/shadows on battery
 
+    # X11 clients at physical pixels (Plasma "scaled by applications" /
+    # Hyprland force_zero_scaling). wlroots renders Xwayland at the output's
+    # LOGICAL size and upscales it — on a 4K panel at scale 1.5 every X11
+    # window (Steam, Wine launchers, the AION meter) is a 2560x1440 picture
+    # stretched x1.5. Measured 2026-10-13 on DESK: Xwayland screen 5815x2834
+    # (logical union), 1.5x smear on every X11 surface. Local patches
+    # patches/wlroots-0.19-xwayland-zero-scaling.patch (xdg-output geometry
+    # per client, scene-surface scale override with input mapping) and
+    # patches/sway-xwayland-zero-scaling.patch (new `xwayland_zero_scaling`
+    # command, X11 coordinate space = physical size at layout*max_scale).
+    # Costs a from-source build of wlroots + sway (~3 min). Rebuilds only
+    # the profiles that set it. Needs a relogin into sway.
+    swayXwaylandZeroScaling = false;
+    # Xft.dpi handed to X11 clients when zero scaling is on (96 * output
+    # scale); X11 has ONE DPI, so pick the main monitor's. Apps that ignore
+    # Xft.dpi draw small but sharp.
+    swayXwaylandDpi = 96;
+
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
     # sway-apps: GUI + CLI for window rules and manual startup apps. When ON,

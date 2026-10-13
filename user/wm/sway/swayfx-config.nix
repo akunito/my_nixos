@@ -18,6 +18,14 @@ let
   # start. See the note on swayUseSwayfx in lib/defaults.nix for what the choice
   # costs in looks and buys in VRAM.
   useFx = systemSettings.swayUseSwayfx or true;
+
+  # X11 at physical pixels (local sway/wlroots patch, lib/defaults.nix
+  # swayXwaylandZeroScaling). The command is launch-time only; Xft.dpi tells
+  # X11 toolkits how big to draw now that they get real pixels.
+  zeroScaling = systemSettings.swayXwaylandZeroScaling or false;
+  xwaylandXresources = pkgs.writeText "xwayland-zero-scaling.Xresources" ''
+    Xft.dpi: ${toString (systemSettings.swayXwaylandDpi or 96)}
+  '';
   swayPkg = if useFx then pkgs.swayfx else pkgs.sway;
 
   # Only appended to a command list when the effects exist.
@@ -1320,6 +1328,11 @@ in
     };
 
     extraConfig = ''
+      ${lib.optionalString zeroScaling ''
+      # X11 clients see a physical-pixel screen and are drawn 1:1 (patched sway)
+      xwayland_zero_scaling yes
+      exec_always ${pkgs.xorg.xrdb}/bin/xrdb -merge ${xwaylandXresources}
+      ''}
       # Window border settings
       default_border pixel 2
 

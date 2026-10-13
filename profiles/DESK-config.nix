@@ -863,6 +863,11 @@ in
     # relogin. Full reasoning in lib/defaults.nix.
     swayUseSwayfx = false;
 
+    # X11 at physical pixels on the 4K Samsung (see lib/defaults.nix). DPI for
+    # its 1.5 scale; at 1.6 use 154.
+    swayXwaylandZeroScaling = true;
+    swayXwaylandDpi = 144;
+
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
     swayPrimaryMonitor = monitors.samsungMain.criteria;

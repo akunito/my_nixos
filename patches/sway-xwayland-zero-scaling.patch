@@ -1,0 +1,701 @@
+diff --git a/include/sway/commands.h b/include/sway/commands.h
+index 5210d3b..41bc244 100644
+--- a/include/sway/commands.h
++++ b/include/sway/commands.h
+@@ -201,6 +201,7 @@ sway_cmd cmd_workspace;
+ sway_cmd cmd_workspace_layout;
+ sway_cmd cmd_ws_auto_back_and_forth;
+ sway_cmd cmd_xwayland;
++sway_cmd cmd_xwayland_zero_scaling;
+ 
+ sway_cmd bar_cmd_bindcode;
+ sway_cmd bar_cmd_binding_mode_indicator;
+diff --git a/include/sway/config.h b/include/sway/config.h
+index bb770c6..a5378b3 100644
+--- a/include/sway/config.h
++++ b/include/sway/config.h
+@@ -521,6 +521,8 @@ struct sway_config {
+ 	enum sway_fowa focus_on_window_activation;
+ 	enum sway_popup_during_fullscreen popup_during_fullscreen;
+ 	enum xwayland_mode xwayland;
++	// X11 clients get a physical-pixel screen and are drawn 1:1 (no upscale)
++	bool xwayland_zero_scaling;
+ 
+ 	// swaybg
+ 	char *swaybg_command;
+diff --git a/include/sway/desktop/transaction.h b/include/sway/desktop/transaction.h
+index dd7edb7..438cc29 100644
+--- a/include/sway/desktop/transaction.h
++++ b/include/sway/desktop/transaction.h
+@@ -56,6 +56,12 @@ bool transaction_notify_view_ready_by_serial(struct sway_view *view,
+  * A success boolean is returned denoting that this part of the transaction is
+  * ready.
+  */
++/**
++ * Mark the view's pending instruction ready without a geometry check (the
++ * caller matched the client's commit against what it was asked for itself).
++ */
++bool transaction_notify_view_ready_immediately(struct sway_view *view);
++
+ bool transaction_notify_view_ready_by_geometry(struct sway_view *view,
+ 		double x, double y, int width, int height);
+ 
+diff --git a/include/sway/tree/view.h b/include/sway/tree/view.h
+index 9f084ee..512a194 100644
+--- a/include/sway/tree/view.h
++++ b/include/sway/tree/view.h
+@@ -142,6 +142,12 @@ struct sway_xwayland_view {
+ 
+ 	struct wlr_scene_tree *surface_tree;
+ 
++	// xwayland_zero_scaling: output scale the window is drawn with (0 = unset)
++	// and the last configure sent, in X11 coordinates, to recognise the commit
++	// that fulfils it.
++	double scale;
++	struct wlr_box last_configure;
++
+ 	struct wl_listener commit;
+ 	struct wl_listener request_move;
+ 	struct wl_listener request_resize;
+@@ -306,6 +312,9 @@ void view_unmap(struct sway_view *view);
+ void view_update_size(struct sway_view *view);
+ void view_center_and_clip_surface(struct sway_view *view);
+ 
++// Surface pixels per layout unit: 1 unless xwayland_zero_scaling applies.
++double view_surface_scale(struct sway_view *view);
++
+ struct sway_view *view_from_wlr_xdg_surface(
+ 	struct wlr_xdg_surface *xdg_surface);
+ #if WLR_HAS_XWAYLAND
+diff --git a/include/sway/xwayland.h b/include/sway/xwayland.h
+index 93055c4..d406894 100644
+--- a/include/sway/xwayland.h
++++ b/include/sway/xwayland.h
+@@ -3,6 +3,9 @@
+ 
+ #include <wlr/xwayland.h>
+ #include <xcb/xproto.h>
++#include <wlr/util/box.h>
++
++struct sway_view;
+ 
+ enum atom_name {
+ 	NET_WM_WINDOW_TYPE_NORMAL,
+@@ -28,4 +31,27 @@ struct sway_xwayland {
+ 
+ void handle_xwayland_ready(struct wl_listener *listener, void *data);
+ 
++/*
++ * xwayland_zero_scaling: X11 lives in its own coordinate space where every
++ * output is its physical size, placed at (layout position * max output scale)
++ * so outputs never overlap. X11 surfaces are drawn at buffer/scale logical
++ * size, i.e. 1:1 on the screen, instead of being rendered at logical size
++ * and upscaled (the blur every wlroots compositor shows on fractional scale).
++ */
++struct sway_output;
++bool xwayland_zero_scaling_enabled(void);
++double xwayland_output_scale(struct sway_output *output);
++void xwayland_output_xbox(struct sway_output *output, struct wlr_box *box);
++struct sway_output *xwayland_output_at_layout(double lx, double ly);
++struct sway_output *xwayland_output_at_x(int x, int y);
++void xwayland_layout_to_x(struct sway_output *output, double lx, double ly,
++	int *x, int *y);
++void xwayland_x_to_layout(int x, int y, double *lx, double *ly);
++double xwayland_view_surface_scale(struct sway_view *view);
++struct wlr_xdg_output_manager_v1;
++struct wlr_output_layout_output;
++bool xwayland_xdg_output_geometry(struct wlr_xdg_output_manager_v1 *manager,
++	struct wl_client *client, struct wlr_output_layout_output *layout_output,
++	struct wlr_box *box);
++
+ #endif
+diff --git a/sway/commands.c b/sway/commands.c
+index c2c12ee..1ceaa02 100644
+--- a/sway/commands.c
++++ b/sway/commands.c
+@@ -108,6 +108,7 @@ static const struct cmd_handler config_handlers[] = {
+ 	{ "swaynag_command", cmd_swaynag_command },
+ 	{ "workspace_layout", cmd_workspace_layout },
+ 	{ "xwayland", cmd_xwayland },
++	{ "xwayland_zero_scaling", cmd_xwayland_zero_scaling },
+ };
+ 
+ /* Runtime-only commands. Keep alphabetized */
+diff --git a/sway/commands/xwayland_zero_scaling.c b/sway/commands/xwayland_zero_scaling.c
+new file mode 100644
+index 0000000..dc951b2
+--- /dev/null
++++ b/sway/commands/xwayland_zero_scaling.c
+@@ -0,0 +1,27 @@
++#include "sway/config.h"
++#include "log.h"
++#include "sway/commands.h"
++#include "util.h"
++
++struct cmd_results *cmd_xwayland_zero_scaling(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "xwayland_zero_scaling", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++
++#ifdef WLR_HAS_XWAYLAND
++	bool enabled = parse_boolean(argv[0], config->xwayland_zero_scaling);
++	// Changing it live would need every X11 window re-sized and Xwayland's
++	// screen re-announced; config.c keeps the old value on reload.
++	if (config->reloading && config->xwayland_zero_scaling != enabled) {
++		return cmd_results_new(CMD_FAILURE,
++				"xwayland_zero_scaling can only be changed at launch");
++	}
++	config->xwayland_zero_scaling = enabled;
++#else
++	sway_log(SWAY_INFO, "Ignoring `xwayland_zero_scaling` command, "
++		"sway hasn't been built with Xwayland support");
++#endif
++
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
+diff --git a/sway/config.c b/sway/config.c
+index d579022..aef3b99 100644
+--- a/sway/config.c
++++ b/sway/config.c
+@@ -257,6 +257,7 @@ static void config_defaults(struct sway_config *config) {
+ 	config->focus_on_window_activation = FOWA_URGENT;
+ 	config->popup_during_fullscreen = POPUP_SMART;
+ 	config->xwayland = XWAYLAND_MODE_LAZY;
++	config->xwayland_zero_scaling = false;
+ 
+ 	config->titlebar_border_thickness = 1;
+ 	config->titlebar_h_padding = 5;
+@@ -480,6 +481,7 @@ bool load_main_config(const char *file, bool is_active, bool validating) {
+ 		sway_log(SWAY_DEBUG, "xwayland will remain %s",
+ 				old_config->xwayland ? "enabled" : "disabled");
+ 		config->xwayland = old_config->xwayland;
++		config->xwayland_zero_scaling = old_config->xwayland_zero_scaling;
+ 
+ 		// primary_selection can only be enabled/disabled at launch
+ 		sway_log(SWAY_DEBUG, "primary_selection will remain %s",
+diff --git a/sway/desktop/transaction.c b/sway/desktop/transaction.c
+index 325a302..ceb96c9 100644
+--- a/sway/desktop/transaction.c
++++ b/sway/desktop/transaction.c
+@@ -923,6 +923,16 @@ bool transaction_notify_view_ready_by_serial(struct sway_view *view,
+ 	return false;
+ }
+ 
++bool transaction_notify_view_ready_immediately(struct sway_view *view) {
++	struct sway_transaction_instruction *instruction =
++		view->container->node.instruction;
++	if (instruction != NULL) {
++		set_instruction_ready(instruction);
++		return true;
++	}
++	return false;
++}
++
+ bool transaction_notify_view_ready_by_geometry(struct sway_view *view,
+ 		double x, double y, int width, int height) {
+ 	struct sway_transaction_instruction *instruction =
+diff --git a/sway/desktop/xwayland.c b/sway/desktop/xwayland.c
+index b83537a..f948d05 100644
+--- a/sway/desktop/xwayland.c
++++ b/sway/desktop/xwayland.c
+@@ -1,4 +1,5 @@
+ #include <float.h>
++#include <math.h>
+ #include <stdbool.h>
+ #include <stdlib.h>
+ #include <wayland-server-core.h>
+@@ -17,7 +18,9 @@
+ #include "sway/scene_descriptor.h"
+ #include "sway/tree/arrange.h"
+ #include "sway/tree/container.h"
++#include "sway/tree/root.h"
+ #include "sway/server.h"
++#include "sway/xwayland.h"
+ #include "sway/tree/view.h"
+ #include "sway/tree/workspace.h"
+ 
+@@ -35,6 +38,206 @@ static const char *atom_map[ATOM_LAST] = {
+ 	[NET_WM_STATE_MODAL] = "_NET_WM_STATE_MODAL",
+ };
+ 
++// --- xwayland_zero_scaling -------------------------------------------------
++// X11 coordinate space: every output is its physical (transformed) size at
++// (layout position * S), S = largest scale of any enabled output. Scaling all
++// positions by one factor keeps the outputs disjoint (an output's physical
++// extent never exceeds its logical extent * S); an output with a smaller
++// scale just leaves dead X11 space on its right/bottom.
++
++bool xwayland_zero_scaling_enabled(void) {
++	return config->xwayland_zero_scaling;
++}
++
++static double max_output_scale(void) {
++	double max = 1.0;
++	for (int i = 0; i < root->outputs->length; ++i) {
++		struct sway_output *output = root->outputs->items[i];
++		if (output->wlr_output->scale > max) {
++			max = output->wlr_output->scale;
++		}
++	}
++	return max;
++}
++
++double xwayland_output_scale(struct sway_output *output) {
++	if (!config->xwayland_zero_scaling || !output || !output->wlr_output) {
++		return 1.0;
++	}
++	return output->wlr_output->scale;
++}
++
++void xwayland_output_xbox(struct sway_output *output, struct wlr_box *box) {
++	struct wlr_box lbox;
++	wlr_output_layout_get_box(root->output_layout, output->wlr_output, &lbox);
++	if (!config->xwayland_zero_scaling) {
++		*box = lbox;
++		return;
++	}
++	double s = max_output_scale();
++	box->x = (int)round(lbox.x * s);
++	box->y = (int)round(lbox.y * s);
++	wlr_output_transformed_resolution(output->wlr_output,
++		&box->width, &box->height);
++}
++
++struct sway_output *xwayland_output_at_layout(double lx, double ly) {
++	struct wlr_output *wlr_output =
++		wlr_output_layout_output_at(root->output_layout, lx, ly);
++	if (!wlr_output) {
++		double cx, cy;
++		wlr_output_layout_closest_point(root->output_layout, NULL, lx, ly,
++			&cx, &cy);
++		wlr_output = wlr_output_layout_output_at(root->output_layout, cx, cy);
++	}
++	return wlr_output ? wlr_output->data : NULL;
++}
++
++static double box_distance_sq(struct wlr_box *box, double x, double y) {
++	double dx = x < box->x ? box->x - x :
++		(x >= box->x + box->width ? x - (box->x + box->width - 1) : 0);
++	double dy = y < box->y ? box->y - y :
++		(y >= box->y + box->height ? y - (box->y + box->height - 1) : 0);
++	return dx * dx + dy * dy;
++}
++
++struct sway_output *xwayland_output_at_x(int x, int y) {
++	struct sway_output *best = NULL;
++	double best_dist = 0;
++	for (int i = 0; i < root->outputs->length; ++i) {
++		struct sway_output *output = root->outputs->items[i];
++		struct wlr_box box;
++		xwayland_output_xbox(output, &box);
++		double dist = box_distance_sq(&box, x, y);
++		if (!best || dist < best_dist) {
++			best = output;
++			best_dist = dist;
++		}
++		if (dist == 0) {
++			break;
++		}
++	}
++	return best;
++}
++
++void xwayland_layout_to_x(struct sway_output *output, double lx, double ly,
++		int *x, int *y) {
++	if (!config->xwayland_zero_scaling || !output) {
++		*x = (int)round(lx);
++		*y = (int)round(ly);
++		return;
++	}
++	struct wlr_box lbox, xbox;
++	wlr_output_layout_get_box(root->output_layout, output->wlr_output, &lbox);
++	xwayland_output_xbox(output, &xbox);
++	double scale = output->wlr_output->scale;
++	*x = xbox.x + (int)round((lx - lbox.x) * scale);
++	*y = xbox.y + (int)round((ly - lbox.y) * scale);
++}
++
++void xwayland_x_to_layout(int x, int y, double *lx, double *ly) {
++	struct sway_output *output = config->xwayland_zero_scaling ?
++		xwayland_output_at_x(x, y) : NULL;
++	if (!output) {
++		*lx = x;
++		*ly = y;
++		return;
++	}
++	struct wlr_box lbox, xbox;
++	wlr_output_layout_get_box(root->output_layout, output->wlr_output, &lbox);
++	xwayland_output_xbox(output, &xbox);
++	double scale = output->wlr_output->scale;
++	*lx = lbox.x + (x - xbox.x) / scale;
++	*ly = lbox.y + (y - xbox.y) / scale;
++}
++
++bool xwayland_xdg_output_geometry(struct wlr_xdg_output_manager_v1 *manager,
++		struct wl_client *client, struct wlr_output_layout_output *layout_output,
++		struct wlr_box *box) {
++	if (!config->xwayland_zero_scaling) {
++		return false;
++	}
++	struct wlr_xwayland *xwayland = server.xwayland.wlr_xwayland;
++	if (!xwayland || !xwayland->server || client != xwayland->server->client) {
++		return false;
++	}
++	struct sway_output *output = layout_output->output->data;
++	if (!output) {
++		return false;
++	}
++	xwayland_output_xbox(output, box);
++	return true;
++}
++
++// Output a view is (going to be) drawn on: the one under the centre of its
++// pending content box, else its workspace's output, else the focused one.
++static struct sway_output *view_output(struct sway_view *view) {
++	struct sway_container *con = view->container;
++	if (con) {
++		struct sway_container_state *st = &con->pending;
++		if (st->content_width > 0 && st->content_height > 0) {
++			struct sway_output *output = xwayland_output_at_layout(
++				st->content_x + st->content_width / 2.0,
++				st->content_y + st->content_height / 2.0);
++			if (output) {
++				return output;
++			}
++		}
++		if (st->workspace && st->workspace->output) {
++			return st->workspace->output;
++		}
++	}
++	struct sway_seat *seat = input_manager_current_seat();
++	struct sway_workspace *ws = seat_get_focused_workspace(seat);
++	return ws ? ws->output : NULL;
++}
++
++double xwayland_view_surface_scale(struct sway_view *view) {
++	if (!config->xwayland_zero_scaling) {
++		return 1.0;
++	}
++	struct sway_xwayland_view *xwayland_view = (struct sway_xwayland_view *)view;
++	if (xwayland_view->scale > 0) {
++		return xwayland_view->scale;
++	}
++	return xwayland_output_scale(view_output(view));
++}
++
++// Apply the scale to the scene surface of the view's wl_surface (the direct
++// buffer child of the subsurface tree; X11 has no subsurfaces).
++static void xwayland_view_set_scale(struct sway_xwayland_view *xwayland_view,
++		double scale) {
++	xwayland_view->scale = scale;
++	if (!xwayland_view->surface_tree) {
++		return;
++	}
++	struct wlr_scene_node *node;
++	wl_list_for_each(node, &xwayland_view->surface_tree->children, link) {
++		if (node->type != WLR_SCENE_NODE_BUFFER) {
++			continue;
++		}
++		struct wlr_scene_surface *scene_surface =
++			wlr_scene_surface_try_from_buffer(wlr_scene_buffer_from_node(node));
++		if (scene_surface &&
++				scene_surface->surface == xwayland_view->view.surface) {
++			wlr_scene_surface_set_scale_override(scene_surface, scale);
++		}
++	}
++}
++
++static void unmanaged_apply_zero_scaling(struct sway_xwayland_unmanaged *surface) {
++	struct wlr_xwayland_surface *xsurface = surface->wlr_xwayland_surface;
++	double lx, ly;
++	xwayland_x_to_layout(xsurface->x, xsurface->y, &lx, &ly);
++	wlr_scene_node_set_position(&surface->surface_scene->buffer->node,
++		(int)round(lx), (int)round(ly));
++	if (config->xwayland_zero_scaling) {
++		wlr_scene_surface_set_scale_override(surface->surface_scene,
++			xwayland_output_scale(xwayland_output_at_x(xsurface->x, xsurface->y)));
++	}
++}
++// ---------------------------------------------------------------------------
++
+ static void unmanaged_handle_request_configure(struct wl_listener *listener,
+ 		void *data) {
+ 	struct sway_xwayland_unmanaged *surface =
+@@ -48,9 +251,7 @@ static void unmanaged_handle_request_configure(struct wl_listener *listener,
+ static void unmanaged_handle_set_geometry(struct wl_listener *listener, void *data) {
+ 	struct sway_xwayland_unmanaged *surface =
+ 		wl_container_of(listener, surface, set_geometry);
+-	struct wlr_xwayland_surface *xsurface = surface->wlr_xwayland_surface;
+-
+-	wlr_scene_node_set_position(&surface->surface_scene->buffer->node, xsurface->x, xsurface->y);
++	unmanaged_apply_zero_scaling(surface);
+ }
+ 
+ static void unmanaged_handle_map(struct wl_listener *listener, void *data) {
+@@ -64,8 +265,7 @@ static void unmanaged_handle_map(struct wl_listener *listener, void *data) {
+ 	if (surface->surface_scene) {
+ 		scene_descriptor_assign(&surface->surface_scene->buffer->node,
+ 			SWAY_SCENE_DESC_XWAYLAND_UNMANAGED, surface);
+-		wlr_scene_node_set_position(&surface->surface_scene->buffer->node,
+-			xsurface->x, xsurface->y);
++		unmanaged_apply_zero_scaling(surface);
+ 
+ 		wl_signal_add(&xsurface->events.set_geometry, &surface->set_geometry);
+ 		surface->set_geometry.notify = unmanaged_handle_set_geometry;
+@@ -272,7 +472,18 @@ static uint32_t configure(struct sway_view *view, double lx, double ly, int widt
+ 	}
+ 	struct wlr_xwayland_surface *xsurface = view->wlr_xwayland_surface;
+ 
+-	wlr_xwayland_surface_configure(xsurface, lx, ly, width, height);
++	int x = (int)round(lx), y = (int)round(ly), w = width, h = height;
++	if (config->xwayland_zero_scaling) {
++		struct sway_output *output = xwayland_output_at_layout(
++			lx + width / 2.0, ly + height / 2.0);
++		double scale = xwayland_output_scale(output);
++		xwayland_layout_to_x(output, lx, ly, &x, &y);
++		w = (int)round(width * scale);
++		h = (int)round(height * scale);
++		xwayland_view_set_scale(xwayland_view, scale);
++	}
++	xwayland_view->last_configure = (struct wlr_box){ x, y, w, h };
++	wlr_xwayland_surface_configure(xsurface, x, y, w, h);
+ 
+ 	// xwayland doesn't give us a serial for the configure
+ 	return 0;
+@@ -392,10 +603,11 @@ static void get_constraints(struct sway_view *view, double *min_width,
+ 		return;
+ 	}
+ 
+-	*min_width = size_hints->min_width > 0 ? size_hints->min_width : DBL_MIN;
+-	*max_width = size_hints->max_width > 0 ? size_hints->max_width : DBL_MAX;
+-	*min_height = size_hints->min_height > 0 ? size_hints->min_height : DBL_MIN;
+-	*max_height = size_hints->max_height > 0 ? size_hints->max_height : DBL_MAX;
++	double scale = xwayland_view_surface_scale(view);
++	*min_width = size_hints->min_width > 0 ? size_hints->min_width / scale : DBL_MIN;
++	*max_width = size_hints->max_width > 0 ? size_hints->max_width / scale : DBL_MAX;
++	*min_height = size_hints->min_height > 0 ? size_hints->min_height / scale : DBL_MIN;
++	*max_height = size_hints->max_height > 0 ? size_hints->max_height / scale : DBL_MAX;
+ }
+ 
+ static const struct sway_view_impl view_impl = {
+@@ -419,9 +631,10 @@ static void handle_commit(struct wl_listener *listener, void *data) {
+ 	struct wlr_xwayland_surface *xsurface = view->wlr_xwayland_surface;
+ 	struct wlr_surface_state *state = &xsurface->surface->current;
+ 
++	double scale = xwayland_view_surface_scale(view);
+ 	struct wlr_box new_geo = {0};
+-	new_geo.width = state->width;
+-	new_geo.height = state->height;
++	new_geo.width = (int)round(state->width / scale);
++	new_geo.height = (int)round(state->height / scale);
+ 
+ 	bool new_size = new_geo.width != view->geometry.width ||
+ 			new_geo.height != view->geometry.height;
+@@ -440,8 +653,17 @@ static void handle_commit(struct wl_listener *listener, void *data) {
+ 	}
+ 
+ 	if (view->container->node.instruction) {
+-		bool successful = transaction_notify_view_ready_by_geometry(view,
+-				xsurface->x, xsurface->y, state->width, state->height);
++		bool successful;
++		if (config->xwayland_zero_scaling) {
++			// Compare in X11 units against what configure() asked for
++			struct wlr_box *want = &xwayland_view->last_configure;
++			successful = xsurface->x == want->x && xsurface->y == want->y &&
++				state->width == want->width && state->height == want->height &&
++				transaction_notify_view_ready_immediately(view);
++		} else {
++			successful = transaction_notify_view_ready_by_geometry(view,
++					xsurface->x, xsurface->y, state->width, state->height);
++		}
+ 
+ 		// If we saved the view and this commit isn't what we're looking for
+ 		// that means the user will never actually see the buffers submitted to
+@@ -501,6 +723,7 @@ static void handle_unmap(struct wl_listener *listener, void *data) {
+ 		wlr_scene_node_destroy(&xwayland_view->surface_tree->node);
+ 		xwayland_view->surface_tree = NULL;
+ 	}
++	xwayland_view->scale = 0;
+ 
+ 	view_unmap(view);
+ }
+@@ -517,8 +740,15 @@ static void handle_map(struct wl_listener *listener, void *data) {
+ 	struct sway_view *view = &xwayland_view->view;
+ 	struct wlr_xwayland_surface *xsurface = view->wlr_xwayland_surface;
+ 
+-	view->natural_width = xsurface->width;
+-	view->natural_height = xsurface->height;
++	double scale = 1.0;
++	if (config->xwayland_zero_scaling) {
++		// Where the window asked to be, in X11 space, decides the scale its
++		// natural size is expressed in.
++		scale = xwayland_output_scale(
++			xwayland_output_at_x(xsurface->x, xsurface->y));
++	}
++	view->natural_width = (int)round(xsurface->width / scale);
++	view->natural_height = (int)round(xsurface->height / scale);
+ 
+ 	// Wire up the commit listener here, because xwayland map/unmap can change
+ 	// the underlying wlr_surface
+@@ -537,6 +767,12 @@ static void handle_map(struct wl_listener *listener, void *data) {
+ 			&xwayland_view->surface_tree_destroy);
+ 	}
+ 
++	if (config->xwayland_zero_scaling) {
++		// Draw at the right size from the first frame; configure() refines it
++		xwayland_view_set_scale(xwayland_view,
++			xwayland_output_scale(view_output(view)));
++	}
++
+ 	transaction_commit_dirty();
+ }
+ 
+@@ -582,8 +818,9 @@ static void handle_request_configure(struct wl_listener *listener, void *data) {
+ 	}
+ 	if (container_is_floating(view->container)) {
+ 		// Respect minimum and maximum sizes
+-		view->natural_width = ev->width;
+-		view->natural_height = ev->height;
++		double scale = xwayland_view_surface_scale(view);
++		view->natural_width = (int)round(ev->width / scale);
++		view->natural_height = (int)round(ev->height / scale);
+ 		container_floating_resize_and_center(view->container);
+ 
+ 		configure(view, view->container->pending.content_x,
+diff --git a/sway/input/cursor.c b/sway/input/cursor.c
+index 1fd57ec..cd6f033 100644
+--- a/sway/input/cursor.c
++++ b/sway/input/cursor.c
+@@ -312,14 +312,19 @@ void pointer_motion(struct sway_cursor *cursor, uint32_t time_msec,
+ 			return;
+ 		}
+ 
++		// sx/sy and the region are in surface units; dx/dy in layout units
++		struct sway_view *view = view_from_wlr_surface(surface);
++		double scale = view ? view_surface_scale(view) : 1.0;
++
+ 		double sx_confined, sy_confined;
+-		if (!wlr_region_confine(&cursor->confine, sx, sy, sx + dx, sy + dy,
++		if (!wlr_region_confine(&cursor->confine, sx, sy,
++				sx + dx * scale, sy + dy * scale,
+ 				&sx_confined, &sy_confined)) {
+ 			return;
+ 		}
+ 
+-		dx = sx_confined - sx;
+-		dy = sy_confined - sy;
++		dx = (sx_confined - sx) / scale;
++		dy = (sy_confined - sy) / scale;
+ 	}
+ 
+ 	wlr_cursor_move(cursor->cursor, device, dx, dy);
+@@ -818,9 +823,12 @@ static void check_constraint_region(struct sway_cursor *cursor) {
+ 		cursor->active_confine_requires_warp = false;
+ 
+ 		struct sway_container *con = view->container;
++		double scale = view_surface_scale(view);
+ 
+-		double sx = cursor->cursor->x - con->pending.content_x + view->geometry.x;
+-		double sy = cursor->cursor->y - con->pending.content_y + view->geometry.y;
++		double sx = (cursor->cursor->x - con->pending.content_x) * scale +
++			view->geometry.x;
++		double sy = (cursor->cursor->y - con->pending.content_y) * scale +
++			view->geometry.y;
+ 
+ 		if (!pixman_region32_contains_point(region,
+ 				floor(sx), floor(sy), NULL)) {
+@@ -831,8 +839,8 @@ static void check_constraint_region(struct sway_cursor *cursor) {
+ 				double sy = (boxes[0].y1 + boxes[0].y2) / 2.;
+ 
+ 				wlr_cursor_warp_closest(cursor->cursor, NULL,
+-					sx + con->pending.content_x - view->geometry.x,
+-					sy + con->pending.content_y - view->geometry.y);
++					(sx - view->geometry.x) / scale + con->pending.content_x,
++					(sy - view->geometry.y) / scale + con->pending.content_y);
+ 
+ 				cursor_rebase(cursor);
+ 			}
+@@ -1283,9 +1291,10 @@ static void warp_to_constraint_cursor_hint(struct sway_cursor *cursor) {
+ 		}
+ 
+ 		struct sway_container *con = view->container;
++		double scale = view_surface_scale(view);
+ 
+-		double lx = sx + con->pending.content_x - view->geometry.x;
+-		double ly = sy + con->pending.content_y - view->geometry.y;
++		double lx = (sx - view->geometry.x) / scale + con->pending.content_x;
++		double ly = (sy - view->geometry.y) / scale + con->pending.content_y;
+ 
+ 		wlr_cursor_warp(cursor->cursor, NULL, lx, ly);
+ 
+diff --git a/sway/meson.build b/sway/meson.build
+index 8042c89..ec05969 100644
+--- a/sway/meson.build
++++ b/sway/meson.build
+@@ -124,6 +124,7 @@ sway_sources = files(
+ 	'commands/workspace_layout.c',
+ 	'commands/ws_auto_back_and_forth.c',
+ 	'commands/xwayland.c',
++	'commands/xwayland_zero_scaling.c',
+ 
+ 	'commands/bar/bind.c',
+ 	'commands/bar/binding_mode_indicator.c',
+diff --git a/sway/server.c b/sway/server.c
+index e8a6ce6..29249a1 100644
+--- a/sway/server.c
++++ b/sway/server.c
+@@ -297,6 +297,9 @@ bool server_init(struct sway_server *server) {
+ 
+ 	server->xdg_output_manager_v1 =
+ 		wlr_xdg_output_manager_v1_create(server->wl_display, root->output_layout);
++#if WLR_HAS_XWAYLAND
++	server->xdg_output_manager_v1->client_geometry = xwayland_xdg_output_geometry;
++#endif
+ 
+ 	server->idle_notifier_v1 = wlr_idle_notifier_v1_create(server->wl_display);
+ 	sway_idle_inhibit_manager_v1_init();
+diff --git a/sway/tree/view.c b/sway/tree/view.c
+index 9a5cf06..28a2a10 100644
+--- a/sway/tree/view.c
++++ b/sway/tree/view.c
+@@ -34,6 +34,7 @@
+ #include "sway/tree/container.h"
+ #include "sway/tree/view.h"
+ #include "sway/tree/workspace.h"
++#include "sway/xwayland.h"
+ #include "sway/config.h"
+ #include "sway/xdg_decoration.h"
+ #include "stringop.h"
+@@ -988,17 +989,29 @@ void view_center_and_clip_surface(struct sway_view *view) {
+ 	if (!wl_list_empty(&con->view->content_tree->children)) {
+ 		struct wlr_box clip = {0};
+ 		if (clip_to_geometry) {
++			// The clip is in surface coordinates: X11 surfaces under
++			// xwayland_zero_scaling are `scale` times the container size.
++			double scale = view_surface_scale(view);
+ 			clip = (struct wlr_box){
+ 				.x = con->view->geometry.x,
+ 				.y = con->view->geometry.y,
+-				.width = con->current.content_width,
+-				.height = con->current.content_height,
++				.width = (int)round(con->current.content_width * scale),
++				.height = (int)round(con->current.content_height * scale),
+ 			};
+ 		}
+ 		wlr_scene_subsurface_tree_set_clip(&con->view->content_tree->node, &clip);
+ 	}
+ }
+ 
++double view_surface_scale(struct sway_view *view) {
++#if WLR_HAS_XWAYLAND
++	if (view->type == SWAY_VIEW_XWAYLAND) {
++		return xwayland_view_surface_scale(view);
++	}
++#endif
++	return 1.0;
++}
++
+ struct sway_view *view_from_wlr_surface(struct wlr_surface *wlr_surface) {
+ 	struct wlr_xdg_surface *xdg_surface;
+ 	if ((xdg_surface = wlr_xdg_surface_try_from_wlr_surface(wlr_surface))) {

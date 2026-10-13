@@ -1,0 +1,188 @@
+diff --git a/include/wlr/types/wlr_scene.h b/include/wlr/types/wlr_scene.h
+index 2292f1f..7b3e762 100644
+--- a/include/wlr/types/wlr_scene.h
++++ b/include/wlr/types/wlr_scene.h
+@@ -120,6 +120,9 @@ struct wlr_scene_surface {
+ 	struct wlr_scene_buffer *buffer;
+ 	struct wlr_surface *surface;
+ 
++	// See wlr_scene_surface_set_scale_override(). 0 means none.
++	double scale_override;
++
+ 	struct {
+ 		struct wlr_box clip;
+ 
+@@ -391,6 +394,14 @@ struct wlr_scene_tree *wlr_scene_tree_create(struct wlr_scene_tree *parent);
+ struct wlr_scene_surface *wlr_scene_surface_create(struct wlr_scene_tree *parent,
+ 	struct wlr_surface *surface);
+ 
++/**
++ * Present the surface at 1/scale of its surface size and map input back to
++ * surface coordinates. For an Xwayland surface drawn on an output of that
++ * scale the buffer then lands 1:1 on the screen. 0 or 1 disables.
++ */
++void wlr_scene_surface_set_scale_override(struct wlr_scene_surface *scene_surface,
++	double scale);
++
+ /**
+  * If this node represents a wlr_scene_buffer, that buffer will be returned. It
+  * is not legal to feed a node that does not represent a wlr_scene_buffer.
+diff --git a/include/wlr/types/wlr_xdg_output_v1.h b/include/wlr/types/wlr_xdg_output_v1.h
+index 4ee8ec3..5bc3d8c 100644
+--- a/include/wlr/types/wlr_xdg_output_v1.h
++++ b/include/wlr/types/wlr_xdg_output_v1.h
+@@ -10,6 +10,7 @@
+ #define WLR_TYPES_WLR_XDG_OUTPUT_V1_H
+ #include <wayland-server-core.h>
+ #include <wlr/types/wlr_output_layout.h>
++#include <wlr/util/box.h>
+ 
+ struct wlr_xdg_output_v1 {
+ 	struct wlr_xdg_output_manager_v1 *manager;
+@@ -33,6 +34,15 @@ struct wlr_xdg_output_manager_v1 {
+ 
+ 	struct wl_list outputs;
+ 
++	// Optional compositor hook. When set and it returns true, the box it fills
++	// is advertised to that client instead of the layout geometry, and the
++	// details are re-sent to that client on every layout change. Lets the
++	// compositor hand Xwayland a physical-pixel layout (no X11 upscaling).
++	bool (*client_geometry)(struct wlr_xdg_output_manager_v1 *manager,
++		struct wl_client *client, struct wlr_output_layout_output *layout_output,
++		struct wlr_box *box);
++	void *client_geometry_data;
++
+ 	struct {
+ 		struct wl_signal destroy;
+ 	} events;
+diff --git a/types/scene/surface.c b/types/scene/surface.c
+index f0651bc..e7e53af 100644
+--- a/types/scene/surface.c
++++ b/types/scene/surface.c
+@@ -1,4 +1,5 @@
+ #include <assert.h>
++#include <math.h>
+ #include <stdlib.h>
+ #include <wlr/types/wlr_alpha_modifier_v1.h>
+ #include <wlr/types/wlr_compositor.h>
+@@ -152,6 +153,36 @@ static void surface_reconfigure(struct wlr_scene_surface *scene_surface) {
+ 		return;
+ 	}
+ 
++	double scale_override = scene_surface->scale_override;
++	if (scale_override > 0 && scale_override != 1.0) {
++		width = (int)round(width / scale_override);
++		height = (int)round(height / scale_override);
++		if (width < 1) {
++			width = 1;
++		}
++		if (height < 1) {
++			height = 1;
++		}
++		// The opaque region is in presentation coordinates: keep it only when it
++		// is one rectangle, shrunk inwards so it never claims a blended pixel.
++		int nrects;
++		pixman_box32_t *rects = pixman_region32_rectangles(&opaque, &nrects);
++		if (nrects == 1) {
++			int x1 = (int)ceil(rects[0].x1 / scale_override);
++			int y1 = (int)ceil(rects[0].y1 / scale_override);
++			int x2 = (int)floor(rects[0].x2 / scale_override);
++			int y2 = (int)floor(rects[0].y2 / scale_override);
++			pixman_region32_fini(&opaque);
++			if (x2 > x1 && y2 > y1) {
++				pixman_region32_init_rect(&opaque, x1, y1, x2 - x1, y2 - y1);
++			} else {
++				pixman_region32_init(&opaque);
++			}
++		} else {
++			pixman_region32_clear(&opaque);
++		}
++	}
++
+ 	float opacity = 1.0;
+ 	const struct wlr_alpha_modifier_surface_v1_state *alpha_modifier_state =
+ 		wlr_alpha_modifier_v1_get_surface_state(surface);
+@@ -242,6 +273,10 @@ static bool scene_buffer_point_accepts_input(struct wlr_scene_buffer *scene_buff
+ 	struct wlr_scene_surface *scene_surface =
+ 		wlr_scene_surface_try_from_buffer(scene_buffer);
+ 
++	if (scene_surface->scale_override > 0) {
++		*sx *= scene_surface->scale_override;
++		*sy *= scene_surface->scale_override;
++	}
+ 	*sx += scene_surface->clip.x;
+ 	*sy += scene_surface->clip.y;
+ 
+@@ -271,6 +306,15 @@ static const struct wlr_addon_interface surface_addon_impl = {
+ 	.destroy = surface_addon_destroy,
+ };
+ 
++void wlr_scene_surface_set_scale_override(struct wlr_scene_surface *scene_surface,
++		double scale) {
++	if (scene_surface->scale_override == scale) {
++		return;
++	}
++	scene_surface->scale_override = scale;
++	surface_reconfigure(scene_surface);
++}
++
+ struct wlr_scene_surface *wlr_scene_surface_try_from_buffer(
+ 		struct wlr_scene_buffer *scene_buffer) {
+ 	struct wlr_addon *addon = wlr_addon_find(&scene_buffer->node.addons,
+diff --git a/types/wlr_xdg_output_v1.c b/types/wlr_xdg_output_v1.c
+index 2621239..a70ca77 100644
+--- a/types/wlr_xdg_output_v1.c
++++ b/types/wlr_xdg_output_v1.c
+@@ -24,12 +24,25 @@ static void output_handle_resource_destroy(struct wl_resource *resource) {
+ 	wl_list_remove(wl_resource_get_link(resource));
+ }
+ 
++static bool output_client_geometry(struct wlr_xdg_output_v1 *xdg_output,
++		struct wl_resource *resource, struct wlr_box *box) {
++	struct wlr_xdg_output_manager_v1 *manager = xdg_output->manager;
++	return manager->client_geometry != NULL &&
++		manager->client_geometry(manager, wl_resource_get_client(resource),
++			xdg_output->layout_output, box);
++}
++
+ static void output_send_details(struct wlr_xdg_output_v1 *xdg_output,
+ 		struct wl_resource *resource) {
+-	zxdg_output_v1_send_logical_position(resource,
+-		xdg_output->x, xdg_output->y);
+-	zxdg_output_v1_send_logical_size(resource,
+-		xdg_output->width, xdg_output->height);
++	struct wlr_box box = {
++		.x = xdg_output->x,
++		.y = xdg_output->y,
++		.width = xdg_output->width,
++		.height = xdg_output->height,
++	};
++	output_client_geometry(xdg_output, resource, &box);
++	zxdg_output_v1_send_logical_position(resource, box.x, box.y);
++	zxdg_output_v1_send_logical_size(resource, box.width, box.height);
+ 	if (wl_resource_get_version(resource) < OUTPUT_DONE_DEPRECATED_SINCE_VERSION) {
+ 		zxdg_output_v1_send_done(resource);
+ 	}
+@@ -53,12 +66,19 @@ static void output_update(struct wlr_xdg_output_v1 *xdg_output) {
+ 		updated = true;
+ 	}
+ 
+-	if (updated) {
+-		struct wl_resource *resource;
+-		wl_resource_for_each(resource, &xdg_output->resources) {
++	// A client with overridden geometry may depend on other outputs (its
++	// layout is derived from all scales), so it is refreshed on every change.
++	bool sent = false;
++	struct wl_resource *resource;
++	wl_resource_for_each(resource, &xdg_output->resources) {
++		struct wlr_box box;
++		if (updated || output_client_geometry(xdg_output, resource, &box)) {
+ 			output_send_details(xdg_output, resource);
++			sent = true;
+ 		}
++	}
+ 
++	if (sent) {
+ 		wlr_output_schedule_done(xdg_output->layout_output->output);
+ 	}
+ }

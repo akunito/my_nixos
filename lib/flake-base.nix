@@ -286,6 +286,26 @@ let
     });
   };
 
+  # Xwayland at physical pixels — see swayXwaylandZeroScaling in lib/defaults.nix.
+  # wlroots gets a per-client xdg-output geometry hook and a scene-surface scale
+  # override (input mapped back); sway gets the `xwayland_zero_scaling` command
+  # and converts between its layout and X11's physical coordinate space.
+  # Verified 2026-10-13 in a nested sway at scale 1.5: X screen 1920x1080 for a
+  # 1280x720 logical output, xterm configured 1914x1038 at +3+39, pointer
+  # coordinates delivered in X pixels exactly (150,75 for a 100,50 logical
+  # offset), text 1:1 instead of the 1.5x smear of the unpatched build.
+  # Applied only on profiles with the flag: it rebuilds wlroots + sway.
+  swayXwaylandZeroScalingOverlay = final: prev: {
+    wlroots_0_19 = prev.wlroots_0_19.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/wlroots-0.19-xwayland-zero-scaling.patch ];
+    });
+    sway-unwrapped = (prev.sway-unwrapped.override { wlroots = final.wlroots_0_19; }).overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/sway-xwayland-zero-scaling.patch ];
+    });
+  };
+  zeroScalingOverlays = lib.optional (systemSettingsWithFonts.swayXwaylandZeroScaling or false)
+    swayXwaylandZeroScalingOverlay;
+
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {
     system = systemSettingsWithFonts.system;
@@ -300,7 +320,7 @@ let
     # swayfx #478 crash fix — DESK is systemStable=true, so its `pkgs` (and thus
     # the Home Manager compositor via homeConfigurations `inherit pkgs`) is
     # pkgs-stable. The overlay must live here too, not only on the unstable branch.
-    overlays = [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ];
+    overlays = [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ] ++ zeroScalingOverlays;
   };
 
   # Configure pkgs-unstable
@@ -349,7 +369,7 @@ let
                allowUnfree = true;
                allowUnfreePredicate = (_: true);
              };
-             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ];
+             overlays = (lib.optional useRustOverlay rustOverlay) ++ [ swayfxNullOutputCrashFixOverlay waybarElectronTrayFixOverlay gamescopeRemapCrashFixOverlay ] ++ zeroScalingOverlays;
            });
 
   # Configure home-manager
@@ -425,7 +445,7 @@ let
           # programs.steam.extraPackages resolves through the module system's
           # pkgs. Any overlay that must reach SYSTEM-level packages (Steam's
           # FHS, environment.systemPackages) has to be injected here.
-          { nixpkgs.overlays = [ gamescopeRemapCrashFixOverlay ]; }
+          { nixpkgs.overlays = [ gamescopeRemapCrashFixOverlay ] ++ zeroScalingOverlays; }
         ];
         specialArgs = {
           inherit pkgs-stable;
