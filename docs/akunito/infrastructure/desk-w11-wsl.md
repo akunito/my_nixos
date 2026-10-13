@@ -635,21 +635,21 @@ unknown (the previous life's journal was lost with it).
 
 1. `DefaultOOMPolicy=continue`: an OOM kill no longer stops the unit it happened in.
    For `init.scope` that unit is the distro; for `session-N.scope` it is the terminal.
-2. `user-.slice` and `init.scope` drop-ins -- `MemoryHigh=10G`, `MemoryMax=12G`,
+2. `user-.slice` and `init.scope` drop-ins -- `MemoryHigh=6G`, `MemoryMax=7G` (10G/12G until 2026-10-12),
    `CPUQuota=600%` each. Every login shell, so every build, test run or Claude session, sits in `user-1000.slice`
    (`cat /proc/self/cgroup`); `sudo` does not move cgroups, so `install.sh`'s
    `nixos-rebuild` evaluation is covered too. Above MemoryHigh the slice is throttled,
    above MemoryMax the kernel kills its largest process. .NET reads the cgroup limit and
    sizes its GC heap from it.
-3. `nix-daemon` -- `MemoryHigh=8G`, `MemoryMax=10G`, `CPUQuota=600%`, `max-jobs=2`,
+3. `nix-daemon` -- `MemoryHigh=5G`, `MemoryMax=6G` (8G/10G until 2026-10-12), `CPUQuota=600%`, `max-jobs=2`,
    `cores=3`: the build half of a deploy.
-4. On the Windows side `.wslconfig` now gives WSL **half the box**: `memory=16GB`,
+4. On the Windows side `.wslconfig` caps the VM: `memory=8GB` (16 GB until 2026-10-12: with AION 2, Zen and a leaking ShareX Windows hit 37 MB free and paged at 4-7 k reads/s while WSL sat at PSI 0),
    `processors=8` (of 32 GB / 16 threads). Whatever happens inside, the host keeps the
-   other half. Applied with `bootstrap.ps1`'s copy + `wsl --shutdown`.
+   rest. Applied with `bootstrap.ps1`'s copy + `wsl --shutdown`. ShareX is restarted above 1.5 GB by the "ShareX watchdog" task (`sharex-watchdog.ps1`).
 
 **Check after a deploy**: `systemctl show user-1000.slice -p MemoryMax -p CPUQuotaPerSecUSec`
-(12G, 6s), `systemctl show init.scope -p OOMPolicy` (continue),
-`systemctl show nix-daemon -p MemoryMax` (10G), `free -g` (16 total).
+(7G, 6s), `systemctl show init.scope -p OOMPolicy` (continue),
+`systemctl show nix-daemon -p MemoryMax` (6G), `free -g` (8 total).
 
 **Deploying from a Windows-side session (Claude Code on Windows, PowerShell, a script):
 the sudo prompt never shows.** Measured 2026-10-02, three failed runs in a row.
