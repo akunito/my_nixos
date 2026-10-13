@@ -45,12 +45,13 @@
         }
       ],
       "actions": [
-        "float",
-        "sticky"
+        "float"
       ],
       "enabled": true,
       "notes": "Audited build from ~/Projects/aion2-dps-meter: overlay, timers, atlas and the node-naming prompt float on every workspace, above the game (the windows are Topmost).",
-      "updatedAt": 1791468974378
+      "updatedAt": 1791468974378,
+      "target": {},
+      "updated_at": 1791878186
     }
   ]
 }
