@@ -30,6 +30,7 @@
     ++ lib.optional (systemSettings.prometheusWorkstationExporterEnable or false) ../../system/app/prometheus-workstation-exporter.nix # Lightweight metrics exporter for workstations
     ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
     ++ lib.optional (systemSettings.wifiAuditEnable or false) ../../system/security/wifi-audit.nix # WiFi security audit toolkit (aircrack-ng + hashcat + wireshark)
+    ++ lib.optional ((systemSettings.rgbOffOpenrgbArgs or [ ]) != [ ]) ../../system/hardware/rgb-off.nix # one-shot OpenRGB at boot/resume/hotplug (RGB off, Tartarus colour)
     ++ lib.optional (systemSettings.wolEnable or false) ../../system/hardware/wol.nix # Persist Wake-on-LAN arming on a dedicated NIC (woken by pfSense)
     ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix # Local LLM inference server (llama.cpp Vulkan, OpenAI-compatible)
     ++ lib.optional (systemSettings.ollamaServerEnable or false) ../../system/app/ollama-server.nix # Local LLM inference server (Ollama ROCm; serves BOTH /v1 and /api/chat)

@@ -84,7 +84,15 @@ in
     claudeBackupToNextcloudEnable = true;
     nextcloudSyncFolder = "/home/akunito/Nextcloud";
 
-    # i2c modules removed - add back if needed for lm-sensors/OpenRGB/ddcutil
+    # RGB (AINF: Aion 2 setup 2026-10-13): Aura USB mobo "off", both Dominator sticks direct black
+    # (Direct is their only mode, volatile), Tartarus V2 static violet. `-d` is a case-insensitive
+    # substring that selects EVERY matching controller (cli.cpp OptionDevice), hence one "Dominator"
+    # covers both sticks. The XFX 9070 XT (1eae:8811) has no OpenRGB controller — not in
+    # --list-devices as root (measured 2026-10-13); its lighting is hardware-only. Hotplug re-run
+    # because the Tartarus reverts to its onboard effect on re-enumeration. i2c-dev comes from rgb-off.nix.
+    rgbOffOpenrgbArgs = [ "-d" "Dominator" "-m" "direct" "-c" "000000" "-d" "X670E" "-m" "off" "-d" "Tartarus" "-m" "static" "-c" "5A1E96" ];
+    rgbOffUsbIds = [ "1532:022b" ];
+
     kernelModules = [
       "xpadneo" # xbox controller
       "hid_nintendo" # Joy-Con controller

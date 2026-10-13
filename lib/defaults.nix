@@ -25,6 +25,7 @@
     gpuType = "intel"; # Options: "amd", "intel", "nvidia", "none" (for VMs/containers)
     nouveauBlacklistEnable = false; # dGPU present but no driver wanted yet (homelab profile)
     rgbOffOpenrgbArgs = []; # non-empty = system/hardware/rgb-off.nix runs `openrgb --noautoconnect <args>` at boot + after resume
+    rgbOffUsbIds = []; # "vvvv:pppp" USB ids whose hotplug re-runs rgb-off (devices that reset their lighting on re-enumeration)
     # NVIDIA (system/hardware/nvidia.nix, only read when gpuType = "nvidia"; headless compute)
     nvidiaDriverChannel = "production";     # attr of boot.kernelPackages.nvidiaPackages; 25.11: stable == production == 580.142
     nvidiaOpenKernelModule = true;          # Turing+ (RTX 20xx and newer); false only for Pascal and older
