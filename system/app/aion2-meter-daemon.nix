@@ -26,8 +26,13 @@ let
   dataDir = orDefault (cfg.aion2MeterDaemonDataDir or null) "${home}/.local/share/AionMeter";
   extraArgs = cfg.aion2MeterDaemonExtraArgs or [ ];
   uiDir = orDefault (cfg.aion2MeterUiInstallDir or null) "${home}/.local/opt/aionmeter-ui";
-  # Overlay UI (AionMeter.Linux, Avalonia on XWayland, window class "aionmeter"; Hyper+g in sway-apps).
-  # Reads the daemon's socket ($XDG_RUNTIME_DIR/aionmeter.sock by default) and reconnects while it is away.
+  # Daemon <-> UI socket. Not the meter's default $XDG_RUNTIME_DIR/aionmeter.sock: the unit has no
+  # XDG_RUNTIME_DIR and PrivateTmp, so its fallback /tmp/aionmeter-<uid>.sock lands in a private /tmp the UI
+  # never sees, and /run/user/<uid> does not exist before login. RuntimeDirectory= gives a /run dir owned by User=.
+  socketPath = "/run/aionmeter/aionmeter.sock";
+  # Overlay UI (AionMeter.Linux, Avalonia on XWayland, window class "aionmeter"; DESK sway-apps: Hyper+g launches,
+  # Hyper+Shift+g sends SIGUSR1 to $XDG_RUNTIME_DIR/aionmeter-ui.pid (written by the UI) to turn click-through off).
+  # Reconnects while the daemon is away (restart wipes /run/aionmeter).
   # Avalonia dlopens the X11/fontconfig/GL libs by soname; NixOS has no /usr/lib, so they go on LD_LIBRARY_PATH.
   aionmeterUi = pkgs.writeShellScriptBin "aionmeter-ui" ''
     dll=''${AIONMETER_UI_DIR:-${uiDir}}/AionMeter.Linux.dll
@@ -40,7 +45,7 @@ let
       fontconfig freetype libGL
     ])}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-    exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" "$@"
+    exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} "$@"
   '';
 in
 {
@@ -73,7 +78,11 @@ in
           "${installDir}/aionmeter-daemon.dll"
           "--data-dir"
           dataDir
+          "--socket"
+          socketPath
         ] ++ extraArgs);
+        RuntimeDirectory = "aionmeter";
+        RuntimeDirectoryMode = "0750";
         AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_ADMIN" ];
         CapabilityBoundingSet = [ "CAP_NET_RAW" "CAP_NET_ADMIN" ];
         KillSignal = "SIGTERM";

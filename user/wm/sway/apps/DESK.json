@@ -1,6 +1,35 @@
 {
   "version": 1,
-  "rules": [],
+  "rules": [
+    {
+      "id": "r-7534934f",
+      "kind": "for_window",
+      "criteria": {
+        "class": "aionmeter"
+      },
+      "actions": [
+        "floating enable",
+        "border none",
+        "move container to output \"NSL RGB-27QHDS    Unknown\""
+      ],
+      "name": "AION 2 meter overlay",
+      "enabled": true,
+      "notes": "AionMeter.Linux (Avalonia on XWayland). NSL = DP-2 (same criteria as monitors.nslVertical): AION 2 is fullscreen in gamescope on the Samsung and sway paints no floating window over a fullscreen view."
+    },
+    {
+      "id": "r-4ec90fb9",
+      "kind": "for_window",
+      "criteria": {
+        "class": "^aionmeter$"
+      },
+      "actions": [
+        "sticky enable"
+      ],
+      "name": "AION 2 meter overlay sticky",
+      "enabled": true,
+      "notes": "Separate rule on purpose: measured 2026-10-13 on Sway 1.11, 'sticky enable' inside the floating rule left sticky=false."
+    }
+  ],
   "startup": [
     {
       "id": "s-zen-browser-7367",
@@ -74,6 +103,22 @@
       "category": "Gaming",
       "table": "prefix",
       "updated_at": 1791905020
+    },
+    {
+      "id": "k-4346000a",
+      "keys": "Hyper+Shift+g",
+      "kind": "exec",
+      "app_id": "",
+      "command": "kill -USR1 $(cat $XDG_RUNTIME_DIR/aionmeter-ui.pid)",
+      "name": "AION 2 meter: clicks back",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": true,
+      "category": "Gaming",
+      "table": "prefix",
+      "notes": "SIGUSR1 turns the overlay's click-through off. Never pkill -f: USR1 also hits the steam-run bwrap/shell and kills the UI. Takes over nix's duplicate fullscreen toggle (Hyper+f stays).",
+      "updated_at": 1791920000
     }
   ],
   "tools": [],
