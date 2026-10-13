@@ -47,12 +47,61 @@ let
     export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
     exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} "$@"
   '';
+  # Native overlay card (AionMeter.Overlay: GTK4 + wlr-layer-shell, layer OVERLAY, so it paints above gamescope's
+  # fullscreen view, at the output's own scale). Pid in $XDG_RUNTIME_DIR/aionmeter-overlay.pid; SIGUSR1 = click-through,
+  # SIGUSR2 = hide/show. GirCore opens every lib by soname -> LD_LIBRARY_PATH (getLib: glib/pango/fontconfig are split).
+  # No LD_PRELOAD: the program dlopens libgtk4-layer-shell RTLD_GLOBAL itself before GTK loads libwayland-client.
+  # No steam-run / GDK_BACKEND=x11: it must be a Wayland client.
+  overlayDir = orDefault (cfg.aion2MeterOverlayInstallDir or null) "${home}/.local/opt/aionmeter-overlay";
+  overlayMonitor = cfg.aion2MeterOverlayMonitor or "DP-1";
+  aionmeterOverlay = pkgs.writeShellScriptBin "aionmeter-overlay" ''
+    dll=''${AIONMETER_OVERLAY_DIR:-${overlayDir}}/AionMeter.Overlay.dll
+    if [ ! -f "$dll" ]; then
+      ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter-overlay" "Not installed: $dll"
+      exit 1
+    fi
+    export LD_LIBRARY_PATH=${lib.makeLibraryPath (map lib.getLib (with pkgs; [
+      gtk4 gtk4-layer-shell glib cairo pango gdk-pixbuf graphene harfbuzz fontconfig freetype wayland
+    ]))}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+    exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} --monitor ${overlayMonitor} "$@"
+  '';
+  # pid of a live front-end: from its own pid file, checked against /proc cmdline (stale file, reused pid).
+  # Never pkill -f: it matches the launcher shells as well.
+  livePid = ''
+    live_pid() {
+      [ -f "$1" ] || return 1
+      p=$(cat "$1" 2>/dev/null) || return 1
+      case $p in ""|*[!0-9]*) return 1;; esac
+      tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q "$2" || return 1
+      echo "$p"
+    }
+    run=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+  '';
+  # Hyper+g: hide/show the card if it runs, else start it detached.
+  aionmeterOverlayToggle = pkgs.writeShellScriptBin "aionmeter-overlay-toggle" ''
+    ${livePid}
+    if p=$(live_pid "$run/aionmeter-overlay.pid" AionMeter.Overlay.dll); then
+      exec kill -USR2 "$p"
+    fi
+    exec setsid -f ${aionmeterOverlay}/bin/aionmeter-overlay </dev/null >/dev/null 2>&1
+  '';
+  # Hyper+Shift+g: click-through toggle of the card; the Avalonia UI when the card is not running.
+  aionmeterClicks = pkgs.writeShellScriptBin "aionmeter-clicks" ''
+    ${livePid}
+    if p=$(live_pid "$run/aionmeter-overlay.pid" AionMeter.Overlay.dll) || p=$(live_pid "$run/aionmeter-ui.pid" AionMeter.Linux.dll); then
+      exec kill -USR1 "$p"
+    fi
+    exec ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter" "No overlay running"
+  '';
 in
 {
   config = lib.mkIf (cfg.aion2MeterDaemonEnable or false) {
     # Must exist before the unit starts: ReadWritePaths of a missing dir fails the namespace setup.
     systemd.tmpfiles.rules = [ "d ${dataDir} 0755 ${user} users -" ];
-    environment.systemPackages = [ aionmeterUi ];
+    environment.systemPackages = [ aionmeterUi aionmeterOverlay aionmeterOverlayToggle aionmeterClicks ];
+    # The card's CSS asks for Inter, then Noto Sans / DejaVu Sans.
+    fonts.packages = [ pkgs.inter ];
 
     systemd.services.aion2-meter-daemon = {
       description = "AION 2 DPS meter daemon (headless capture)";
