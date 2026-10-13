@@ -19,6 +19,7 @@
 #   GAMESCOPE_DISABLE=1   skip gamescope, run %command% directly (A/B testing)
 #   GAMESCOPE_WLDEBUG=1   run gamescope under WAYLAND_DEBUG=1 into a log file
 #                         (keeps the last 64MB; GAMESCOPE_WLDEBUG_MAX_MB overrides)
+#   GAMESCOPE_SHARE_PID=1 keep the game in the host pid namespace (see below)
 #
 set -euo pipefail
 
@@ -119,6 +120,24 @@ done
 # also stops the stutter but loses all of that.
 #
 # Full write-up: docs/akunito/gaming/gamescope-lag-bomb.md
+
+# Private pid namespace for every game launched through this wrapper (Proton or
+# native-in-Steam-Linux-Runtime; a game without pressure-vessel ignores it).
+# Measured on DESK 2026-10-13: AION 2 (Proton, SteamLinuxRuntime_4) shared the
+# host pid namespace and its sandbox mounts /proc, so the game and its in-process
+# anti-cheat (NCGuard, bb64.dll) could list all 595 host processes.
+# PRESSURE_VESSEL_SHARE_PID=0 == pressure-vessel-wrap --unshare-pid (default is
+# shared). Caveats from pressure-vessel itself: it logs "Unsharing process ID
+# namespace. This is not expected to work...", and the namespace is always
+# shared under a Flatpak subsandbox (not our case: native Steam). Host network
+# stays shared (bond0 capture of the game's TCP flow is unaffected). If a game
+# breaks (Steam overlay, Steam API not seeing the client, stuck "Running"),
+# prefix its launch options with GAMESCOPE_SHARE_PID=1 (before this wrapper).
+if [[ "${GAMESCOPE_SHARE_PID:-0}" != "1" ]]; then
+    export PRESSURE_VESSEL_SHARE_PID=0
+    log "PRESSURE_VESSEL_SHARE_PID=0: game gets its own pid namespace (GAMESCOPE_SHARE_PID=1 opts out)"
+fi
+
 STEAM_PRELOAD="${LD_PRELOAD:-}"
 if [[ -n "$STEAM_PRELOAD" ]]; then
     unset LD_PRELOAD
