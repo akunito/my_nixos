@@ -227,6 +227,8 @@
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";  # auto-downloaded via -hf on first start
     llamaServerModelHfFile = "";                           # optional QUANT TAG for -hf repo:TAG, e.g. "Q4_K_M" — NOT a filename: passing "Model-Q4_K_M.gguf" makes llama.cpp report "no GGUF files found in repository". "" = repo default
     llamaServerModelFile = "";                             # absolute GGUF path under /var/lib/llama-server; replaces -hf when set (pre-downloaded models, e.g. gated/abliterated repos)
+    llamaServerBackend = "vulkan";                         # "vulkan" (nix llama-cpp, AMD) | "docker-cuda" (llama.cpp's CUDA image via CDI, NVIDIA — Vulkan on NVIDIA prefills at 48 tok/s, CUDA at 1326, measured 2026-10-13)
+    llamaServerDockerImage = "ghcr.io/ggml-org/llama.cpp@sha256:c4348afb91499b10fad12f92626c7a8ca8b69d6475d10c793b810cb61237ce00";  # server-cuda tag resolved 2026-10-13; bump the digest by hand
     llamaServerCtxSize = 16384;                            # context window
     llamaServerGpuLayers = 999;                            # offload all layers to GPU
     llamaServerApiKey = "";                                # legacy literal; leaks into the store AND `ps` — prefer llamaServerApiKeySecret

@@ -66,8 +66,23 @@ let
 
   modelRef = if hfFile != "" then "${hfRepo}:${hfFile}" else hfRepo;
 
+  # "vulkan": the nix llama-cpp (RDNA4 on DESK). "docker-cuda": llama.cpp's own
+  # CUDA image through CDI, for NVIDIA hosts. MEASURED on NAS_PROD's RTX 3090
+  # 2026-10-13, Qwen3.8-27B UD-Q4_K_XL, 3140-token prompt: Vulkan on the NVIDIA
+  # ICD prefill 48 tok/s / gen 36 tok/s; CUDA prefill 1326 tok/s / gen 40 tok/s.
+  # Vulkan on NVIDIA is unusable for anything with a real context. No nix CUDA
+  # build: cudaSupport is never in cache.nixos.org and would recompile on every
+  # bump; the image is pinned by digest instead.
+  backend = cfg.llamaServerBackend or "vulkan";
+  dockerImage = cfg.llamaServerDockerImage or "ghcr.io/ggml-org/llama.cpp@sha256:c4348afb91499b10fad12f92626c7a8ca8b69d6475d10c793b810cb61237ce00";
+  isDocker = backend == "docker-cuda";
+  dockerBin = "${config.virtualisation.docker.package}/bin/docker";
+  stateDir = "/var/lib/llama-server";
+
   args = [
-    "--host" "127.0.0.1"          # backend is localhost-only; the proxy fronts it
+    # Backend is localhost-only; the proxy fronts it. Inside the container the
+    # server must bind all interfaces, docker publishes it on 127.0.0.1 only.
+    "--host" (if isDocker then "0.0.0.0" else "127.0.0.1")
     "--port" (toString internalPort)
     "-ngl" (toString gpuLayers)   # offload all layers to the GPU
     "-c" (toString ctxSize)
@@ -113,17 +128,44 @@ let
     # proxy (ordered After=) only forwards once we can actually serve.
     for i in $(seq 1 300); do
       ${pkgs.curl}/bin/curl -sf "http://127.0.0.1:${toString internalPort}/health" >/dev/null 2>&1 && exit 0
+      # A backend that died (missing model, bad VRAM fit) used to keep this
+      # loop polling the full 300 s, holding `systemctl start` with it.
+      kill -0 "$MAINPID" 2>/dev/null || { echo "llama-server: backend exited before /health was ready" >&2; exit 1; }
       sleep 1
     done
     echo "llama-server: /health not ready after 300s" >&2
     exit 1
   '';
+
+  # docker-cuda: the container is the sandbox (root daemon, CDI GPU). The state
+  # dir is mounted at its host path so llamaServerModelFile and LLAMA_CACHE are
+  # the same strings for both backends. --rm + a fixed name: a stale container
+  # from a crash is removed in ExecStartPre, never left to block the next start.
+  dockerStart = pkgs.writeShellScript "llama-docker-start" ''
+    exec ${dockerBin} run --rm --name llama-server \
+      --device nvidia.com/gpu=all \
+      -v ${stateDir}:${stateDir} \
+      -e LLAMA_CACHE=${stateDir} -e HOME=${stateDir} \
+      -p 127.0.0.1:${toString internalPort}:${toString internalPort} \
+      ${dockerImage} ${lib.escapeShellArgs args}
+  '';
 in
 {
   config = lib.mkIf enabled {
+    assertions = [
+      { assertion = backend == "vulkan" || backend == "docker-cuda";
+        message = "llamaServerBackend must be \"vulkan\" or \"docker-cuda\" (got \"${backend}\")"; }
+      { assertion = !isDocker || (cfg.nvidiaContainerToolkitEnable or false);
+        message = "llamaServerBackend = docker-cuda needs nvidiaContainerToolkitEnable (CDI --device nvidia.com/gpu=all)"; }
+      { assertion = !isDocker || apiKeySecret == "";
+        message = "llamaServerApiKeySecret is not wired into the docker-cuda backend (the credential dir is outside the container)"; }
+    ];
+
     # Heavy backend — not auto-started; pulled in on demand by the proxy.
     systemd.services.llama-server = {
-      description = "llama.cpp inference backend (Vulkan) — on-demand";
+      description = "llama.cpp inference backend (${backend}) — on-demand";
+      requires = lib.optionals isDocker [ "docker.service" ];
+      after = lib.optionals isDocker [ "docker.service" ];
       # Stop before S3: a loaded model would ride into suspend holding VRAM (on
       # NVIDIA, PreserveVideoMemoryAllocations then dumps it to /var/tmp). The
       # proxy Requires= us, so it stops too and the socket re-arms on resume.
@@ -147,9 +189,18 @@ in
       };
       serviceConfig = {
         ExecCondition = "${preflight}";
-        ExecStart = "${lib.getExe' llamaVulkan "llama-server"} ${lib.escapeShellArgs args}";
         ExecStartPost = "${waitReady}";
-        TimeoutStartSec = "360";      # covers first-run GGUF download + model load
+        TimeoutStartSec = "360";      # covers first-run GGUF download / image pull + model load
+        StateDirectory = "llama-server";
+        Restart = "on-failure";
+        RestartSec = 5;
+      } // (if isDocker then {
+        ExecStartPre = "-${dockerBin} rm -f llama-server";
+        ExecStart = "${dockerStart}";
+        ExecStop = "${dockerBin} stop -t 30 llama-server";
+        TimeoutStopSec = "45";
+      } else {
+        ExecStart = "${lib.getExe' llamaVulkan "llama-server"} ${lib.escapeShellArgs args}";
         DynamicUser = true;
         # These are NOT optional. They used to sit inside the api-key branch
         # below, which meant a server configured WITHOUT an api key got no
@@ -157,15 +208,12 @@ in
         # DynamicUser and every start died on "Permission denied" fetching the
         # model) and no video/render groups (so it would have had no /dev/dri
         # even if it had started). Observed on DESK 2026-08-17.
-        StateDirectory = "llama-server";
         SupplementaryGroups = [ "video" "render" ];  # /dev/dri access for the GPU
-        Restart = "on-failure";
-        RestartSec = 5;
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
-      } // lib.optionalAttrs (apiKeySecret != "") {
+      }) // lib.optionalAttrs (apiKeySecret != "") {
         # Exposed to the (DynamicUser) service as %d/api-key, mode 0400.
         LoadCredential = "api-key:${apiKeyFile}";
       };
