@@ -34,6 +34,16 @@ let
   idleTimeout = cfg.llamaServerIdleTimeout or "15min";
   hfRepo = cfg.llamaServerModelHfRepo or "ggml-org/gpt-oss-20b-GGUF";
   hfFile = cfg.llamaServerModelHfFile or "";
+  # Absolute path to a GGUF already on disk; when set it replaces -hf. Must live
+  # under StateDirectory (/var/lib/llama-server): ProtectHome + ProtectSystem=strict
+  # hide everything else from the DynamicUser.
+  modelFile = cfg.llamaServerModelFile or "";
+  # Vulkan ICD by GPU vendor. NVIDIA's ICD works headless with nvidia_drm blocked
+  # (NAS_PROD, vulkaninfo 2026-10-13: "NVIDIA GeForce RTX 3090, driverName NVIDIA");
+  # pinning one ICD also hides the 5600G's RADV iGPU from llama.cpp's device list.
+  vkIcd = if (cfg.gpuType or "amd") == "nvidia"
+    then "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json"
+    else "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json";
   ctxSize = cfg.llamaServerCtxSize or 16384;
   gpuLayers = cfg.llamaServerGpuLayers or 999;
   apiKey = cfg.llamaServerApiKey or "";
@@ -61,8 +71,9 @@ let
     "--port" (toString internalPort)
     "-ngl" (toString gpuLayers)   # offload all layers to the GPU
     "-c" (toString ctxSize)
-    "-hf" modelRef                # auto-download GGUF (cached in StateDirectory)
   ]
+  ++ (if modelFile != "" then [ "-m" modelFile ]
+      else [ "-hf" modelRef ])    # auto-download GGUF (cached in StateDirectory)
   # --api-key-file keeps the key out of both the store AND the process table
   # (`--api-key <secret>` would be visible in `ps` to every local user).
   ++ lib.optionals (apiKeySecret != "") [ "--api-key-file" "%d/api-key" ]
@@ -113,9 +124,13 @@ in
     # Heavy backend — not auto-started; pulled in on demand by the proxy.
     systemd.services.llama-server = {
       description = "llama.cpp inference backend (Vulkan) — on-demand";
+      # Stop before S3: a loaded model would ride into suspend holding VRAM (on
+      # NVIDIA, PreserveVideoMemoryAllocations then dumps it to /var/tmp). The
+      # proxy Requires= us, so it stops too and the socket re-arms on resume.
+      before = [ "sleep.target" ];
+      unitConfig.Conflicts = [ "sleep.target" ];
       environment = {
-        # Vulkan ICD discovery (RADV) — same path used by gaming + whisper.cpp here.
-        VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json";
+        VK_ICD_FILENAMES = vkIcd;
         LLAMA_CACHE = "/var/lib/llama-server";
         HOME = "/var/lib/llama-server";
       };

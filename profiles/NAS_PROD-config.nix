@@ -29,6 +29,18 @@ in
     # IT5702 (RGB Fusion 2) has no Off mode → static black. Front power LED is on F_PANEL.
     rgbOffOpenrgbArgs = [ "-d" "RTX 3090" "-m" "direct" "-c" "000000" "-d" "B550" "-m" "static" "-c" "000000" ];
 
+    # === Reasoner preset: llama.cpp on the 3090, on-demand (0 VRAM idle) ===
+    # Qwen3.8-27B abliterated (huihui-ai, Apache-2.0), Unsloth UD-Q4_K_XL 17.4 GB,
+    # pre-downloaded by hand (sha256 ebbc66b4…) — no -hf, the file is the model.
+    # Thinking mode is Qwen3.8's default; sampling = Qwen's thinking-mode card
+    # values. Port 8090 on tailscale0 only; the backend stops after 15 min idle
+    # and before S3. Plan: docs/akunito/plans/nas-3090-ai-presets.md
+    llamaServerEnable = true;
+    llamaServerModelFile = "/var/lib/llama-server/models/Huihui-Qwen3.8-27B-abliterated-UD-Q4_K_XL.gguf";
+    llamaServerCtxSize = 32768;           # ESTIMATE: weights 17.4 GB + KV; measure nvidia-smi, then raise
+    llamaServerExtraArgs = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];
+    llamaServerVramBusyBytes = 2147483648; # nothing else may hold the card: 24 GB - 17.4 GB weights
+
     # ============================================================================
     # HEADLESS SERVER — disable GUI/desktop features
     # ============================================================================
