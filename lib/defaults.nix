@@ -1130,7 +1130,9 @@
     swayXwaylandZeroScaling = false;
     # Xft.dpi handed to X11 clients when zero scaling is on (96 * output
     # scale); X11 has ONE DPI, so pick the main monitor's. Apps that ignore
-    # Xft.dpi draw small but sharp.
+    # Xft.dpi draw small but sharp. Written by sway itself (`xwayland_dpi`)
+    # on every Xwayland start, because lazy Xwayland exits 10 s after its
+    # last client and an xrdb at login is gone by the time Steam starts.
     swayXwaylandDpi = 96;
 
     # Monitor management (imperative GUI approach)

@@ -1,25 +1,29 @@
 diff --git a/include/sway/commands.h b/include/sway/commands.h
-index 5210d3b..41bc244 100644
+index 5210d3b..cc5ebbe 100644
 --- a/include/sway/commands.h
 +++ b/include/sway/commands.h
-@@ -201,6 +201,7 @@ sway_cmd cmd_workspace;
+@@ -201,6 +201,8 @@ sway_cmd cmd_workspace;
  sway_cmd cmd_workspace_layout;
  sway_cmd cmd_ws_auto_back_and_forth;
  sway_cmd cmd_xwayland;
++sway_cmd cmd_xwayland_dpi;
 +sway_cmd cmd_xwayland_zero_scaling;
  
  sway_cmd bar_cmd_bindcode;
  sway_cmd bar_cmd_binding_mode_indicator;
 diff --git a/include/sway/config.h b/include/sway/config.h
-index bb770c6..a5378b3 100644
+index bb770c6..78838cc 100644
 --- a/include/sway/config.h
 +++ b/include/sway/config.h
-@@ -521,6 +521,8 @@ struct sway_config {
+@@ -521,6 +521,11 @@ struct sway_config {
  	enum sway_fowa focus_on_window_activation;
  	enum sway_popup_during_fullscreen popup_during_fullscreen;
  	enum xwayland_mode xwayland;
 +	// X11 clients get a physical-pixel screen and are drawn 1:1 (no upscale)
 +	bool xwayland_zero_scaling;
++	// Xft.dpi written to the X root RESOURCE_MANAGER on every Xwayland start
++	// (lazy Xwayland dies 10 s after its last client and loses it); 0 = off
++	int xwayland_dpi;
  
  	// swaybg
  	char *swaybg_command;
@@ -110,17 +114,50 @@ index 93055c4..d406894 100644
 +
  #endif
 diff --git a/sway/commands.c b/sway/commands.c
-index c2c12ee..1ceaa02 100644
+index c2c12ee..6d34d17 100644
 --- a/sway/commands.c
 +++ b/sway/commands.c
-@@ -108,6 +108,7 @@ static const struct cmd_handler config_handlers[] = {
+@@ -108,6 +108,8 @@ static const struct cmd_handler config_handlers[] = {
  	{ "swaynag_command", cmd_swaynag_command },
  	{ "workspace_layout", cmd_workspace_layout },
  	{ "xwayland", cmd_xwayland },
++	{ "xwayland_dpi", cmd_xwayland_dpi },
 +	{ "xwayland_zero_scaling", cmd_xwayland_zero_scaling },
  };
  
  /* Runtime-only commands. Keep alphabetized */
+diff --git a/sway/commands/xwayland_dpi.c b/sway/commands/xwayland_dpi.c
+new file mode 100644
+index 0000000..76c6440
+--- /dev/null
++++ b/sway/commands/xwayland_dpi.c
+@@ -0,0 +1,26 @@
++#include <stdlib.h>
++#include "sway/config.h"
++#include "log.h"
++#include "sway/commands.h"
++
++struct cmd_results *cmd_xwayland_dpi(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "xwayland_dpi", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++
++#ifdef WLR_HAS_XWAYLAND
++	char *end;
++	long dpi = strtol(argv[0], &end, 10);
++	if (*end != '\0' || dpi < 0 || dpi > 1000) {
++		return cmd_results_new(CMD_INVALID, "Expected 'xwayland_dpi <0-1000>'");
++	}
++	// Applied on the next Xwayland start (see handle_xwayland_ready).
++	config->xwayland_dpi = (int)dpi;
++#else
++	sway_log(SWAY_INFO, "Ignoring `xwayland_dpi` command, "
++		"sway hasn't been built with Xwayland support");
++#endif
++
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
 diff --git a/sway/commands/xwayland_zero_scaling.c b/sway/commands/xwayland_zero_scaling.c
 new file mode 100644
 index 0000000..dc951b2
@@ -155,18 +192,19 @@ index 0000000..dc951b2
 +	return cmd_results_new(CMD_SUCCESS, NULL);
 +}
 diff --git a/sway/config.c b/sway/config.c
-index d579022..aef3b99 100644
+index d579022..df257f0 100644
 --- a/sway/config.c
 +++ b/sway/config.c
-@@ -257,6 +257,7 @@ static void config_defaults(struct sway_config *config) {
+@@ -257,6 +257,8 @@ static void config_defaults(struct sway_config *config) {
  	config->focus_on_window_activation = FOWA_URGENT;
  	config->popup_during_fullscreen = POPUP_SMART;
  	config->xwayland = XWAYLAND_MODE_LAZY;
 +	config->xwayland_zero_scaling = false;
++	config->xwayland_dpi = 0;
  
  	config->titlebar_border_thickness = 1;
  	config->titlebar_h_padding = 5;
-@@ -480,6 +481,7 @@ bool load_main_config(const char *file, bool is_active, bool validating) {
+@@ -480,6 +482,7 @@ bool load_main_config(const char *file, bool is_active, bool validating) {
  		sway_log(SWAY_DEBUG, "xwayland will remain %s",
  				old_config->xwayland ? "enabled" : "disabled");
  		config->xwayland = old_config->xwayland;
@@ -196,7 +234,7 @@ index 325a302..ceb96c9 100644
  		double x, double y, int width, int height) {
  	struct sway_transaction_instruction *instruction =
 diff --git a/sway/desktop/xwayland.c b/sway/desktop/xwayland.c
-index b83537a..f948d05 100644
+index b83537a..3ce7f07 100644
 --- a/sway/desktop/xwayland.c
 +++ b/sway/desktop/xwayland.c
 @@ -1,4 +1,5 @@
@@ -563,6 +601,29 @@ index b83537a..f948d05 100644
  		container_floating_resize_and_center(view->container);
  
  		configure(view, view->container->pending.content_x,
+@@ -892,6 +1129,22 @@ void handle_xwayland_ready(struct wl_listener *listener, void *data) {
+ 		return;
+ 	}
+ 
++	if (config->xwayland_dpi > 0) {
++		// Done before the atom round trips: the client that woke a lazy Xwayland
++		// is racing us and reads RESOURCE_MANAGER in XOpenDisplay.
++		// Appended, not replaced: Xrm keeps the last definition of a key, so a
++		// client that already merged resources is not wiped and ours wins.
++		char res[32];
++		int len = snprintf(res, sizeof(res), "Xft.dpi:\t%d\n", config->xwayland_dpi);
++		xcb_screen_t *screen = xcb_setup_roots_iterator(xcb_get_setup(xcb_conn)).data;
++		if (screen != NULL && len > 0) {
++			xcb_change_property(xcb_conn, XCB_PROP_MODE_APPEND, screen->root,
++				XCB_ATOM_RESOURCE_MANAGER, XCB_ATOM_STRING, 8, len, res);
++			xcb_flush(xcb_conn);
++			sway_log(SWAY_DEBUG, "Set Xft.dpi %d on the X root window", config->xwayland_dpi);
++		}
++	}
++
+ 	xcb_intern_atom_cookie_t cookies[ATOM_LAST];
+ 	for (size_t i = 0; i < ATOM_LAST; i++) {
+ 		cookies[i] =
 diff --git a/sway/input/cursor.c b/sway/input/cursor.c
 index 1fd57ec..cd6f033 100644
 --- a/sway/input/cursor.c
@@ -630,13 +691,14 @@ index 1fd57ec..cd6f033 100644
  		wlr_cursor_warp(cursor->cursor, NULL, lx, ly);
  
 diff --git a/sway/meson.build b/sway/meson.build
-index 8042c89..ec05969 100644
+index 8042c89..47bd557 100644
 --- a/sway/meson.build
 +++ b/sway/meson.build
-@@ -124,6 +124,7 @@ sway_sources = files(
+@@ -124,6 +124,8 @@ sway_sources = files(
  	'commands/workspace_layout.c',
  	'commands/ws_auto_back_and_forth.c',
  	'commands/xwayland.c',
++	'commands/xwayland_dpi.c',
 +	'commands/xwayland_zero_scaling.c',
  
  	'commands/bar/bind.c',

@@ -21,7 +21,7 @@ sway (`patches/sway-xwayland-zero-scaling.patch`):
 - `handle_commit`: `view->geometry` = surface size / scale (logical, what the layout code expects); `view_center_and_clip_surface` multiplies the clip back into surface units (`view_surface_scale`).
 - Natural size, size hints and request_configure sizes divided by the scale; unmanaged (override-redirect) surfaces positioned via X11 -> logical and given the scale of the output under them.
 - Pointer constraints (cursor.c): region/hint math in surface units, deltas scaled.
-- Xft.dpi via `xrdb -merge` on start (`swayXwaylandDpi`, 144 for scale 1.5).
+- Config command `xwayland_dpi <n>` (`swayXwaylandDpi`, 144 for scale 1.5): sway appends `Xft.dpi` to the root `RESOURCE_MANAGER` in `handle_xwayland_ready`, before its atom round trips. An `xrdb` at login does not survive: lazy Xwayland runs with `-terminate 10`, dies after its last client and comes back empty (measured 2026-10-13 live: xrdb at 19:07:18, Xwayland restarted with the meter at 19:08:07, `xrdb -query` empty). Race with the client that woke Xwayland: 5/5 `xrdb -query` as the first client saw the value.
 
 ## Verification (nested sway, `WLR_BACKENDS=wayland`, output 1920x1080 scale 1.5)
 
@@ -31,6 +31,8 @@ sway (`patches/sway-xwayland-zero-scaling.patch`):
 | xterm X window for a 1276x692 logical container at (2,26) | logical size | 1914x1038 at +3+39 |
 | xev pointer at logical offset (100,50) / (358,274) | n/a | (150,75) / (537,411) |
 | xterm text, grim crop at 3x | 1.5x smear | 1:1 pixels |
+
+Live session DESK 2026-10-13 (scale 1.5 DP-1, 1.25 DP-2 transform 90): X screen 8435x4251, DP-1 `3840x2160+3155+2091`, DP-2 `1440x2560+6995+1179`; meter window 611x624 logical -> 917x936 X pixels at +4882+2405; grim crop at 3x shows 1:1 text.
 
 Harness: scratchpad `nested-test.sh` (starts a nested sway, launches xterm, prints the numbers above). Deploy: `install.sh` on DESK + `sync-user.sh`, then relogin.
 

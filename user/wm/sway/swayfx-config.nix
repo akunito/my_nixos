@@ -23,9 +23,10 @@ let
   # swayXwaylandZeroScaling). The command is launch-time only; Xft.dpi tells
   # X11 toolkits how big to draw now that they get real pixels.
   zeroScaling = systemSettings.swayXwaylandZeroScaling or false;
-  xwaylandXresources = pkgs.writeText "xwayland-zero-scaling.Xresources" ''
-    Xft.dpi: ${toString (systemSettings.swayXwaylandDpi or 96)}
-  '';
+  # Set by the patched sway on every Xwayland start, not by xrdb: lazy
+  # Xwayland runs with -terminate 10 and drops RESOURCE_MANAGER with every
+  # restart (measured 2026-10-13: xrdb at login, empty 50 s later).
+  xwaylandDpi = toString (systemSettings.swayXwaylandDpi or 96);
   swayPkg = if useFx then pkgs.swayfx else pkgs.sway;
 
   # Only appended to a command list when the effects exist.
@@ -1331,7 +1332,7 @@ in
       ${lib.optionalString zeroScaling ''
       # X11 clients see a physical-pixel screen and are drawn 1:1 (patched sway)
       xwayland_zero_scaling yes
-      exec_always ${pkgs.xorg.xrdb}/bin/xrdb -merge ${xwaylandXresources}
+      xwayland_dpi ${xwaylandDpi}
       ''}
       # Window border settings
       default_border pixel 2
