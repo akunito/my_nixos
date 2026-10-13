@@ -19,7 +19,7 @@
 #   GAMESCOPE_DISABLE=1   skip gamescope, run %command% directly (A/B testing)
 #   GAMESCOPE_WLDEBUG=1   run gamescope under WAYLAND_DEBUG=1 into a log file
 #                         (keeps the last 64MB; GAMESCOPE_WLDEBUG_MAX_MB overrides)
-#   GAMESCOPE_SHARE_PID=1 keep the game in the host pid namespace (see below)
+#   GAMESCOPE_UNSHARE_PID=1 give the game its own pid namespace (breaks Steam IPC for AION 2, see below)
 #
 set -euo pipefail
 
@@ -132,10 +132,13 @@ done
 # shared under a Flatpak subsandbox (not our case: native Steam). Host network
 # stays shared (bond0 capture of the game's TCP flow is unaffected). If a game
 # breaks (Steam overlay, Steam API not seeing the client, stuck "Running"),
-# prefix its launch options with GAMESCOPE_SHARE_PID=1 (before this wrapper).
-if [[ "${GAMESCOPE_SHARE_PID:-0}" != "1" ]]; then
+# (opt-in only since the AION 2 failure below).
+# Measured 2026-10-13 16:16 with AION 2: the private pid namespace killed the launch — Steam's IPC died ("src/common/pipes.cpp (900):
+# fatal stalled cross-thread pipe (pipe is disconnected) / Fatal assert; application exiting" 29 s after start) and Steam stayed stuck
+# on "Stop". So it is OPT-IN now: GAMESCOPE_UNSHARE_PID=1 in a game's launch options; the default keeps the shared namespace.
+if [[ "${GAMESCOPE_UNSHARE_PID:-0}" == "1" ]]; then
     export PRESSURE_VESSEL_SHARE_PID=0
-    log "PRESSURE_VESSEL_SHARE_PID=0: game gets its own pid namespace (GAMESCOPE_SHARE_PID=1 opts out)"
+    log "PRESSURE_VESSEL_SHARE_PID=0: game gets its own pid namespace (GAMESCOPE_UNSHARE_PID=1)"
 fi
 
 STEAM_PRELOAD="${LD_PRELOAD:-}"
