@@ -582,13 +582,15 @@ in
     mount2ndDrives = true;
     # disk1 slot free. It used to be /mnt/2nd_NVME (LUKS+ext4 on nvme0n1p5,
     # Skyrim/LoreRim + VirtPool). Wiped 2026-09-13 and handed back to Windows
-    # as a second NTFS partition (Aion 2 and other Windows-only games). LoreRim
-    # config/saves bundle + VirtPool now live on /mnt/DATA_SATA3 — see
-    # docs/akunito/gaming/skyrim-linux-setup.md section 9.
+    # as a second NTFS partition, which since 2026-10-13 is disk2 below (Games +
+    # VirtPool). LoreRim/Skyrim was deleted 2026-10-05.
     disk1_enabled = false;
     disk2_enabled = true;
     disk2_name = "/mnt/DATA_SATA3";
-    disk2_device = "/dev/disk/by-uuid/B8AC28E3AC289E3E";
+    # Since 2026-10-13 this is the GAMES NTFS partition on the NM790 2 TB (nvme p5, Windows E:),
+    # not the 870 QVO (by-uuid/B8AC28E3AC289E3E), which went to the NAS as the new ssdpool.
+    # PARTUUID read from Windows (Get-Partition Guid) because the 64-bit NTFS serial needs admin.
+    disk2_device = "/dev/disk/by-partuuid/8cdcc4ad-4262-4248-b5ba-294f534f881e";
     disk2_fsType = "ntfs3";
     disk2_options = [
       "nofail"
