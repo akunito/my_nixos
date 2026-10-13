@@ -61,11 +61,6 @@
       fsType = "9p";
     };
 
-  fileSystems."/mnt/f" =
-    { device = "F:\134";
-      fsType = "9p";
-    };
-
   fileSystems."/home/akunito/Nextcloud" =
     { device = "/mnt/c/Users/diego/Nextcloud";
       fsType = "none";
@@ -76,10 +71,6 @@
     { device = "tmpfs";
       fsType = "tmpfs";
     };
-
-
-
-
 
 
 
