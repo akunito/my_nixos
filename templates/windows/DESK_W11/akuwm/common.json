@@ -746,14 +746,13 @@
     {
       "id": "k-dpsmtr",
       "keys": "Hyper+G",
-      "kind": "app",
-      "app": "AION2DpsMeter.exe",
-      "command": "%USERPROFILE%\\Documents\\AION2DpsMeter-built-535edf3\\AION2DpsMeter.exe",
+      "kind": "send",
+      "command": "^+d",
       "category": "Apps",
-      "name": "AION2 DPS Meter",
+      "name": "AION2 DPS Meter: show/hide the overlay",
       "enabled": true,
-      "notes": "the install folder carries the build hash: update the path when the meter is rebuilt",
-      "updated_at": 1791676800
+      "notes": "sends the meter's own HotkeyToggleOverlay (Ctrl+Shift+D, settings.json). The overlay is an OWNED WS_EX_TOOLWINDOW|TOPMOST|NOACTIVATE window, so AkuWM never manages it and an app toggle cannot see it: it relaunched the exe instead of hiding (2026-10-13)",
+      "updated_at": 1791878400
     },
     {
       "id": "k-wm-left",
