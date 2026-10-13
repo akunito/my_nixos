@@ -73,7 +73,7 @@ let
       [ -f "$1" ] || return 1
       p=$(cat "$1" 2>/dev/null) || return 1
       case $p in ""|*[!0-9]*) return 1;; esac
-      tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q "$2" || return 1
+      [ -r "/proc/$p/cmdline" ] && tr '\0' ' ' < "/proc/$p/cmdline" | grep -q "$2" || return 1
       echo "$p"
     }
     run=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
