@@ -607,6 +607,16 @@
 
     # GPU-related feature flags
     amdLACTdriverEnable = false; # Enable LACT (Linux AMD GPU Control Application) for AMD GPU management
+    # Mesa from the nixpkgs-unstable RECIPE, built against this profile's own
+    # (stable) package set and installed only as hardware.graphics.package.
+    # The unstable BINARY cannot be used on a stable base: measured 2026-10-13,
+    # Mesa 26.2.4 libgallium needs GLIBC_2.43, its LLVM 21.1.8 GLIBC_2.44 and it
+    # calls amdgpu_va_manager_init2 (libdrm 2.4.134 > stable 2.4.129) — RADV
+    # fails to load ("version GLIBC_2.44 not found"). Overriding pkgs.mesa in an
+    # overlay would rebuild the world; hardware.graphics.package does not.
+    # Costs a from-source Mesa build (64 + 32 bit). Why: RDNA4 RT/perf work in
+    # Mesa 26.x (Aion 2 on the RX 9070 XT) while DESK stays on nixos-25.11.
+    mesaUnstableRecipeEnable = false;
     amdgpuSuspendWorkaround = false; # AINF-282: disable amdgpu runpm/bapm/aspm + pause lactd around sleep (RDNA 4 / Navi 48 SMU regression, kernel 6.17–7.0+)
     amdgpuDisableIps = false; # amdgpu.dcdebugmask=0x800 (DC_DISABLE_IPS): stop DMCUB wedging on resume (RDNA 4 INBOX0 HW Lock Ack flood, kernel 7.1.x)
     amdgpuGttSizeMiB = null; # Cap amdgpu GTT (system RAM pinned by the GPU) in MiB. null = kernel default (half of RAM). Bounds how much must be evicted at suspend.

@@ -46,6 +46,7 @@ in
     gpuType = "amd";
     enableDesktopPerformance = true; # Enable desktop-optimized I/O scheduler and performance tuning
     amdLACTdriverEnable = true;
+    mesaUnstableRecipeEnable = true; # Mesa 26.2.4 (unstable recipe on the stable base); 25.2.6 before 2026-10-13
     amdgpuSuspendWorkaround = true; # AINF-282: kernel 6.17→7.0+ SMU suspend regression on Navi 48
     amdgpuDisableIps = true; # DMCUB wedged on resume 2026-08-07 (INBOX0 HW Lock Ack flood → ~1 FPS desktop)
     # Loose backstop only — the actual fix is the amdgpu_evict_gtt drain in

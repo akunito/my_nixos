@@ -1,14 +1,39 @@
 {
   pkgs,
+  pkgs-unstable,
   systemSettings,
   lib,
   ...
 }:
 
+let
+  # Unstable's Mesa recipe evaluated with THIS package set (callPackage from
+  # `p`), so the drivers link the same glibc/LLVM/libstdc++ as every app that
+  # dlopens them. Only libdrm (Mesa 26.2 needs 2.4.134 symbols) and DirectX-Headers come along.
+  # mesa-libclc 22.x refuses LLVM < 22 at configure time; LLVM 21's libclc is
+  # what stable's own Mesa 25.2 builds with. Keep the expression identical for
+  # 64 and 32 bit (pkgsi686Linux) so both come from one evaluation.
+  mesaUnstableRecipe =
+    p:
+    let
+      u = pkgs-unstable.path;
+      libdrm = p.callPackage "${u}/pkgs/by-name/li/libdrm/package.nix" { };
+      # Mesa 26.2 wants DirectX-Headers >= 1.619.1 (stable: 1.618.2), header-only
+      directx-headers = p.callPackage "${u}/pkgs/by-name/di/directx-headers/package.nix" { };
+    in
+    p.callPackage "${u}/pkgs/development/libraries/mesa" {
+      inherit libdrm directx-headers;
+      mesa-libclc = p.llvmPackages_21.libclc;
+      llvmPackages = p.llvmPackages_21;
+    };
+  mesaFromUnstable = systemSettings.mesaUnstableRecipeEnable or false;
+in
 {
   hardware.graphics = {
     enable = true;
     enable32Bit = true;
+    package = lib.mkIf mesaFromUnstable (mesaUnstableRecipe pkgs);
+    package32 = lib.mkIf mesaFromUnstable (mesaUnstableRecipe pkgs.pkgsi686Linux);
   };
 
   # OpenGL (renamed to graphics)
