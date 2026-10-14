@@ -104,6 +104,28 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
   - una web pública carga;
   - Chromium corre con sandbox (`chrome://sandbox` o el proceso `zygote` con namespaces).
 
+**Estado F3a (2026-10-14):** implementado y probado en DESK de principio a fin con `rea-claude <caso-web> --ask`:
+- `example.com` → 200, título correcto;
+- `192.168.8.1` → **403 del proxy**; el agente informó del bloqueo sin intentar esquivarlo;
+- probados también, a mano, `192.168.8.1.nip.io` (*DNS rebinding*), `localtest.me` (que resuelve a 127.0.0.1) y `100.64.0.6` → **403**;
+- Chromium corre **sin** `--no-sandbox`;
+- al cerrar, no queda squid, ni scopes, ni VM, y el *staging* queda vacío.
+
+**Hallazgos medidos en la implementación:**
+1. **La ACL `::ffff:0:0/96` de la auditoría bloquea TODO el IPv4.** Squid guarda internamente las IPv4 como IPv6 mapeadas. Eliminada.
+2. **El envoltorio de Chromium tenía un `\\`** que en un string `''` de Nix no continúa la línea: Chromium recibía un argumento suelto `\`. Corregido; ahora el `stderr` de Chromium se copia a `out/chromium.err` con `tee`.
+3. **Claude Code 2.1.296 abre con una sonda `server/discover`** (protocolo 2026-07-28) antes de `initialize`. rea-agents 6.4.0 la contesta ejecutando su ruta de cierre (`closeProviders`): a partir de ahí **todas las herramientas con proveedor** (navegador, Android/apktool, firmware, artefactos…) devuelven "provider is closing" durante el resto de la sesión. Las herramientas de Ghidra no se ven afectadas.
+   - **Arreglo:** `mcp-filter.py` (`rea-mcp-filter`) responde a la sonda con "method not found" y Claude Code sigue con `initialize`. Se aplica al nivel 0 y a la VM.
+   - **Pendiente:** reportarlo upstream (`morluto/rea`, con issue antes de PR, según su CONTRIBUTING).
+4. **Claude Code termina con una señal el servidor MCP de las sesiones `-p`.** Bash no ejecuta el `trap EXIT` con una señal fatal, y la limpieza se quedaba a medias. Ahora:
+   - `trap 'exit 143' TERM INT HUP`;
+   - `socat` en segundo plano con `wait`; **`<&0` obligatorio**, porque sin él un comando en segundo plano recibe `/dev/null` y cerraba la sesión;
+   - el filtro se interpone, así que el lanzador ve EOF y termina su limpieza;
+   - al empezar cada sesión se paran los scopes `rea-*` que hayan quedado.
+5. **Chromium hace peticiones de fondo** a `google.com` y `gvt1.com`. Se reducen con `--disable-background-networking --disable-component-update --disable-domain-reliability`. Las que quedan pasan por el proxy y se registran.
+6. `visible_hostname rea-proxy`: la página de error de squid mostraba el nombre del host.
+7. `<caso>/.trace` vuelca el tráfico MCP en el log del caso (`mcp-client.dump`, `mcp-server.dump`).
+
 ## Carril dinámico (F3b) — revisado tras la auditoría (2026-10-14)
 
 - **El objetivo es hijo de REA**, con el mismo uid `rea`, en modo *spawn*. Así pwndbg y la captura de procesos funcionan sin `CAP_SYS_PTRACE` y sin pelearse con Yama. Se descarta el uid 1001: lo que escriba en `out/` pasa de todas formas por el barrido.

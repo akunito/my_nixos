@@ -1,5 +1,8 @@
-{ inputs, pkgs, rea-agents, uid, cacheDir, extraModules ? [ ] }:
+{ inputs, pkgs, rea-agents, uid, cacheDir, web ? false, extraModules ? [ ] }:
 # extraModules: tests only (e.g. a root console for the escape test); empty in production.
+# web = true: the F3a web lane — no target/, Chromium, and an HTTP proxy that exists only
+# as a vsock relay to the per-session host squid (no NIC; libslirp 4.9.1 has
+# CVE-2026-9539 and microvm.nix cannot express restrict=on — audit 2026-10-14).
 # REA microVM for tiers 1-2 (AINF-408 F2). A user-run QEMU guest (microvm.nix):
 # no NIC at all, its own store (storeOnDisk: the host /nix/store is NOT shared — it
 # holds generated configs with secret-derived values), RAM-only root, QEMU -sandbox on.
@@ -9,6 +12,28 @@
 # Prototype measurements and gotchas: docs/akunito/plans/rea-sandbox/aislamiento.md.
 let
   reaEnv = import ./env.nix { inherit pkgs rea-agents; };
+  # Playwright 1.58.2 always appends --no-sandbox (REA never passes chromiumSandbox) and
+  # no proxy. This wrapper drops the former (namespace sandbox works in the guest) and
+  # forces every request through the relay; QUIC, non-proxied WebRTC UDP and DoH are off.
+  chromiumWrapper = pkgs.writeShellScript "rea-chromium" ''
+    args=()
+    for a in "$@"; do [ "$a" = --no-sandbox ] || args+=("$a"); done
+    # Chromium stderr is also copied to out/ (reaches the case through the staging sweep):
+    # REA only reports "execution_failure" when a launch fails. tee, not a redirect:
+    # Playwright reads the DevTools endpoint from this stderr.
+    exec 2> >(${pkgs.coreutils}/bin/tee -a /mnt/out/chromium.err >&2)
+    exec ${pkgs.chromium}/bin/chromium "''${args[@]}" \
+      --proxy-server=http://127.0.0.1:3128 --proxy-bypass-list='<-loopback>' \
+      '--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1' \
+      --disable-quic --force-webrtc-ip-handling-policy=disable_non_proxied_udp --dns-over-https-mode=off \
+      --disable-background-networking --disable-component-update --disable-domain-reliability
+  '';
+  envAll = reaEnv.env // pkgs.lib.optionalAttrs web {
+    REA_BROWSER_EXECUTABLE = "${chromiumWrapper}";
+    HTTPS_PROXY = "http://127.0.0.1:3128";
+    HTTP_PROXY = "http://127.0.0.1:3128";
+    NODE_USE_ENV_PROXY = "1"; # Node >= 24: fetch (WebSourceMapFetcher) honours the proxy
+  };
   run = "/run/user/${toString uid}/rea-vm";
   share = tag: ro: {
     proto = "9p"; inherit tag; source = "${run}/${tag}"; mountPoint = "/mnt/${tag}";
@@ -70,8 +95,9 @@ let
           # files there for a host reader at any time (audit 2026-10-14). The guest writes a
           # staging dir in the user's tmpfs (also caps its size); rea-vm-mcp sweeps it and
           # moves it into the case only after QEMU has exited.
-          shares = [ (share "target" true) { proto = "9p"; tag = "out"; source = "${run}/out-stage";
-                       mountPoint = "/mnt/out"; readOnly = false; securityModel = "none"; } (share "ctl" true) ];
+          shares = pkgs.lib.optional (!web) (share "target" true) ++ [
+            { proto = "9p"; tag = "out"; source = "${run}/out-stage"; mountPoint = "/mnt/out"; readOnly = false; securityModel = "none"; }
+            (share "ctl" true) ];
           # work/ (Ghidra temp, REA HOME) is a throwaway disk, not a host directory: nothing
           # from it ever reaches the host fs, and it cannot fill /home. rea-vm-mcp deletes
           # the image before every boot, so the runner mkfs'es a fresh one.
@@ -90,8 +116,10 @@ let
             d=$(cat /mnt/ctl/case)
             case "$d" in /home/*/rea/cases/*) ;; *) echo "refusing case path $d" >&2; exit 1 ;; esac
             mkdir -p "$d/target" "$d/out" "$d/work"
-            mount --bind /mnt/target "$d/target"
-            mount -o remount,bind,ro "$d/target"
+            if [ -d /mnt/target ]; then
+              mount --bind /mnt/target "$d/target"
+              mount -o remount,bind,ro "$d/target"
+            fi
             mount --bind /mnt/out "$d/out"
             chown rea:users /mnt/work /mnt/out
             mount --bind /mnt/work "$d/work"
@@ -107,7 +135,7 @@ let
             {
               echo '#!${pkgs.bash}/bin/bash'
               ${lib.concatStrings (lib.mapAttrsToList (k: v: ''echo 'export ${k}="${v}"'
-              '') reaEnv.env)}
+              '') envAll)}
               echo "export TMPDIR=$d/work HOME=$d/work"
               echo "exec ${rea-agents}/bin/rea mcp 2>>$d/out/rea-mcp.err"
             } > /run/rea-mcp.sh
@@ -122,9 +150,16 @@ let
           path = [ pkgs.socat ];
           script = "exec socat VSOCK-LISTEN:5001,reuseaddr,fork EXEC:${triage},su=rea";
         };
-        environment.systemPackages = reaEnv.tools;
+        # Web lane: the only way out is 127.0.0.1:3128 -> vsock -> host squid (port in ctl/).
+        systemd.services.rea-proxy-relay = lib.mkIf web {
+          wantedBy = [ "multi-user.target" ];
+          path = [ pkgs.socat pkgs.coreutils ];
+          script = "exec socat TCP-LISTEN:3128,bind=127.0.0.1,reuseaddr,fork VSOCK-CONNECT:2:$(cat /mnt/ctl/proxy-port)";
+        };
+        environment.systemPackages = reaEnv.tools ++ lib.optional web pkgs.chromium;
       })
     ] ++ extraModules;
   };
 in
-guest.config.microvm.declaredRunner
+# chromiumWrapper: the absolute path REA must be given as executable_path (web cases).
+guest.config.microvm.declaredRunner // { inherit chromiumWrapper; }

@@ -15,6 +15,8 @@ let
   vmUid = 1000; # baked into the microVM share paths (/run/user/<uid>/rea-vm); the launcher checks it
   vmCache = "${config.home.homeDirectory}/.cache/rea-vm"; # throwaway work disk image
   vmRunner = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; };
+  vmRunnerWeb = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; web = true; };
+  squid = pkgs-unstable.squid;
   socat = pkgs-unstable.socat;
   # The real binary, bypassing the claude-sync wrapper: with a foreign
   # CLAUDE_CONFIG_DIR the wrapper would turn ~/.claude-rea into a hub clone.
@@ -31,6 +33,7 @@ let
       echo "$CASES/$1"
     }
     case_tier() { sed -n 's/^tier: *\([0-9]\).*/\1/p' "$1/CASE.md" 2>/dev/null | head -1; }
+    case_web() { grep -q '^web: yes' "$1/CASE.md" 2>/dev/null; }
     ensure_image() {
       docker image inspect "$IMAGE" >/dev/null 2>&1 || docker load -q -i ${image} >/dev/null
     }
@@ -55,10 +58,11 @@ let
       case "$cmd" in
         new)
           d=$(case_dir "''${1:-}"); name=$1; shift
-          tier=1; brief=""
+          tier=1; brief=""; web=no
           while [ $# -gt 0 ]; do
             case "$1" in
               --tier) tier=$2; shift 2 ;;
+              --web) web=yes; shift ;;
               --brief) brief=$2; shift 2 ;;
               *) die "unknown option $1" ;;
             esac
@@ -67,8 +71,14 @@ let
           [ -e "$d" ] && die "case $name already exists"
           mkdir -p "$d/target" "$d/out" "$d/work" "$d/log"
           chmod 755 "$d" "$d/target"
-          printf 'tier: %s\ncreated: %s\nbrief: %s\n' "$tier" "$(date -Iseconds)" "$brief" > "$d/CASE.md"
+          [ "$web" = no ] || [ "$tier" != 0 ] || die "web cases are tier 1 or 2 (a website is never ours in the tier-0 sense)"
+          printf 'tier: %s\nweb: %s\ncreated: %s\nbrief: %s\n' "$tier" "$web" "$(date -Iseconds)" "$brief" > "$d/CASE.md"
           cp ${./case-CLAUDE.md} "$d/CLAUDE.md"; chmod 644 "$d/CLAUDE.md"
+          if [ "$web" = yes ]; then
+            # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
+            printf '\n## Web case\n- The only browser is inside the sandbox: pass `%s` as `executable_path` (launch mode) to `capture_browser_scenario`. Do not search the host for a browser.\n- All traffic goes through a filtering proxy: LAN, tailnet, the host, private/reserved IPs, numeric hosts and internal domains are refused by design (HTTP 403). Report such refusals, do not try to get around them.\n- `log/proxy.log` lists every request (query strings stripped).\n' \
+              "${vmRunnerWeb.chromiumWrapper}" >> "$d/CLAUDE.md"
+          fi
           if [ "$tier" = 0 ]; then
             # tier 0: REA runs as container uid 1000 = host subuid 100999
             ensure_image
@@ -122,12 +132,16 @@ let
     '';
   };
 
+  # Answers Claude Code's `server/discover` probe so rea-agents 6.4.0 does not close its
+  # providers (details in mcp-filter.py).
+  rea-mcp-filter = pkgs.writeScriptBin "rea-mcp-filter" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./mcp-filter.py);
+
   # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
   # (stdio <-> vsock) and destroy the VM when the client goes away. stdout is the MCP
   # stream: everything else goes to stderr or the case log.
   rea-vm-mcp = pkgs.writeShellApplication {
     name = "rea-vm-mcp";
-    runtimeInputs = [ socat pkgs.coreutils pkgs.findutils pkgs.util-linux pkgs.systemd ];
+    runtimeInputs = [ socat squid pkgs.coreutils pkgs.findutils pkgs.util-linux pkgs.systemd pkgs.iproute2 pkgs.gawk ];
     text = ''
       d=$1; mode=''${2:-mcp}
       die() { echo "rea-vm: $*" >&2; exit 1; }
@@ -137,6 +151,9 @@ let
       mkdir -p "$V/ctl"
       exec 9>"$V.lock"
       flock -n 9 || die "another tier 1-2 session is running (one microVM at a time)"
+      # We hold the lock, so any rea scope still around is a leftover of a session that
+      # was killed before its cleanup ran.
+      systemctl --user stop 'rea-vm-*.scope' 'rea-proxy-*.scope' 'rea-relay-*.scope' >/dev/null 2>&1 || true
       C=${vmCache}
       mkdir -p "$C"
       rm -f "$C/work.img"               # the runner mkfs'es a fresh work disk
@@ -144,12 +161,69 @@ let
       ln -sfn "$d/target" "$V/target"
       printf '%s' "$d" > "$V/ctl/case"
       unit="rea-vm-$$"
+      sq=""
+      runner=${vmRunner}
+      if [ "$mode" = web ]; then
+        runner=${vmRunnerWeb}
+        free() { ! ss -Hltn "( sport = :$1 )" | grep -q .; }
+        sp=$(shuf -i 40000-59999 -n 1); while ! free "$sp"; do sp=$(shuf -i 40000-59999 -n 1); done
+        vp=$(shuf -i 20000-39999 -n 1)
+        printf '%s' "$vp" > "$V/ctl/proxy-port"
+        # Everything the host itself owns is a forbidden destination too (LAN, tailnet,
+        # docker bridges…), on top of the audited private/reserved ranges.
+        own=$(ip -o addr show | awk '{print $4}' | cut -d/ -f1 | paste -sd' ')
+        cat > "$V/squid.conf" <<EOSQ
+      http_port 127.0.0.1:$sp
+      pid_filename none
+      shutdown_lifetime 0 seconds
+      visible_hostname rea-proxy
+      coredump_dir $V
+      cache deny all
+      icp_port 0
+      htcp_port 0
+      snmp_port 0
+      dns_nameservers 1.1.1.1 9.9.9.9
+      via off
+      forwarded_for delete
+      request_header_access X-Forwarded-For deny all
+      httpd_suppress_version_string on
+      strip_query_terms on
+      log_mime_hdrs off
+      access_log stdio:$d/log/proxy.log
+      cache_log stdio:$d/log/proxy-cache.log
+      acl localsrc src 127.0.0.1/32
+      acl Safe_ports port 80 443
+      acl SSL_ports port 443
+      acl ok_method method GET HEAD POST CONNECT
+      acl private_dst dst 0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.168.0.0/16 224.0.0.0/4 240.0.0.0/4 ::1/128 ::/128 fc00::/7 fe80::/10 64:ff9b::/96 2002::/16 $own
+      acl numeric_host dstdom_regex -i ^[0-9]+$ ^0x
+      acl internal_dom dstdom_regex -i \.local\.akunito\.com$ \.local$ \.internal$ \.home\.arpa$ \.ts\.net$ \.lan$
+      http_access deny !Safe_ports
+      http_access deny CONNECT !SSL_ports
+      http_access deny !ok_method
+      http_access deny to_localhost
+      http_access deny to_linklocal
+      http_access deny private_dst
+      http_access deny numeric_host
+      http_access deny internal_dom
+      http_access allow localsrc
+      http_access deny all
+      EOSQ
+        env -u LD_LIBRARY_PATH systemd-run --user --scope --quiet --collect --unit="rea-proxy-$$" -p MemoryMax=512M \
+          squid -N -f "$V/squid.conf" >>"$d/log/proxy-cache.log" 2>&1 &
+        sq=$!
+        for _ in $(seq 1 30); do free "$sp" || break; sleep 0.5; done
+        free "$sp" && die "squid did not start (see $d/log/proxy-cache.log)"
+        systemd-run --user --scope --quiet --collect --unit="rea-relay-$$" -p MemoryMax=128M \
+          socat "VSOCK-LISTEN:$vp,reuseaddr,fork" "TCP:127.0.0.1:$sp" >>"$d/log/proxy-cache.log" 2>&1 &
+      fi
       # Only after QEMU is gone does anything the guest wrote reach the case: no symlinks,
       # no FIFOs/sockets/devices, no exec/setuid bits (audit 2026-10-14).
       # shellcheck disable=SC2329 # invoked through the EXIT trap
       cleanup() {
-        systemctl --user stop "$unit.scope" >/dev/null 2>&1 || true
-        rm -f "$V/target" "$V/ctl/case" "$C/work.img"
+        systemctl --user stop "$unit.scope" "rea-proxy-$$.scope" "rea-relay-$$.scope" >/dev/null 2>&1 || true
+        [ -z "$sq" ] || kill "$sq" 2>/dev/null || true
+        rm -f "$V/target" "$V/ctl/case" "$V/ctl/proxy-port" "$V/squid.conf" "$C/work.img"
         if [ -n "$(ls -A "$V/out-stage" 2>/dev/null)" ]; then
           find "$V/out-stage" -mindepth 1 \( -type l -o \( ! -type f ! -type d \) \) -delete
           find "$V/out-stage" -type f -exec chmod a-xst {} +
@@ -160,12 +234,16 @@ let
         rm -rf "$V/out-stage"
       }
       trap cleanup EXIT
+      # Claude Code ends a headless (-p) session by signalling its MCP servers; bash skips
+      # the EXIT trap on a fatal signal, which left squid and the staging dir behind
+      # (measured with --ask). Turn the signals into a normal exit.
+      trap 'exit 143' TERM INT HUP
       echo "$(date -Iseconds) boot" >> "$d/log/vm-console.log"
       # The desktop exports a global LD_LIBRARY_PATH (alsa, sane, pipewire-jack) that
       # breaks binaries from another nixpkgs revision: GLIBC_2.43 not found (measured).
       env -u LD_LIBRARY_PATH systemd-run --user --scope --quiet --collect --unit="$unit" \
         -p MemoryMax=8G -p TasksMax=2048 \
-        ${vmRunner}/bin/microvm-run </dev/null >>"$d/log/vm-console.log" 2>&1 &
+        "$runner/bin/microvm-run" </dev/null >>"$d/log/vm-console.log" 2>&1 &
       vm=$!
       for _ in $(seq 1 120); do
         kill -0 "$vm" 2>/dev/null || die "microVM exited during boot (see $d/log/vm-console.log)"
@@ -173,7 +251,16 @@ let
           if [ "$mode" = triage ]; then
             socat -u VSOCK-CONNECT:4242:5001 STDOUT | tee "$d/log/triage.txt"
           else
-            socat STDIO VSOCK-CONNECT:4242:5000
+            # In the background + wait, so a TERM is handled at once instead of after socat.
+            # <&0 is required: without job control a background command gets /dev/null as
+            # stdin, and socat then closed the MCP session at once (measured).
+            # A <case>/.trace file dumps the raw MCP traffic into the case log (debugging).
+            if [ -e "$d/.trace" ]; then
+              socat -r "$d/log/mcp-client.dump" -R "$d/log/mcp-server.dump" STDIO VSOCK-CONNECT:4242:5000 <&0 &
+            else
+              socat STDIO VSOCK-CONNECT:4242:5000 <&0 &
+            fi
+            wait $!
           fi
           exit 0
         fi
@@ -195,12 +282,19 @@ let
         0) ;;
         1|2)
           [ "''${1:-}" = mcp ] || die "tier $tier cases only run through rea-claude (MCP in the microVM)"
-          exec ${rea-vm-mcp}/bin/rea-vm-mcp "$d"
+          if case_web "$d"; then exec ${rea-mcp-filter}/bin/rea-mcp-filter ${rea-vm-mcp}/bin/rea-vm-mcp "$d" web; fi
+          exec ${rea-mcp-filter}/bin/rea-mcp-filter ${rea-vm-mcp}/bin/rea-vm-mcp "$d"
           ;;
         *) die "case has no valid tier in CASE.md" ;;
       esac
       ensure_image
-      exec docker run --rm -i --runtime krun --annotation krun.ram_mib=6144 \
+      # A closed case hands out/ and work/ back to the user; REA runs as container uid
+      # 1000 (= host subuid 100999) and needs them again (EACCES mkdtemp otherwise).
+      as_root -v "$d/out:/o" -v "$d/work:/w" "$IMAGE" -c 'chown 1000:100 /o /w && chmod 700 /o /w'
+      # MCP mode goes through the discover filter (see mcp-filter.py); the CLI does not.
+      filter=()
+      [ "''${1:-}" != mcp ] || filter=(${rea-mcp-filter}/bin/rea-mcp-filter)
+      exec "''${filter[@]}" docker run --rm -i --runtime krun --annotation krun.ram_mib=6144 \
         --network none --read-only --tmpfs /tmp:size=512m \
         --cap-drop ALL --security-opt no-new-privileges --memory 8g --pids-limit 4096 \
         -v "$d/target:$d/target:ro" -v "$d/out:$d/out" -v "$d/work:$d/work" \
