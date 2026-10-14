@@ -55,11 +55,19 @@ let
       # trees (children first) rather than by process group: a pgid can be the
       # caller's shell when the session was started without job control.
       kill_tree() { local c; for c in $(${pkgs.procps}/bin/pgrep -P "$1"); do kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null; }
+      # Every process of this user carrying the URL (no name match: the nixpkgs
+      # wrapper runs as comm `.claude-wrapped`, so `pgrep -x claude` found nothing
+      # on 2026-10-14 and the -p session kept generating); roots = those whose
+      # parent does not carry it. The caller's own shell is skipped.
+      marked=" "
+      for p in $(${pkgs.procps}/bin/pgrep -u "$(id -u)"); do
+        [ "$p" = "$$" ] || [ "$p" = "$PPID" ] && continue
+        tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qx "ANTHROPIC_BASE_URL=${url}" && marked="$marked$p "
+      done
       roots=""
-      for p in $(${pkgs.procps}/bin/pgrep -u "$(id -u)" -x claude); do
-        [ "$p" = "$$" ] && continue
-        tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qx "ANTHROPIC_BASE_URL=${url}" || continue
-        roots="$roots $p"
+      for p in $marked; do
+        pp=$(${pkgs.procps}/bin/ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+        case "$marked" in *" $pp "*) ;; *) roots="$roots $p" ;; esac
       done
       for p in $roots; do kill_tree "$p"; done
       [ -n "$roots" ] && sleep 2
