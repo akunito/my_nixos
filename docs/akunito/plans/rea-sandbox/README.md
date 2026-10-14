@@ -15,6 +15,7 @@ related_files:
   - docs/akunito/plans/docker-rootless-workstations.md
   - docs/akunito/plans/rea-sandbox/aislamiento.md
   - docs/akunito/plans/rea-sandbox/herramientas.md
+  - docs/akunito/plans/rea-sandbox/mejoras.md
 ---
 
 # REA en un sandbox: plan
@@ -115,6 +116,8 @@ Diseño de cada sandbox (contenedor, microVM, carril web, sesión aislada, higie
 - Una línea en el `CLAUDE.md` global que apunta al skill.
 
 Herramientas, versiones, motores comerciales y cadena de suministro: [herramientas.md](herramientas.md).
+
+Segundo plan, con lo que ya existe en open source para medir y mejorar Ghidra (DecBench, extensiones, firmas abiertas, IA local): [mejoras.md](mejoras.md).
 
 ## Fases y pruebas
 
