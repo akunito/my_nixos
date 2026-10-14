@@ -61,14 +61,58 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
   3. `pkill -f <patrón>` también mata al propio shell si el patrón aparece en su línea de comandos. Hay que parar la VM por PID exacto o con `microvm.socket`.
 - **Para el módulo real:** usar el `pkgs-unstable` de la dotfiles (el prototipo usó otro nodo y cargó Ghidra 12.1.2), compartir la lista de herramientas con la imagen, un CID por sesión con un lock (o una sola VM a la vez) y parada limpia.
 
-## Carril web (F3)
+## Carril web (F3a) — diseño 2026-10-14, pendiente de auditoría
 
-Va **en la microVM**, no en un contenedor rootless:
-- En rootless no se puede bloquear la LAN de forma fiable: slirp4netns corre como akunito, así que filtrar por uid filtraría todo el tráfico de Diego.
-- La VM tiene su propio interfaz tap. El host le aplica reglas nftables declaradas en Nix que **tiran todo lo que va a 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, link-local e IPs del host**, y solo dejan salir a internet.
-- Chromium corre con su propio sandbox activo, porque dentro de la VM tiene los privilegios que necesita.
+**Cambio respecto al diseño anterior:** el interfaz `tap` con nftables en el host no sirve, porque un QEMU ejecutado sin root no puede crear un `tap`. Filtrar por uid tampoco sirve: slirp corre como akunito y filtraría todo su tráfico. Nuevo diseño, todo rootless:
 
-Sin `target/`, solo `out/` y `work/`. Las webs son nivel 1. Es el único carril con internet: REA baja ahí source maps (`WebSourceMapFetcher.ts`). Prueba: desde la VM, `192.168.8.1`, `100.64.0.6` y la IP de DESK no responden, y una web pública sí.
+- **Una VM web aparte** (otro runner de `vm.nix` con un parámetro `web = true`), nunca la misma que analiza binarios.
+  - Sin `target/`: solo `out/`, `work/` y `ctl/`, porque aquí el objetivo es una URL.
+  - NIC de QEMU en modo usuario con **`restrict=on`**, que corta toda salida salvo los `guestfwd` declarados.
+  - **Un único `guestfwd`:** `tcp:10.0.2.100:3128` → `cmd:` que conecta (socat) con el proxy del host. No hay ninguna otra ruta. Sin DNS en el guest: resuelve el proxy.
+- **Proxy en el host: squid**, uno por sesión, lanzado por el lanzador como el usuario, en un scope con límites, en `127.0.0.1:<puerto aleatorio>`. Se destruye al cerrar.
+  - **Lo bloquea por IP ya resuelta** (ACL `dst`, que protege también contra *DNS rebinding*): 10/8, 172.16/12, 192.168/16, 100.64/10, 127/8, 169.254/16, 0/8, 224/4, 240/4, ::1, fc00::/7, fe80::/10, más `to_localhost`, las IPs propias del host y el VPS por su IP pública.
+  - Solo métodos `GET`/`HEAD`/`POST` a los puertos 80 y 443, y `CONNECT` solo al 443.
+  - Resuelve con DNS públicos (1.1.1.1, 9.9.9.9), **no con pfSense**: así los nombres internos (`*.local.akunito.com`) no se resuelven ni se pueden sondear.
+  - Log de cada petición en `log/proxy.log`, que es la traza de lo que la web intentó cargar.
+- **Dentro de la VM:**
+  - `REA_BROWSER_EXECUTABLE` apunta a un envoltorio que lanza Chromium con `--proxy-server=http://10.0.2.100:3128` y sin bypass. Chromium conserva su propio sandbox, porque dentro de la VM tiene los privilegios que necesita.
+  - REA (Node) recibe `HTTPS_PROXY`/`HTTP_PROXY` y `NODE_USE_ENV_PROXY=1` para bajar source maps (`WebSourceMapFetcher.ts`) por el mismo proxy.
+- **Nivel:** las webs son nivel 1 (`rea-case new <caso> --web --tier 1`), solo por `rea-claude`.
+- **Pruebas:**
+  - desde la VM, `192.168.8.1`, `100.64.0.6`, la IP de DESK, `127.0.0.1` del host y la IP pública del VPS fallan;
+  - un nombre que resuelva a una IP privada (rebinding simulado con un dominio público apuntando a 192.168.x) falla;
+  - una web pública carga;
+  - sin proxy, la VM no sale a ningún sitio.
+
+## Carril dinámico (F3b) — diseño 2026-10-14, pendiente de auditoría
+
+Ejecuta el objetivo **dentro de la microVM**, nunca en el host ni en el contenedor del nivel 0 (salvo builds nuestros).
+
+- **Alcance:**
+  - binarios Linux (ELF) y scripts;
+  - **Windows PE:** fuera de alcance, porque no hay Windows ni Wine en la VM;
+  - **Android dinámico:** F4, con un emulador en la VM.
+- **Red falsa, por defecto en dinámico:** la VM sigue **sin NIC hacia fuera**. Dentro hay:
+  - un interfaz `dummy` con 10.99.0.1;
+  - `dnsmasq` que resuelve **cualquier** nombre a 10.99.0.1;
+  - escuchas en 10.99.0.1 (`socat` en los puertos habituales, y `mitmproxy` en modo inverso o transparente para HTTP/TLS con su CA instalada en el guest), que registran en `out/net/` lo que el programa intenta enviar.
+  
+  Nada sale de la VM.
+- **Herramientas de REA:**
+  - `capture-process` (PTY, ficheros tocados, salida);
+  - pwndbg en vivo;
+  - **Frida**: el módulo npm `frida` 17.23.2 de REA necesita un binario precompilado. Va como derivación aparte fijada por hash, y se usa solo en la VM dinámica.
+- **El objetivo corre como un usuario aparte** (`target`, uid 1001), no como `rea`. REA lo lanza y observa. Los ficheros que escriba quedan en el overlay en RAM, que se tira al apagar.
+- **Pruebas** con un programa propio que intenta:
+  - conectar a internet y a la LAN (debe quedar registrado en `out/net/` sin salir);
+  - escribir fuera de `out/`;
+  - dejar symlinks;
+  - escalar a root;
+  - persistir.
+  
+  Nada sale, nada queda, y `rea-case close` limpia `out/`.
+
+Ambos carriles comparten la VM base de F2 (store propio, `-sandbox on`, raíz en RAM, una VM a la vez).
 
 ## Sesión aislada del agente (`rea-claude <caso>`)
 
