@@ -152,8 +152,18 @@ Detalles:
   - libgcc y libm añadidos;
   - aviso al agente de que un nombre con `source: analysis` es una suposición de FID.
 - **Medido:** construir las bases a la vez agotó la memoria de DESK (un Ghidra de hasta 6 GB por librería). Siempre con `--max-jobs` 1 o 2.
+- **Ampliado el 2026-10-15 con Debian 12, Ubuntu 24.04 y Alpine 3.20** (`bench/fid/distro.nix`).
+  - **Bases:** desde los paquetes oficiales (`libc6-dev`, `libstdc++-dev`, `libgcc-dev`, `musl-dev`, `gcc`), fijados por hash.
+  - **Corpus "ajeno":** los mismos programas, compilados con la cadena de cada distribución en Docker rootless (`workbench/rea-bench/foreign-corpus`).
+  - **Medido en ese corpus:**
+
+| Binario estático | Solo FID de nixpkgs | + FID de las distribuciones |
+|---|---|---|
+| C | 0,4–11 % | **54–60 %** |
+| C++ | 0,5–8 % | **27–36 %** |
+
+  - Nombres equivocados: 0,7 % o menos. Las firmas de nixpkgs solas apenas sirven con binarios de terceros; las de las distribuciones donde se compilan, sí.
 - **Pendiente:**
-  - Debian/Ubuntu glibc y Alpine musl para tener más versiones;
   - una lista de símbolos comunes como la que usa Ghidra para MSVC;
   - exponer en REA el comentario PLATE con los candidatos de `FID_conflict`.
 

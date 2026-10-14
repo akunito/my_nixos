@@ -13,7 +13,11 @@ let
   # stable), adopted after the independent audit of 2026-10-14 (bench/fid, workbench/rea-bench).
   fid = import ./bench/fid/fid.nix { pkgs = pkgs-unstable; };
   pkgs-stable-x86 = import inputs.nixpkgs-stable { system = "x86_64-linux"; };
-  ghidraExtensions = [ (fid.extension (fid.libSet pkgs-unstable "u" ++ fid.libSet pkgs-stable-x86 "s")) ];
+  # + Debian 12 / Ubuntu 24.04 / Alpine 3.20 sets (fid/distro.nix): on binaries built with
+  # those toolchains, nixpkgs-only FIDs named 0.4-11 % and these 54-60 % (C), 27-36 % (C++),
+  # wrong <= 0.7 % (measured 2026-10-15, workbench/rea-bench).
+  ghidraExtensions = [ (fid.extension (fid.libSet pkgs-unstable "u" ++ fid.libSet pkgs-stable-x86 "s"
+    ++ import ./bench/fid/distro.nix { pkgs = pkgs-unstable; inherit (fid) mkFid; })) ];
   image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents ghidraExtensions; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;
