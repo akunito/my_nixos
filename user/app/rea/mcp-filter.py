@@ -6,6 +6,8 @@
 # tool (browser scenarios, Android/apktool, firmware, artifacts…) then fails with
 # "provider is closing" for the rest of the session. Ghidra session tools are not
 # affected. A "method not found" reply makes Claude Code fall back to `initialize`.
+# Fixed upstream in rea-agents 6.5.0 (7c9c1ebdb, #2205; verified live 2026-10-14);
+# kept as a cheap guard against a regression.
 import json
 import subprocess
 import sys

@@ -193,6 +193,17 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
 7. **Baja.** El espejo podía morir con un error al escribir. **Arreglo:** cada fichero lleva su propio `try` y se salta el que no ha cambiado.
 8. **Informativo**, ya existía: un root del invitado puede inundar `log/vm-console.log`.
 
+**Frida (2026-10-14): REA sube de 6.4.0 a 6.5.0** (`3b79af28`, publicada hoy). Antes de adoptarla pasó una auditoría independiente con Fable, de solo lectura, sobre los 894 commits. **Veredicto: adoptar con mitigaciones.**
+- **Cadena de suministro:** ningún binario nuevo; el `native/` de Windows no cambia. Todo el lockfile sale de registry.npmjs.org y con integridad. Hubo un `rolldown` desde un mirror de Tencent (76e4153d3), pero se corrigió antes del tag (f889a69fb).
+- **Dependencias nuevas:** cborg, saxes y la opcional `frida` 17.23.2. Esta última es el único script de instalación nuevo y la descarga se sustituye por el binario precompilado, fijado por hash en `rea-agents.nix`. Solo depende de glibc.
+- **Red por iniciativa propia:** `rea mcp` no hace ninguna llamada. Las comprobaciones de actualización solo existen en `rea update`.
+- **No hay `shell:true`**, ni lecturas de credenciales o variables de Claude/SSH.
+- **Riesgo de diseño:** las herramientas nuevas `gdb_console`, `rizin_debug_command` y Frida son ilimitadas: `shell`, `attach` a cualquier pid y Frida contra un `remote` con cualquier host:puerto. Dentro de las VMs sin NIC solo alcanzan la propia VM. En la VM web, Frida y gdb remotos fallan porque la única salida es squid, que solo habla HTTP y aplica las ACL.
+- **El fallo de `server/discover` está arreglado upstream** (7c9c1ebdb, #2205). **Medido:** sin filtro, REA contesta "Method not found" y las herramientas con proveedor siguen vivas. El filtro se queda como protección barata.
+- **Probado en la VM dinámica:**
+  - `instrument_with_frida` en modo *spawn* sobre `curl` engancha `getaddrinfo` y `connect`, y la red falsa registra el mismo DNS;
+  - regresión con `--ask`: niveles 0 y 1 aciertan con `vault` (6.5.0 además vio que el último carácter cuenta por su byte, así que `REAX-200C` también abre); en el carril web, example.com da 200 y 192.168.8.1 da 403.
+
 **Riesgo asumido:** el objetivo corre con el mismo uid que REA. Puede estorbar al propio análisis de esa sesión (matar REA, tocar `work/`) y escribir en `out/`, que se barre al salir. Lo que no puede es alterar los registros de red sin ser root del invitado. El nivel 2 sigue aprobando cada llamada a mano.
 
 ## Sesión aislada del agente (`rea-claude <caso>`)
