@@ -1404,6 +1404,7 @@ in
       # AION 2 meter card (Wayland toplevel) over the fullscreen game (A2M-50);
       # floating/border/sticky come from the sway-apps rules for the same app_id.
       ${lib.optionalString aboveFullscreen ''for_window [app_id="^aionmeter$"] above_fullscreen enable''}
+      ${lib.optionalString aboveFullscreen ''no_focus [app_id="^aionmeter$"]''}
 
       ${lib.optionalString (!swayApps) ''
       # DESK startup apps - assign to specific workspaces

@@ -74,6 +74,12 @@ let
     export XDG_DATA_DIRS=${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}''${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}
     export GDK_PIXBUF_MODULE_FILE=${pixbufLoaders}
     export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+    # A2M-50 window mode (meter e4db091): the card is a plain Wayland toplevel placed through Sway IPC, so SWAYSOCK must point at the
+    # live compositor — a shell started before a sway restart carries a stale path (measured 2026-10-13), take the newest socket then.
+    # --monitor only matters for the old layer-shell card (`aionmeter-overlay --layer`), window mode ignores it.
+    if [ -z "''${SWAYSOCK:-}" ] || [ ! -S "$SWAYSOCK" ]; then
+      s=$(ls -t /run/user/"$(id -u)"/sway-ipc.*.sock 2>/dev/null | head -n 1); [ -n "$s" ] && export SWAYSOCK="$s"
+    fi
     exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} --monitor ${overlayMonitor} "$@"
   '';
   # pid of a live front-end: from its own pid file, checked against /proc cmdline (stale file, reused pid).
