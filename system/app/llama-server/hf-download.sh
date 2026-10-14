@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # GGUF downloads for the NAS 3090 presets (system/app/ai-presets.nix) — run on NAS_PROD as root:
-#   sudo systemd-run --unit=hf-download -p IOSchedulingClass=idle -p Nice=10 ~/.dotfiles/system/app/llama-server/hf-download.sh
+#   sudo systemd-run --unit=hf-download -p IOSchedulingClass=idle -p Nice=10 /run/current-system/sw/bin/bash ~/.dotfiles/system/app/llama-server/hf-download.sh
 #   sudo journalctl -u hf-download -f
 # Each file goes to .part, is sha256-checked (LFS hash from the HF API, 2026-10-14) and renamed; a present+valid file is skipped.
 # Models dir is the root NVMe, never a pool. Claude's auto mode refuses to run external downloads itself, hence this script.
 set -u
+# systemd-run gives the unit a bare PATH: `env: 'bash': No such file` on 2026-10-14. Launch with an explicit bash and fix PATH here.
+export PATH=/run/current-system/sw/bin:/run/wrappers/bin:$PATH
 cd /var/lib/llama-server/models || exit 1
 while read -r sha url; do
   [ -n "$sha" ] || continue
