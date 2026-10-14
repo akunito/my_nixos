@@ -88,9 +88,12 @@ in
       # system message like 3.8's, but it is a different template: no
       # reasoning_effort variable, so --reasoning-effort does nothing here).
       # KV 32 KB/token f16 (8 full-attention layers). Spec from the NAS session 2026-10-14.
+      # MEASURED 2026-10-14: 20.6 GB, load 4.6 s, 77 tok/s; mid-turn system message
+      # 200 on /v1/messages; needle test at 411,734 tokens: 3/3 exact, prefill
+      # 292 s (1,409 tok/s), generation 28.5 tok/s at that context.
       reasoner-9b-512k = {
         label = "Reasoner Qwen3.5-9B abliterated · 1×512k (YaRN ×2) · KV q8_0 · vision";
-        short = "R9 512k"; vramEst = "~19 GB (measure)"; ctx = 524288; slots = 1; kv = "q8_0";
+        short = "R9 512k"; vramEst = "20.6 GB"; ctx = 524288; slots = 1; kv = "q8_0";
         model = "Huihui-Qwen3.5-9B-abliterated.Q8_0.gguf";
         alias = "reasoner-9b-512k";
         template = ../system/app/llama-server/templates/qwen3.5-system-anywhere.jinja;
