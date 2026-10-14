@@ -360,8 +360,8 @@ in
     openCodeExtraProviders = [
       { id = "nas"; name = "NAS 3090 — llama.cpp (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1";
         models = [
-          { id = "qwen3.8-27b-abliterated"; label = "Qwen3.8 27B abliterated UD-Q4_K_XL (256k, NAS)";
-            contextLimit = 262144; outputLimit = 32768; }
+          { id = "qwen3.8-27b-abliterated"; label = "Qwen3.8 27B abliterated UD-Q4_K_XL (128k, NAS)";
+            contextLimit = 131072; outputLimit = 32768; }
         ]; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot

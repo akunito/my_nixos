@@ -39,11 +39,11 @@ in
     llamaServerIdleTimeout = "infinity";  # never unload on idle (Diego, 2026-10-14): measured 7.5 W unloaded vs 7.6 W loaded at P8 (30 s avg), 0.04 % CPU, 414 MB RAM — unloading buys nothing while nothing else wants the card. Still stops before S3 (Conflicts=sleep.target); the preset manager (F1) will unload on a preset change
     llamaServerBackend = "docker-cuda";   # MEASURED 2026-10-13: Vulkan/NVIDIA ICD 48 pp / 36 tg tok/s; CUDA image 1326 pp / 40 tg, load 10 s
     llamaServerModelFile = "/var/lib/llama-server/models/Huihui-Qwen3.8-27B-abliterated-UD-Q4_K_XL.gguf";
-    llamaServerCtxSize = 262144;          # = n_ctx_train. VRAM measured: 4 x 32k 18.7 GB, 4 x 64k 20.8 GB (~16 KB/token). One slot at 256k so a Claude Code session in .dotfiles (base ~25k + defaults.nix 24k per read) has room (Diego, 2026-10-14)
+    llamaServerCtxSize = 131072;          # KV is 64 KB/token in f16 (256k asked for a 16 GB KV buffer and OOMed on 2026-10-14; weights 17.4 GB). 128k with q8_0 KV = ~4 GB. 256k (= n_ctx_train) only fits with q4_0 KV — not worth the recall loss on a Q4 27B
     llamaServerParallelSlots = 1;         # Claude Code / OpenCode are one stream; a second client queues
     llamaServerModelAlias = "qwen3.8-27b-abliterated";   # the id OpenCode / claude-nas use; llama-server accepts any model name anyway (verified), this only makes /v1/models honest
     llamaServerChatTemplateFile = ../system/app/llama-server/templates/qwen3.8-system-anywhere.jinja;   # Claude Code sends a role=system "# Environment" message after the first user turn; the GGUF's template raises on it (every request 500 on 2026-10-14)
-    llamaServerExtraArgs = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];
+    llamaServerExtraArgs = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" "-ctk" "q8_0" "-ctv" "q8_0" ];   # q8_0 KV halves the cache (needs -fa on); near-lossless
     llamaServerVramBusyBytes = 2147483648; # nothing else may hold the card: 24 GB - 17.4 GB weights
 
     # ============================================================================
