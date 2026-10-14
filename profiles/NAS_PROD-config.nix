@@ -83,6 +83,22 @@ in
         label = "Reasoner Qwen3.8-27B · 2×128k · KV q4_0";
         short = "R 2×128k"; vramEst = "~22 GB"; ctx = 262144; slots = 2; kv = "q4_0";   # -c is the TOTAL, split across slots: -c 131072 -np 2 gave n_ctx 65536 per slot, 19.1 GB (measured 2026-10-14)
       };
+      # Qwen3.5-9B abliterated: 512k with YaRN x2 (card: 262,144 native, up to
+      # 1,010,000). Its OWN patched template (Qwen3.5's raises on a non-first
+      # system message like 3.8's, but it is a different template: no
+      # reasoning_effort variable, so --reasoning-effort does nothing here).
+      # KV 32 KB/token f16 (8 full-attention layers). Spec from the NAS session 2026-10-14.
+      reasoner-9b-512k = {
+        label = "Reasoner Qwen3.5-9B abliterated · 1×512k (YaRN ×2) · KV q8_0 · vision";
+        short = "R9 512k"; vramEst = "~19 GB (measure)"; ctx = 524288; slots = 1; kv = "q8_0";
+        model = "Huihui-Qwen3.5-9B-abliterated.Q8_0.gguf";
+        alias = "reasoner-9b-512k";
+        template = ../system/app/llama-server/templates/qwen3.5-system-anywhere.jinja;
+        extra = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "--presence-penalty" "1.5"
+                  "-fa" "on" "--reasoning-budget" "16384"
+                  "--rope-scaling" "yarn" "--rope-scale" "2" "--yarn-orig-ctx" "262144"
+                  "--mmproj" "/var/lib/llama-server/models/Huihui-Qwen3.5-9B-abliterated.mmproj-Q8_0.gguf" ];
+      };
       coder = {
         label = "Coder Qwen3.6-35B-A3B (MoE) · 1×256k · KV q8_0";
         short = "Coder"; vramEst = "~22 GB"; ctx = 262144; slots = 1; kv = "q8_0";
