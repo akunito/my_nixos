@@ -29,7 +29,9 @@ _log = log.get("input")
 ACK_CMD = "nop sway-apps input ack"
 ABORT_CMD = "nop sway-apps input abort"
 ACK_TIMEOUT = 1.0
-ACK_RETRY_AFTER = 0.1
+# Measured live on DESK 2026-10-14: sway lists a new uinput device ~56 ms after
+# UI_DEV_CREATE and keys written before that are lost; ack latency 1:1 ~0.2 ms.
+DEVICE_WAIT = 2.0
 MOD_COMBOS = ("Shift", "Control", "Mod1", "Mod4", "Mod5")
 DEFAULT_EXCLUDE = ov.SETTINGS_DEFAULTS["exclude"]
 
@@ -124,10 +126,15 @@ class Broker:
         sees the device). Returns ms since the broker started."""
         if self.ready_ms is None:
             if self.backend == "live":
-                grabbed = self.kbd.grabbed_by_other()
-                if grabbed:
+                ident = "%d:%d:%s" % (0x5341, 0x0001, "sway-apps-input")
+                end = time.monotonic() + DEVICE_WAIT
+                while not any(i.get("identifier") == ident for i in self.conn.inputs()):
+                    if time.monotonic() > end:
+                        raise InputError("sway never listed the uinput keyboard")
+                    time.sleep(0.002)
+                if self.kbd.grabbed_by_other():
                     raise InputError("the uinput keyboard is grabbed by another process (keyd not excluding 5341:0001?)")
-            self.ack(timeout=2.0)
+            self.ack()
             self.ready_ms = round(1000 * (time.monotonic() - self.t0), 1)
         return self.ready_ms
 
@@ -155,19 +162,19 @@ class Broker:
         state = self.conn.binding_state()
         if state != "default" and not self.force:
             raise Refused(f"sway is in binding mode {state!r}")
+        # One press, one binding event: no retry, or a late event would pair with the next ack.
         t = time.monotonic()
-        for attempt in (0, 1):
-            self.kbd.key(KEY_F24, True)
-            self.kbd.key(KEY_F24, False)
-            if self.backend != "live":
-                self.wire.sync()
-            deadline = time.monotonic() + (timeout if attempt else ACK_RETRY_AFTER)
-            while (ev := self._next_event(deadline)) is not None:
-                name, body = ev
-                if name == "binding" and ((body or {}).get("binding") or {}).get("command", "") == ACK_CMD:
-                    return round(1000 * (time.monotonic() - t), 2)
-                self._seen.append(ev)
-        raise InputError("no ack from sway (shortcuts inhibited, locked or not bound)")
+        self.kbd.key(KEY_F24, True)
+        self.kbd.key(KEY_F24, False)
+        if self.backend != "live":
+            self.wire.sync()
+        deadline = time.monotonic() + timeout
+        while (ev := self._next_event(deadline)) is not None:
+            name, body = ev
+            if name == "binding" and ((body or {}).get("binding") or {}).get("command", "") == ACK_CMD:
+                return round(1000 * (time.monotonic() - t), 2)
+            self._seen.append(ev)
+        raise InputError("no ack from sway (shortcuts inhibited, locked, unknown modifier held, or not bound)")
 
     def wait_for(self, spec: str, timeout: float) -> dict[str, Any]:
         """spec 'window:focus', 'workspace:focus', 'binding:<substring>', 'window:new'..."""
