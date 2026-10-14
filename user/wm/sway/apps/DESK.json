@@ -126,7 +126,16 @@
             "custom/power-menu"
           ]
         }
+      },
+      "margins": {
+        "top": 8,
+        "sides": 12,
+        "bottom": 4
       }
+    },
+    "spacing": {
+      "inner": 8,
+      "edge": 8
     }
   },
   "shortcuts": [
