@@ -103,6 +103,29 @@
         }
       },
       "imported_from": "/home/akunito/.config/sway/outputs @ 2026-10-14"
+    },
+    "waybar": {
+      "templates": {
+        "secondary": {
+          "left": [
+            "backlight",
+            "battery",
+            "custom/ram",
+            "custom/vram",
+            "custom/llm"
+          ],
+          "center": [
+            "sway/workspaces"
+          ],
+          "right": [
+            "idle_inhibitor",
+            "custom/notifications",
+            "tray",
+            "clock",
+            "custom/power-menu"
+          ]
+        }
+      }
     }
   },
   "shortcuts": [
