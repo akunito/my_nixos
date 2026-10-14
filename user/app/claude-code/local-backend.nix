@@ -62,7 +62,7 @@ let
       marked=" "
       for p in $(${pkgs.procps}/bin/pgrep -u "$(id -u)"); do
         [ "$p" = "$$" ] || [ "$p" = "$PPID" ] && continue
-        tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qx "ANTHROPIC_BASE_URL=${url}" && marked="$marked$p "
+        { tr '\0' '\n' < /proc/$p/environ | grep -qx "ANTHROPIC_BASE_URL=${url}"; } 2>/dev/null && marked="$marked$p "
       done
       roots=""
       for p in $marked; do
@@ -70,9 +70,11 @@ let
         case "$marked" in *" $pp "*) ;; *) roots="$roots $p" ;; esac
       done
       for p in $roots; do kill_tree "$p"; done
+      # Abort before the grace wait: the card is free ~0.1 s after the call (measured
+      # 2026-10-14), the SIGKILL sweep is only for a session that ignores SIGTERM.
+      r=$(${curl} -s --max-time 5 -X POST "${url}/gate/abort" 2>/dev/null)
       [ -n "$roots" ] && sleep 2
       for p in $roots; do kill -KILL "$p" 2>/dev/null; done   # survivors; a reaped zombie just fails here
-      r=$(${curl} -s --max-time 5 -X POST "${url}/gate/abort" 2>/dev/null)
       echo "claude-${name} stop: killed$( [ -n "$roots" ] && echo "$roots" || echo " nothing"); NAS: ''${r:-no answer (asleep?)}"
       exit 0
     fi
