@@ -250,7 +250,7 @@ let
     #!/usr/bin/env bash
     TMUX_BIN="${pkgs.tmux}/bin/tmux"
     if "$TMUX_BIN" list-sessions >/dev/null 2>&1; then
-      "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper" || true
+      "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper" quiet || true
     fi
   '';
 
@@ -516,9 +516,9 @@ in
       
       # Save on session close/detach to prevent data loss
       # Hook to save when session is closed (all windows in session are closed)
-      set-hook -g session-closed "run-shell 'tmux show-options -g @resurrect-save-script-path 2>/dev/null | awk \"{print \\\$2}\" | xargs -r sh'"
+      set-hook -g session-closed "run-shell '${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper quiet'"
       # Hook to save when client detaches (user detaches from tmux)
-      set-hook -g client-detached "run-shell 'tmux show-options -g @resurrect-save-script-path 2>/dev/null | awk \"{print \\\$2}\" | xargs -r sh'"
+      set-hook -g client-detached "run-shell '${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper quiet'"
       
       # ============================================================================
       # PROCESS RESTORATION (tmux-resurrect)
@@ -603,7 +603,10 @@ in
           "TMUX_TMPDIR=%t"
           "PATH=${lib.makeBinPath [ pkgs.tmux pkgs.coreutils pkgs.procps pkgs.gnugrep pkgs.gnused pkgs.gawk pkgs.util-linux pkgs.bash pkgs.nettools pkgs.gnutar ]}"
         ];
-        ExecStart = "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper";
+        # "quiet": without it resurrect's save.sh runs a "Saving..." spinner + "Tmux environment saved!" in the
+        # status line, and a key pressed while that message is up only dismisses it — keystrokes typed during the
+        # 5-min save were swallowed (seen 2026-10-14). The prefix+C-s manual save keeps its message.
+        ExecStart = "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper quiet";
       };
     };
   });
