@@ -4,14 +4,16 @@ Diego wants Claude to run the "by hand" desktop checks itself, as if it were him
 
 - Ask first; never while he is gaming. Snapshot before (visible workspaces, every window's id/type/rect, focused con, `sha256sum user/wm/sway/apps/*.json`) and compare after — restore anything that differs.
 - Never close windows you did not open (his Claude Code sessions live in Alacritty). Test windows: `../e2e/client.py --app-id handtest.*`.
-- Keys: open a floating **safe sink** window and focus it before sending keys, and send Enter/Esc/arrows only while the target (overview) is open — a stray Esc/Enter in Alacritty interrupts or submits a Claude Code prompt. `../e2e/vkeyboard.py` only knows Tab/Return/Escape/arrows/space + modifiers (mods 76 = Hyper).
+- Keys: open a floating **safe sink** window and focus it before sending keys, and send Enter/Esc/arrows only while the target (overview) is open — a stray Esc/Enter in Alacritty interrupts or submits a Claude Code prompt.
+- **Input = `sway-apps input` (SWAY-17)**, never `../e2e/vkeyboard.py`/`vpointer.py` on the live seat: a uinput keyboard excluded from keyd and grouped by sway with Diego's (his keymap, AltGr text, real Hyper = Ctrl+Alt+Super), a virtual pointer with layout-box coordinates, acks via the bindcode-202 sentinel (~0.1 ms), guards (`--expect-focus`, fullscreen/games, lock, binding mode). CLI `sway-apps input key|type|click|drag|scroll|move|probe|panic|serve`, or `from sway_apps.input.broker import Broker` in scripts. Abort a run with Hyper+Shift+Pause; `sway-apps input panic` releases buttons after a crash.
 - Config changes with `SWAY_APPS_GIT=0` and restore the JSON afterwards (no commits from a test).
 - Never `pkill -f <pattern>` (matches your own command line and kills the shell): kill by pid.
 
 Run with the e2e tool env (`sway-apps-e2e`'s python, or the env it exports) plus `SWAYSOCK=/run/user/1000/sway-ipc.1000.<oldest sway pid>.sock WAYLAND_DISPLAY=wayland-1`. `LIVE_OUT` = where screenshots go.
 
 - `peek_live.py` — temp workspace, red tile + blue float, hold left/right on the tile, sample the overlap pixel (2026-10-14: blue → red while held → blue, both buttons).
-- `overview_hand.py` — Hyper+Tab via the virtual keyboard, screenshot, Tab/Shift+Tab, an arrow pair, Enter (on the sink card), reopen + Escape; restores focus; exit 1 on any failed check.
+- `input_phase0.py` — SWAY-17 gates (ack, create->ack, lost acks with Shift held, keymap resends, AltGr text, drag). 2026-10-14 DESK: all met (ack p95 0.08 ms, create->ack 56 ms).
+- `overview_hand.py` — Hyper+Tab, screenshot, Tab/Shift+Tab, an arrow pair, Enter (on the sink card), reopen + Escape, via the broker; restores focus; exit 1 on any failed check.
 - `overview_follow.py` — the overview with the REAL bindings: Hyper+Shift+9 moves the selected test window (swaysome follows it), Hyper+9 goes back (auto_back_and_forth), a drag brings it home. Needs workspace <group>9 free; restores focus and visible workspaces.
 - Test windows are remembered by the placement journal (it restores them next time and once undid a test move): forget them after a run, `sway-apps placement journal forget handtest.<name>` (overview_follow.py does).
 - `overview_keys.py` — older variant (CLI open, Down + Escape); prefer overview_hand.py.

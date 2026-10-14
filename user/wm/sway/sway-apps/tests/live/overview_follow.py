@@ -1,7 +1,8 @@
-"""Live check of the overview following sway (SWAY-15) with Diego's REAL bindings:
+"""Live check of the overview following sway (SWAY-15) with Diego's REAL bindings, driven by
+sway-apps input (SWAY-17: uinput keyboard grouped with Diego's + virtual pointer, acks):
 Hyper+Shift+9 moves the selected window (swaysome follows it: the overview's focused
-column becomes 9), Hyper+9 there goes back (workspace_auto_back_and_forth), a drag
-moves the window home.
+column becomes 9), Hyper+9 there goes back (workspace_auto_back_and_forth), a drag of its
+card moves the window home.
 
 Only a test window is moved: it is focused before the overview opens, so even a broken
 wrapper would move it and nothing else. Target = workspace <group>9 of the focused
@@ -14,15 +15,15 @@ E2E = os.path.join(HERE, "..", "e2e")
 sys.path.insert(0, os.path.join(HERE, "..", ".."))
 from sway_apps import ipc  # noqa: E402
 from sway_apps import overview as ov  # noqa: E402
+from sway_apps.input.broker import Broker  # noqa: E402
 
 PY = os.environ.get("E2E_PYTHON", sys.executable)
 OUT = os.environ.get("LIVE_OUT", "/tmp")
-HYPER, SHIFT = 76, 1
-c = ipc.Connection(os.environ["SWAYSOCK"])
+c = ipc.Connection()
 
 
 def state():
-    return json.loads(subprocess.run(["sway-apps", "--json", "overview", "state"], capture_output=True, text=True).stdout or "{}")
+    return ov.request("state")
 
 
 def until(pred, timeout=3.0):
@@ -63,7 +64,6 @@ res["target"] = target
 
 sink = subprocess.Popen([PY, os.path.join(E2E, "client.py"), "--app-id", "handtest.follow", "--size", "320x160",
                          "--log", os.path.join(OUT, "live-follow.log")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-kb = vp = None
 ok = False
 try:
     until(lambda: any(cd.app_id == "handtest.follow" for v in ov.build(c.tree()) for cd in v.cards()), 5)
@@ -71,87 +71,32 @@ try:
     sid = until(lambda: (lambda f: f.id if f and f.app_id == "handtest.follow" else None)(ov.focused_card(ov.build(c.tree()))))
     if not sid:
         raise SystemExit("test window not focused")
-    kb = subprocess.Popen([PY, os.path.join(E2E, "vkeyboard.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, cwd=E2E)
-    assert kb.stdout.readline().strip() == "ready"
-
-    def k(line):
-        kb.stdin.write(line + "\n")
-        kb.stdin.flush()
-        kb.stdout.readline()
-
-    def chord(key, shift=False):
-        if not state().get("open"):
-            raise SystemExit(f"overview closed before Hyper+{'Shift+' if shift else ''}{key}")
-        k(f"mods {HYPER | (SHIFT if shift else 0)}")
-        k(f"key {key}")
-        k("mods 0")
-
-    k(f"mods {HYPER}")
-    k("key Tab")
-    k("mods 0")
-    st = until(lambda: (lambda s: s if s.get("open") and s.get("painted") else None)(state()))
-    res["open"] = bool(st)
-    res["selected_is_test_window"] = bool(st) and st["selected"] == sid
-    if not res["selected_is_test_window"]:
-        raise SystemExit("selection is not the test window")
-
-    chord("9", shift=True)               # real binding: overview-selected.sh + swaysome move 9 (it follows)
-    res["shift9_moved_and_followed"] = bool(until(lambda: sid in columns(state()).get(target, [])
-                                                  and focused_cols(state()) == [target] and state()["selected"] == sid))
-    chord("9")                           # real binding: swaysome focus 9; already on it, so
-    res["hyper9_back_and_forth"] = bool(until(lambda: focused_cols(state()) == [home]))   # auto_back_and_forth: home
-    subprocess.run(["grim", "-s", "0.5", os.path.join(OUT, "overview-follow.png")])
-
-    st = state()
-    src, dst = st["bounds"].get(str(sid)), st["bounds"].get(str(f0.id))
-    outs = {o["name"]: o["rect"] for o in c.outputs() if o.get("active")}
-    # virtual-pointer absolute motion spans the layout BOX, which on DESK starts at
-    # (2103, 786), not (0, 0): the first live drag pressed beside the card.
-    X0 = min(r["x"] for r in outs.values())
-    Y0 = min(r["y"] for r in outs.values())
-    W = max(r["x"] + r["width"] for r in outs.values()) - X0
-    H = max(r["y"] + r["height"] for r in outs.values()) - Y0
-
-    def absxy(b):
-        r = outs[b[0]]
-        return r["x"] - X0 + b[1] + b[3] // 2, r["y"] - Y0 + b[2] + b[4] // 2
-
-    vp = subprocess.Popen([PY, os.path.join(E2E, "vpointer.py")], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, cwd=E2E)
-    assert vp.stdout.readline().strip() == "ready"
-
-    def p(line):
-        vp.stdin.write(line + "\n")
-        vp.stdin.flush()
-        vp.stdout.readline()
-
-    (x0, y0), (x1, y1) = absxy(src), absxy(dst)
-    p(f"abs {x0} {y0} {W} {H}")
-    p("press left")
-    for dx in (4, 8, 12, 16):            # past the drag threshold, then let the drag start
-        p(f"abs {x0 + dx} {y0} {W} {H}")
-        time.sleep(0.02)
-    time.sleep(0.15)
-    for i in range(1, 21):
-        p(f"abs {x0 + (x1 - x0) * i // 20} {y0 + (y1 - y0) * i // 20} {W} {H}")
-        time.sleep(0.02)
-    for dy in (2, 0):                    # settle on the target before dropping
-        p(f"abs {x1} {y1 + dy} {W} {H}")
-        time.sleep(0.1)
-    p("release left")
-    res["drag_moved_it_home"] = bool(until(lambda: sid in columns(state()).get(home, [])))
-    res["still_open_after_drop"] = bool(state().get("open"))
-    if state().get("open"):
-        k("key Escape")
-    res["closed"] = bool(until(lambda: not state().get("open")))
+    with Broker("live") as b:
+        b.ready()
+        b.guard("handtest.follow")
+        b.key("Hyper+Tab")
+        st = until(lambda: (lambda s: s if s.get("open") and s.get("painted") else None)(state()))
+        res["open"] = bool(st)
+        res["selected_is_test_window"] = bool(st) and st["selected"] == sid
+        if not res["selected_is_test_window"]:
+            raise SystemExit("selection is not the test window")
+        b.key("Hyper+Shift+9")           # real binding: overview-selected.sh + swaysome move 9 (it follows)
+        res["shift9_moved_and_followed"] = bool(until(lambda: sid in columns(state()).get(target, [])
+                                                      and focused_cols(state()) == [target] and state()["selected"] == sid))
+        b.key("Hyper+9")                 # swaysome focus 9; already on it -> auto_back_and_forth: home
+        res["hyper9_back_and_forth"] = bool(until(lambda: focused_cols(state()) == [home]))
+        subprocess.run(["grim", "-s", "0.5", os.path.join(OUT, "overview-follow.png")])
+        b.drag(f"ov-card:{sid}", f"ov-card:{f0.id}", hold_ms=300)
+        res["drag_moved_it_home"] = bool(until(lambda: sid in columns(state()).get(home, [])))
+        res["still_open_after_drop"] = bool(state().get("open"))
+        if state().get("open"):
+            b.key("Escape")
+        res["closed"] = bool(until(lambda: not state().get("open")))
     ok = all(v for key, v in res.items() if key not in ("focus_before", "home", "target"))
 finally:
-    for proc in (kb, vp):
-        if proc:
-            proc.terminate()
-    subprocess.run(["sway-apps", "overview", "hide"], capture_output=True)
+    ov.request("hide")
     sink.terminate()
     time.sleep(0.4)
-    c.command(f"[con_id={f0.id}] focus")
     for name, out in vis0:                 # each output back on its workspace
         c.command(f'focus output {out}; workspace "{name}"')
     c.command(f"[con_id={f0.id}] focus")
