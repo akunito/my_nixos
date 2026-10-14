@@ -1,6 +1,6 @@
 ---
 id: gaming.l2reborn-linux
-summary: L2 Reborn (Interlude/Classic private server) on NixOS via umu/Proton — everything runs except the SmartGuard anti-cheat, which refuses to start under Wine (Code 1004); measurements, logs, staff statements, options
+summary: L2 Reborn and LU4 on NixOS via umu/Proton — everything runs except the kernel anti-cheats (SmartGuard Code 1004; Active Anticheat driver error 11); measurements, logs, staff statements, options
 tags: [gaming, lineage2, l2reborn, proton, umu, wine, smartguard, anticheat]
 related_files: [user/wm/sway/sway-apps/tests/live/README.md]
 date: 2026-10-14
@@ -62,3 +62,12 @@ Diego asked (2026-10-14) to use REA to find how the guard detects a non-Windows 
 - Research extracts (session scratch, not kept): Discord search for "linux" (652 hits), "proton" (101), "1004" (1 unrelated crash log).
 - Remove everything: `rm -rf ~/Games/l2reborn` (the account on l2reborn.org is unaffected).
 - Driving the Wine windows from Claude (clicks into Xwayland): `user/wm/sway/sway-apps/tests/live/README.md`, section "Driving Wine / Proton (Xwayland) windows".
+
+## Addendum 2026-10-14 evening — LU4 (Liberta Ultimata, lu4.org): same wall, measured
+
+E-Global's UE5 L2-style MMO, tried in its own prefix `~/Games/lu4/` (scripts `run-launcher.sh`, `run-gamescope.sh`; launcher `EGlobalLauncher.exe` 1.8.2.8, unsigned, VirusTotal 3/71 heuristic-only, byte-identical size/ETag to `static.lu4.org/launcher/`).
+- Launcher (WPF .NET) works under GE-Proton11-5; downloaded the 44.2 GB client at 70–77 MB/s. Running it directly on Sway's Xwayland it died once mid-download with a fatal `X Error: XI_BadDevice (XInputExtension / X_GetDeviceButtonMapping)`; inside gamescope (`run-gamescope.sh`, same flags as AION 2) it ran to completion and clicks work through `DISPLAY=:2 xdotool` regardless of window position.
+- Play Game → `lu4\binaries\win64\lu4-win64-shipping.exe -useallcores -dx11` starts, then a window titled **"Active Launcher"** shows **"Load error: Driver installation error(11) (General failure.)"**; Wine log: `err:ntoskrnl:ZwLoadDriver failed to create driver "\Registry\Machine\System\CurrentControlSet\Services\PRProt": c0000001`. That is Active Anticheat's kernel driver install, refused by Wine's ntoskrnl — the game never reaches login. So LU4's UE5 client **does** ship Active AC (previously only inferred from the UE2 MasterWork client).
+- Same verdict as Reborn: not a Wine/DXVK problem, a kernel anti-cheat. Bare-metal Windows (DESK_A + Sunshine) with Hyper-V/VBS off is the only known path; LU4 on Linux has zero reports anywhere.
+- Side finding for SWAY: with the live `xwayland_zero_scaling` patch, X11 windows outside a monitor's top-left quadrant lose pointer focus (5/5 failed clicks at logical 2949,1881 on DP-1); gamescope sidesteps it. Memory `reference_sway_virtual_input_xwayland.md`.
+- Cleanup: `rm -rf ~/Games/lu4` frees ~47 GB.
