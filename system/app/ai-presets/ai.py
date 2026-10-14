@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
 import urllib.request
 
 PRESETS_FILE = os.environ.get("AI_PRESETS_FILE", "/etc/ai-presets/presets.json")
@@ -71,8 +72,11 @@ def env_text(p: dict) -> str:
 
 def _post(url: str, body: dict, timeout: float = 60) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read() or b"{}")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as exc:
+        raise SystemExit(f"{url} {body}: HTTP {exc.code}: {exc.read().decode(errors='replace')[:300]}")
 
 
 def router_models(base: str = BACKEND) -> list[dict]:
@@ -88,6 +92,13 @@ def apply_router(cfg: dict, name: str) -> str:
     loaded = [m["id"] for m in (router_models() if active else []) if m["status"] in ("loaded", "loading")]
     for mid in loaded:
         _post(f"{PUBLIC}/models/unload", {"model": mid})
+    # /models/unload answers before the old instance has exited; a load sent
+    # right after got HTTP 500 (NAS b11580, 2026-10-14). Wait for "unloaded".
+    deadline = time.monotonic() + 60
+    while loaded and time.monotonic() < deadline:
+        if all(m["status"] == "unloaded" for m in router_models() if m["id"] in loaded):
+            break
+        time.sleep(0.3)
     if name == "off":
         return "off: no model loaded" + (f" (unloaded {', '.join(loaded)})" if loaded else "")
     if name not in cfg["presets"]:
