@@ -354,18 +354,20 @@ in
       { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 32k)";
         contextLimit = 32768; outputLimit = 8192; }
     ];
-    # The NAS 3090 reasoner (system/app/llama-server.nix docker-cuda, tailscale0
-    # only). Pick it with /models or `opencode --model nas/qwen3.8-27b-abliterated`;
-    # it wakes the model on the first request (6-15 s) and unloads 15 min later.
+    # The NAS 3090 through llama-server ROUTER mode (2026-10-14): model ids = aiPresets names
+    # (profiles/NAS_PROD-config.nix); picking one LOADS it on the NAS (--models-max 1 evicts the
+    # previous, 5-15 s). Only chat presets here: decider/clef/laya/kev-9b answer /v1/systemone only.
+    # contextLimit = the preset's ctx. tailscale0 only.
     openCodeExtraProviders = [
-      { id = "nas"; name = "NAS 3090 — llama.cpp (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1";
+      { id = "nas"; name = "NAS 3090 — llama.cpp router (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1";
         models = [
-          { id = "qwen3.8-27b-abliterated"; label = "Qwen3.8 27B abliterated UD-Q4_K_XL (128k, NAS)";
+          { id = "reasoner-256k";   label = "Qwen3.8 27B abliterated · 256k · KV q4_0";
+            contextLimit = 262144; outputLimit = 32768; }
+          { id = "reasoner-128k";   label = "Qwen3.8 27B abliterated · 128k · KV q8_0";
             contextLimit = 131072; outputLimit = 32768; }
-          # NAS preset `coder` (ai-presets.nix; switch with the Waybar NAS widget).
-          # llama-server answers ANY model name with whatever preset is loaded,
-          # so pick the id that matches the active preset.
-          { id = "qwen3.6-35b-a3b"; label = "Qwen3.6 35B-A3B coder UD-IQ4_XS (256k, NAS preset coder)";
+          { id = "reasoner-2x128k"; label = "Qwen3.8 27B abliterated · 2 slots × 128k · KV q4_0";
+            contextLimit = 131072; outputLimit = 32768; }
+          { id = "coder";           label = "Qwen3.6 35B-A3B coder (MoE, fast) · 256k · KV q8_0";
             contextLimit = 262144; outputLimit = 32768; }
         ]; }
     ];

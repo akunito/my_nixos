@@ -18,6 +18,9 @@
 #   would outrank these exports — keep ANTHROPIC_* out of it.
 # - An unknown model name is treated as a 200k-window current model;
 #   CLAUDE_CODE_MAX_CONTEXT_TOKENS is what the 2.1.296 binary asks for.
+# - Router mode on the NAS (llama-server --models-preset, --models-max 1, 2026-10-14): model ids are
+#   the aiPresets names; an unknown id is HTTP 400; /props needs ?model=. Single-model servers ignore
+#   the name, so this wrapper works against both.
 # - MCP servers are OFF by default (CLAUDE_<NAME>_MCP=1 keeps them): with every
 #   MCP of ~/.claude.json the first turn was 45-48k tokens and a read+edit task
 #   took 3 min 07 s; without them 16.7k tokens and 27 s (same task, same model,
@@ -29,8 +32,11 @@
 let
   url = systemSettings.claudeCodeLocalBackendUrl or "";
   name = systemSettings.claudeCodeLocalBackendName or "nas";
-  model = systemSettings.claudeCodeLocalBackendModel or "qwen3.8-27b-abliterated";
-  ctx = toString (systemSettings.claudeCodeLocalBackendCtx or 65536);
+  model = systemSettings.claudeCodeLocalBackendModel or "reasoner-256k";
+  aliasOpus = systemSettings.claudeCodeLocalBackendAliasOpus or model;
+  aliasSonnet = systemSettings.claudeCodeLocalBackendAliasSonnet or model;
+  aliasFable = systemSettings.claudeCodeLocalBackendAliasFable or model;
+  ctx = toString (systemSettings.claudeCodeLocalBackendCtx or 262144);
   curl = "${pkgs.curl}/bin/curl";
   py = "${pkgs.python3}/bin/python3";
 
@@ -43,13 +49,15 @@ let
     unset ANTHROPIC_API_KEY
     export ANTHROPIC_BASE_URL="${url}" ANTHROPIC_AUTH_TOKEN=local
     export ANTHROPIC_MODEL="${model}" ANTHROPIC_DEFAULT_MODEL="${model}"
-    export ANTHROPIC_DEFAULT_OPUS_MODEL="${model}" ANTHROPIC_DEFAULT_SONNET_MODEL="${model}"
-    export ANTHROPIC_DEFAULT_HAIKU_MODEL="${model}" ANTHROPIC_DEFAULT_FABLE_MODEL="${model}"
+    # Router mode (2026-10-14): each alias is a preset NAME, so /model really switches the loaded
+    # model. Haiku stays = main: background work would otherwise evict the main model (--models-max 1).
+    export ANTHROPIC_DEFAULT_OPUS_MODEL="${aliasOpus}" ANTHROPIC_DEFAULT_SONNET_MODEL="${aliasSonnet}"
+    export ANTHROPIC_DEFAULT_HAIKU_MODEL="${model}" ANTHROPIC_DEFAULT_FABLE_MODEL="${aliasFable}"
     export CLAUDE_CODE_SUBAGENT_MODEL="${model}" CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1
     # The live window wins over the Nix value: presets (system/app/ai-presets.nix)
     # change the server's ctx without a DESK rebuild. /props answers only when
     # the model is loaded; otherwise (asleep, loading) the Nix default stands.
-    live_ctx=$(${curl} -sf --max-time 3 "${url}/props" 2>/dev/null | ${py} -c 'import json,sys; print(json.load(sys.stdin)["default_generation_settings"]["n_ctx"])' 2>/dev/null || true)
+    live_ctx=$(${curl} -sf --max-time 3 "${url}/props?model=${model}" 2>/dev/null | ${py} -c 'import json,sys; print(json.load(sys.stdin)["default_generation_settings"]["n_ctx"])' 2>/dev/null || true)
     export CLAUDE_CODE_MAX_CONTEXT_TOKENS="''${live_ctx:-${ctx}}" CLAUDE_CODE_DISABLE_1M_CONTEXT=1
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
     export CLAUDE_CODE_ATTRIBUTION_HEADER=0 DISABLE_PROMPT_CACHING=1
