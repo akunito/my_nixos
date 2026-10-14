@@ -1,6 +1,6 @@
 ---
 id: akunito.plans.aion2-rpa-assistant
-summary: Plan de implementación (sin implementar aún) del asistente RPA para Aion 2 en DESK — bus de estado local (meter + evdev + frames), orquestador aion-brain, asesor en overlay/voz, inyector uinput aion-assist con escalera sombra→asistido→rutinas, dataset y entrenamiento de Kev-4B en el NAS, presets de la 3090, tickets por fase; objetivo declarado de Diego: aprender RPA/asistentes, no un bot desatendido
+summary: Plan de implementación (sin implementar aún, v2 tras auditoría Fable) del asistente RPA para Aion 2 en DESK — bus de estado local (meter + evdev + frames por evento), orquestador aion-brain, asesor por notificaciones/voz, inyector uinput aion-assist con escalera sombra silenciosa→asistido→rutinas, dataset y entrenamiento de Kev en el NAS, presets de la 3090, fases R0-R6 con criterios medibles; objetivo de Diego: aprender RPA/asistentes, no un bot desatendido
 tags: [aion2, rpa, uinput, evdev, meter, nas, rtx3090, kev, laya, clef, whisper, piper, plan]
 tickets: []
 date: 2026-10-14
@@ -11,97 +11,106 @@ related_files:
   - system/app/aion2-meter-daemon.nix
   - system/app/ai-presets.nix
   - system/app/llama-server.nix
+  - system/app/nas-services.nix
   - user/wm/sway/scripts/gamescope-wrapper.sh
+  - user/wm/sway/session-env.nix
 ---
 
-# Asistente RPA para Aion 2 — plan de implementación
+# Asistente RPA para Aion 2 — plan de implementación (v2, auditado)
 
-Investigación previa: `aion2-capture-pipeline.md`. Decisión de Diego (2026-10-14): el riesgo del lado servidor se acepta, no habrá bot desatendido; el objetivo es **aprender RPA y asistentes** sobre un juego real. Este plan no implementa nada: define componentes, contratos, fases y qué se mide para darlas por hechas. Lo audita Fable antes de tocar código.
+Investigación previa: `aion2-capture-pipeline.md`. Decisión de Diego (2026-10-14): el riesgo del lado servidor se acepta, no habrá bot desatendido; el objetivo es **aprender RPA y asistentes** sobre un juego real. Este plan no implementa nada. La v1 fue auditada por Fable el 2026-10-14 (veredicto "aprobar con cambios"); esta v2 incorpora todas sus correcciones, resumidas en §6.
 
 ## 1. Arquitectura
 
 ```
-DESK (NixOS, Sway, gamescope + Proton)                      NAS (RTX 3090)
-─────────────────────────────────────────                   ───────────────────────────
-aion2-meter-daemon ──/run/aionmeter.sock──┐                 llama-server (docker-cuda)
-aion-evdev (user svc, /dev/input ro) ─────┤  JSONL bus       ├ reasoner / qwen3.5-9b VLM
-aion-frames (grim 1 fps, opcional) ───────┼─► aion-brain ◄──HTTP (tailscale)── kev-4b-aion / clef / laya
-aion-assist (uinput, socket) ◄────────────┘  (orquestador)   whisper.cpp (docker)
-      ▲                                          │            aion-train (docker python, bajo demanda)
-   kill switch (evdev físico)         overlay/TTS (piper)     /var/lib/aion-capture (sesiones, datasets)
+DESK (NixOS, Sway, gamescope + Proton)                       NAS (RTX 3090)
+──────────────────────────────────────────                   ──────────────────────────────
+aion2-meter-daemon ──/run/aionmeter.sock──┐                  llama-server (docker-cuda, router)
+aion-evdev (user svc, /dev/input ro) ─────┤  bus JSONL        ├ qwen3.5-9b (chat+VLM) · reasoner
+aion-frames (grim por evento) ────────────┼─► aion-brain ◄──HTTP tailscale── kev-4b-aion (/v1/systemone)
+aion-assist (uinput, socket) ◄────────────┘  (orquestador)    whisper-server (docker, puerto propio)
+      ▲ abort directo (< 50 ms)                   │           aion-train.service (docker python, bajo demanda)
+   evdev físico (KEY, REL > 8 px)      swaync + piper (voz)   /var/lib/aion-capture (sesiones, datasets)
 ```
 
 Reglas de diseño:
-- **Todo lo que necesita latencia baja vive en DESK** (bus, reflejos, inyección, overlay, TTS). El NAS solo sirve modelos y entrena. Si el NAS duerme, el asistente degrada a reglas + overlay sin LLM, nunca se bloquea.
-- **Un solo bus JSONL por sesión**, cada productor con `src` propio; `aion-brain` es el único consumidor en vivo y el único que escribe acciones. Ningún componente nuevo toca el meter; el meter solo gana un ticket (A2M) si falta un campo.
-- **Toda entrada inyectada se registra en el mismo bus** con `src=assist`, así el dataset distingue humano/máquina y el modo sombra se mide solo.
-- **Nada de píxeles en el bucle rápido.** Frames muestreados sirven al dataset y a preguntas bajo demanda.
+- **Latencia baja = DESK** (bus, reflejos, inyección, notificaciones, TTS). El NAS solo sirve modelos y entrena. Si el NAS duerme, el asistente degrada a reglas + voz ("NAS dormido"), nunca se bloquea.
+- **Un bus JSONL por sesión**; `aion-brain` es el único consumidor en vivo. **Dos caminos de abort**: el directo `aion-evdev → aion-assist` es el autoritativo (< 50 ms); la regla en `aion-brain` es respaldo.
+- **Toda entrada inyectada se registra en el bus** con `src=assist` y el devnode del dispositivo virtual; el dataset excluye esas ventanas.
+- **Nada de píxeles en el bucle rápido**; frames solo por evento (boss, muerte, menú) y bajo demanda.
+- **Clave de unión = `w` (wall ms)** en todo el bus: evdev marca con CLOCK_REALTIME y el meter exporta `unixMs`; `t` (mono) solo para latencias dentro de un proceso.
 
 ## 2. Componentes y contratos
 
 ### 2.1 Bus y sesiones (`aion-capture`, DESK)
-- Directorio `~/.local/share/aion-capture/<session_id>/` (NVMe de DESK), `session_id = YYYYMMDD-HHMMSS-<char>`. Abre cuando el meter informa del login (identity packet); cierra a 10 min sin posición ni paquetes. `rsync` al NAS (`/var/lib/aion-capture/`) al cerrar y cada hora (user timer); retención DESK 7 días, NAS: eventos para siempre, frames 3 días salvo marcados.
-- Ficheros: `events.jsonl` (todo), `state.jsonl` (snapshots 5 Hz derivados), `actions.jsonl` (humanas y virtuales), `frames/<t_mono_ms>.jpg`, `meta.json` (char, server, versión del meter, hash de settings).
-- Evento: `{"t":<mono_ns>,"w":<wall_ms>,"src":"meter|evdev|frame|assist|brain","type":"...","d":{...}}`. Snapshot: `{"t","pos":[x,y,z],"zone","hp","hp_max","mp","target":{"id","name","hp_pct"},"combat":bool,"cd":{skill_id:ms},"buffs":[...],"quest":{"id","step"},"bag_free":n}` — los campos que el meter no exponga quedan `null` y abren ticket A2M.
+- `~/.local/share/aion-capture/<session_id>/`, `session_id = YYYYMMDD-HHMMSS-<char>`. **Apertura**: cambio de mtime de `state/summary.json` del meter con `character` presente (el socket no emite identidad), o primer `position` si tarda; **cierre**: 10 min sin `position`; al arrancar, toda sesión sin `meta.json.closed` se cierra con el último `w` de `events.jsonl`. Foco del juego por **Sway IPC** (`get_tree`, `app_id` de gamescope, como el wrapper): sin foco no se graban teclas.
+- Ficheros: `events.jsonl`, `state.jsonl` (snapshots 5 Hz), `actions.jsonl`, `frames/` (evento `{src:frame,w_start,w_end,file}`), `meta.json` (char, server, versión del cliente y del meter, `keymap.json` tecla→slot, `questions.json` versión, `closed`).
+- Evento: `{"w":<wall_ms>,"t":<mono_ns>,"src":"meter|evdev|frame|assist|brain","type":"...","d":{...}}`. Snapshot: `{"w","pos","zone","hp","hp_max","mp","target":{"id","name","hp_pct"},"combat","cd":{slot:ms},"buffs","bag_free"}`; hoy el meter solo da posición, combate/daño, objetivo y bosses; **hp/mp/cd/buffs son `null` hasta R6** y así se registra.
+- Copia al NAS: escribir en el export NFS ya montado (no `rsync` por ssh: una unidad de usuario no hereda `SSH_AUTH_SOCK`), con la trampa conocida del NAS apagado (`reference_nfs_offline_nas_hang`): copia solo si el mount responde (`timeout 5 stat`), al cerrar sesión y cada hora. Retención: DESK 7 días; NAS eventos para siempre, frames 3 días salvo marcados.
 
 ### 2.2 `aion-evdev` (DESK, user service)
-- python-evdev 1.9.3 (nixpkgs); abre en lectura todos los `/dev/input/event*` con capacidad KEY/REL (akunito ∈ `input`), sin `grab`. Emite `key {code,val}` y `rel {dx,dy}` agregados a 100 Hz; marca `phys: true|false` por `device.phys` (los uinput no tienen `phys`). Hotkey global de **kill switch**: cualquier evento físico mientras `aion-assist` ejecuta una rutina → manda `abort` por el socket.
-- Coste medido a alcanzar: < 1 % CPU de un core. Privacidad: solo graba con una sesión abierta (el meter dice que el juego está delante); fuera de sesión no abre dispositivos.
+- `python3Packages.evdev` 1.9.3; abre en lectura los `/dev/input/event*` con KEY/REL (akunito ∈ `input`), sin `grab`, **con inotify en `/dev/input`** para reabrir en caliente (el UInput de `aion-assist` aparece después). Emite `key {code,val}` y `rel {dx,dy}` agregados a 100 Hz. **Virtual vs. físico por devnode**: `aion-assist` publica su `/dev/input/eventN` en el bus (los UInput de evdev traen `phys='py-evdev-uinput'`, no sirve como criterio) y además se crea con `bustype=BUS_VIRTUAL` y nombre fijo.
+- **Kill switch**: solo `KEY` físicos y `REL` con |d| acumulado > 8 px en 50 ms (el ruido de 1 px no aborta); la tecla disparadora de `assist` se ignora 300 ms tras su key-up. Envía `abort` directo al socket de `aion-assist`.
+- Solo graba con sesión abierta y foco en el juego. Coste objetivo: < 1 % de un core (`systemd-cgtop` sobre 1 h).
 
-### 2.3 `aion-frames` (DESK, user service, opcional por flag)
-- `grim -o DP-1 -t jpeg -q 70 -s 0.5` a 1 fps (≈ 150 KB, 1920×1080 desde 4K) → `frames/`. Medir el impacto en FPS del juego con `mangoapp` antes de dejarlo fijo; si > 2 % se baja a 0,5 fps o se mueve a captura por evento (boss, muerte, menú). Vídeo continuo: no en v1 (wf-recorder VAAPI es la opción si hace falta, Elgato solo si se quiere sin coste en DESK).
+### 2.3 `aion-frames` (DESK, user service, flag aparte)
+- `grim -o <monitor> -t jpeg -q 70 -s 0.5` **por evento** (boss-alert, muerte, apertura de menú, petición de voz), no continuo; cada captura se registra con `w_start/w_end` (grim a 4K tarda decenas de ms). Medir el impacto en FPS con `mangoapp` antes de ampliar; 1 fps continuo solo si cuesta ≤ 2 %.
 
-### 2.4 `aion-brain` (DESK, user service, python)
-- Entradas: cliente del socket del meter (`overlay`, `position`, `fight-closed`, `boss-alert` a 5 Hz/1 Hz), socket de `aion-evdev`, directorio de frames, hotkey/voz. Salidas: `state.jsonl`, overlay, TTS, acciones a `aion-assist`.
-- **Reglas (reflejos, < 10 ms):** tabla declarativa en YAML (`when: hp_pct < 0.3 and combat → say("pot")`, `when: assist.running and evdev.phys → assist.abort`). Sin modelo.
-- **Decisión macro (50-200 ms):** `POST /v1/systemone` al NAS con el estado de los últimos 5-10 s como `state` y preguntas fijas: `next_skill` (choice sobre skills equipadas), `target_priority` (score 0-3), `retreat` (noul), `open_menu` (choice). Umbral de confianza configurable; por debajo, no propone.
-- **Planificación/charla (2-5 s):** `/v1/chat/completions` (razonador o Qwen3.5-9B con frame) con RAG sobre las guías (índice `_src/search` de `docs/aion2-site`, ya construido para la web) y la ficha del personaje (JSON del meter).
-- **Salida:** overlay propio GTK4 layer-shell mínimo (una tarjeta de texto, `above_fullscreen` como el meter; toplevel si Diego quiere moverla) y `piper-tts` 1.8.0 (voz es-ES, nixpkgs). Voz de entrada: whisper.cpp 1.9.5 en el NAS (preset) o en DESK CPU si el NAS duerme.
-- **Modos:** `off` · `advise` (parte A) · `shadow` (propone y mide acuerdo con lo que haces) · `assist` (una tecla ejecuta la propuesta) · `routine <nombre>` (menús). Se cambian por hotkey y por `aion-brain mode X`; el modo actual se ve en la tarjeta.
+### 2.4 `aion-brain` (DESK, user service, python `asyncio`)
+- Entradas: socket del meter (`overlay`, `position`, `fight-closed`, `boss-alert`; **reconexión con backoff**: un restart del daemon borra el socket), socket de `aion-evdev`, frames, push-to-talk. Salidas: `state.jsonl`, notificaciones, TTS, acciones a `aion-assist`, heartbeat a `aion-assist` **en su propio task** (nunca en el hilo de las llamadas HTTP).
+- **Reglas (< 10 ms)**: YAML declarativo. v1 = 3 reglas con datos que existen hoy: boss (`boss-alert`), muerte (`fight-closed` + posición), bolsa llena (`inventory.json`). Pociones y cooldowns llegan con R6.
+- **Decisión macro (50-200 ms, desde R4)**: `POST /v1/systemone` con timeout de conexión 1 s y total 0,3 s; preguntas de un `questions.json` versionado **compartido con el conversor** (`next_skill` choice = slots de `8c e2`/`00 39` en orden fijo, `target_priority` score 0-3, `retreat` noul). Bajo el umbral de confianza no propone.
+- **Chat/planificación (2-5 s)**: `/v1/chat/completions` (Qwen3.5-9B con frame, o el razonador) + RAG propio: chunks del markdown de `~/Projects/aion2-guides` + embeddings (Pagefind del sitio es WASM para el navegador, no se consulta desde Python); ficha del personaje del JSON del meter.
+- **Salida v1 = `notify-send` → swaync** (ya corre como unidad de usuario; verificar una vez que se ve sobre gamescope) + `piper-tts` 1.8.0 con voz `es_ES-*.onnx` de rhasspy/piper-voices (sha256 en un script como `hf-download.sh`). Overlay GTK propio: fuera de v1; la tarjeta del meter es la opción 2 vía ticket A2M.
+- **Voz de entrada**: push-to-talk por hotkey → `pw-record` → whisper-server en el NAS; respaldo en DESK con el whisper.cpp de `meetingTranscribeEnable`, modelo `base` en **CPU** (Vulkan competiría con el juego).
+- **Modos**: `off` · `advise` · `shadow` (**silencioso**: la propuesta va al bus, no a pantalla, para medir predicción y no aceptación) · `assist` (una tecla ejecuta la propuesta) · `routine <nombre>`. Hotkey + `aion-brain mode X`; el modo se ve en la notificación persistente.
 
 ### 2.5 `aion-assist` (DESK, user service, python)
-- `evdev.UInput` crea un teclado y un ratón **relativo** virtuales (akunito tiene `rw` en `/dev/uinput` por ACL de logind, medido 2026-10-14). Socket unix `$XDG_RUNTIME_DIR/aion-assist.sock`, JSON por línea: `{"op":"act","action":"skill","args":{"slot":3}}`, `{"op":"abort"}`, `{"op":"status"}`.
-- Acciones macro v1: `skill <slot>`, `target_next`, `move <fwd|back|left|right> <ms>`, `turn <dx>`, `interact`, `open <bag|map|quest|warehouse>`, `close`, `click <x,y rel>`. Cada una se expande a eventos con tiempos muestreados de la **distribución real** de `aion-evdev` (hold de tecla, gaps, overshoot del ratón); nunca tiempos fijos.
-- Seguridad: cola de una acción; `abort` vacía la cola y suelta todas las teclas (`SYN` + key-up de todo lo pulsado); watchdog 2 s sin heartbeat de `aion-brain` = abort; límite de acciones/min configurable; todo evento inyectado se publica en el bus con `src=assist`.
-- Rutinas v1 (parte "navegar la UI para capturar datos" que antes era de la Pico): `capture_bag`, `capture_warehouse`, `capture_quests`, `capture_market_search <item>` — abren el menú, esperan el paquete del meter que confirma el contenido (el meter re-manda el contenedor entero al abrirlo), cierran. Éxito = el JSON del meter se actualizó; fallo = timeout → abort.
+- `evdev.UInput` (teclado + ratón relativo, `BUS_VIRTUAL`); publica su devnode en el bus al arrancar. Acceso: hoy la ACL `uaccess` viene de la regla udev de **Steam** (`60-steam-input.rules`) y akunito **no está en `uinput`** → añadir `uinput` a `extraGroups` tras el flag; no depender de la ACL.
+- Socket `$XDG_RUNTIME_DIR/aion-assist.sock` (solo usuario): `{"op":"act","action":"skill","args":{"slot":3}}`, `{"op":"abort"}`, `{"op":"status"}`, `{"op":"heartbeat"}`.
+- Acciones v1: `skill <slot>`, `target_next`, `move <dir> <ms>` (interrumpible a mitad del hold), `turn <dx>`, `interact`, `open <bag|warehouse>`, `close`. **Sin `click`** (ratón relativo sin lectura del cursor deriva; en modo cámara el cursor va capturado). Tiempos muestreados de la **distribución real** de `aion-evdev` (hold, gaps, overshoot), nunca constantes.
+- Seguridad: cola de una acción; `abort` vacía la cola y emite key-up de todo lo pulsado + `SYN`; watchdog 2 s sin heartbeat = abort; límite de acciones/min; la rutina de `assist` arranca en el **key-up** de la tecla disparadora.
+- Rutinas v1: **solo `capture_bag` y `capture_warehouse` (junto al NPC)**, verificables porque el meter re-manda el contenedor al abrirlo (`Seen[c].fullMs` en `inventory.json`). Quests y mercado no van por paquetes (quests = datos de cliente; mercado = HTTPS): fuera de v1, como mucho verificación por frame + Clef ("¿ventana de quest abierta?").
 
 ### 2.6 Modelos en el NAS
-| Preset | Modelos | VRAM | Uso |
+- **Decisión tomada para este plan: modo router de llama-server** (`--models-preset`, `--models-max 2`, sin `-m`) — se resuelve en R0 con la sesión que hizo F1, porque condiciona `llama-server.nix` y el widget. Sin router, un preset del gestor actual es **un** llama-server con **un** modelo, y `aion-advise` necesita dos.
+
+| Preset / unidad | Modelos | VRAM | Fase |
 |---|---|---|---|
-| `aion-advise` | Qwen3.5-9B abliterated + mmproj (chat/VLM) + Laya o Kev-4B + whisper.cpp | ~11 + 5 (Kev-4B Q8) + 1,5 ≈ 18 GB (estimado, medir) | asesor + decisión macro |
-| `aion-train` | nada cargado en llama-server; `aion-train` docker (peft/transformers) usa toda la tarjeta | hasta 24 GB | entrenar Kev-4B |
-| `kev-4b-aion` | el Kev afinado, GGUF, `/v1/systemone` | ~5 GB | decisión macro en producción |
-Con el modo router (`--models-max 2`) `aion-advise` son dos modelos cargados a la vez; sin router, un preset compuesto. Decidir con dotfiles-69 (F1 v2).
+| `aion-advise` | Qwen3.5-9B abliterated + mmproj (chat/VLM) y, desde R4, `kev-4b-aion`; whisper-server aparte | ~11 + 6-7 (Kev-4B f16 ctx 16k, **medir**) + 1,5 ≈ 19-20 GB | R2 (solo Qwen3.5-9B), R4 |
+| `aion-train.service` | `ai preset set off` + contenedor pytorch/peft (CDI como `llama-server.nix`, `Conflicts=sleep.target`); imagen (~10 GB) se trae **a mano** una vez, nunca dentro del job | hasta 24 GB | R4 |
+| `kev-4b-aion` | Kev afinado, GGUF, `/v1/systemone` | medir | R4+ |
+- Firewall tailscale0 hoy: 8090 (llama) y 8093 (estado de presets); añadir el puerto de whisper-server. Unidad propia para whisper y train, no compose (`nasRootDockerProjects` es lista cerrada).
+- **Inhibidor de S3**: `nas-suspend` dispara a las 23:00 y nada impide dormir en mitad de una sesión; `aion-brain` manda un inhibidor (`systemd-inhibit` por ssh o endpoint del gestor de presets) mientras la sesión está abierta, y WoL del NAS no funciona hoy → R2 "con el NAS despierto" se juega antes de las 23:00 hasta que F1 resuelva el despertar.
 
 ### 2.7 Dataset y entrenamiento (`aion-train`, NAS docker)
-- Conversor `session → kev.jsonl`: por cada ventana de 2 s en combate (y por cada acción humana) un registro `{state_text, questions{next_skill: choice[...], target_priority: score, retreat: noul}, answers}`; la respuesta = lo que hizo Diego en los 1,5 s siguientes (del bus: paquete de skill lanzada o evdev). Estado en texto compacto (≤ 600 tokens): snapshot + últimos 5 eventos + cooldowns.
-- Entrenamiento: `kev.train --init_from jaredpalmer/kev-4b` con split por sesión (nunca por registro), calibración de temperatura en held-out, exporta GGUF (`convert_hf_to_gguf` del repo de Kev o el flujo de ggml-org) → `/var/lib/llama-server/models/kev-4b-aion-<fecha>.gguf`.
-- Métricas que cierran la fase: acuerdo top-1 en held-out ≥ 0,70 (Kev-4B base está en ~0,5 en dominios nuevos según su ficha), Brier mejor que la base, y en **modo sombra en vivo** acuerdo ≥ 0,6 durante 3 sesiones antes de activar `assist`.
+- **Antes de entrenar (gate)**: convertir el Kev-4B base publicado a GGUF con nuestro flujo (fundir LoRA con `merge_and_unload` + `convert_hf_to_gguf`) y comprobar que `GET /v1/models` lo anuncia como `output_modalities: ["decisions"]` y responde igual que `ggml-org/Kev-4B-GGUF` a la prueba de humo. Si no, nada de R4 se sirve.
+- Conversor `session → kev.jsonl`: ventanas de 2 s en combate y cada acción humana → `{state_text ≤ 600 tokens, questions (de questions.json), answers}`; respuesta = skill lanzada (paquete) o tecla→slot (`keymap.json`) en los 1,5 s siguientes; **se excluyen** ventanas con acción `assist` en ±1,5 s y las sesiones en modo `shadow` visible. Split **por sesión**; temperatura calibrada en held-out; ECE reportado.
+- Métricas de cierre: top-1 ≥ 0,70 en held-out por sesión, Brier < base, y **sombra silenciosa** 3 sesiones: propuesta ≥ 0,5 s antes de la acción humana con el mismo skill ≥ 0,6. Línea base única: la de la ficha de Kev-4B (verificar id HF y cifra antes de R4; descargar con `hf-download.sh`).
 
-## 3. Fases y tickets (crear en Plane al aprobar; AINF para dotfiles, A2M para el meter)
+## 3. Fases y criterios de cierre (tickets al aprobar: AINF dotfiles, A2M meter)
 
-| Fase | Entregable | Hecho cuando | Ticket |
-|---|---|---|---|
-| R0 | Bus + sesiones: `aion-capture` (flag `aionCaptureEnable`), `aion-evdev`, cliente del socket del meter en `aion-brain` escribiendo `events/state.jsonl`; rsync al NAS | una sesión de 1 h grabada, `state.jsonl` con pos/hp/target/cd rellenos (o tickets A2M por cada `null`), < 1 % CPU | AINF-nuevo, A2M-nuevo (campos) |
-| R1 | Reglas + overlay + TTS (`advise` sin LLM) | 5 reglas útiles (pociones, boss, bolsa llena, cooldown largo, muerte) sonando en juego, 0 falsos positivos en 2 sesiones | AINF |
-| R2 | Asesor con modelos: preset `aion-advise`, RAG guías, voz | pregunta por voz → respuesta hablada < 5 s con el NAS despierto; degradación limpia dormido | AINF |
-| R3 | `aion-assist` + modo sombra + kill switch | 100 acciones inyectadas sin un solo key stuck; abort < 50 ms; evdev distingue 100 % virtual/físico | AINF |
-| R4 | Dataset + Kev-4B v1 + sombra en vivo | métricas de 2.7 | AINF (train), A2M (export) |
-| R5 | `assist` y rutinas de captura de UI (bolsa, almacén, quests, mercado) | las 4 rutinas actualizan el JSON del meter 10/10 veces | AINF, A2M |
-| R6 | REA → tabla de opcodes → parsers del meter (HP/MP, buffs, cooldowns, party, inspect) | `opcodes.json` + tests de replay en el meter | A2M |
+| Fase | Entregable | Hecho cuando (medible) |
+|---|---|---|
+| **R6a** (primero, en paralelo con R0) | REA → `opcodes.json` → parsers del meter para HP/MP, cooldowns, buffs | `opcodes.json` + replay en el gate del meter (`build.sh`, tests + login pcap) con asserts de HP/MP/cooldown |
+| **R0** | Bus + sesiones: flags, `aion-evdev`, cliente del socket del meter en `aion-brain`, `state.jsonl`, copia al NAS por NFS | 1 h de sesión; 20 skills pulsadas a mano, cada una con su paquete ≤ 300 ms después en el bus; `aion-evdev`+`aion-brain` < 1 % de un core en `systemd-cgtop`; la sesión está en el NAS |
+| **R1** | 3 reglas (boss, muerte, bolsa llena) → swaync + piper | cada disparo guarda su snapshot; hotkey "mal" de Diego; FP ≤ 5 % sobre ≥ 50 disparos en 2 sesiones |
+| **R2** | Asesor: preset `aion-advise` (solo Qwen3.5-9B), RAG propio, voz, inhibidor S3 | p90 < 5 s en 20 preguntas (`ptt_down` → `tts_start` en el bus); con el NAS apagado las reglas siguen y la voz dice "NAS dormido" ≤ 2 s |
+| **R3** | `aion-assist` + kill switch + modo sombra silencioso | banco fuera del juego (`wev`/kitty en DP-2): 100 acciones, conjunto de teclas pulsadas vacío ≤ 100 ms tras cada una; abort < 50 ms (evdev físico → último key-up en el bus); 1 000 eventos inyectados, 100 % marcados virtuales por devnode |
+| **R4** | Gate GGUF, dataset, Kev-4B v1, sombra silenciosa | métricas de §2.7 |
+| **R5** | `assist` + rutinas `capture_bag`/`capture_warehouse` | `Seen[c].fullMs` sube 10/10; timeout → abort con teclas sueltas comprobadas por `aion-evdev` |
+| **R6b** | Resto de opcodes (party, inspect) y lo que R1-R5 hayan pedido | replay + asserts en el meter |
 
-R6 corre en paralelo desde R0 (es el proyecto del meter). Cada fase: medir, anotar en este doc, memoria, commit; el widget de Waybar se actualiza cuando cambian presets (regla 2026-10-14) y antes de cada despliegue se pregunta por otras sesiones.
+Primer resultado útil (un asesor que dice algo verdadero en juego) = R0 → R1 con las 3 reglas de hoy → R2. Cada fase: medir, anotar aquí y en la memoria del proyecto que toque (meter → `aion2-dps-meter`), commit; widget de Waybar al día cuando cambian presets; antes de desplegar, preguntar por otras sesiones.
 
-## 4. Riesgos y decisiones abiertas
+## 4. Convenciones a respetar en la implementación
+- Flags en `lib/defaults.nix` a `false`: `aion2AssistantEnable`, `aion2AssistantEvdevEnable`, `aion2AssistantFramesEnable`, `aion2AssistantAssistEnable`, `aion2AssistantMonitor` (default `"DP-1"` como `aion2MeterOverlayMonitor`), `aion2AssistantNasUrl`, `aion2AssistantWhisperUrl`; nunca `DP-1` ni `100.64.0.1` literales en módulos; documentar en `docs/profile-feature-flags.md`.
+- Módulos en `user/app/aion2-assistant/` (no en `user/wm/sway/`); unidades de usuario con `PartOf=sway-session.target` + `EnvironmentFile=%t/sway-session.env`; un solo gestor de ciclo de vida.
+- Sin toolchains en el host: `python3Packages.{evdev,pyyaml,requests}` de nixpkgs; sin PyGObject/GTK; entrenamiento solo en docker en el NAS.
+- Despliegue: DESK `./deploy.sh --profile DESK`; NAS `install.sh … -s -d`; toda unidad nueva del NAS con GPU lleva `Conflicts=sleep.target`.
 
-- **Campos ausentes en el meter** (HP/MP propios, cooldowns, buffs): bloquean las reglas de R1 y el dataset de R4. Mitigación: R0 lo descubre en la primera sesión; REA (R6) es la vía sistemática; OCR solo como parche puntual.
-- **FPS**: `grim` a 1 fps y el overlay GTK sobre gamescope tienen coste; medir con `mangoapp` en R0 y fijar presupuesto (≤ 2 % FPS).
-- **Horario del NAS** (S3 23:00-16:00): el asesor con LLM solo con el NAS despierto; `aion-brain` debe poder despertarlo (WoL, pendiente de F1) y vivir sin él.
-- **Distribución de inputs**: un jitter mal muestreado se nota (y aprende mal); el muestreo viene del propio registro evdev, nunca de constantes.
-- **Modo router vs presets compuestos** (F1 v2): decidir antes de R2.
-- **Parches del juego**: opcodes y UI cambian; el bus guarda la versión del cliente en `meta.json` y el dataset se etiqueta por versión.
-- **Seguridad de `aion-assist`**: socket solo para el usuario, sin red; watchdog y límite de acciones; el `abort` físico siempre gana.
+## 5. Lo que NO se hace en v1
+Autonomía en combate sin sombra previa; vídeo continuo; `click` por ratón relativo; rutinas de quests/mercado; overlay GTK propio; leer memoria del proceso salvo que REA lo exija para desempaquetar; dependencias fuera de nix/docker; modificar el meter desde este repo (solo tickets A2M).
 
-## 5. Lo que NO se hace
-
-Autonomía en combate sin sombra previa; captura de vídeo continua en v1; leer memoria del proceso salvo que REA lo exija para desempaquetar; dependencias instaladas fuera de nix/docker; modificar el meter desde este repo (solo tickets A2M).
+## 6. Auditoría Fable 2026-10-14 — qué cambió de v1 a v2
+Errores de hecho corregidos: apertura de sesión por `state/summary.json` (el socket no emite login); virtual/físico por devnode (los UInput sí traen `phys`); grupo `uinput` en vez de confiar en la ACL de Steam; `aion-train` como unidad propia y `aion-advise` exige router (un preset = un llama-server con un modelo; no hay whisper en el NAS); RAG propio (no existe `_src/search`, el sitio usa Pagefind WASM); rutinas limitadas a bolsa/almacén (quests y mercado no van por paquetes); una sola línea base de Kev y VRAM de Kev-4B "a medir". Fallos de diseño arreglados: kill switch con umbral (no aborta por 1 px), rutina en key-up + 300 ms de gracia, inotify para ver el dispositivo virtual, heartbeat en task propio con timeouts cortos, unión por wall-clock, foco por Sway IPC, sombra silenciosa y exclusión de ventanas `assist` del dataset, `questions.json` compartido, abort directo autoritativo, sin `click`. Piezas añadidas: inhibidor de S3, firewall de whisper, copia por NFS, reconexión al socket, cierre tras crash, gate de export GGUF, imagen de entrenamiento a mano, voces piper, push-to-talk con respaldo CPU, `keymap.json`, decisión router en R0. Reordenado: R6a (HP/MP/cooldowns) delante de R1; Kev/Laya fuera de R2; frames por evento; overlay GTK fuera de v1. Criterios de cierre reescritos para ser medibles.
