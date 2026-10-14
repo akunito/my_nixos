@@ -356,12 +356,12 @@ let
   # That needs root (ss -K = SOCK_DESTROY), hence the exact-match sudo rule below;
   # without it only this user's local clients can be killed.
   llamaStop = pkgs.writeShellScriptBin "llama-stop" ''
-    n=$(${pkgs.iproute2}/bin/ss -Htn "sport = :${toString port}" | ${pkgs.coreutils}/bin/wc -l)
-    if /run/wrappers/bin/sudo -n /run/current-system/sw/bin/ss -K -tn sport = :${toString port} >/dev/null 2>&1; then
+    n=$(${pkgs.iproute2}/bin/ss -Htn "sport eq :${toString port}" | ${pkgs.coreutils}/bin/wc -l)
+    if /run/wrappers/bin/sudo -n /run/current-system/sw/bin/ss -K -tn sport eq :${toString port} >/dev/null 2>&1; then
       echo "llama-stop: cut $n connection(s) to :${toString port} — the model stays loaded"
       exit 0
     fi
-    pids=$(${pkgs.iproute2}/bin/ss -Htnp "dport = :${toString port}" | ${pkgs.gnugrep}/bin/grep -oE 'pid=[0-9]+' | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/sort -u | ${pkgs.coreutils}/bin/tr '\n' ' ')
+    pids=$(${pkgs.iproute2}/bin/ss -Htnp "dport eq :${toString port}" | ${pkgs.gnugrep}/bin/grep -oE 'pid=[0-9]+' | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/sort -u | ${pkgs.coreutils}/bin/tr '\n' ' ')
     for p in $pids; do kill -TERM "$p" 2>/dev/null; done
     echo "llama-stop: no sudo rule for ss -K; killed local client(s): ''${pids:-none}"
   '';
@@ -638,7 +638,7 @@ in
     # llama-stop (Waybar "Stop" row): only this exact command, nothing else.
     security.sudo.extraRules = [{
       users = [ userSettings.username ];
-      commands = [{ command = "/run/current-system/sw/bin/ss -K -tn sport = :${toString port}"; options = [ "NOPASSWD" ]; }];
+      commands = [{ command = "/run/current-system/sw/bin/ss -K -tn sport eq :${toString port}"; options = [ "NOPASSWD" ]; }];
     }];
 
     # Tailscale only. openFirewall would punch the port on every interface, and
