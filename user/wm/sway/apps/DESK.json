@@ -67,15 +67,6 @@
       "notes": ""
     },
     {
-      "id": "tv",
-      "criteria": "Philips Consumer Electronics Company PHILIPS FTV 0x01010101",
-      "group": 3,
-      "name": "Philips TV",
-      "primary": false,
-      "enabled": true,
-      "notes": ""
-    },
-    {
       "id": "left",
       "criteria": "BNQ ZOWIE XL LCD 7CK03588SL0",
       "group": 4,
