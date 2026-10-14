@@ -2,7 +2,7 @@
 id: akunito.plans.aion2-rpa-assistant
 summary: Plan de implementación (sin implementar aún, v2 tras auditoría Fable) del asistente RPA para Aion 2 en DESK — bus de estado local (meter + evdev + frames por evento), orquestador aion-brain, asesor por notificaciones/voz, inyector uinput aion-assist con escalera sombra silenciosa→asistido→rutinas, dataset y entrenamiento de Kev en el NAS, presets de la 3090, fases R0-R6 con criterios medibles; objetivo de Diego: aprender RPA/asistentes, no un bot desatendido
 tags: [aion2, rpa, uinput, evdev, meter, nas, rtx3090, kev, laya, clef, whisper, piper, plan]
-tickets: []
+tickets: [AINF-409, AINF-410, AINF-411, AINF-412, AINF-413, AINF-414, A2M-51, A2M-52]
 date: 2026-10-14
 status: draft
 related_files:
@@ -88,7 +88,7 @@ Reglas de diseño:
 - Conversor `session → kev.jsonl`: ventanas de 2 s en combate y cada acción humana → `{state_text ≤ 600 tokens, questions (de questions.json), answers}`; respuesta = skill lanzada (paquete) o tecla→slot (`keymap.json`) en los 1,5 s siguientes; **se excluyen** ventanas con acción `assist` en ±1,5 s y las sesiones en modo `shadow` visible. Split **por sesión**; temperatura calibrada en held-out; ECE reportado.
 - Métricas de cierre: top-1 ≥ 0,70 en held-out por sesión, Brier < base, y **sombra silenciosa** 3 sesiones: propuesta ≥ 0,5 s antes de la acción humana con el mismo skill ≥ 0,6. Línea base única: la de la ficha de Kev-4B (verificar id HF y cifra antes de R4; descargar con `hf-download.sh`).
 
-## 3. Fases y criterios de cierre (tickets al aprobar: AINF dotfiles, A2M meter)
+## 3. Fases y criterios de cierre (tickets creados 2026-10-14: R0 AINF-409 · R1 AINF-410 · R2 AINF-411 · R3 AINF-412 · R4 AINF-413 · R5 AINF-414 · R6a A2M-51 · R6b A2M-52)
 
 | Fase | Entregable | Hecho cuando (medible) |
 |---|---|---|
