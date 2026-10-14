@@ -233,20 +233,29 @@ let
     fi
   '';
 
-  # Wraps the tab pills onto extra status lines (rows 1-4; line 0 is a blank margin above the bar).
+  # Wraps the tab pills onto extra status lines and stores each window's line in @row (status-format[1..4] show
+  # the windows whose @row matches; line 0 is a blank margin above the bar). Up to 2 pill rows get a blank line
+  # between them (lines 1,3); 3-4 rows drop the gap (lines 1-4) — tmux caps status at 5 lines.
   # Pill width = "I:" + name cut at 15 (+…) + 2 caps + 1 separator; #{w:} is display width (#{n:} counts bytes).
-  # Runs from hooks on window link/unlink/rename (auto-rename fires window-renamed), client attach/resize.
+  # Runs from hooks on window link/unlink/rename (auto-rename fires window-renamed), client attach/resize, and
+  # from the #() in status-format[0] every status-interval.
   tmux-status-rows = pkgs.writeShellScript "tmux-status-rows" ''
     T=${pkgs.tmux}/bin/tmux
     $T list-clients -F '#{client_session} #{client_width}' 2>/dev/null | while read -r s w; do
-      row=1 x=0
+      row=1 x=0 ids=() rows=() curs=()
       while read -r i pw cur; do
         pw=$((pw + 3))
         if (( x > 0 && x + pw > w + 1 && row < 4 )); then row=$((row + 1)); x=0; fi
         x=$((x + pw))
-        [ "$cur" = "$row" ] || $T set -wq -t "$s:$i" @row "$row"
+        ids+=("$i") rows+=("$row") curs+=("$cur")
       done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{window_index}:#{=/15/…:window_name}} #{@row}')
-      [ "$($T show -qv -t "$s" status)" = "$((row + 1))" ] || $T set -q -t "$s" status "$((row + 1))"
+      gap=0; (( row <= 2 )) && gap=1
+      for k in "''${!ids[@]}"; do
+        line=''${rows[k]}; (( gap )) && line=$((line * 2 - 1))
+        [ "''${curs[k]}" = "$line" ] || $T set -wq -t "$s:''${ids[k]}" @row "$line"
+      done
+      lines=$row; (( gap )) && lines=$((row * 2 - 1))
+      [ "$($T show -qv -t "$s" status)" = "$((lines + 1))" ] || $T set -q -t "$s" status "$((lines + 1))"
     done
   '';
 
