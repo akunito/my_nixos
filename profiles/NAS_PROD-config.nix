@@ -164,7 +164,10 @@ in
       "/mnt/ssdpool/docker/unifi"
     ];
     nasAutoSnapshotEnable = true;
-    nasRootDockerProjects = [ "vpn-media" ];
+    # tailscale = subnet router for 192.168.8/20 → Headscale, cloudflared = tunnel. Until
+    # 2026-10-14 both only lived through `restart: unless-stopped`; a `compose down`
+    # (migration cut) removed them and nothing brought them back after the reboot.
+    nasRootDockerProjects = [ "vpn-media" "tailscale" "cloudflared" ];
     nasRootlessDockerProjects = [ "npm" "cloudflared" "media" "exporters" "monitoring" ];
     # Stopped by default, started with `nas-svc start <name>` (AINF-401). State lives
     # in /mnt/ssdpool/docker/<name>, NOT under compose/: the VPS "configs" backup job
