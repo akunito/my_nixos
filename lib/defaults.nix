@@ -229,7 +229,8 @@
     llamaServerModelFile = "";                             # absolute GGUF path under /var/lib/llama-server; replaces -hf when set (pre-downloaded models, e.g. gated/abliterated repos)
     llamaServerBackend = "vulkan";                         # "vulkan" (nix llama-cpp, AMD) | "docker-cuda" (llama.cpp's CUDA image via CDI, NVIDIA — Vulkan on NVIDIA prefills at 48 tok/s, CUDA at 1326, measured 2026-10-13)
     llamaServerDockerImage = "ghcr.io/ggml-org/llama.cpp@sha256:c4348afb91499b10fad12f92626c7a8ca8b69d6475d10c793b810cb61237ce00";  # server-cuda tag resolved 2026-10-13; bump the digest by hand
-    llamaServerCtxSize = 16384;                            # context window
+    llamaServerCtxSize = 16384;                            # context window PER SLOT (llama.cpp b11580: -c is per slot, VRAM = slots x ctx)
+    llamaServerParallelSlots = null;                       # -np; null = llama.cpp default (4). 1 for a single agent client: on Qwen3.8-27B KV costs ~16 KB/token, so 4 x 64k = 2.1 GB more than 4 x 32k (measured 2026-10-14)
     llamaServerGpuLayers = 999;                            # offload all layers to GPU
     llamaServerApiKey = "";                                # legacy literal; leaks into the store AND `ps` — prefer llamaServerApiKeySecret
     llamaServerApiKeySecret = "";                          # attribute NAME in secrets/domains.nix; resolved at activation into a 0400 file passed via LoadCredential
@@ -650,7 +651,7 @@
     claudeCodeLocalBackendUrl = ""; # Root URL (no /v1) of an Anthropic+OpenAI-compatible llama-server; "" = off. Installs `claude-<name>` (whole session on it) and `<name>-ask` (one-shot, stdin = context) — user/app/claude-code/local-backend.nix
     claudeCodeLocalBackendName = "nas"; # command suffix/prefix
     claudeCodeLocalBackendModel = "qwen3.8-27b-abliterated"; # model id sent (llama-server serves whatever is loaded under any name; matches llamaServerModelAlias for honesty)
-    claudeCodeLocalBackendCtx = 65536; # the server's real window (llamaServerCtxSize) -> CLAUDE_CODE_MAX_CONTEXT_TOKENS
+    claudeCodeLocalBackendCtx = 262144; # the server's real window per slot (llamaServerCtxSize) -> CLAUDE_CODE_MAX_CONTEXT_TOKENS
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
     claudeProjectsWorkspaceDir = "Projects"; # Directory under $HOME that holds the project repositories
     developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)

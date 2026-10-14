@@ -45,6 +45,7 @@ let
     then "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json"
     else "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json";
   ctxSize = cfg.llamaServerCtxSize or 16384;
+  parallelSlots = cfg.llamaServerParallelSlots or null;
   gpuLayers = cfg.llamaServerGpuLayers or 999;
   apiKey = cfg.llamaServerApiKey or "";
   # Preferred over llamaServerApiKey: the NAME of an attribute in
@@ -99,6 +100,7 @@ let
   ++ lib.optionals (apiKeySecret != "") [ "--api-key-file" "%d/api-key" ]
   ++ lib.optionals (apiKeySecret == "" && apiKey != "") [ "--api-key" apiKey ]
   ++ lib.optionals (modelAlias != "") [ "-a" modelAlias ]
+  ++ lib.optionals (parallelSlots != null) [ "-np" (toString parallelSlots) ]
   ++ lib.optionals (chatTemplateFile != null)
        [ "--chat-template-file" (if isDocker then chatTemplateInContainer else "${chatTemplateFile}") ]
   ++ extraArgs;
