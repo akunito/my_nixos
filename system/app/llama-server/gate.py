@@ -142,14 +142,14 @@ class Gate:
             await self.refresh_loaded(force=not self.known)
             if self.known and model not in self.known:
                 alias = LEGACY_ALIASES.get(model)
-                target = None
+                serve_as = None   # NOT `target`: that name holds the request path in this method
                 if alias and self.loaded and self.loaded.startswith(alias[0]):
-                    target = self.loaded
+                    serve_as = self.loaded
                 elif alias and self.loaded is None and alias[1] in self.known:
-                    target = alias[1]
-                if target:
-                    body = body.replace(json.dumps(model).encode(), json.dumps(target).encode(), 1)
-                    model = target
+                    serve_as = alias[1]
+                if serve_as:
+                    body = body.replace(json.dumps(model).encode(), json.dumps(serve_as).encode(), 1)
+                    model = serve_as
                 else:
                     await self._respond(writer, *unknown_body(path, model, sorted(self.known)))
                     return

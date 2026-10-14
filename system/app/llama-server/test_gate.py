@@ -68,6 +68,7 @@ class LegacyAlias(unittest.TestCase):
             st, body = await http(port, "POST", "/v1/messages", {"model": "qwen3.8-27b-abliterated"}, {"X-Nas-No-Switch": "1"})
             self.assertEqual((st, body["model"]), (200, "reasoner-256k"))
             self.assertEqual(fake.loaded, "reasoner-256k")
+            self.assertEqual(fake.log[-1], "POST /v1/messages:reasoner-256k")   # path kept (a shadowed name once sent 'POST reasoner-256k')
             fake.loaded = "coder"
             gate.loaded_at = 0
             st, body = await http(port, "POST", "/v1/messages", {"model": "qwen3.8-27b-abliterated"})
@@ -103,7 +104,7 @@ class FakeRouter:
                 self.loaded = m
             elif m:
                 self.loaded = m
-            self.log.append(f"{target}:{m}")
+            self.log.append(f"{method} {target}:{m}")
             await asyncio.sleep(float(json.loads(body or b"{}").get("sleep", 0)))
             out = json.dumps({"model": m, "ok": True}).encode()
         w.write(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % len(out) + out)
@@ -142,7 +143,7 @@ class EndToEnd(unittest.TestCase):
             await first
             self.assertEqual(st, 200)
             self.assertGreaterEqual(waited, 1.5, "b must wait for a's answer AND the grace")
-            self.assertEqual(fake.log[:2], ["/v1/chat/completions:a", "/v1/chat/completions:b"])
+            self.assertEqual(fake.log[:2], ["POST /v1/chat/completions:a", "POST /v1/chat/completions:b"])
             # claude-nas naming another model: rejected at once, nothing forwarded
             n = len(fake.log)
             t1 = time.monotonic()
