@@ -350,6 +350,22 @@ let
       && echo "local LLM unlocked — the next request will load the model again"
   '';
 
+  # Stop what the model is doing NOW, keep it resident (the DESK twin of the NAS
+  # gate's POST /gate/abort, 2026-10-14). Ollama has no cancel API; it aborts a
+  # generation whose client is gone, so cut every connection the server holds.
+  # That needs root (ss -K = SOCK_DESTROY), hence the exact-match sudo rule below;
+  # without it only this user's local clients can be killed.
+  llamaStop = pkgs.writeShellScriptBin "llama-stop" ''
+    n=$(${pkgs.iproute2}/bin/ss -Htn "sport = :${toString port}" | ${pkgs.coreutils}/bin/wc -l)
+    if /run/wrappers/bin/sudo -n /run/current-system/sw/bin/ss -K -tn sport = :${toString port} >/dev/null 2>&1; then
+      echo "llama-stop: cut $n connection(s) to :${toString port} — the model stays loaded"
+      exit 0
+    fi
+    pids=$(${pkgs.iproute2}/bin/ss -Htnp "dport = :${toString port}" | ${pkgs.gnugrep}/bin/grep -oE 'pid=[0-9]+' | ${pkgs.coreutils}/bin/cut -d= -f2 | ${pkgs.coreutils}/bin/sort -u | ${pkgs.coreutils}/bin/tr '\n' ' ')
+    for p in $pids; do kill -TERM "$p" 2>/dev/null; done
+    echo "llama-stop: no sudo rule for ss -K; killed local client(s): ''${pids:-none}"
+  '';
+
   # `llama-lock` and `llama-unlock` say what they did but not what the state IS,
   # and the state is now worth asking about: the lock is normally taken and
   # released by GameMode, not by hand, so "is it locked, and why" is the first
@@ -616,8 +632,14 @@ in
       };
     };
 
-    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock llamaStatus ollamaPull ]
+    environment.systemPackages = [ ollamaPkg llamaLock llamaUnlock llamaStop llamaStatus ollamaPull ]
       ++ lib.optional evictEnable llamaEvict;
+
+    # llama-stop (Waybar "Stop" row): only this exact command, nothing else.
+    security.sudo.extraRules = [{
+      users = [ userSettings.username ];
+      commands = [{ command = "/run/current-system/sw/bin/ss -K -tn sport = :${toString port}"; options = [ "NOPASSWD" ]; }];
+    }];
 
     # Tailscale only. openFirewall would punch the port on every interface, and
     # this one answers unauthenticated prompts to a 20B model.

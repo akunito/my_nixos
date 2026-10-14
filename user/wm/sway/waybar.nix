@@ -577,6 +577,7 @@ let
        resident but partly in system RAM, which costs 30-60% of decode speed
        and is otherwise completely silent. */
     #custom-llm.ok     { color: #${config.lib.stylix.colors.base0B}; }
+    #custom-llm.busy   { color: #${config.lib.stylix.colors.base0D}; }
     #custom-llm.spill  { color: #${config.lib.stylix.colors.base0A};
                          background-color: ${hexToRgba config.lib.stylix.colors.base0A "22"}; }
     #custom-llm.locked { color: #${config.lib.stylix.colors.base0E}; }

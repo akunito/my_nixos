@@ -18,6 +18,8 @@ set -uo pipefail
 #   locked  the gaming lock is held — no model can load (see ollama-server.nix)
 #   idle    service up, nothing resident
 #   spill   a model is resident but part of it is in system RAM  <- the warning
+#   busy    resident and the GPU is > 50 % busy (generating) — same class/colour
+#           as the NAS widget; the "Stop" menu row is for this state
 #   ok      a model is resident, entirely on the GPU
 #
 # Deliberately does NOT start anything. Waybar polls this every few seconds; a
@@ -52,6 +54,16 @@ vram_free_mib() {
 }
 
 FREE="$(vram_free_mib)"
+# GPU load of the biggest card (amdgpu sysfs), for the busy state.
+gpu_busy_pct() {
+  local best=0 busy=0 d t
+  for d in /sys/class/drm/card*/device; do
+    t=$(cat "$d/mem_info_vram_total" 2>/dev/null || echo 0)
+    [ "$t" -gt "$best" ] && { best=$t; busy=$(cat "$d/gpu_busy_percent" 2>/dev/null || echo 0); }
+  done
+  echo "$busy"
+}
+BUSY="$(gpu_busy_pct)"
 
 if [ -e "$LOCK" ]; then
   emit "󰍁 locked" "Local LLM locked — a game is running, or llama-lock was run.
@@ -72,11 +84,12 @@ fi
 PS="$(curl -sf --max-time 2 "${API}/api/ps" 2>/dev/null || echo '')"
 [ -n "$PS" ] || { emit "󰅗 down" "ollama is not answering on ${API}." "down"; exit 0; }
 
-python3 - "$PS" "$FREE" <<'PY'
+python3 - "$PS" "$FREE" "$BUSY" <<'PY'
 import json, sys, datetime
 
 ps = json.loads(sys.argv[1] or '{"models":[]}')
 free = int(sys.argv[2])
+busy = int(sys.argv[3] or 0)
 models = ps.get("models") or []
 
 def out(text, tooltip, cls):
@@ -111,9 +124,15 @@ except Exception:
     pass
 
 gib = total / 2**30
-if pct >= 100:
+ctx = m.get("context_length")
+ctxs = f" · ctx {ctx // 1024}k" if isinstance(ctx, int) and ctx >= 1024 else ""
+if busy > 50:
+    out(f"󰚩 {name} ⚡{busy}%",
+        f"{name}\n{gib:.1f} GiB · {pct}% on GPU{ctxs}{when}\nGenerating: GPU {busy} % busy.\n{free} MiB VRAM free.\n\nClick for the menu — ⏹ Stop cuts what is running.",
+        "busy")
+elif pct >= 100:
     out(f"󰚩 {name} 100%",
-        f"{name}\n{gib:.1f} GiB · fully on GPU{when}\n{free} MiB VRAM free.\n\nClick for the model menu.",
+        f"{name}\n{gib:.1f} GiB · fully on GPU{ctxs}{when}\n{free} MiB VRAM free.\n\nClick for the model menu.",
         "ok")
 else:
     spilled = (total - vram) / 2**20

@@ -119,6 +119,9 @@ for m in sorted(models, key=lambda x: x["name"]):
     print(f"{resident} {short}{star}   {detail}\0info\x1fload:{name}")
 PY
 
+  # Same row as the NAS widget: cut what is running, keep the model (llama-stop,
+  # ollama-server.nix). Listed first so it is one keystroke away mid-generation.
+  row "⏹  Stop — cut what is running now (model stays loaded)" "stop"
   if [ -e "$LOCK" ]; then
     row "󰍁  Unlock — allow models to load again" "unlock"
   else
@@ -133,6 +136,9 @@ fi
 action="${ROFI_INFO:-}"
 
 case "$action" in
+  stop)
+    if out=$(llama-stop 2>&1); then notify "Stopped" "$out"; else notify "Stop failed" "${out:0:200}"; fi
+    ;;
   lock)
     llama-lock >/dev/null 2>&1
     notify "Locked" "Models will not load; VRAM freed."
@@ -163,7 +169,9 @@ case "$action" in
     # closes immediately, and refresh the bar when it finishes.
     set_oc_default "ollama/${model%:latest}"
     notify "Loading ${model%:latest}" "Set as OpenCode's default. Cold start; the bar updates when it is resident."
-    ( curl -sf --max-time 600 "${API}/api/generate" -d '{"model":"'"$model"'","prompt":""}' >/dev/null 2>&1
+    ( if ! curl -sf --max-time 600 "${API}/api/generate" -d '{"model":"'"$model"'","prompt":""}' >/dev/null 2>&1; then
+        notify "Load failed: ${model%:latest}" "ollama did not load it — journalctl -u ollama -n 20"
+      fi
       refresh_bar ) &
     ;;
 esac
