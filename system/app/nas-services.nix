@@ -95,7 +95,12 @@ ${onDemandCases}
   llamaOn = systemSettings.llamaServerEnable or false;
   llamaPort = toString (systemSettings.llamaServerPort or 8090);
   llamaBusyGrace = 300;      # s since the loaded model last answered = still "in use" (the gate's own grace)
-  suspendRetrySeconds = 1800;
+  suspendRetryMinutes = 30;
+  # Set when guard 3 postponed a sleep; nas-suspend-check re-runs nas-suspend every
+  # 30 min while it exists. A FILE, not a transient timer: `systemd-run --on-active`
+  # died with the deploy of 2026-10-14 23:23 (and with any cancel/reboot), and the
+  # NAS then stayed awake all night with the card idle.
+  suspendPendingFile = "/var/lib/nas-suspend/pending";
 in
 {
   # Every zfs fileSystems entry, whatever its origin (profile list or a regenerated
@@ -684,16 +689,18 @@ HEADER
         fi
 
         # Guard 2: only suspend inside the sleep window (23:00–16:00). Any stray
-        # trigger outside it is a bug, not an intent to sleep.
+        # trigger outside it is a bug, not an intent to sleep. A pending retry chain
+        # (guard 3) ends here.
         HOUR=$(${pkgs.coreutils}/bin/date +%H)
         if [ "$HOUR" -lt 23 ] && [ "$HOUR" -ge 16 ]; then
           echo "Outside the 23:00–16:00 sleep window (hour=$HOUR) — refusing to suspend."
+          ${pkgs.coreutils}/bin/rm -f ${suspendPendingFile}
           exit 0
         fi
 
         # Guard 3 (Diego 2026-10-14, after the 23:00 sleep cut a claude-nas answer):
-        # a prompt in flight on the 3090 postpones the sleep; a transient timer
-        # re-runs this unit in ${toString (suspendRetrySeconds / 60)} min, and so on
+        # a prompt in flight on the 3090 postpones the sleep; the pending marker makes
+        # nas-suspend-check re-run this unit every ${toString suspendRetryMinutes} min
         # until the card is free (guard 2 ends the chain at 16:00). "In use" = a
         # request in flight, or the loaded model answered < ${toString llamaBusyGrace} s
         # ago (a session between two turns). Only asked while the proxy is up: a
@@ -710,20 +717,41 @@ if n: print(f"{n} request(s) in flight on {m}")
 elif m and idle is not None and idle < ${toString llamaBusyGrace}: print(f"{m} answered {int(idle)} s ago")
 ' 2>/dev/null || true)
           if [ -n "$BUSY" ]; then
-            echo "NAS 3090 busy ($BUSY) — suspend postponed ${toString (suspendRetrySeconds / 60)} min."
-            ${pkgs.systemd}/bin/systemctl stop nas-suspend-retry.timer nas-suspend-retry.service 2>/dev/null || true
-            ${pkgs.systemd}/bin/systemctl reset-failed nas-suspend-retry.service 2>/dev/null || true
-            ${pkgs.systemd}/bin/systemd-run --quiet --unit=nas-suspend-retry --on-active=${toString suspendRetrySeconds} \
-              --timer-property=AccuracySec=1s ${pkgs.systemd}/bin/systemctl start nas-suspend.service
-            /run/current-system/sw/bin/infra-notify send "💤 NAS: sleep postponed ${toString (suspendRetrySeconds / 60)} min — 3090 busy ($BUSY)" >/dev/null 2>&1 || true
+            echo "NAS 3090 busy ($BUSY) — suspend postponed ${toString suspendRetryMinutes} min."
+            ${pkgs.coreutils}/bin/mkdir -p ${dirOf suspendPendingFile}
+            if [ ! -e ${suspendPendingFile} ]; then   # one Telegram line per night, not one per retry
+              /run/current-system/sw/bin/infra-notify send "💤 NAS: sleep postponed — 3090 busy ($BUSY); retrying every ${toString suspendRetryMinutes} min" >/dev/null 2>&1 || true
+            fi
+            ${pkgs.coreutils}/bin/touch ${suspendPendingFile}
             exit 0
           fi
         fi
         ''}
 
+        ${pkgs.coreutils}/bin/rm -f ${suspendPendingFile}
         echo "NAS suspending at $(date)"
         ${pkgs.systemd}/bin/systemctl suspend
       '';
+    };
+
+    # Guard 3's retry: every 30 min inside the sleep window, only while the pending
+    # marker exists (ConditionPathExists skips silently otherwise). Not Persistent,
+    # for the same reason as nas-suspend.timer.
+    systemd.timers.nas-suspend-check = {
+      description = "Retry the postponed NAS suspend every ${toString suspendRetryMinutes} min";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*-*-* 23,00..15:00,30:00";   # every 30 min of the window; 23:00 coincides with nas-suspend.timer (same unit, harmless)
+        Persistent = false;
+      };
+    };
+    systemd.services.nas-suspend-check = {
+      description = "Retry the postponed NAS suspend";
+      unitConfig.ConditionPathExists = suspendPendingFile;
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.systemd}/bin/systemctl start nas-suspend.service";
+      };
     };
 
     # Docker pre-suspend (root daemon): stop rootful compose projects
