@@ -525,6 +525,7 @@ in
     # because the bot must know them while the NAS is asleep.
     infraOnDemandSshTarget = "akunito@100.64.0.1";
     infraOnDemandNode = "nas";
+    infraAiHost = "100.64.0.1";   # /ai in the infra bot (NAS 3090 presets)
     infraOnDemandServices = [ "calibre" "romm" "unifi" "akucraft-survival" "akucraft-solo" "akucraft-creative" "akucraft-staging" ];
     # Their containers: kept out of "N stopped" in /status for the ~5 min a
     # taken-down stack lingers in cAdvisor's container_last_seen.

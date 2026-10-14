@@ -66,3 +66,33 @@ m.in_sleep_window = lambda now=None: False
 assert "cannot reach" in m.cmd_svc([], user="2")
 assert m.svc_states() is None
 print("infra-bot /svc tests: ok")
+
+# ---- /ai: status for everyone, set = admins + closed preset list + confirm
+m.AI_HOST = "nas"
+ST = {"preset": "reasoner-256k", "state": "loaded",
+      "gpu": {"vram_used_mb": 22016, "vram_total_mb": 24576, "util_pct": 0, "temp_c": 36},
+      "presets": [{"id": "off", "label": "Off", "vram_est": "0 GB"},
+                  {"id": "coder", "label": "Coder", "vram_est": "~22 GB"},
+                  {"id": "reasoner-256k", "label": "Reasoner", "vram_est": "22.0 GB"}]}
+GATE = {"loaded": "reasoner-256k", "grace_s": 300.0, "inflight": {}, "idle_s": {"reasoner-256k": 30.0}, "queue": []}
+m.ai_fetch = lambda: (ST, GATE)
+sent.clear(); m.PENDING.clear()
+out = m.cmd_ai([], user="2")
+assert "▶ <code>reasoner-256k</code>" in out and "VRAM 21.5/24 GB" in out and "used 30 s ago" in out, out
+assert "admins" in m.cmd_ai(["set", "coder"], user="2") and not sent
+assert "Unknown preset" in m.cmd_ai(["set", "../x"], user="1") and not sent
+assert "already the preset" in m.cmd_ai(["set", "reasoner-256k"], user="1") and not sent
+assert m.cmd_ai(["set", "coder"], user="1") is None and len(sent) == 1
+assert "used 30 s ago" in sent[0][0] and sent[0][1]["inline_keyboard"][0][0]["callback_data"].startswith("ai:")
+p = next(iter(m.PENDING.values()))
+assert (p["kind"], p["name"], p["user"]) == ("ai", "coder", "1")
+GATE.update(idle_s={"reasoner-256k": 900.0})
+assert m.ai_busy(GATE) == ""
+GATE.update(inflight={"reasoner-256k": 2})
+assert m.ai_busy(GATE) == "2 request(s) running on reasoner-256k"
+m.ai_fetch = lambda: (None, None)
+m.in_sleep_window = lambda now=None: True
+assert "asleep" in m.cmd_ai([], user="2")
+m.in_sleep_window = lambda now=None: False
+assert "does not answer" in m.cmd_ai(["set", "coder"], user="1")
+print("infra-bot /ai tests: ok")

@@ -88,6 +88,10 @@ SVC_NAMES = json.loads(os.environ.get("SVC_NAMES", "[]"))
 # container_last_seen for ~5 min and would read as "stopped" in /status.
 SVC_CONTAINERS = set(json.loads(os.environ.get("SVC_CONTAINERS", "[]")))
 SVC_BIN = "/run/current-system/sw/bin/nas-svc"
+# /ai: the NAS 3090 presets (ai-presets.nix). Status over HTTP (tailnet), switching
+# through the same ssh target as /svc and the NAS sudo rule for `ai preset set *`.
+AI_HOST = os.environ.get("AI_HOST", "")
+AI_BIN = "/run/current-system/sw/bin/ai"
 CONFIRM_TTL = 120
 BOT_NAME = ""
 TG = Telegram(TOKEN)
@@ -428,6 +432,7 @@ def cmd_help(args):
             "/deploys — last generation change per node\n"
             "/restart &lt;node&gt; docker-rootless|docker-rootful — admins only, asks to confirm\n"
             "/svc — on-demand services on the NAS (off by default); /svc start|stop &lt;name&gt; — admins only, asks to confirm\n"
+            "/ai — NAS 3090 preset, VRAM, queue; /ai set &lt;preset&gt; — admins only, asks to confirm\n"
             "Alerts: 🔴 critical → 🚨 Alerts topic once + 🟢 resolved · 🟡 warnings → Sunday digest in 📋 Weekly")
 
 
@@ -495,6 +500,15 @@ def handle_callback(cq):
         telegram("answerCallbackQuery", callback_query_id=cq_id, text="not yours")
         return
     del PENDING[nonce]
+    if p.get("kind") == "ai":
+        if answer != "yes" or time.time() - p["created"] > CONFIRM_TTL:
+            telegram("answerCallbackQuery", callback_query_id=cq_id, text="cancelled")
+            edit(p["message_id"], f"❌ Switch to <b>{esc(p['name'])}</b> cancelled"
+                 + ("" if answer != "yes" else " (confirmation expired)"))
+            return
+        telegram("answerCallbackQuery", callback_query_id=cq_id, text="switching…")
+        ai_confirmed(p)
+        return
     if p.get("kind") == "svc":
         if answer != "yes" or time.time() - p["created"] > CONFIRM_TTL:
             telegram("answerCallbackQuery", callback_query_id=cq_id, text="cancelled")
@@ -631,6 +645,117 @@ def svc_confirmed(p):
     threading.Thread(target=work, daemon=True).start()
 
 
+# ----------------------------------------------------------------------------
+# /ai — NAS 3090 presets: status for everyone, set for admins (confirm button)
+# ----------------------------------------------------------------------------
+def ai_fetch():
+    """(status, gate) dicts from the NAS, or (None, None) when it does not answer."""
+    try:
+        st = http_json(f"http://{AI_HOST}:8093/status", timeout=5)
+    except Exception:
+        return None, None
+    try:
+        gate = http_json(f"http://{AI_HOST}:8090/gate/status", timeout=5)
+    except Exception:
+        gate = {}
+    return st, gate
+
+
+def ai_busy(gate):
+    """'' or why switching now interrupts someone (in-flight or used within the grace)."""
+    loaded = gate.get("loaded")
+    if not loaded:
+        return ""
+    n = (gate.get("inflight") or {}).get(loaded, 0)
+    if n:
+        return f"{n} request(s) running on {loaded}"
+    idle = (gate.get("idle_s") or {}).get(loaded)
+    if idle is not None and idle < gate.get("grace_s", 300):
+        return f"{loaded} used {int(idle)} s ago"
+    return ""
+
+
+def ai_status_text(st, gate):
+    g = st.get("gpu") or {}
+    cur = st.get("preset") or "?"
+    lines = [f"🧠 <b>NAS 3090</b>: <b>{esc(cur)}</b> · {esc(st.get('state', '?'))}"
+             f" · VRAM {g.get('vram_used_mb', 0) / 1024:.1f}/{g.get('vram_total_mb', 0) / 1024:.0f} GB"
+             f" · {g.get('util_pct', 0)} % · {g.get('temp_c', '?')} °C"]
+    busy = ai_busy(gate)
+    q = len(gate.get("queue") or [])
+    if busy or q:
+        lines.append("⏳ " + " · ".join(x for x in (busy, f"{q} queued" if q else "") if x))
+    for p in st.get("presets") or []:
+        mark = "▶" if p["id"] == cur else "·"
+        lines.append(f"{mark} <code>{esc(p['id'])}</code> — {esc(p.get('label', ''))} ({esc(p.get('vram_est', ''))})")
+    lines.append("/ai set &lt;preset&gt; — admins, asks to confirm")
+    return "\n".join(lines)
+
+
+def ai_unreachable():
+    if in_sleep_window():
+        return f"💤 the NAS is asleep ({SLEEP_FROM}–{SLEEP_TO}); the 3090 is off until it wakes."
+    return "🔴 the NAS does not answer on :8093."
+
+
+def cmd_ai(args, user=None, thread=None, message_id=None):
+    if not AI_HOST:
+        return "no NAS AI host configured."
+    st, gate = ai_fetch()
+    if not args or args[0].lower() == "status":
+        return ai_status_text(st, gate) if st else ai_unreachable()
+    if args[0].lower() != "set" or len(args) != 2:
+        return "usage: /ai — status · /ai set &lt;preset&gt;"
+    if str(user) not in ADMIN_USER_IDS:
+        return "⛔ /ai set is limited to admins."
+    if not st:
+        return ai_unreachable()
+    name = args[1].lower()
+    ids = [p["id"] for p in st.get("presets") or []]
+    if name not in ids:
+        return f"Unknown preset <b>{esc(name)}</b>. Known: " + ", ".join(f"<code>{esc(i)}</code>" for i in ids)
+    if name == st.get("preset") and st.get("state") != "off":
+        return f"▶ <b>{esc(name)}</b> is already the preset."
+    busy = ai_busy(gate)
+    nonce = uuid.uuid4().hex[:12]
+    kb = {"inline_keyboard": [[
+        {"text": "✅ Switch", "callback_data": f"ai:{nonce}:yes"},
+        {"text": "❌ Cancel", "callback_data": f"ai:{nonce}:no"},
+    ]]}
+    m = send(f"⚠️ Switch the 3090 from <b>{esc(st.get('preset') or '?')}</b> to <b>{esc(name)}</b>?"
+             + (f"\n<i>{esc(busy)}: the switch waits for running requests, then cuts them off.</i>" if busy else ""),
+             thread, reply_to=message_id, reply_markup=kb)
+    PENDING[nonce] = {"kind": "ai", "name": name, "user": str(user), "created": time.time(),
+                      "message_id": m["message_id"]}
+    return None  # already answered
+
+
+def ai_confirmed(p):
+    head = f"<b>{esc(p['name'])}</b>"
+    edit(p["message_id"], f"⏳ Switching the 3090 to {head} …")
+
+    def work():
+        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "-o", "StrictHostKeyChecking=accept-new",
+               SVC_SSH_TARGET, "sudo", "-n", AI_BIN, "preset", "set", p["name"]]
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+            ok, text = out.returncode == 0, (out.stdout + out.stderr).strip()
+        except subprocess.TimeoutExpired:
+            ok, text = False, "timed out after 240s"
+        st, _ = ai_fetch() if ok else (None, None)
+        g = (st or {}).get("gpu") or {}
+        tail = "\n".join(text.splitlines()[-3:])
+        try:
+            edit(p["message_id"], (f"🟢 3090 on {head} · {esc((st or {}).get('state', '?'))}"
+                                   f" · VRAM {g.get('vram_used_mb', 0) / 1024:.1f} GB") if ok
+                 else f"🔴 switch to {head} FAILED\n<code>{esc(tail)}</code>")
+        except Exception as e:
+            log.error("edit failed: %s", e)
+        log.info("ai set %s by %s: %s", p["name"], p["user"], "ok" if ok else "FAILED")
+
+    threading.Thread(target=work, daemon=True).start()
+
+
 COMMANDS = {"status": cmd_status, "alerts": cmd_alerts, "deploys": cmd_deploys, "help": cmd_help, "start": cmd_help}
 
 
@@ -645,6 +770,12 @@ def handle_command(text, user=None, thread=None, message_id=None):
         except Exception as e:
             log.exception("restart failed")
             return f"⚠️ restart failed: {esc(e)}"
+    if cmd == "ai":
+        try:
+            return cmd_ai(parts[1:], user, thread, message_id)
+        except Exception as e:
+            log.exception("ai failed")
+            return f"⚠️ ai failed: {esc(e)}"
     if cmd == "svc":
         try:
             return cmd_svc(parts[1:], user, thread, message_id)
@@ -813,6 +944,7 @@ def run_commands():
             ("deploys", "Last generation change per node"),
             ("help", "What this bot does"),
         ] + ([("svc", "On-demand services on the NAS: list, start, stop")] if SVC_NAMES else [])
+          + ([("ai", "NAS 3090 preset, VRAM, queue; /ai set <preset>")] if AI_HOST else [])
           + ([("restart", "Restart docker-rootless/rootful on a node (admins)")] if ADMIN_USER_IDS else []))
     except Exception as e:
         log.warning("getMe/setMyCommands failed: %s", e)

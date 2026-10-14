@@ -774,6 +774,7 @@
     # Bot only: /svc list|start|stop for the on-demand stacks of one node, through its `nas-svc` over BatchMode ssh
     infraOnDemandSshTarget = "";   # "user@host"; empty disables /svc
     infraOnDemandNode = "nas";     # Prometheus node label of that host
+    infraAiHost = "";              # NAS tailnet IP serving ai-presets :8093 + gate :8090; empty disables /ai
     infraOnDemandServices = [ ];   # names as `nas-svc list` prints them (that node's nasOnDemandDockerProjects basenames)
     infraOnDemandContainers = [ ]; # their container names, hidden from the "stopped" count in /status
     healthchecksPingUrl = ""; # healthchecks.io ping URL (dead-man's switch); "" = no ping timer

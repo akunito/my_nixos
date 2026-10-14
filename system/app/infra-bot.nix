@@ -10,6 +10,9 @@
 #   - /svc list|start|stop: on-demand compose stacks on the NAS through its
 #     `nas-svc` over BatchMode ssh (infraOnDemand*); start/stop admins only,
 #     same confirm button
+#   - /ai [set <preset>]: NAS 3090 preset/VRAM/queue from its :8093/status and
+#     :8090/gate/status (infraAiHost); set = admins, confirm button, then
+#     `sudo -n ai preset set` over the /svc ssh target
 #   - /restart <node> docker-rootless|docker-rootful: admins only
 #     (infraTelegramAdminUserIds), inline confirm button, runs `sudo -n
 #     infra-restart` locally or over BatchMode ssh (infraRestartSshTargets)
@@ -87,6 +90,7 @@ lib.mkIf enabled {
       SVC_NODE = systemSettings.infraOnDemandNode or "nas";
       SVC_NAMES = builtins.toJSON (systemSettings.infraOnDemandServices or [ ]);
       SVC_CONTAINERS = builtins.toJSON (systemSettings.infraOnDemandContainers or [ ]);
+      AI_HOST = systemSettings.infraAiHost or "";
       LOCAL_NODE = systemSettings.infraNodeName or "vps";
       STATE_DIR = "/var/lib/infra-bot";
       TZ = systemSettings.timezone or "Europe/Warsaw";
