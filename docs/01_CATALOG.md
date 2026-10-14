@@ -51,6 +51,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### App
 
 - **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
+- **system/app/ai-presets.nix**: NAS 3090 preset manager (plan docs/akunito/plans/nas-3090-ai-presets.md, F1). *Enabled when:* `cfg.aiPresetsDefault or "off"`
 - **system/app/aion2-meter-daemon.nix**: AION 2 DPS meter, headless Linux daemon (aionmeter-daemon, Plane A2M-48 phase 2b). *Enabled when:* `cfg.aion2MeterDaemonEnable or false`
 - **system/app/akucraft-status-bot.nix**: AkuCraft Telegram bot (announcements + group commands) *Enabled when:* `status + commands`
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
@@ -524,6 +525,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/extras.nix**: The compositor package this profile actually runs. MUST match *Enabled when:*
    - `systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)`
    - `systemSettings.ollamaServerEnable or false`
+   - `systemSettings.nasAiWidgetEnable or false`
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
    - `systemSettings.swayUseSwayfx or true`
    - `declarativeMode && kanshiEnabled`
@@ -654,6 +656,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Plans
 
+- **docs/akunito/plans/aion2-capture-pipeline.md**: Cómo capturar una sesión de Aion 2 en DESK de forma eficiente (paquetes del meter + frames de la Elgato/DESK + entradas evdev, con un reloj común) para un asesor en vivo sobre la 3090 del NAS y para entrenar un modelo de decisión tipo Jev (Kev/Laya) con las propias partidas
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
 - **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
 - **docs/akunito/plans/akucraft-creative-rebuild.md**: The AkuCraft Creative server rebuilt from scratch on Solo's mod list, private to three players, plus per-machine gating of the FreesmLauncher instances
@@ -669,6 +672,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-worlds-and-maps.md**: Research into what extra worlds, community map downloads and dimension mods can be added to AkuCraft, given that Multiworld and ShadowBorders are already in production
 - **docs/akunito/plans/desk-w11-meeting-captions.md**: Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11**; direction changed the same
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
+- **docs/akunito/plans/docker-rootless-workstations.md**: Docker rootless por defecto en DESK y LAPTOP_X13 (modelo híbrido como NAS_PROD) — el daemon root queda solo para lo que no puede ir rootless y exige sudo; migración perezosa proyecto a proyecto con notas para que cualquier sesión adapte su stack
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
@@ -680,6 +684,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/plane-test-suite/README.md**: Plane fork regression suite — audit, interview decisions (2026-09-17), architecture, deploy gate, phases
 - **docs/akunito/plans/plane-test-suite/catalog.md**: Plane fork regression suite — full test catalogue by layer, mapped to register IDs A-xx/B-xx, with combination matrices
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
+- **docs/akunito/plans/rea-sandbox.md**: REA (morluto/rea, MCP de ingeniería inversa) listo en DESK y X13 con aislamiento por niveles de riesgo (gVisor en todo contenedor, microVM desechable), sesión de Claude Code con configuración propia, todas las herramientas que REA sabe usar y un skill global para que Claude Code las proponga
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
