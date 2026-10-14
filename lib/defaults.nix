@@ -239,7 +239,8 @@
     llamaServerChatTemplateFile = null;                    # nix path to a .jinja that overrides the GGUF's template (--chat-template-file). Qwen3.8's embedded template raises on a system message after turn 1, and Claude Code 2.1.296 sends its "# Environment" block exactly like that -> system/app/llama-server/templates/qwen3.8-system-anywhere.jinja
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
     llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
-    llamaServerRouter = false;                             # router mode: one llama-server, model = the request's `model` (aiPresets names), --models-max 1
+    llamaServerRouter = false;
+    llamaServerSwitchGraceSeconds = 300;                   # router: a request for ANOTHER model waits while the loaded one was used within this many seconds (gate.py)                             # router mode: one llama-server, model = the request's `model` (aiPresets names), --models-max 1
     llamaServerKvType = "";                                # -ctk/-ctv type ("" = f16); q8_0/q4_0 need -fa on. Presets override it
     # NAS 3090 preset manager (system/app/ai-presets.nix; needs llamaServerEnable):
     # `ai preset list|status|set|sync`, GET /status on tailscale0, sudo rule for `ai preset set`.

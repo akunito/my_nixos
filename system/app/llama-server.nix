@@ -216,6 +216,8 @@ in
         message = "llamaServerBackend must be \"vulkan\" or \"docker-cuda\" (got \"${backend}\")"; }
       { assertion = !isDocker || (cfg.nvidiaContainerToolkitEnable or false);
         message = "llamaServerBackend = docker-cuda needs nvidiaContainerToolkitEnable (CDI --device nvidia.com/gpu=all)"; }
+      { assertion = !router || idleTimeout == "infinity";
+        message = "llamaServerRouter: the switch gate never exits on idle; set llamaServerIdleTimeout = \"infinity\""; }
       { assertion = !router || isDocker;
         message = "llamaServerRouter is wired for the docker-cuda backend only"; }
       { assertion = !isDocker || apiKeySecret == "";
@@ -304,8 +306,17 @@ in
       # (ExecCondition); while locked the backend is skipped, so the proxy just
       # closes the caller's connection. StartLimitIntervalSec=0 avoids lockout.
       unitConfig.StartLimitIntervalSec = 0;
+      # Router mode: the switch gate (llama-server/gate.py) instead of the plain
+      # proxy — queues requests for another model while the loaded one is in use,
+      # rejects claude-nas switches (X-Nas-No-Switch), passes explicit loads.
+      environment = lib.optionalAttrs router {
+        GATE_BACKEND_PORT = toString internalPort;
+        GATE_GRACE_SECONDS = toString (cfg.llamaServerSwitchGraceSeconds or 300);
+      };
       serviceConfig = {
-        ExecStart = "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd --exit-idle-time=${idleTimeout} 127.0.0.1:${toString internalPort}";
+        ExecStart = if router
+          then "${pkgs.python3}/bin/python3 ${./llama-server/gate.py}"
+          else "${pkgs.systemd}/lib/systemd/systemd-socket-proxyd --exit-idle-time=${idleTimeout} 127.0.0.1:${toString internalPort}";
       };
     };
 

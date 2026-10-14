@@ -199,6 +199,11 @@ def status_router(cfg: dict, st: dict) -> dict:
     hot = next((m for m in models if m["status"] in ("loaded", "loading")), None)
     st["router"] = True
     st["models"] = models
+    # The gate (llama-server/gate.py) knows the queue; only asked when the proxy
+    # already runs, so polling the status never socket-activates the backend.
+    if systemctl("is-active", "llama-proxy.service").stdout.strip() == "active":
+        g = _get_json(f"{PUBLIC}/gate/status", timeout=2) or {}
+        st["queue"] = g.get("queue") or []
     if not hot:
         st["preset"], st["state"] = None, "idle"
         return st

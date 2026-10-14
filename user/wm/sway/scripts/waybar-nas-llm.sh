@@ -32,11 +32,13 @@ jq -c '
   | {
       text: (if $cls == "off" then "󰒋 NAS off"
              elif .preset == null then "󰒋 NAS idle"
-             else "󰒋 \($cur.short // .preset) · \($g.vram_used_mb | gb) · \($g.temp_c // "?")°" end),
+             else "󰒋 \($cur.short // .preset) · \($g.vram_used_mb | gb) · \($g.temp_c // "?")°" end)
+            + (if ((.queue // []) | length) > 0 then " ⏳ " + ((.queue // []) | map(.model) | join(",")) else "" end),
       tooltip: ("NAS 3090 — preset: \(.preset // "off") (\($cur.label // "-"))\n"
                 + "state: \(.state // "?")   model: \(.model_alias // "-")   ctx: \(.ctx // "-") × \(.slots // "-") slot(s), KV \(.kv // "-")\n"
                 + (if (.kind // "chat") == "decision" then "decision model: answers only POST /v1/systemone (chat → 501)\n" else "" end)
                 + "VRAM \($g.vram_used_mb | gb) / \($g.vram_total_mb | gb)   \($g.temp_c // "?")°C   \($g.power_w // "?") W   GPU \($g.util_pct // "?") %\n"
+                + (if ((.queue // []) | length) > 0 then "queued (waiting for the loaded model to be free): " + ((.queue // []) | map("\(.model) \(.waiting_s|floor) s") | join(", ")) + "\n" else "" end)
                 + "click: switch preset"),
       class: $cls
     }' <<<"$j" 2>/dev/null || jq -cn '{text: "󰒋 NAS ?", tooltip: "NAS AI: unreadable status", class: "asleep"}'
