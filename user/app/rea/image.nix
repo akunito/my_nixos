@@ -1,8 +1,8 @@
-{ pkgs, rea-agents, pwndbg ? null }:
+{ pkgs, rea-agents, pwndbg ? null, ghidraExtensions ? [ ] }:
 # REA sandbox image for tier 0 (AINF-408 F1): rootless Docker + krun. Tools and
 # environment come from env.nix, shared with the microVM guest (vm.nix).
 let
-  reaEnv = import ./env.nix { inherit pkgs rea-agents pwndbg; };
+  reaEnv = import ./env.nix { inherit pkgs rea-agents pwndbg ghidraExtensions; };
   nss = pkgs.dockerTools.fakeNss.override {
     extraPasswdLines = [ "rea:x:1000:100:rea:/tmp:/bin/sh" ];
     extraGroupLines = [ "users:x:100:" ];

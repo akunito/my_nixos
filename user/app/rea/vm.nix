@@ -1,4 +1,4 @@
-{ inputs, pkgs, rea-agents, uid, cacheDir, web ? false, dynamic ? false, extraModules ? [ ] }:
+{ inputs, pkgs, rea-agents, uid, cacheDir, web ? false, dynamic ? false, ghidraExtensions ? [ ], extraModules ? [ ] }:
 # dynamic = true: the F3b lane — the target is executed (REA capture_process_scenario)
 # with a fake network inside the guest: every name resolves to 10.99.0.1 / fd99::1,
 # all TCP is redirected to a transparent mitmproxy that records it, other UDP/ICMP is
@@ -16,7 +16,7 @@
 # Prototype measurements and gotchas: docs/akunito/plans/rea-sandbox/aislamiento.md.
 let
   pwndbg = inputs.pwndbg.packages.${pkgs.stdenv.hostPlatform.system}.pwndbg.meta.pwndbgVenv;
-  reaEnv = import ./env.nix { inherit pkgs rea-agents pwndbg; };
+  reaEnv = import ./env.nix { inherit pkgs rea-agents pwndbg ghidraExtensions; };
   # Playwright 1.58.2 always appends --no-sandbox (REA never passes chromiumSandbox) and
   # no proxy. This wrapper drops the former (namespace sandbox works in the guest) and
   # forces every request through the relay; QUIC, non-proxied WebRTC UDP and DoH are off.
@@ -98,7 +98,7 @@ let
     done
     echo
     if [ -n "$reject" ]; then
-      echo "PROPOSAL: REJECT —$reject matches anti-cheat/DRM rules (out of scope). Diego decides; a match on a name can be a false positive."
+      echo "PROPOSAL: REJECT —$reject matches anti-cheat/DRM rules. Diego decides: overridable when he explicitly asks (2026-10-14); a match on a name can be a false positive."
     else
       echo "PROPOSAL: tier $worst (tier 0 only for builds of our own repos; Diego confirms)"
     fi

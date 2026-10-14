@@ -9,14 +9,19 @@
 let
   enabled = systemSettings.reaSandboxEnable or false;
   rea-agents = pkgs-unstable.callPackage ./rea-agents.nix { };
-  image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
+  # M2: Function ID databases from nixpkgs' static libs, two version points (unstable +
+  # stable), adopted after the independent audit of 2026-10-14 (bench/fid, workbench/rea-bench).
+  fid = import ./bench/fid/fid.nix { pkgs = pkgs-unstable; };
+  pkgs-stable-x86 = import inputs.nixpkgs-stable { system = "x86_64-linux"; };
+  ghidraExtensions = [ (fid.extension (fid.libSet pkgs-unstable "u" ++ fid.libSet pkgs-stable-x86 "s")) ];
+  image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents ghidraExtensions; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;
   vmUid = 1000; # baked into the microVM share paths (/run/user/<uid>/rea-vm); the launcher checks it
   vmCache = "${config.home.homeDirectory}/.cache/rea-vm"; # throwaway work disk image
-  vmRunner = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; };
-  vmRunnerWeb = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; web = true; };
-  vmRunnerDyn = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; dynamic = true; };
+  vmRunner = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; };
+  vmRunnerWeb = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; web = true; };
+  vmRunnerDyn = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; dynamic = true; };
   squid = pkgs-unstable.squid;
   socat = pkgs-unstable.socat;
   # The real binary, bypassing the claude-sync wrapper: with a foreign

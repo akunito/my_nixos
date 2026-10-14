@@ -1,4 +1,4 @@
-{ pkgs, rea-agents, pwndbg ? null }:
+{ pkgs, rea-agents, pwndbg ? null, ghidraExtensions ? [ ] }:
 # One tool list + environment for both REA sandboxes (AINF-408): the OCI image
 # (tier 0, rootless + krun) and the microVM guest (tiers 1-2). pkgs = nixpkgs-unstable
 # (Ghidra 12.1.4 — REA requires 12.1.x; the stable channel is older).
@@ -12,7 +12,8 @@ let
   # an extra root, and REA forwards the whole environment to the JVM it launches.
   # An EMPTY NIX_GHIDRAHOME does not disable them. wasm is broken for 12.1.4 in
   # nixpkgs; kaiju changes every disassembly and waits for the M1 benchmark.
-  ghidraExt = pkgs.ghidra.withExtensions (e: [ e.ghidra-golanganalyzerextension e.findcrypt ]);
+  # ghidraExtensions: our own modules, e.g. the M2 Function ID set (bench/fid).
+  ghidraExt = pkgs.ghidra.withExtensions (e: [ e.ghidra-golanganalyzerextension e.findcrypt ] ++ ghidraExtensions);
   jdk = pkgs.jdk21;
   # The recorded-crash decoder (inspect_recorded_crash) requires pyelftools 0.33 exactly
   # ("Expected pyelftools 0.33", measured; nixpkgs has 0.32). The same profile pins

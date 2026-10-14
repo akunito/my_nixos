@@ -3,9 +3,10 @@
 # built from a pinned commit, as an ALTERNATIVE engine for the benchmark only — never
 # REA's default. Ghidra spawns Decompiler/os/linux_x86_64/decompile and Kuna's
 # kuna_ghidra speaks the same wire protocol (it gets the specs over the wire), so a
-# Ghidra tree with that one file swapped runs Kuna headless. The tree is a real copy:
-# Ghidra canonicalises its install path, so a symlink farm would resolve back to the
-# stock binary.
+# Ghidra tree with that one file swapped runs Kuna headless. nixpkgs' support/launch.sh
+# is a wrapProgram wrapper that execs the ORIGINAL install's .launch.sh-wrapped by
+# absolute path, so a plain copy silently ran the stock decompiler (measured: identical
+# output); the copy's wrapper is replaced by a script pointing at itself.
 let
   kuna = pkgs.rustPlatform.buildRustPackage {
     pname = "kuna-ghidra";
@@ -26,7 +27,16 @@ in
   inherit kuna;
   ghidraTree = pkgs.runCommand "ghidra-kuna-${kuna.version}" { } ''
     cp -r ${ghidra}/lib/ghidra $out
-    chmod -R u+w $out/Ghidra/Features/Decompiler/os
+    chmod -R u+w $out/Ghidra/Features/Decompiler/os $out/support
+    # launch.sh is a binary makeBinaryWrapper: replace it with the equivalent script.
+    rm $out/support/launch.sh
+    cat > $out/support/launch.sh <<EOF
+    #!${pkgs.runtimeShell}
+    export NIX_GHIDRAHOME=\''${NIX_GHIDRAHOME:-$out/Ghidra}
+    export PATH=${pkgs.jdk21}/bin:\$PATH
+    exec -a "\$0" $out/support/.launch.sh-wrapped "\$@"
+    EOF
+    chmod 755 $out/support/launch.sh
     install -m755 ${kuna}/bin/kuna_ghidra $out/Ghidra/Features/Decompiler/os/linux_x86_64/decompile
   '';
 }

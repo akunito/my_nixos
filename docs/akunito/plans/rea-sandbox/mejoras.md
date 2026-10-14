@@ -129,7 +129,7 @@ Detalles:
 
 - **Fallo real de Ghidra que mide el banco:** una función que termina con un salto a `strcmp` se toma por un *thunk* y se llama `strcmp`.
 
-**Estado M2 (2026-10-14): auditado, veredicto "adoptar con cambios"; pendiente de activar en REA.**
+**Estado M2 (2026-10-14): activo en REA** (imagen de nivel 0 y VMs), tras la auditoría independiente y sus cambios. `rea-bench` sobre la imagen reproduce exactamente la medición candidata. En la VM, el agente aislado nombró `calloc`, `fopen`, `strtol`, `printf`… en un binario musl estático sin símbolos y distinguió "análisis" de "importado".
 - **Bases Function ID de Ghidra** generadas en el sandbox de Nix desde las librerías estáticas de nixpkgs:
   - glibc, libm, musl y libgcc/libgcc_eh;
   - libstdc++, para gnu y para musl;
@@ -156,6 +156,16 @@ Detalles:
   - Debian/Ubuntu glibc y Alpine musl para tener más versiones;
   - una lista de símbolos comunes como la que usa Ghidra para MSVC;
   - exponer en REA el comentario PLATE con los candidatos de `FID_conflict`.
+
+**Estado M3 (2026-10-14): Kuna medido, no adoptado.** Kuna v1.833 compilado desde `fe01d629` (`bench/kuna.nix`).
+- **Cómo se monta:** es un árbol de Ghidra copiado, con `decompile` sustituido. Hay que cambiar el `launch.sh` de nixpkgs, que es un envoltorio binario que salta al Ghidra original por ruta absoluta; sin eso, la copia usaba en silencio el decompilador normal (medido: salida idéntica).
+- **Resultado frente a Ghidra 12.1.4, mismo corpus:**
+  - −28 a −35 % de `goto`;
+  - C más compacto: 152k frente a 229k líneas en glibc estático;
+  - casi ningún comentario `WARNING`, porque no los emite;
+  - un fallo en glibc, ninguno en Rust ni Go;
+  - **tres veces más lento** en el binario grande (188 s frente a 59 s).
+- **Sin tests semánticos, lo más compacto no demuestra que sea más correcto.** Queda como segunda opinión para el banco, nunca como motor de REA. Lo siguiente: tests de recompilación y ejecución (como HumanEval-Decompile) antes de compararlos en serio.
 
 **M3 — motores alternativos.** Kuna va en una **imagen aparte** con un `GHIDRA_INSTALL_DIR` alternativo (un `symlinkJoin` que sustituye `Decompiler/os/linux_x86_64/decompile`), con commit fijado y compilado con Nix. Nunca es el motor por defecto. Kuna como decompilador alternativo en headless, comparado con el nativo en M1. Nunca lo sustituye. Opcional: RetDec y Reko desde los runners de dogbolt.
 
