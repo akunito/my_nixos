@@ -288,9 +288,8 @@
     aion2MeterDaemonInstallDir = null;                     # null = ~user/.local/opt/aionmeter-daemon
     aion2MeterDaemonDataDir = null;                        # null = ~user/.local/share/AionMeter
     aion2MeterDaemonExtraArgs = [ ];                       # e.g. [ "--json-events" ] when a UI reads stdout
-    aion2MeterUiInstallDir = null;                         # null = ~user/.local/opt/aionmeter-ui (AionMeter.Linux publish; launcher `aionmeter-ui`)
     aion2MeterOverlayInstallDir = null;                    # null = ~user/.local/opt/aionmeter-overlay (AionMeter.Overlay publish; `aionmeter-overlay`)
-    aion2MeterOverlayMonitor = "DP-1";                     # sway connector the layer-shell card sits on (the gaming output)
+    aion2MeterOverlayMonitor = "DP-1";                     # sway connector of `aionmeter-overlay --layer` (window mode ignores it)
     # --- VRAM peak sampler ---
     # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY
     # desktop, which is the most favourable reading available rather than a

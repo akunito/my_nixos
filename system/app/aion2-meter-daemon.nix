@@ -25,31 +25,16 @@ let
   installDir = orDefault (cfg.aion2MeterDaemonInstallDir or null) "${home}/.local/opt/aionmeter-daemon";
   dataDir = orDefault (cfg.aion2MeterDaemonDataDir or null) "${home}/.local/share/AionMeter";
   extraArgs = cfg.aion2MeterDaemonExtraArgs or [ ];
-  uiDir = orDefault (cfg.aion2MeterUiInstallDir or null) "${home}/.local/opt/aionmeter-ui";
   # Daemon <-> UI socket. Not the meter's default $XDG_RUNTIME_DIR/aionmeter.sock: the unit has no
   # XDG_RUNTIME_DIR and PrivateTmp, so its fallback /tmp/aionmeter-<uid>.sock lands in a private /tmp the UI
   # never sees, and /run/user/<uid> does not exist before login. RuntimeDirectory= gives a /run dir owned by User=.
   socketPath = "/run/aionmeter/aionmeter.sock";
-  # Overlay UI (AionMeter.Linux, Avalonia on XWayland, window class "aionmeter"; DESK sway-apps: Hyper+g launches,
-  # Hyper+Shift+g sends SIGUSR1 to $XDG_RUNTIME_DIR/aionmeter-ui.pid (written by the UI) to turn click-through off).
-  # Reconnects while the daemon is away (restart wipes /run/aionmeter).
-  # Avalonia dlopens the X11/fontconfig/GL libs by soname; NixOS has no /usr/lib, so they go on LD_LIBRARY_PATH.
-  aionmeterUi = pkgs.writeShellScriptBin "aionmeter-ui" ''
-    dll=''${AIONMETER_UI_DIR:-${uiDir}}/AionMeter.Linux.dll
-    if [ ! -f "$dll" ]; then
-      ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter-ui" "Not installed: $dll"
-      exit 1
-    fi
-    export LD_LIBRARY_PATH=${lib.makeLibraryPath (with pkgs; [
-      xorg.libX11 xorg.libICE xorg.libSM xorg.libXi xorg.libXcursor xorg.libXrandr xorg.libXext xorg.libXrender
-      fontconfig freetype libGL
-    ])}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-    export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
-    exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} "$@"
-  '';
-  # Native overlay card (AionMeter.Overlay: GTK4 + wlr-layer-shell, layer OVERLAY, so it paints above gamescope's
-  # fullscreen view, at the output's own scale). Pid in $XDG_RUNTIME_DIR/aionmeter-overlay.pid; SIGUSR1 = click-through,
-  # SIGUSR2 = hide/show. GirCore opens every lib by soname -> LD_LIBRARY_PATH (getLib: glib/pango/fontconfig are split).
+  # The meter's only Linux UI (AionMeter.Overlay, GTK4): a Wayland window, app_id aionmeter, kept above fullscreen gamescope by
+  # the patched sway's above_fullscreen rule (swayfx-config.nix); `--layer` is the old wlr-layer-shell card. Every tab lives in it
+  # (A2M-50 retired the Avalonia tools window, aionmeter-ui, on 2026-10-14). Pid in $XDG_RUNTIME_DIR/aionmeter-overlay.pid;
+  # SIGUSR1 = click-through, SIGUSR2 = hide/show, SIGTERM = clean quit. Single instance: a second `aionmeter-overlay
+  # [--show|--hide|--toggle|--quit] [--tab KEY]` hands the command to the running card over $XDG_RUNTIME_DIR/aionmeter-overlay.sock
+  # and exits (no card: --show/--toggle start one). GirCore opens every lib by soname -> LD_LIBRARY_PATH (getLib: glib/pango/fontconfig are split).
   # No LD_PRELOAD: the program dlopens libgtk4-layer-shell RTLD_GLOBAL itself before GTK loads libwayland-client.
   # No steam-run / GDK_BACKEND=x11: it must be a Wayland client.
   overlayDir = orDefault (cfg.aion2MeterOverlayInstallDir or null) "${home}/.local/opt/aionmeter-overlay";
@@ -102,20 +87,20 @@ let
     fi
     exec setsid -f ${aionmeterOverlay}/bin/aionmeter-overlay </dev/null >/dev/null 2>&1
   '';
-  # Hyper+Shift+g: click-through toggle of the card; the Avalonia UI when the card is not running.
+  # Hyper+Shift+g: click-through toggle of the card.
   aionmeterClicks = pkgs.writeShellScriptBin "aionmeter-clicks" ''
     ${livePid}
-    if p=$(live_pid "$run/aionmeter-overlay.pid" AionMeter.Overlay.dll) || p=$(live_pid "$run/aionmeter-ui.pid" AionMeter.Linux.dll); then
+    if p=$(live_pid "$run/aionmeter-overlay.pid" AionMeter.Overlay.dll); then
       exec kill -USR1 "$p"
     fi
-    exec ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter" "No overlay running"
+    exec ${pkgs.libnotify}/bin/notify-send -a "AION 2 meter" "aionmeter" "The card is not running (Hyper+g starts it)"
   '';
 in
 {
   config = lib.mkIf (cfg.aion2MeterDaemonEnable or false) {
     # Must exist before the unit starts: ReadWritePaths of a missing dir fails the namespace setup.
     systemd.tmpfiles.rules = [ "d ${dataDir} 0755 ${user} users -" ];
-    environment.systemPackages = [ aionmeterUi aionmeterOverlay aionmeterOverlayToggle aionmeterClicks ];
+    environment.systemPackages = [ aionmeterOverlay aionmeterOverlayToggle aionmeterClicks ];
     # The card's CSS asks for Inter, then Noto Sans / DejaVu Sans.
     fonts.packages = [ pkgs.inter ];
 
