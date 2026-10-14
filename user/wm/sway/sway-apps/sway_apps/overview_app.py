@@ -43,6 +43,19 @@ os.environ.pop("LD_PRELOAD", None)
 _log = log.get("overview")
 
 GRIM = os.environ.get("SWAY_APPS_GRIM_BIN", "grim")
+
+
+def _screen_locked() -> bool:
+    """swaylock (any wrapper keeps comm "swaylock") holds the session lock."""
+    for pid in os.listdir("/proc"):
+        if pid.isdigit():
+            try:
+                with open(f"/proc/{pid}/comm") as fh:
+                    if fh.read().startswith("swaylock"):
+                        return True
+            except OSError:
+                continue
+    return False
 ICON_FALLBACK = "application-x-executable"
 
 CSS = """
@@ -591,6 +604,8 @@ class Overview:
         c = ov.focused_card(views)
         if c is None or c.id != cid or not ov.capturable(c, self.excluded):
             return False
+        if _screen_locked():
+            return False  # a lock within 1 s of a focus change would be saved as the window's thumbnail
         path = ov.thumb_path(self.root, self.session, cid)
         tmp = path.with_suffix(".tmp")
         argv = ov.grim_window_argv(GRIM, c, float(self.settings["thumb_scale"]), int(self.settings.get("jpeg_quality") or 75), str(tmp))
