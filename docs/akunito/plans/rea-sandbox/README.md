@@ -41,7 +41,7 @@ No es objetivo un carril de modelos locales. Cualquier modelo vale, y para lo pr
   3. El repo cambia a diario: 10 versiones del 3 al 11 de octubre y 10 menciones BREAKING en el CHANGELOG.
   4. Hay copias falsas: solo valen `morluto/rea`, rea.tools y npm `rea-agents`. `rea-githu/REA` es un señuelo.
 - `rea setup` reescribe la configuración de los agentes y puede instalar Hopper vía `pkexec`. Aquí no se usa nunca.
-- Legal (UE, Directiva 2009/24/CE, art. 6): interoperar sí, clonar no; nada de DRM, licencias ni antitrampas. **El cliente de Aion 2 queda fuera.**
+- Legal (UE, Directiva 2009/24/CE, art. 6): interoperar sí, clonar no. Análisis de clientes de juegos online y antitrampas (Aion 2, L2, …) entra cuando Diego lo pide explícitamente (2026-10-14); por defecto: análisis sí, evadir DRM/licencias/antitrampas no, salvo petición expresa.
 
 ## Decisiones
 
