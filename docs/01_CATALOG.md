@@ -455,9 +455,15 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
 - **user/app/rea/env.nix**: One tool list + environment for both REA sandboxes (AINF-408): the OCI image
 - **user/app/rea/image.nix**: REA sandbox image for tier 0 (AINF-408 F1): rootless Docker + krun. Tools and
-- **user/app/rea/rea-agents.nix**: rea-agents 6.4.0 built from our fork (akunito/rea) at the upstream release commit.
+- **user/app/rea/rea-agents.nix**: rea-agents built from our fork (akunito/rea) at the upstream release commit.
 - **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
-- **user/app/rea/vm.nix**: extraModules: tests only (e.g. a root console for the escape test); empty in production. *Enabled when:* `cat /mnt/ctl/proxy-port`
+- **user/app/rea/vm.nix**: dynamic = true: the F3b lane — the target is executed (REA capture_process_scenario) *Enabled when:*
+   - `cat /mnt/ctl/proxy-port`
+   - `audit 2026-10-14`
+   - `Permission denied, measured`
+   - `asyncio sets IPV6_V6ONLY`
+   - `seq 1 60`
+   - `UDP|ICMP|OTHER`
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
@@ -586,8 +592,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Gaming
 
 - **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
+- **docs/akunito/gaming/desk-a-w11-dualboot.md**: Runbook para añadir Windows 11 en un NVMe aparte en DESK_A (nixosagadesk, desktop de Aga, AMD RX 9060 XT) sin que Windows toque el bootloader de NixOS — método de aislamiento físico del disco; endurecer W11 para el anti-cheat kernel de LU4; streaming Sunshine(W11)→Moonlight(DESK) para jugar LU4 Black
 - **docs/akunito/gaming/gamescope-lag-bomb.md**: Every game launched through gamescope from Steam became unplayable after roughly
-- **docs/akunito/gaming/l2reborn-linux.md**: L2 Reborn (Interlude/Classic private server) on NixOS via umu/Proton — everything runs except the SmartGuard anti-cheat, which refuses to start under Wine (Code 1004); measurements, logs, staff statements, options
+- **docs/akunito/gaming/l2reborn-linux-investigation.md**: **Date:** 2026-10-14
+- **docs/akunito/gaming/l2reborn-linux.md**: L2 Reborn and LU4 on NixOS via umu/Proton — everything runs except the kernel anti-cheats (SmartGuard Code 1004; Active Anticheat driver error 11); measurements, logs, staff statements, options
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 - **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 
@@ -702,6 +710,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/rea-sandbox/herramientas.md**: Herramientas de REA con versiones nixpkgs vs requeridas, motores comerciales (Hopper, IDA, JEB) y cadena de suministro/actualizaciones
 - **docs/akunito/plans/rea-sandbox/mejoras.md**: Segundo plan de REA — qué ya existe en open source para medir y mejorar Ghidra (DecBench, extensiones de nixpkgs, firmas abiertas, refinado con IA local) y cómo incorporarlo al sandbox sin clonar herramientas comerciales
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
+- **docs/akunito/plans/sway-input-broker.md**: sway-apps input - one input-injection API for Claude's hand tests and the e2e suite on Sway: keyboard = a uinput device excluded from keyd and grouped by sway with Diego's keyboard, pointer = a persistent wlr virtual pointer with layout-box coordinates, bindcode sentinel acks instead of sleeps, safety guards.
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
