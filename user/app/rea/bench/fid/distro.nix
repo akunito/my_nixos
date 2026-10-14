@@ -1,4 +1,4 @@
-{ pkgs, mkFid }:
+{ pkgs, mkFid, mkLinkedFid ? null }:
 # M2 extension (AINF-408): FID sets from the static libraries real third-party Linux
 # binaries are linked against — Debian 12, Ubuntu 24.04 and Alpine 3.20 — taken from the
 # distributions' official packages pinned by hash (the exact versions their toolchains
@@ -39,6 +39,28 @@ let
     (mkFid { name = "${name}-libstdcxx-${gccV}"; family = "libstdc++-${name}"; version = gccV; archives = [ "${g}/libstdc++.a" ]; })
     (mkFid { name = "${name}-libgcc-${gccV}"; family = "libgcc-${name}"; version = gccV; archives = [ "${g}/libgcc.a" "${g}/libgcc_eh.a" ]; })
   ];
+  # Linked variants (fid.nix mkLinkedFid): what a non-PIE `gcc -static` binary contains
+  # after ld's TLS/GOT relaxations, which the per-object sets cannot match.
+  gnuLinked = name: src: gccV: glibcV: let
+    l = "${src}/usr/lib/x86_64-linux-gnu"; g = "${src}/usr/lib/gcc/x86_64-linux-gnu/${gccV}";
+    crtPre = [ "${l}/crt1.o" "${l}/crti.o" "${g}/crtbeginT.o" ]; crtPost = [ "${g}/crtend.o" "${l}/crtn.o" ];
+    base = [ "${l}/libc.a" "${g}/libgcc.a" "${g}/libgcc_eh.a" ];
+    libm = [ "${l}/libm.a" "${l}/libm-${glibcV}.a" ];
+  in [
+    (mkLinkedFid { name = "${name}-glibc-${glibcV}-linked"; family = "glibc-${name}"; version = glibcV; syms = [ "${l}/libc.a" ]; link = base; inherit crtPre crtPost; })
+    (mkLinkedFid { name = "${name}-libm-${glibcV}-linked"; family = "glibc-libm-${name}"; version = glibcV; syms = libm; link = libm ++ base; inherit crtPre crtPost; })
+    (mkLinkedFid { name = "${name}-libstdcxx-${gccV}-linked"; family = "libstdc++-${name}"; version = gccV; syms = [ "${g}/libstdc++.a" ]; link = [ "${g}/libstdc++.a" ] ++ libm ++ base; inherit crtPre crtPost; })
+  ];
+  muslLinked = let
+    l = "${alpine320}/usr/lib"; g = "${alpine320}/usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1";
+    crtPre = [ "${l}/crt1.o" "${l}/crti.o" "${g}/crtbeginT.o" ]; crtPost = [ "${g}/crtend.o" "${l}/crtn.o" ];
+    base = [ "${l}/libc.a" "${g}/libgcc.a" "${g}/libgcc_eh.a" ];
+  in [
+    (mkLinkedFid { name = "alpine320-musl-1.2.5-linked"; family = "musl-alpine320"; version = "1.2.5-r3"; syms = [ "${l}/libc.a" ]; link = base; inherit crtPre crtPost; })
+    (mkLinkedFid { name = "alpine320-libstdcxx-13.2.1-linked"; family = "libstdc++-alpine320"; version = "13.2.1"; syms = [ "${l}/libstdc++.a" ]; link = [ "${l}/libstdc++.a" ] ++ base; inherit crtPre crtPost; })
+  ];
+  linked = if mkLinkedFid == null then [ ] else
+    gnuLinked "debian12" debian12 "12" "2.36" ++ gnuLinked "ubuntu2404" ubuntu2404 "13" "2.39" ++ muslLinked;
 in
 gnu "debian12" debian12 "12" "2.36"
 ++ gnu "ubuntu2404" ubuntu2404 "13" "2.39"
@@ -47,3 +69,4 @@ gnu "debian12" debian12 "12" "2.36"
   (mkFid { name = "alpine320-libstdcxx-13.2.1"; family = "libstdc++-alpine320"; version = "13.2.1"; variant = "x86_64-linux-musl"; archives = [ "${alpine320}/usr/lib/libstdc++.a" ]; })
   (mkFid { name = "alpine320-libgcc-13.2.1"; family = "libgcc-alpine320"; version = "13.2.1"; archives = [ "${alpine320}/usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/libgcc.a" "${alpine320}/usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/libgcc_eh.a" ]; })
 ]
+++ linked
