@@ -29,8 +29,10 @@ related_files: [system/app/nas-services.nix, profiles/NAS_PROD-config.nix, .clau
 | Pool | Size | Type | Encryption | Health |
 |------|------|------|------------|--------|
 | boot-pool | 232GB | 2x NVMe mirror | No | ✅ ONLINE |
-| ssdpool | ~5.4TB | RAIDZ1, 4x 2TB SSD | Passphrase | ✅ ONLINE |
+| ssdpool | 3.62TB | Single SATA SSD (Samsung 870 QVO 4TB, S/N S5STNF0W204263A) | Passphrase (key file, `nas-zfs-unlock`) | ✅ ONLINE |
 | extpool | ~4TB | Single USB NVMe | No | ✅ ONLINE |
+
+> **Pool migration (Oct 2026, AINF-406)**: the 4x "Samsung 870 EVO 2TB" of the RAIDZ1 were confirmed non-genuine by Samsung (ticket 431368) and are kept powered off as court evidence. On 2026-10-14 ssdpool was replicated dataset by dataset (`zfs send | zfs recv -x encryption`, same key) onto the 870 QVO 4TB via USB-SATA, then the QVO moved to an internal SATA port and the pool was renamed with `zpool import ssdtmp ssdpool`. Single disk, no redundancy: the offsite restic copy on the VPS is the only safety net. Log: `workbench/allegro-ssd-claim/13-plan-migracion-ssdpool.md`.
 
 > **Pool migration (Mar 2026)**: hddpool (4x HDD, 2x mirror vdevs) removed. All data consolidated to ssdpool (rebuilt as RAIDZ1 with 4x 2TB SSDs). ZFS replication (ssdpool->hddpool) eliminated. New extpool added for game downloads via USB NVMe.
 
@@ -38,7 +40,7 @@ related_files: [system/app/nas-services.nix, profiles/NAS_PROD-config.nix, .clau
 
 ### Key Datasets
 
-**ssdpool** (primary storage — RAIDZ1, 4x 2TB SSD):
+**ssdpool** (primary storage — single 870 QVO 4TB since 2026-10-14):
 - `ssdpool/media` - Jellyfin media library (movies, TV shows)
 - `ssdpool/workstation_backups` - Workstation restic backups (DESK, LAPTOP_X13)
 - `ssdpool/vps-backups` - VPS restic databases (critical)

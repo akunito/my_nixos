@@ -1,7 +1,7 @@
 # NAS_PROD Profile Configuration
 # NixOS replacement for TrueNAS SCALE on the storage server
 # Hardware: B550 AORUS ELITE V2, Ryzen 5 5600G, 62GB RAM
-# Storage: ssdpool (4x2TB SATA RAIDZ1, encrypted), extpool (4TB NVMe PCIe)
+# Storage: ssdpool (1x Samsung 870 QVO 4TB SATA, encrypted; single disk since 2026-10-14, AINF-406), extpool (4TB NVMe PCIe)
 # Network: 2x10GbE LACP bond (VLAN 100), 2.5GbE LAN fallback
 
 let

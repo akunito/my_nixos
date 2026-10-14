@@ -66,7 +66,7 @@ DECOMMISSIONED (Feb 2026):
 | RAM | 62GB DDR4 ECC UDIMM |
 | CPU | AMD Ryzen 5 5600G |
 | NICs | 2x Intel X520 SFP+ (bond0 LACP), 1x RTL8125B 2.5GbE (WOL) |
-| Pools | ssdpool (RAIDZ1, 4x 2TB SSD), extpool (~4TB USB NVMe) |
+| Pools | ssdpool (single Samsung 870 QVO 4TB SATA, encrypted; since 2026-10-14, the 4x 2TB RAIDZ1 was counterfeit SSDs kept as evidence), extpool (~4TB NVMe) |
 | VLAN 20 | 192.168.20.200 (bond0) |
 | LAN | 192.168.8.200 (enp10s0) |
 | NPM | Bridge on 192.168.20.200 (ports 80/443/81) |
