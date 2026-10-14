@@ -656,7 +656,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 ### Akunito / Plans
 
-- **docs/akunito/plans/aion2-capture-pipeline.md**: Cómo capturar una sesión de Aion 2 en DESK de forma eficiente (paquetes del meter + frames de la Elgato/DESK + entradas evdev, con un reloj común) para un asesor en vivo sobre la 3090 del NAS y para entrenar un modelo de decisión tipo Jev (Kev/Laya) con las propias partidas
+- **docs/akunito/plans/aion2-capture-pipeline.md**: Fork del plan de presets para Aion 2 ahora que el juego corre en DESK (NixOS/Proton) — dos partes complementarias sobre un mismo bus de estado (paquetes del meter + evdev + frames muestreados, un reloj) — A) captura + asesor pasivo, B) asistente/automatización con entradas virtuales uinput en el propio DESK; modelos de decisión Kev/Laya entrenados con las propias partidas; análisis de detección, latencias y modelo de 512k
 - **docs/akunito/plans/akucraft-ai-handoff.md**: Handoff for building the AkuCraft AI work - villager conversations in MCA and a per-player Discord support assistant with usage limits
 - **docs/akunito/plans/akucraft-ai-prod-handoff.md**: What is built, what is verified, and the exact steps to take the AkuCraft AI work from staging to production
 - **docs/akunito/plans/akucraft-creative-rebuild.md**: The AkuCraft Creative server rebuilt from scratch on Solo's mod list, private to three players, plus per-machine gating of the FreesmLauncher instances
@@ -684,7 +684,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/plane-test-suite/README.md**: Plane fork regression suite — audit, interview decisions (2026-09-17), architecture, deploy gate, phases
 - **docs/akunito/plans/plane-test-suite/catalog.md**: Plane fork regression suite — full test catalogue by layer, mapped to register IDs A-xx/B-xx, with combination matrices
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
-- **docs/akunito/plans/rea-sandbox.md**: REA (morluto/rea, MCP de ingeniería inversa) listo en DESK y X13 con aislamiento por niveles de riesgo (gVisor en todo contenedor, microVM desechable), sesión de Claude Code con configuración propia, todas las herramientas que REA sabe usar y un skill global para que Claude Code las proponga
+- **docs/akunito/plans/rea-sandbox.md**: REA (morluto/rea, MCP de ingeniería inversa) listo en DESK y X13 con aislamiento por niveles de riesgo (contenedor Docker rootless solo para lo nuestro, microVM desechable para todo lo de terceros), sesión de Claude Code con configuración propia, todas las herramientas que REA sabe usar y un skill global para que Claude Code las proponga
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
