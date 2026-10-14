@@ -49,7 +49,7 @@ pedidos en Botland el 2026-10-01. Contexto previo: memorias `project_local_ai_bo
 | `aion-pico` | `aion-coach` + controlador Pico (CPU) | igual |
 | `reasoner` | **LIVE 2026-10-13**: Qwen3.8-27B abliterated (huihui-ai UD-Q4_K_XL 17,4 GB), `llama-server.nix` backend `docker-cuda`, `http://100.64.0.1:8090`, alias `qwen3.8-27b-abliterated` | **21,1 GB medidos** (1 slot × 128k, KV q8_0, 2026-10-14) |
 | `reasoner-9b-512k` | **LIVE 2026-10-14**: Huihui-Qwen3.5-9B-abliterated Q8_0 + mmproj (visión), 1 slot × 524 288 (YaRN ×2), KV q8_0, plantilla `qwen3.5-system-anywhere.jinja` | **20,6 GB medidos**; 77 tok/s corto; aguja a 411k tokens 3/3 exactas, prefill 1 409 tok/s (292 s), 28,5 tok/s a ese contexto |
-| `llm4decompile` | **Añadido 2026-10-14 (REA M4, AINF-408)**: LLM4Decompile-Ref 9B v2 Q8_0 (mradermacher, sha256 `04d6d729…760d`), completions en crudo con el prompt del artículo, sin plantilla, `--temp 0`. Lo usa `rea-llm-mcp` solo si ya es el preset activo; nunca lo activa él. El mismo modelo en Q6_K está en el Ollama de DESK | ~10,5 GB (sin medir aún) |
+| `llm4decompile` | **Añadido 2026-10-14 (REA M4, AINF-408)**: LLM4Decompile-Ref 9B v2 Q8_0 (mradermacher, sha256 `04d6d729…760d`), completions en crudo con el prompt del artículo, sin plantilla, `--temp 0`. Lo usa `rea-llm-mcp` solo si ya es el preset activo; nunca lo activa él. El mismo modelo en Q6_K está en el Ollama de DESK | **10,6 GB medidos** (1,5 s por función) |
 | `hermes` | `reasoner` + Hermes (aplazado) | igual |
 | `coder` | modelo de código para OpenCode | ~15-20 GB |
 | `whisper` | solo Whisper (reuniones, `meeting-transcribe` M3) | ~4-5 GB |

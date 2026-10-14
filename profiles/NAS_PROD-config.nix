@@ -116,7 +116,7 @@ in
       # Raw /v1/completions with the paper's prompt: no chat template, greedy decoding.
       llm4decompile = {
         label = "LLM4Decompile-Ref 9B v2 Q8_0 · pseudo-code → C (REA)";
-        short = "🔧 l4d"; vramEst = "~10.5 GB"; ctx = 16384; slots = 1; kv = "";
+        short = "🔧 l4d"; vramEst = "10.6 GB"; ctx = 16384; slots = 1; kv = "";   # MEASURED 2026-10-14: 10640 MB, 1.5 s/function
         model = "llm4decompile-9b-v2.Q8_0.gguf";   # mradermacher, sha256 04d6d729…760d
         alias = "llm4decompile-9b";
         template = null;

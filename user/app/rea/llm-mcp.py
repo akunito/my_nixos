@@ -48,7 +48,9 @@ def refine(pseudo: str, max_tokens: int) -> tuple[str, str]:
                 if not nas_active():
                     errors.append(f"{url}: NAS preset is not llm4decompile (switching would evict another model)")
                     continue
-                r = post(url + "/v1/completions", {"model": MODEL, "prompt": prompt, "max_tokens": max_tokens,
+                # The NAS router names models by PRESET ("llm4decompile"), not by alias:
+                # "llm4decompile-9b" got 400 unknown_model (measured).
+                r = post(url + "/v1/completions", {"model": "llm4decompile", "prompt": prompt, "max_tokens": max_tokens,
                                                    "temperature": 0}, 300)
                 return r["choices"][0]["text"], url
         except (OSError, ValueError, KeyError, urllib.error.HTTPError) as e:
