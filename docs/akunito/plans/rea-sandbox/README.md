@@ -101,6 +101,16 @@ La diferencia entre los niveles 1 y 2 está en la red del dinámico, en lo que e
 
 Diseño de cada sandbox (contenedor, microVM, carril web, sesión aislada, higiene de casos): [aislamiento.md](aislamiento.md).
 
+## Legalidad (resumen)
+
+No es asesoramiento jurídico; panorama general, foco UE (Polonia) y EE.UU. (2026-10-14).
+
+- **Emulación: legal en sí misma.** El emulador es lícito (EE.UU.: *Sony v. Connectix*, *Sony v. Bleem*). Lo ilegal es copiar/distribuir ROMs, BIOS o claves con copyright, no emular.
+- **Descompilación / ingeniería inversa: legal con límites.** UE (Directiva 2009/24/CE): art. 5.3 estudiar un programa que usas legítimamente; art. 6 descompilar **para interoperar** (condiciones: info no disponible de otro modo, solo lo necesario, sin clonar ni reutilizar el código). Derechos irrenunciables: un EULA no los anula (TJUE *Top System*, 2021). EE.UU.: fair use (*Sega v. Accolade*).
+- **Análisis de software para ver cómo funciona: legal.** Observar, medir y entender un binario (sobre todo propio o de la empresa) es lícito.
+- **Dónde deja de serlo:** eludir DRM para distribuir (DMCA §1201 / InfoSoc art. 6), redistribuir o reusar código/assets ajenos, clonar. Saltarse un antitrampas online suele ser violación de ToS (contractual), a veces DMCA.
+- **Nuestro encuadre:** análisis general sí; interoperar sí. El **análisis de DRM, licencias o antitrampas** —para entender cómo funcionan, con fines de estudio e investigación— está **aprobado explícitamente por Diego** (ver línea 44).
+
 ## Cómo lo descubre Claude Code
 
 - **Skill global `reverse-engineering`** en `~/.claude/skills/` (claude-sync lo lleva a las tres máquinas).
