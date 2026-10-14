@@ -123,6 +123,12 @@ Se escriben **a mano en cuanto R1 esté desplegado y probado**, no antes; antes 
 - **krun:** kernel del guest 6.12.91, sin red, montaje `:ro` legible y no escribible, `memory.max`/`pids.max` aplicados, VMM como uid 100999 con ~87 MB.
 - Notas para otras sesiones escritas en `~/.claude/CLAUDE.md` y en la memoria `reference_docker_rootless_workstations.md`.
 
+**Prueba con leftyworkout dev (2026-10-14, sobre una copia y con la base de datos vacía).** Encontró dos fallos de la configuración, ya arreglados:
+1. **Con compose, los puertos se abrían en `0.0.0.0` y `[::]`.** `ip` solo cubre la red bridge por defecto; Vite 3111 respondía desde el NAS por tailscale. Arreglo: `default-network-opts` con `host_binding_ipv4=127.0.0.1` (`e2fd6bd4`). Ahora solo `127.0.0.1`, también sin `[::]`.
+2. **El deploy no reinicia el dockerd rootless,** así que un cambio en `daemon.json` no se aplicaba. Arreglo: la activación compara el `--config-file` y reinicia si no hay contenedores rootless corriendo (`bd65d8df`).
+
+Lo propio del proyecto (`user: "0:0"` en dev, `data/db` a 100998, puertos en la IP tailscale) está en la memoria de leftyworkout (`reference_leftyworkout_rootless_docker.md`). Con eso, backend `/up` 200 y Vite 200.
+
 Pendiente de R1:
 - Comprobar `sudo docker ps` y que `docker` sin sudo no llega al daemon root, tras el próximo login.
 - Migrar leftyworkout (dev y dev2) la próxima vez que se use.
