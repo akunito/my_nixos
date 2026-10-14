@@ -22,6 +22,11 @@ from typing import Any
 
 os.environ.setdefault("GDK_BACKEND", "wayland")
 os.environ.setdefault("GTK_A11Y", "none")  # no AT-SPI bus round trips on a resident overlay
+# Measured 2026-10-14 (GPU-backed nested sway, DESK-sized outputs 4K@1.5 + QHD@1.25, after
+# one open): vulkan 217 MB VRAM + 195 MB GTT, RSS 171 MB, first open 198 ms; ngl 77 MB VRAM,
+# RSS 316 MB, first open 342 ms; cairo 0 VRAM, RSS 132 MB, first open 44 ms, warm paint
+# ~8 ms vs ~4 ms. The panels are static cards, so the GPU renderers buy nothing here.
+os.environ.setdefault("GSK_RENDERER", "cairo")
 
 import gi  # noqa: E402
 
@@ -252,6 +257,9 @@ class Overview:
         self._pending: set[str] = set()
         self._present_timer = 0
         self._focus_timer = 0
+        self._focus_since: tuple[int, float] | None = None
+        fmts = {f.get_name() for f in GdkPixbuf.Pixbuf.get_formats()}
+        self.cap_fmt = "ppm" if "pnm" in fmts else "png"
         self._textures: dict[int, tuple[int, Gdk.Texture]] = {}
         self._live: dict[int, Gdk.Texture] = {}
         self._gicons: dict[str, Gio.Icon] = {}
@@ -370,9 +378,16 @@ class Overview:
         change = ev.get("change")
         cid = (ev.get("container") or {}).get("id")
         if change == "focus" and cid is not None:
+            delay = int(self.settings.get("capture_delay_ms") or 1000)
+            now = time.monotonic()
+            prev, self._focus_since = self._focus_since, (cid, now)
+            # The window that loses focus after holding it past the debounce is refreshed
+            # now, while still on screen: its 1 s-after-focus snapshot is the stalest one.
+            if prev is not None and prev[0] != cid and now - prev[1] >= delay / 1000:
+                GLib.idle_add(self._capture, prev[0], False)
             if self._focus_timer:
                 GLib.source_remove(self._focus_timer)
-            self._focus_timer = GLib.timeout_add(int(self.settings.get("capture_delay_ms") or 1000), self._capture_focused, cid)
+            self._focus_timer = GLib.timeout_add(delay, self._capture, cid, True)
         elif change == "close" and cid is not None:
             ov.remove_thumb(self.root, self.session, cid)
             self._textures.pop(cid, None)
@@ -606,49 +621,57 @@ class Overview:
         GLib.child_watch_add(GLib.PRIORITY_DEFAULT, pid, lambda p, status, _d: (GLib.spawn_close_pid(p), done(status == 0, *data)), None)
         return True
 
-    def _capture_focused(self, cid: int) -> bool:
-        self._focus_timer = 0
+    def _capture(self, cid: int, focused: bool) -> bool:
+        if focused:
+            self._focus_timer = 0
         if self.is_open or not self._thumbs_on():
             return False
         try:
             views = ov.build(self.conn.tree())
         except (ipc.IpcError, OSError):
             return False
-        c = ov.focused_card(views)
-        if c is None or c.id != cid or not ov.capturable(c, self.excluded):
+        if ov.blocked(views):
+            return False  # nothing is captured while a fullscreen window has focus
+        hit = next(((c, v) for v in views for c in v.cards() if c.id == cid), None)
+        if hit is None or (focused and not hit[0].focused) or not ov.capturable(hit[0], self.excluded):
             return False
         if _screen_locked():
             return False  # a lock within 1 s of a focus change would be saved as the window's thumbnail
+        c, v = hit
         path = ov.thumb_path(self.root, self.session, cid)
-        tmp = path.with_suffix(".tmp")
-        argv = ov.grim_window_argv(GRIM, c, float(self.settings["thumb_scale"]), int(self.settings.get("jpeg_quality") or 75), str(tmp))
-        self._spawn(argv, self._focus_done, cid, tmp, path)
+        raw = path.with_name(f"{cid}.cap.{self.cap_fmt}")
+        self._spawn(ov.grim_window_argv(GRIM, c, v.scale, self.cap_fmt, str(raw)), self._capture_done, cid, raw, path, v.scale)
         return False
 
-    def _focus_done(self, ok: bool, cid: int, tmp: Path, path: Path) -> None:
-        if not ok:
-            try:
-                tmp.unlink()
-            except OSError:
-                pass
-            return
+    def _capture_done(self, ok: bool, cid: int, raw: Path, path: Path, out_scale: float) -> None:
         try:
+            if not ok:
+                return
+            pix = GdkPixbuf.Pixbuf.new_from_file(str(raw))
+            ts = float(self.settings["thumb_scale"]) / out_scale
+            small = pix.scale_simple(*ov.thumb_size(pix.get_width(), pix.get_height(), ts), GdkPixbuf.InterpType.BILINEAR)
+            tmp = path.with_suffix(".tmp")
+            small.savev(str(tmp), "jpeg", ["quality"], [str(int(self.settings.get("jpeg_quality") or 75))])
             os.replace(tmp, path)
             _log.debug("thumbnail %s captured", cid)
-        except OSError:
-            pass
+        except (GLib.Error, OSError) as exc:
+            _log.debug("thumbnail %s not captured: %s", cid, exc)
+        finally:
+            try:
+                raw.unlink()
+            except OSError:
+                pass
 
     def _start_live(self, views: list[ov.OutputView]) -> None:
         self._pending = set()
         if not self._thumbs_on() or int(self.settings.get("live_capture_ms") or 0) <= 0:
             return
-        scale = float(self.settings["thumb_scale"])
         for v in views:
             cards = [c for g in v.groups if g.visible for c in g.cards if ov.capturable(c, self.excluded)]
             if not cards:
                 continue
-            out = str(self.root / self.session / f"live-{v.name}.png")
-            if self._spawn(ov.grim_output_argv(GRIM, v, scale, out), self._live_done, self._gen, v, cards, out):
+            out = str(self.root / self.session / f"live-{v.name}.{self.cap_fmt}")
+            if self._spawn(ov.grim_output_argv(GRIM, v, self.cap_fmt, out), self._live_done, self._gen, v, cards, out):
                 self._pending.add(v.name)
 
     def _live_done(self, ok: bool, gen: int, view: ov.OutputView, cards: list[ov.Card], out: str) -> None:
@@ -664,12 +687,13 @@ class Overview:
                 pix = None
             if pix is not None:
                 q = str(int(self.settings.get("jpeg_quality") or 75))
-                scale = float(self.settings["thumb_scale"])
+                ts = float(self.settings["thumb_scale"]) / view.scale
                 for c in cards:
-                    box = ov.crop_box(c, view, scale, pix.get_width(), pix.get_height())
+                    box = ov.crop_box(c, view, view.scale, pix.get_width(), pix.get_height())
                     if box is None:
                         continue
-                    sub = pix.new_subpixbuf(*box).copy()
+                    sub = pix.new_subpixbuf(*box).scale_simple(*ov.thumb_size(box[2], box[3], ts),
+                                                               GdkPixbuf.InterpType.BILINEAR)
                     tex = Gdk.Texture.new_for_pixbuf(sub)
                     self._live[c.id] = tex
                     for p in self.panels.values():

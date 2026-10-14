@@ -190,13 +190,15 @@ class Thumbs(unittest.TestCase):
         with mock.patch.dict(os.environ, {"XDG_CACHE_HOME": "/c"}):
             self.assertEqual(ov.cache_root(), Path("/c/sway-apps/thumbs"))
 
-    def test_grim_argv(self):
-        v = ov.build(tree(output("DP-1", "1", ws("1", view("x", rect=(2560, 0, 1000, 800))), x=2560, w=2560, h=1440)))[0]
+    def test_grim_argv_captures_at_the_output_scale(self):
+        v = ov.build(tree(output("DP-1", "1", ws("1", view("x", rect=(2560, 0, 1000, 800))), x=2560, w=2560, h=1440, scale=1.5)))[0]
         c = v.cards()[0]
-        self.assertEqual(ov.grim_window_argv("grim", c, 0.25, 75, "/t.jpg"),
-                         ["grim", "-g", "2562,2 996x796", "-s", "0.25", "-t", "jpeg", "-q", "75", "/t.jpg"])
-        self.assertEqual(ov.grim_output_argv("grim", v, 0.25, "/o.png"),
-                         ["grim", "-g", "2560,0 2560x1440", "-s", "0.25", "-t", "png", "-l", "0", "/o.png"])
+        self.assertEqual(ov.grim_window_argv("grim", c, 1.5, "ppm", "/t.ppm"),
+                         ["grim", "-g", "2562,2 996x796", "-s", "1.5", "-t", "ppm", "/t.ppm"])
+        self.assertEqual(ov.grim_output_argv("grim", v, "png", "/o.png"),
+                         ["grim", "-g", "2560,0 2560x1440", "-s", "1.5", "-t", "png", "-l", "0", "/o.png"])
+        self.assertEqual(ov.thumb_size(996, 796, 0.25), (249, 199))
+        self.assertEqual(ov.thumb_size(2, 2, 0.25), (1, 1))
 
     def test_crop_box_relative_to_output_and_clamped(self):
         v = ov.build(tree(output("DP-1", "1", ws("1", view("x", rect=(2560, 0, 1000, 800)), view("y", rect=(5000, 1300, 200, 400))),

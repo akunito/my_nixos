@@ -240,9 +240,16 @@ def case_thumbnails_captured_on_focus_removed_on_close():
         o = Overview(s)
         thumbs = lambda: set(o.state()["thumbs"])  # noqa: E731
         a, b, c = w["a"].con_id, w["b"].con_id, w["c"].con_id
+        # live capture is off by default (DESK: one output takes 75-100 ms); this case covers it
+        (o.base / "state" / "E2E.json").write_text(json.dumps(
+            {"version": 1, "settings": {"overview": {"live_capture_ms": 3000}}}))
         w["b"].cmd("focus")
         s.wait(lambda: b in thumbs(), "e2e.b captured ~1 s after focus", 5)
-        w["a"].cmd("focus")
+        bpath = Path(o.state()["thumb_dir"]) / f"{b}.jpg"
+        before = bpath.stat().st_mtime_ns
+        time.sleep(0.3)
+        w["a"].cmd("focus")           # b held focus past the debounce: refreshed as it leaves
+        s.wait(lambda: bpath.stat().st_mtime_ns != before, "e2e.b re-captured when it lost focus", 2)
         time.sleep(0.3)
         w["b"].cmd("focus")           # a loses focus before its 1 s debounce: no capture
         time.sleep(1.4)

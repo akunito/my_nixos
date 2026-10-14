@@ -8,9 +8,17 @@ service sway-apps-overview).
 Previews are CACHED snapshots: sway 1.11 / wlroots 0.19 expose only output
 capture (per-toplevel capture arrives with wlroots 0.20) and windows on hidden
 workspaces are not drawn. A window is captured 1 s after it gains focus (still
-focused, visible, not fullscreen, not excluded); visible windows are re-captured
-when the overview opens, BEFORE the panels map (a capture after mapping would
-contain the overlay). Nothing is captured while a fullscreen window has focus.
+focused, visible, not fullscreen, not excluded) and again when it loses focus
+after holding it that long. Optionally (live_capture_ms > 0) visible windows are
+re-captured when the overview opens, BEFORE the panels map (a capture after
+mapping would contain the overlay). Nothing is captured while a fullscreen
+window has focus.
+
+grim captures at the output's own scale and the process downscales: grim's own
+-s resampling is the slow path. Measured DESK 2026-10-14 (4K@1.5 + QHD@1.25):
+`-s 0.25` of a whole output 618 ms (DP-1) / 300 ms (DP-2) whatever the format;
+at the output scale 75-100 ms per output, 40-50 ms per window, plus ~15 ms
+load+scale in GdkPixbuf.
 """
 from __future__ import annotations
 
@@ -30,7 +38,11 @@ SETTINGS_DEFAULTS: dict = {
     "thumb_scale": 0.25,          # grim -s: thumbnail px per logical px
     "jpeg_quality": 75,
     "capture_delay_ms": 1000,     # focus -> capture debounce
-    "live_capture_ms": 100,       # open waits at most this long for the live captures, 0 = cached only
+    # open waits at most this long for live captures of the visible windows; 0 = cached only.
+    # 0 by default: a native capture of one output alone takes 75-100 ms on DESK, so any
+    # useful wait doubles the open time (measured 2026-10-14: ~10 ms cached vs 110-145 ms)
+    # for windows that are on screen anyway.
+    "live_capture_ms": 0,
     "card_width": 260,            # logical px of a thumbnail
     # app_id / class regexes never captured (games, password managers).
     "exclude": ["^steam_app_", "^gamescope$", "(?i)keepassxc", "(?i)bitwarden", "(?i)1password"],
@@ -307,14 +319,23 @@ def capturable(card: Card, excluded) -> bool:
     return card.visible and not card.fullscreen and card.w >= 16 and card.h >= 16 and not excluded(card.app_id)
 
 
-def grim_window_argv(grim: str, card: Card, scale: float, quality: int, out: str) -> list[str]:
-    return [grim, "-g", f"{card.x},{card.y} {card.w}x{card.h}", "-s", f"{scale:g}", "-t", "jpeg",
-            "-q", str(int(quality)), out]
+def grim_argv(grim: str, x: int, y: int, w: int, h: int, out_scale: float, fmt: str, out: str) -> list[str]:
+    """A capture at the output's own scale (no resampling in grim). fmt: ppm, or png at
+    level 0 when gdk-pixbuf lacks the PNM loader."""
+    return [grim, "-g", f"{x},{y} {w}x{h}", "-s", f"{out_scale:g}", "-t", fmt] + (["-l", "0"] if fmt == "png" else []) + [out]
 
 
-def grim_output_argv(grim: str, view: OutputView, scale: float, out: str) -> list[str]:
-    # PNG level 0: no deflate cost, and gdk-pixbuf may be built without the PNM loader.
-    return [grim, "-g", f"{view.x},{view.y} {view.w}x{view.h}", "-s", f"{scale:g}", "-t", "png", "-l", "0", out]
+def grim_window_argv(grim: str, card: Card, out_scale: float, fmt: str, out: str) -> list[str]:
+    return grim_argv(grim, card.x, card.y, card.w, card.h, out_scale, fmt, out)
+
+
+def grim_output_argv(grim: str, view: OutputView, fmt: str, out: str) -> list[str]:
+    return grim_argv(grim, view.x, view.y, view.w, view.h, view.scale, fmt, out)
+
+
+def thumb_size(w: int, h: int, thumb_scale: float) -> tuple[int, int]:
+    """Thumbnail pixels for a w x h logical-px window."""
+    return max(1, round(w * thumb_scale)), max(1, round(h * thumb_scale))
 
 
 def crop_box(card: Card, view: OutputView, scale: float, img_w: int, img_h: int) -> tuple[int, int, int, int] | None:
