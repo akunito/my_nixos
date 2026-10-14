@@ -17,6 +17,9 @@ let
         H=${ghidra}/lib/ghidra/support/analyzeHeadless
         mkdir -p $TMPDIR/proj $out
         for a in ${lib.concatStringsSep " " archives}; do
+          # glibc 2.40's libm.a is a linker script (GROUP ( libm-2.40.a libmvec.a ), measured):
+          # list both names and keep only real ar archives.
+          [ "$(head -c 7 "$a" 2>/dev/null)" = '!<arch>' ] || continue
           cp "$a" $TMPDIR/
           $H $TMPDIR/proj lib -import "$TMPDIR/$(basename "$a")" -recursive \
             -max-cpu $NIX_BUILD_CORES -analysisTimeoutPerFile 120 > $TMPDIR/import.log 2>&1 \
@@ -38,6 +41,9 @@ let
     (mkFid { name = "musl-${p.musl.version}"; family = "musl"; version = p.musl.version; archives = [ "${p.musl}/lib/libc.a" ]; })
     (mkFid { name = "libstdcxx-gnu-${p.stdenv.cc.cc.version}"; family = "libstdc++"; version = p.stdenv.cc.cc.version; variant = "x86_64-linux-gnu"; archives = [ "${p.stdenv.cc.cc}/lib/libstdc++.a" ]; })
     (mkFid { name = "libstdcxx-musl-${p.pkgsStatic.stdenv.cc.cc.version}"; family = "libstdc++"; version = p.pkgsStatic.stdenv.cc.cc.version; variant = "x86_64-linux-musl"; archives = [ "${p.pkgsStatic.stdenv.cc.cc.lib}/x86_64-unknown-linux-musl/lib/libstdc++.a" ]; })
+    # Unwinder/personality and libm: in every static C/C++ binary (audit: unmatched in truth).
+    (mkFid { name = "libgcc-${p.stdenv.cc.cc.version}"; family = "libgcc"; version = p.stdenv.cc.cc.version; archives = map (l: "${p.stdenv.cc.cc}/lib/gcc/x86_64-unknown-linux-gnu/${p.stdenv.cc.cc.version}/${l}.a") [ "libgcc" "libgcc_eh" ]; })
+    (mkFid { name = "glibc-libm-${p.glibc.version}"; family = "glibc-libm"; version = p.glibc.version; archives = [ "${p.glibc.static}/lib/libm.a" "${p.glibc.static}/lib/libm-*.a" ]; })
     (mkFid { name = "rust-std-${p.rustc.version}"; family = "rust-std"; version = p.rustc.version; archives = map (l: "${p.rustc.unwrapped}/lib/rustlib/x86_64-unknown-linux-gnu/lib/lib${l}-*.rlib") [ "core" "alloc" "std" ]; })
   ];
 in

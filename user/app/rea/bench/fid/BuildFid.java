@@ -23,6 +23,14 @@ public class BuildFid extends GhidraScript {
     for (DomainFolder sub : f.getFolders()) collect(sub, out);
   }
 
+  // libstdc++'s "transaction clone for …" symbols demangle at import into names like
+  // `string_const&)` that would be applied as wrong labels (audit 2026-10-14).
+  private static final java.util.function.Predicate<generic.stl.Pair<ghidra.program.model.listing.Function,
+      ghidra.feature.fid.hash.FidHashQuad>> NO_GARBAGE = p -> {
+        String n = p.first.getName();
+        return n.indexOf('(') < 0 && n.indexOf(')') < 0;
+      };
+
   @Override
   public void run() throws Exception {
     String[] a = getScriptArgs();
@@ -34,7 +42,7 @@ public class BuildFid extends GhidraScript {
     collect(state.getProject().getProjectData().getRootFolder(), progs);
     try (FidDB db = ff.getFidDB(true)) {
       FidPopulateResult r = new FidService().createNewLibraryFromPrograms(db, a[0], a[1], a[2],
-          progs, null, new LanguageID(a[4]), null, null, monitor);
+          progs, NO_GARBAGE, new LanguageID(a[4]), null, null, monitor);
       println("REA-FID " + a[0] + " " + a[1] + ": programs=" + progs.size() + " attempted="
           + r.getTotalAttempted() + " added=" + r.getTotalAdded() + " excluded="
           + r.getTotalExcluded() + " failures=" + r.getFailures());
