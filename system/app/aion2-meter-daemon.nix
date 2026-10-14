@@ -25,6 +25,10 @@ let
   installDir = orDefault (cfg.aion2MeterDaemonInstallDir or null) "${home}/.local/opt/aionmeter-daemon";
   dataDir = orDefault (cfg.aion2MeterDaemonDataDir or null) "${home}/.local/share/AionMeter";
   extraArgs = cfg.aion2MeterDaemonExtraArgs or [ ];
+  # A2M-27: "ip:port" -> --forward: the daemon also streams the captured game packets (pcap, plaintext, no auth) to a Windows meter in a
+  # VM or under Wine (Settings -> Capture -> Receive from another meter). Opt-in; bind a LAN/VM address (192.168.122.1 = virbr0) or
+  # 127.0.0.1 for Wine, never 0.0.0.0. A VM on virbr0 also needs the port open on that interface (the firewall is on by default).
+  forward = cfg.aion2MeterDaemonForward or null;
   # Daemon <-> UI socket. Not the meter's default $XDG_RUNTIME_DIR/aionmeter.sock: the unit has no
   # XDG_RUNTIME_DIR and PrivateTmp, so its fallback /tmp/aionmeter-<uid>.sock lands in a private /tmp the UI
   # never sees, and /run/user/<uid> does not exist before login. RuntimeDirectory= gives a /run dir owned by User=.
@@ -62,8 +66,15 @@ let
     # A2M-50 window mode (meter e4db091): the card is a plain Wayland toplevel placed through Sway IPC, so SWAYSOCK must point at the
     # live compositor — a shell started before a sway restart carries a stale path (measured 2026-10-13), take the newest socket then.
     # --monitor only matters for the old layer-shell card (`aionmeter-overlay --layer`), window mode ignores it.
+    # Never "the newest socket": nested headless sways (agents testing in `WLR_BACKENDS=headless`) are newer than the session's
+    # (measured 2026-10-14: the card placed itself through a test sway and came back at a default spot). The session sway is the
+    # live `sway-ipc.<uid>.<pid>.sock` whose process has no WLR_BACKENDS=headless in its environment.
     if [ -z "''${SWAYSOCK:-}" ] || [ ! -S "$SWAYSOCK" ]; then
-      s=$(ls -t /run/user/"$(id -u)"/sway-ipc.*.sock 2>/dev/null | head -n 1); [ -n "$s" ] && export SWAYSOCK="$s"
+      for s in $(ls -t /run/user/"$(id -u)"/sway-ipc.*.sock 2>/dev/null); do
+        pid=''${s%.sock}; pid=''${pid##*.}
+        [ -r /proc/"$pid"/environ ] || continue
+        if ! tr '\0' '\n' < /proc/"$pid"/environ 2>/dev/null | grep -q '^WLR_BACKENDS=headless'; then export SWAYSOCK="$s"; break; fi
+      done
     fi
     exec ${pkgs.dotnet-runtime_10}/bin/dotnet "$dll" --socket ${socketPath} --monitor ${overlayMonitor} "$@"
   '';
@@ -130,7 +141,7 @@ in
           dataDir
           "--socket"
           socketPath
-        ] ++ extraArgs);
+        ] ++ lib.optionals (forward != null) [ "--forward" forward ] ++ extraArgs);
         RuntimeDirectory = "aionmeter";
         RuntimeDirectoryMode = "0750";
         AmbientCapabilities = [ "CAP_NET_RAW" "CAP_NET_ADMIN" ];
