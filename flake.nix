@@ -159,5 +159,10 @@
     # is a deliberate edit: change the rev, deploy DESK first so harmonia has
     # the binary, then the rest of the fleet fetches instead of compiling.
     freesm-launcher.url = "github:FreesmTeam/FreesmLauncher/f3c3c7b77077f30f3b8617c4b5326cd7cac17728";
+
+    # REA sandbox microVM for tiers 1-2 (AINF-408 F2). Pinned for the same reason
+    # as above: the guest is security-relevant and must not move per machine.
+    microvm.url = "github:microvm-nix/microvm.nix/f13928fe9900e91709d7ce581eefa47eaafa79e1";
+    microvm.inputs.nixpkgs.follows = "nixpkgs";
   };
 }

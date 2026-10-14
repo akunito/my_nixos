@@ -1,20 +1,26 @@
-{ config, lib, pkgs, pkgs-unstable, systemSettings, ... }:
+{ config, lib, pkgs, pkgs-unstable, systemSettings, inputs, ... }:
 # REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
 # One case = one directory ~/rea/cases/<case>/{target,out,work,log} mounted at the
 # same absolute path inside the sandbox (REA only takes absolute paths). Tier 0 (our
 # own builds) runs in a rootless container with the krun runtime (own KVM kernel);
-# tiers 1-2 need the microVM (F2) and are refused until it exists.
+# tiers 1-2 run in a disposable microVM (vm.nix), one at a time, destroyed when the
+# MCP session ends. Third-party output only ever reaches the isolated rea-claude
+# session, never the normal one: rea-cli refuses tiers 1-2.
 let
   enabled = systemSettings.reaSandboxEnable or false;
   rea-agents = pkgs-unstable.callPackage ./rea-agents.nix { };
   image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;
+  vmUid = 1000; # baked into the microVM share paths (/run/user/<uid>/rea-vm); the launcher checks it
+  vmRunner = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; };
+  socat = pkgs-unstable.socat;
   # The real binary, bypassing the claude-sync wrapper: with a foreign
   # CLAUDE_CONFIG_DIR the wrapper would turn ~/.claude-rea into a hub clone.
   claude-raw = pkgs.writeShellScriptBin "claude-raw" ''exec ${pkgs-unstable.claude-code}/bin/claude "$@"'';
 
   common = ''
+    HOME="''${HOME:-$(getent passwd "$(id -un)" | cut -d: -f6)}"
     DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"; export DOCKER_HOST
     CASES="$HOME/rea/cases"
     IMAGE="${imageRef}"
@@ -62,8 +68,14 @@ let
           chmod 755 "$d" "$d/target"
           printf 'tier: %s\ncreated: %s\nbrief: %s\n' "$tier" "$(date -Iseconds)" "$brief" > "$d/CASE.md"
           cp ${./case-CLAUDE.md} "$d/CLAUDE.md"; chmod 644 "$d/CLAUDE.md"
-          ensure_image
-          as_root -v "$d/out:/o" -v "$d/work:/w" "$IMAGE" -c 'chown 1000:100 /o /w && chmod 700 /o /w'
+          if [ "$tier" = 0 ]; then
+            # tier 0: REA runs as container uid 1000 = host subuid 100999
+            ensure_image
+            as_root -v "$d/out:/o" -v "$d/work:/w" "$IMAGE" -c 'chown 1000:100 /o /w && chmod 700 /o /w'
+          else
+            # tiers 1-2: QEMU (running as you) writes the 9p shares
+            chmod 700 "$d/out" "$d/work"
+          fi
           echo "case $name (tier $tier): $d"
           ;;
         add)
@@ -109,6 +121,49 @@ let
     '';
   };
 
+  # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
+  # (stdio <-> vsock) and destroy the VM when the client goes away. stdout is the MCP
+  # stream: everything else goes to stderr or the case log.
+  rea-vm-mcp = pkgs.writeShellApplication {
+    name = "rea-vm-mcp";
+    runtimeInputs = [ socat pkgs.coreutils pkgs.util-linux pkgs.systemd ];
+    text = ''
+      d=$1
+      die() { echo "rea-vm: $*" >&2; exit 1; }
+      [ "$(id -u)" = ${toString vmUid} ] || die "the microVM is built for uid ${toString vmUid}"
+      [ -d "$d/target" ] || die "no such case $d"
+      V=/run/user/${toString vmUid}/rea-vm
+      mkdir -p "$V/ctl"
+      exec 9>"$V.lock"
+      flock -n 9 || die "another tier 1-2 session is running (one microVM at a time)"
+      for x in target out work; do ln -sfn "$d/$x" "$V/$x"; done
+      printf '%s' "$d" > "$V/ctl/case"
+      unit="rea-vm-$$"
+      # shellcheck disable=SC2329 # invoked through the EXIT trap
+      cleanup() {
+        systemctl --user stop "$unit.scope" >/dev/null 2>&1 || true
+        rm -f "$V/target" "$V/out" "$V/work" "$V/ctl/case"
+      }
+      trap cleanup EXIT
+      echo "$(date -Iseconds) boot" >> "$d/log/vm-console.log"
+      # The desktop exports a global LD_LIBRARY_PATH (alsa, sane, pipewire-jack) that
+      # breaks binaries from another nixpkgs revision: GLIBC_2.43 not found (measured).
+      env -u LD_LIBRARY_PATH systemd-run --user --scope --quiet --collect --unit="$unit" \
+        -p MemoryMax=8G -p TasksMax=2048 \
+        ${vmRunner}/bin/microvm-run </dev/null >>"$d/log/vm-console.log" 2>&1 &
+      vm=$!
+      for _ in $(seq 1 120); do
+        kill -0 "$vm" 2>/dev/null || die "microVM exited during boot (see $d/log/vm-console.log)"
+        if socat -u OPEN:/dev/null VSOCK-CONNECT:4242:5000 2>/dev/null; then
+          socat STDIO VSOCK-CONNECT:4242:5000
+          exit 0
+        fi
+        sleep 1
+      done
+      die "microVM did not come up in 120 s (see $d/log/vm-console.log)"
+    '';
+  };
+
   # rea-run <case> <rea args…>: the one place that starts the sandbox.
   rea-run = pkgs.writeShellApplication {
     name = "rea-run";
@@ -117,7 +172,14 @@ let
       d=$(case_dir "''${1:-}"); shift
       [ -d "$d/target" ] || die "no such case (rea-case new)"
       tier=$(case_tier "$d")
-      [ "$tier" = 0 ] || die "case is tier ''${tier:-?}: tiers 1-2 run in the microVM (AINF-408 F2), not available yet"
+      case "$tier" in
+        0) ;;
+        1|2)
+          [ "''${1:-}" = mcp ] || die "tier $tier cases only run through rea-claude (MCP in the microVM)"
+          exec ${rea-vm-mcp}/bin/rea-vm-mcp "$d"
+          ;;
+        *) die "case has no valid tier in CASE.md" ;;
+      esac
       ensure_image
       exec docker run --rm -i --runtime krun --annotation krun.ram_mib=6144 \
         --network none --read-only --tmpfs /tmp:size=512m \
@@ -151,6 +213,15 @@ let
     '';
   };
 
+  # rea-claude <case> [--ask "question"] [claude args…]: the isolated session.
+  # Auth: a one-year token from `claude setup-token`, stored by rea-claude-token in
+  # ~/.config/rea/claude-oauth-token and passed as CLAUDE_CODE_OAUTH_TOKEN (no refresh,
+  # so no race with the normal ~/.claude login). CLAUDE_CODE_SUBPROCESS_ENV_SCRUB strips
+  # it from Bash, hooks and MCP servers; CLAUDE_CODE_MCP_ALLOWLIST_ENV starts the MCP
+  # server with a baseline env plus the env given in mcp.json.
+  # --ask: headless (-p), only REA + read-only file tools, prints the final answer — so
+  # the normal session can delegate without third-party output ever entering it. Tier 2
+  # stays interactive (every REA call is approved by hand).
   rea-claude = pkgs.writeShellApplication {
     name = "rea-claude";
     runtimeInputs = [ pkgs.coreutils pkgs.gnused pkgs.jq claude-raw ];
@@ -158,10 +229,26 @@ let
       d=$(case_dir "''${1:-}"); name=$1; shift
       [ -d "$d/target" ] || die "no such case (rea-case new $name)"
       tier=$(case_tier "$d")
-      [ "$tier" = 0 ] || die "case is tier ''${tier:-?}: tiers 1-2 run in the microVM (AINF-408 F2), not available yet"
+      case "$tier" in 0|1|2) ;; *) die "case has no valid tier in CASE.md" ;; esac
+      ask=""
+      if [ "''${1:-}" = --ask ]; then
+        [ -n "''${2:-}" ] || die "--ask needs a question"
+        [ "$tier" != 2 ] || die "tier 2 is interactive only (every REA call is approved by hand)"
+        ask=$2; shift 2
+      fi
+      tok="$HOME/.config/rea/claude-oauth-token"
+      if [ -s "$tok" ]; then
+        CLAUDE_CODE_OAUTH_TOKEN=$(cat "$tok"); export CLAUDE_CODE_OAUTH_TOKEN
+      elif [ -n "$ask" ]; then
+        die "no token: run 'claude setup-token' and store it with rea-claude-token"
+      fi
+      export CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 CLAUDE_CODE_MCP_ALLOWLIST_ENV=1
+      unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
       s="$d/.session"; mkdir -p "$s"
-      jq -n --arg cmd "${rea-run}/bin/rea-run" --arg c "$name" \
-        '{mcpServers: {rea: {type: "stdio", command: $cmd, args: [$c, "mcp"]}}}' > "$s/mcp.json"
+      uid=$(id -u)
+      jq -n --arg cmd "${rea-run}/bin/rea-run" --arg c "$name" --arg home "$HOME" --arg rt "/run/user/$uid" \
+        '{mcpServers: {rea: {type: "stdio", command: $cmd, args: [$c, "mcp"],
+          env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}}}}' > "$s/mcp.json"
       jq -n --arg d "$d" --arg hook "${rea-hook}/bin/rea-hook" --argjson t2 "$([ "$tier" = 2 ] && echo true || echo false)" '
         {
           disableClaudeAiConnectors: true,
@@ -171,7 +258,7 @@ let
             disableBypassPermissionsMode: "disable",
             deny: ["WebFetch", "WebSearch",
                    "Bash(curl *)", "Bash(wget *)", "Bash(ssh *)", "Bash(scp *)", "Bash(git push *)",
-                   "Bash(docker *)", "Bash(nix *)",
+                   "Bash(docker *)", "Bash(nix *)", "Bash(env*)", "Bash(printenv*)",
                    "Read(~/.ssh/**)", "Read(~/.gnupg/**)", "Read(~/.claude/**)", "Read(~/.claude-rea/.credentials.json)",
                    "Read(~/.dotfiles/**)", "Read(~/Projects/**)", "Read(~/.config/**)", "Read(~/.local/**)",
                    "Edit(~/.dotfiles/**)", "Edit(~/Projects/**)", "Edit(~/.config/**)", "Edit(~/.local/**)", "Edit(~/.claude/**)"]
@@ -188,16 +275,45 @@ let
           }
         }' > "$s/settings.json"
       cd "$d"
+      set -- --setting-sources "" --settings "$s/settings.json" \
+        --strict-mcp-config --mcp-config "$s/mcp.json" --no-chrome "$@"
+      if [ -n "$ask" ]; then
+        exec env CLAUDE_CONFIG_DIR="$HOME/.claude-rea" ENABLE_CLAUDEAI_MCP_SERVERS=false \
+          claude-raw -p "$ask" --output-format text \
+          --allowedTools "mcp__rea__*" "Read" "Glob" "Grep" "$@"
+      fi
       exec env CLAUDE_CONFIG_DIR="$HOME/.claude-rea" ENABLE_CLAUDEAI_MCP_SERVERS=false \
-        claude-raw --setting-sources "" --settings "$s/settings.json" \
-        --strict-mcp-config --mcp-config "$s/mcp.json" \
-        --permission-mode default --no-chrome "$@"
+        claude-raw --permission-mode default "$@"
+    '';
+  };
+
+  # rea-claude-token: store the `claude setup-token` token without echoing it.
+  rea-claude-token = pkgs.writeShellApplication {
+    name = "rea-claude-token";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      umask 077
+      mkdir -p "$HOME/.config/rea"
+      read -r -s -p "paste the token printed by 'claude setup-token': " t; echo
+      [ -n "$t" ] || { echo "empty, nothing stored" >&2; exit 1; }
+      printf '%s' "$t" > "$HOME/.config/rea/claude-oauth-token"
+      echo "stored in ~/.config/rea/claude-oauth-token (0600)"
     '';
   };
 
   # rea-cli <case> <rea args…>: tier-0 CLI for the normal session (our own builds).
-  rea-cli = pkgs.writeShellScriptBin "rea-cli" ''exec ${rea-run}/bin/rea-run "$@"'';
+  # Third-party output must not enter the normal session (it holds Plane, n8n, mail…).
+  rea-cli = pkgs.writeShellApplication {
+    name = "rea-cli";
+    runtimeInputs = [ pkgs.coreutils pkgs.gnused ];
+    text = common + ''
+      d=$(case_dir "''${1:-}")
+      tier=$(case_tier "$d")
+      [ "$tier" = 0 ] || die "case is tier ''${tier:-?}: use rea-claude (isolated session); rea-cli is for our own builds only"
+      exec ${rea-run}/bin/rea-run "$@"
+    '';
+  };
 in
 lib.mkIf enabled {
-  home.packages = [ rea-case rea-run rea-cli rea-claude rea-hook claude-raw ];
+  home.packages = [ rea-case rea-run rea-cli rea-claude rea-claude-token rea-hook claude-raw ];
 }
