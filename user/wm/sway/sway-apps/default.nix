@@ -89,7 +89,7 @@ let
       export E2E_WAYBAR="''${E2E_WAYBAR:-${config.programs.waybar.package}/bin/waybar}"
       export E2E_GRIM="${pkgs.grim}/bin/grim"
       export E2E_PYTHON="${e2ePython}/bin/python3"
-      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
+      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 libadwaita glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
       export E2E_TMP="''${E2E_TMP:-''${XDG_RUNTIME_DIR:-/tmp}/sway-apps-e2e}"
       export E2E_RUNTIME_ROOT="''${E2E_RUNTIME_ROOT:-''${XDG_RUNTIME_DIR:-/tmp}}"
       mkdir -p "$E2E_TMP"
@@ -154,14 +154,21 @@ in
     # Regenerate the include from the repo state on every activation. No
     # reload here: the session picks it up on the next reload/login, and the
     # tool reloads itself after every edit. No git: activation must never
-    # create commits. Before onFilesChange: HM's sway module reloads sway there
-    # when its config changed, and with swayAppsOwnsOutputs the output layout
-    # lives in this include — a reload against the previous include would drop
-    # every output to sway's defaults.
-    home.activation.swayAppsGenerate = lib.hm.dag.entryBetween [ "onFilesChange" ] [ "writeBoundary" ] ''
+    # create commits. After linkGeneration (HM's old waybar/config symlink is
+    # gone; the apply also writes the Waybar config/CSS and the sway bar blocks,
+    # sway_apps/waybar.py) and before onFilesChange: HM's sway module reloads
+    # sway there when its config changed, and with swayAppsOwnsOutputs the
+    # output layout lives in this include — a reload against the previous
+    # include would drop every output to sway's defaults. `waybar apply` then
+    # reloads Waybar (and sway, only when a bar id is new to it) if the
+    # generated config changed. Without a session it is left for the watch
+    # daemon at login.
+    home.activation.swayAppsGenerate = lib.hm.dag.entryBetween [ "onFilesChange" "reloadSystemd" ] [ "writeBoundary" "linkGeneration" ] ''
       if [ -d "${dotfiles}/user/wm/sway/apps" ]; then
         SWAY_APPS_GIT=0 ${sway-apps}/bin/sway-apps --json apply --no-reload --no-validate >/dev/null 2>&1 \
           || echo "sway-apps: include generation failed (run 'sway-apps doctor')" >&2
+        SWAY_APPS_GIT=0 ${sway-apps}/bin/sway-apps --json waybar apply >/dev/null 2>&1 \
+          || echo "sway-apps: waybar generation failed (run 'sway-apps waybar apply')" >&2
       fi
     '';
   };

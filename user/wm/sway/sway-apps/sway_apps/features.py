@@ -9,6 +9,8 @@ Each module in FEATURES may define:
                                     with the session's sway; gate patch-only commands on
                                     paths.SWAY_FEATURES)
   GUI_PANELS                        [(key, title, subtitle, icon, "gui.module:Class")]
+  before_reload(state)              generate.apply: write files the coming sway reload must see
+  after_apply(state, reloaded)      generate.apply: after the reload (or none); signal other processes
 Owning files per feature keeps parallel work out of cli.py/state.py/watch.py/gui/app.py.
 """
 from __future__ import annotations
@@ -16,6 +18,8 @@ from __future__ import annotations
 import importlib
 from types import ModuleType
 from typing import Any, Iterator
+
+from . import log
 
 FEATURES = ("tray", "waybar", "stacking", "displays", "placement")
 
@@ -54,6 +58,24 @@ def include_fragments(state) -> Iterator[str]:
             text = fn(state)
             if text:
                 yield text
+
+
+def _hook(name: str, *args) -> None:
+    for m in modules():
+        fn = getattr(m, name, None)
+        if fn:
+            try:
+                fn(*args)
+            except Exception as exc:  # a feature must never break the rules include
+                log.get("features").exception("%s.%s failed: %s", m.__name__, name, exc)
+
+
+def before_reload(state) -> None:
+    _hook("before_reload", state)
+
+
+def after_apply(state, reloaded: bool) -> None:
+    _hook("after_apply", state, reloaded)
 
 
 def gui_panels() -> Iterator[tuple[str, str, str, str, str]]:
