@@ -6,7 +6,7 @@ NixOS infrastructure documentation specific to akunito's environment.
 
 - `infrastructure/` — Homelab services, audits, Docker projects, and internal configs
 - `hardware/` — CPU power management, drive management, GPU monitoring
-- `gaming/` — Skyrim/LoreRim Linux setup guides
+- `gaming/` — Skyrim/LoreRim Linux setup guides, BG3 modding, gamescope lag, L2 Reborn on Linux (blocked by SmartGuard — `l2reborn-linux.md`)
 - `system-modules/` — Hibernate, network bonding
 - `keybindings/` — Sway, Hyprland, mouse button mapping
 - `hardware.md` — General hardware configuration reference

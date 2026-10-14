@@ -453,9 +453,11 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK.
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
-- **user/app/rea/image.nix**: pkgs = nixpkgs-unstable (Ghidra 12.1.4, crun 1.30.1; the stable channel is older).
+- **user/app/rea/env.nix**: One tool list + environment for both REA sandboxes (AINF-408): the OCI image
+- **user/app/rea/image.nix**: REA sandbox image for tier 0 (AINF-408 F1): rootless Docker + krun. Tools and
 - **user/app/rea/rea-agents.nix**: rea-agents 6.4.0 built from our fork (akunito/rea) at the upstream release commit.
 - **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
+- **user/app/rea/vm.nix**: extraModules: tests only (e.g. a root console for the escape test); empty in production.
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
@@ -585,6 +587,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
 - **docs/akunito/gaming/gamescope-lag-bomb.md**: Every game launched through gamescope from Steam became unplayable after roughly
+- **docs/akunito/gaming/l2reborn-linux.md**: L2 Reborn (Interlude/Classic private server) on NixOS via umu/Proton — everything runs except the SmartGuard anti-cheat, which refuses to start under Wine (Code 1004); measurements, logs, staff statements, options
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 - **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
 
@@ -685,6 +688,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
+- **docs/akunito/plans/l2-rpa-testbed.md**: Plan (sin implementar) para usar Lineage 2 Interlude como banco de pruebas del asistente RPA antes de L2 Reborn Legacy (nov 2026) — servidor propio L2J Mobius Interlude (protocolo 746) donde el estado es exacto y gratis, núcleo compartido game-assist con adaptadores aion2/l2 (reaprovecha el bus/evdev/uinput/reglas/voz/entrenamiento del plan de Aion), dos fuentes de estado (plugin de servidor = verdad + lector de paquetes del cliente = percepción portable), asesor por reglas+LLM con el datapack como base, copiloto que tira pociones respetando tu input, generador de escenarios por comandos GM, entrenamiento de Kev/Laya, bot autónomo solo en nuestro server; fases L-study→L7 con criterios medibles; en L2 Reborn solo asesor + lectura pasiva de tráfico propio e inyección solo si el servidor lo permite oficialmente
 - **docs/akunito/plans/nas-3090-ai-presets.md**: Qué hacemos con la RTX 3090 del NAS — presets de IA bajo demanda (nada cargado por defecto), coach de Aion 2 por captura HDMI + voz + panel AkuWM, Pico 2 H como HID para capturar datos del juego, razonador/Hermes local aplazado
 - **docs/akunito/plans/nas-3090-storage-rework.md**: Liberar el PCIEX16 del NAS para la RTX 3090 — sistema del 840 EVO (SATA) a un Samsung 980 500GB en M2B_SB por clonado dd, ssdpool del HBA LSI a los 4 SATA de la placa (TRIM por fin), HBA fuera, KIOXIA fuera
 - **docs/akunito/plans/nas-on-demand-services.md**: AkuCraft hibernado (bot solo Telegram, Discord e invitados fuera) y Minecraft survival + Calibre + RomM + UniFi mudados del VPS al NAS como servicios bajo demanda, con limpieza de copias y monitorización alineada
@@ -701,6 +705,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
+
+### Akunito / Research
+
+- **docs/akunito/research/l2-bot-logic.md**: Lógica de bots/asistentes de Lineage 2 open-source (árbol de combate, triage de heal/buff/recharge para soporte Elven Elder, gestión HP/MP/CP/pociones, targeting, retorno a pueblo) y protocolo/cifrado de red L2 (login Blowfish estático→dinámico + RSA, juego XOR dinámico con clave en el primer paquete y contador que avanza) para construir el asistente RPA del plan l2-rpa-testbed; cada afirmación citada al repo+fichero y marcada MEDIDO/INFERIDO
 
 ### Akunito / System-Modules
 
