@@ -130,3 +130,11 @@ class Wiring(unittest.TestCase):
         self.assertNotIn("NON_UNIQUE", src)               # single instance: a 2nd launch must reach the primary
         self.assertIn("HANDLES_COMMAND_LINE", src)
         self.assertNotRegex(src, re.compile(r'if a == "--toggle"'))   # no duplicated parser
+
+
+class FeaturePanelsListed(unittest.TestCase):
+    def test_every_feature_gui_panel_is_a_section(self):
+        # launch.SECTIONS is hand-kept (GTK-free); SWAY-18's Keypad page was missing from it
+        from sway_apps import features
+        for key, *_ in features.gui_panels():
+            self.assertIn(key, launch.SECTIONS, key)

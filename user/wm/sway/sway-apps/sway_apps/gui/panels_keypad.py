@@ -41,7 +41,7 @@ class KeypadCanvas(Gtk.DrawingArea):
     def __init__(self, panel: "KeypadPanel") -> None:
         super().__init__(hexpand=True)
         self.panel = panel
-        self.set_content_height(360)
+        self.set_content_height(440)
         self.set_draw_func(self._draw)
         self._view = (1.0, 0.0, 0.0)
         click = Gtk.GestureClick()
@@ -103,7 +103,7 @@ class KeypadCanvas(Gtk.DrawingArea):
             cr.stroke()
             self._text(cr, k.id, x + 4, y + 3, w - 8, fg, 0.55, 7)
             bad = kp.validate(action) is not None
-            self._text(cr, action, x + 2, y + h / 2 - 4, w - 4, warn if bad else fg, 1.0, 9, bold=True)
+            self._text(cr, kp.label(action), x + 2, y + h / 2 - 4, w - 4, warn if bad else fg, 1.0, 9, bold=True)
 
 
 def _round(cr, x: float, y: float, w: float, h: float, r: float) -> None:

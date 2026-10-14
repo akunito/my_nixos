@@ -26,6 +26,12 @@ class Validate(unittest.TestCase):
         self.assertIn("root", kp.validate("command(rm -rf /)", KEYS))
         self.assertIn("root", kp.validate("macro(a command(id))", KEYS))
 
+    def test_labels_for_the_drawing(self):
+        for action, want in (("leftshift", "Shift"), ("leftcontrol", "Ctrl"), ("C-S-f5", "Ctrl+Shift+F5"),
+                             ("f", "F"), ("M-a", "Super+A"), ("macro(C-c 50ms C-v)", "macro…"), ("5", "5"),
+                             ("iso-level3-shift", "iso-level3-shift")):
+            self.assertEqual(kp.label(action), want, action)
+
     def test_chord_order(self):
         self.assertEqual(kp.chord({"S", "C"}, "a"), "C-S-a")
         self.assertEqual(kp.chord([], "f1"), "f1")

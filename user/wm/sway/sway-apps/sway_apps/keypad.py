@@ -155,6 +155,28 @@ def chord(mods: set[str] | list[str], key: str) -> str:
     return "".join(f"{m}-" for m in MODS if m in mods) + key
 
 
+_SHORT = {"leftshift": "Shift", "rightshift": "R Shift", "leftcontrol": "Ctrl", "rightcontrol": "R Ctrl",
+          "leftalt": "Alt", "rightalt": "AltGr", "leftmeta": "Super", "rightmeta": "R Super", "capslock": "Caps",
+          "space": "Space", "enter": "Enter", "esc": "Esc", "tab": "Tab", "backspace": "Bksp", "delete": "Del",
+          "pageup": "PgUp", "pagedown": "PgDn", "noop": "—"}
+_MOD_NAMES = {"C": "Ctrl", "S": "Shift", "A": "Alt", "M": "Super", "G": "AltGr"}
+
+
+def label(action: str) -> str:
+    """Short text for the drawing: 'C-S-f5' -> 'Ctrl+Shift+F5', 'leftshift' -> 'Shift',
+    'macro(…)' -> 'macro…'. The editor keeps the keyd syntax."""
+    a = action.strip()
+    fn = re.match(r"([a-z0-9]+)\(", a)
+    if fn:
+        return fn.group(1) + "…"
+    mods, key = [], a
+    while len(key) > 2 and key[1] == "-" and key[0] in MODS and key not in (keyd_keys() or ()):
+        mods.append(_MOD_NAMES[key[0]])
+        key = key[2:]
+    k = _SHORT.get(key) or (key.upper() if re.fullmatch(r"f\d{1,2}|[a-z]", key) else key)
+    return "+".join(mods + [k])
+
+
 def device_model(dev: dict[str, Any]) -> Model | None:
     return MODELS.get(str(dev.get("model", "")))
 
