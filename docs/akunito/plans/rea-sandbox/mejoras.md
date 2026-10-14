@@ -176,6 +176,18 @@ Detalles:
 - **Medido con M1** y a mano en 20–30 funciones de binarios conocidos.
 - **VRAM:** el 9B Q4 (~6 GB) y el Qwen 27B (~17 GB) apenas caben juntos en 24 GB. El router carga un preset u otro.
 
+**Estado M4 (2026-10-14): activo en DESK.** El NAS tiene el preset preparado y el modelo descargado; se despliega cuando el reasoner esté libre, porque el despliegue reinicia `llama-server`.
+- **Modelo:** LLM4Decompile-Ref 9B v2 (MIT). En DESK va en el Ollama de la RX 9070 XT, Q6_K de 7,25 GB, con una VRAM total medida de 11 GB con el escritorio. En el NAS es el preset `llm4decompile`, en Q8_0.
+- **Herramienta:** `rea-llm-mcp` da a la sesión aislada una sola herramienta, `refine_pseudocode`, con el prompt del artículo y decodificación voraz. Orden de prueba: Ollama local, el Ollama de DESK por tailscale (para X13) y el NAS, este último solo si su preset activo ya es `llm4decompile`. El pseudocódigo nunca sale de la red local.
+- **Medido:** 7,2 s por función en DESK.
+- **Prueba con `vault`:** el C es mucho más legible pero tiene **tres errores de significado**:
+  - toma el último carácter como dígito cuando es el byte crudo;
+  - convierte mal la constante del hash;
+  - cambia el signo de los bytes en el bucle.
+
+  El agente aislado los detectó contra el pseudocódigo de REA y el desensamblado, y se fió de REA. Confirma que es una anotación, nunca evidencia.
+- **Pendiente:** medirlo en el corpus de M1 compilando y ejecutando lo que propone, y probar VarBERT (modelo de Ghidra) para nombres de variables.
+
 **M5 — aportar upstream.** Lo que mejore en M2/M3 va como PR a Ghidra (Apache) o a REA (MIT) desde el fork. DecBench no acepta PRs autónomos de IA: ahí solo issues escritos por Diego.
 
 ## Huecos que nadie cubre (posible trabajo propio)
