@@ -1,13 +1,16 @@
 """Monitors: live outputs, hardware ids, workspace pins, geometry pinning.
 
 Layering with the rest of the stack:
-  - nwg-displays owns the PHYSICAL layout and writes ~/.config/sway/outputs
-    keyed by connector (DP-1, HDMI-A-1). Connectors drift; hardware ids don't.
+  - The PHYSICAL layout (mode, position, scale, transform, enable) is owned by
+    displays.py on machines with swayAppsOwnsOutputs; elsewhere nwg-displays
+    writes ~/.config/sway/outputs keyed by connector (DP-1, HDMI-A-1).
+    Connectors drift; hardware ids don't.
   - sway-apps owns the LOGICAL layer: role -> hardware id -> workspace decade,
-    rendered as `workspace N output "<hw id>"` lines plus the
+    rendered as `workspace N output "<hw id>"` lines
     (the hotplug snapshot/restore that used to consume a pins file was removed 2026-09-07).
-  - Optionally (settings.pin_geometry) it re-emits nwg-displays' geometry
-    keyed by hardware id so it survives connector renames.
+  - Optionally (settings.pin_geometry, machines WITHOUT owns_outputs) it
+    re-emits nwg-displays' geometry keyed by hardware id so it survives
+    connector renames.
 """
 from __future__ import annotations
 
@@ -268,7 +271,7 @@ def parse_nwg_outputs(text: str) -> dict[str, dict[str, str]]:
 def render_geometry(state: State) -> tuple[str, list[str]]:
     """Geometry lines keyed by hardware id. Returns (text, notes)."""
     notes: list[str] = []
-    if not state.settings().get("pin_geometry"):
+    if not state.settings().get("pin_geometry") or "owns_outputs" in paths.SWAY_FEATURES:
         return "", notes
     try:
         text = NWG_OUTPUTS_FILE.read_text()

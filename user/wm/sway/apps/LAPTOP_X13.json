@@ -36,7 +36,46 @@
     }
   ],
   "settings": {
-    "auto_adopt": true
+    "auto_adopt": true,
+    "displays": {
+      "outputs": {
+        "Lenovo Group Limited 0x41A0 Unknown": {
+          "mode": "1920x1200@60.003Hz",
+          "x": 1920,
+          "y": 1080,
+          "scale": 1.1,
+          "transform": "normal",
+          "adaptive_sync": false,
+          "enabled": true,
+          "scale_filter": "nearest",
+          "connector": "eDP-1"
+        },
+        "Dell Inc. DELL P2419H 20TZHC3": {
+          "mode": "1920x1080@60.000Hz",
+          "x": 1745,
+          "y": 0,
+          "scale": 1.0,
+          "transform": "normal",
+          "adaptive_sync": false,
+          "enabled": true,
+          "scale_filter": "nearest",
+          "connector": "HDMI-A-1"
+        },
+        "UTV MONITOR 0x00000001": {
+          "mode": "1920x1080@60.000Hz",
+          "x": 1745,
+          "y": 0,
+          "scale": 1.0,
+          "transform": "normal",
+          "adaptive_sync": false,
+          "enabled": true,
+          "scale_filter": "nearest",
+          "connector": "HDMI-A-1"
+        }
+      },
+      "imported_from": "X13 ~/.config/sway/outputs (nwg-displays 2026-02-26, as read 2026-09-06) @ 2026-10-14",
+      "notes": "UNVERIFIED: imported on DESK while X13 was offline; HDMI-A-1's block was given to both dock monitors (today's connector-keyed file did the same). Check `sway-apps displays list` on X13; `sway-apps displays save-live` replaces it with the real layout."
+    }
   },
   "shortcuts": [],
   "tools": [],
