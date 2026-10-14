@@ -121,8 +121,9 @@ def _has_focus(node: dict[str, Any]) -> bool:
 
 
 def build(tree: dict[str, Any]) -> list[OutputView]:
-    """Outputs left to right (then top to bottom); per output the visible workspace
-    first, then the others by number/name; per workspace tiles in tree order, then floats.
+    """Outputs left to right (then top to bottom); per output one column per workspace
+    by number, named ones last (Diego 2026-10-14: workspaces as columns in their spatial
+    order, not the visible one first); per workspace tiles in tree order, then floats.
     Empty workspaces and the scratchpad are left out."""
     views: list[OutputView] = []
     for o in tree.get("nodes") or []:
@@ -156,7 +157,7 @@ def build(tree: dict[str, Any]) -> list[OutputView]:
                     w=wr.get("width") or rr.get("width", 0), h=wr.get("height") or rr.get("height", 0),
                     pid=n.get("pid") or 0))
             ov.groups.append(g)
-        ov.groups.sort(key=lambda g: (not g.visible, g.num is None, g.num if g.num is not None else 0, g.workspace))
+        ov.groups.sort(key=lambda g: (g.num is None, g.num if g.num is not None else 0, g.workspace))
         views.append(ov)
     views.sort(key=lambda v: (v.x, v.y))
     return views
@@ -179,20 +180,21 @@ def blocked(views: list[OutputView], force: bool = False) -> bool:
 
 
 # --------------------------------------------------------------------------
-# navigation: selection is a con_id; arrows stay inside one output, Tab crosses outputs
+# navigation: selection is a con_id. Columns = workspaces, rows = their windows.
+# Up/Down stay in the column; Left/Right go to the neighbour column at the same row
+# (clamped) and cross to the next output at the edge; Tab walks every card in order.
 
-def columns(width: int, card_width: int) -> int:
-    return max(1, (width - 2 * PANEL_MARGIN + CARD_GAP) // (card_width + 2 * 10 + CARD_GAP))
+CARD_CHROME = 2 * 10 + 2 * 10   # card padding + border, then the column padding (CSS .sa-ov-card/.sa-ov-col)
+MIN_CARD_WIDTH = 140
 
 
-def rows(view: OutputView, cols: int) -> list[list[int]]:
-    """Rows of card ids exactly as the panel lays them out: each workspace starts a new row."""
-    out: list[list[int]] = []
-    for g in view.groups:
-        ids = [c.id for c in g.cards]
-        for i in range(0, len(ids), cols):
-            out.append(ids[i:i + cols])
-    return out
+def fit_card_width(width: int, card_width: int, ncols: int) -> int:
+    """Shrink the thumbnails so every workspace column fits the output; below
+    MIN_CARD_WIDTH the panel scrolls sideways instead."""
+    if ncols <= 0:
+        return card_width
+    fit = (width - 2 * PANEL_MARGIN + CARD_GAP) // ncols - CARD_CHROME - CARD_GAP
+    return max(MIN_CARD_WIDTH, min(card_width, fit))
 
 
 def initial_selection(views: list[OutputView]) -> int | None:
@@ -208,8 +210,9 @@ def initial_selection(views: list[OutputView]) -> int | None:
     return None
 
 
-def move(views: list[OutputView], cols: dict[str, int], sel: int | None, direction: str) -> int | None:
-    order = [c.id for v in views for c in v.cards()]
+def move(views: list[OutputView], sel: int | None, direction: str) -> int | None:
+    cols = [[c.id for c in g.cards] for v in views for g in v.groups]
+    order = [i for col in cols for i in col]
     if not order:
         return None
     if sel not in order:
@@ -217,18 +220,15 @@ def move(views: list[OutputView], cols: dict[str, int], sel: int | None, directi
     if direction in ("next", "prev"):
         i = order.index(sel) + (1 if direction == "next" else -1)
         return order[i % len(order)]
-    view = next(v for v in views if any(c.id == sel for c in v.cards()))
-    if direction in ("left", "right"):
-        flat = [c.id for c in view.cards()]
-        i = flat.index(sel) + (1 if direction == "right" else -1)
-        return flat[max(0, min(len(flat) - 1, i))]
-    rs = rows(view, cols.get(view.name, 1))
-    r = next(i for i, row in enumerate(rs) if sel in row)
-    c = rs[r].index(sel)
-    r2 = r + (1 if direction == "down" else -1 if direction == "up" else 0)
-    if not 0 <= r2 < len(rs):
+    ci = next(i for i, col in enumerate(cols) if sel in col)
+    row = cols[ci].index(sel)
+    if direction in ("up", "down"):
+        r = row + (1 if direction == "down" else -1)
+        return cols[ci][max(0, min(len(cols[ci]) - 1, r))]
+    c2 = ci + (1 if direction == "right" else -1)
+    if not 0 <= c2 < len(cols):
         return sel
-    return rs[r2][min(c, len(rs[r2]) - 1)]
+    return cols[c2][min(row, len(cols[c2]) - 1)]
 
 
 # --------------------------------------------------------------------------

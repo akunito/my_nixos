@@ -67,16 +67,17 @@ class Build(unittest.TestCase):
         self.assertEqual([v.name for v in vs], ["DP-1", "DP-2"])
         self.assertNotIn("scratched", [c.app_id for v in vs for c in v.cards()])
 
-    def test_visible_workspace_first_then_by_number_named_last_empty_skipped(self):
+    def test_workspace_columns_by_number_named_last_empty_skipped(self):
         dp1, dp2 = ov.build(self.t)
         self.assertEqual([(g.workspace, g.visible) for g in dp1.groups],
-                         [("12", True), ("3", False), ("11", False), ("mail", False)])
+                         [("3", False), ("11", False), ("12", True), ("mail", False)])
         self.assertEqual([g.workspace for g in dp2.groups], ["21"])   # ws 22 empty
 
     def test_tiles_in_tree_order_then_floats(self):
         dp1 = ov.build(self.t)[0]
-        self.assertEqual([c.app_id for c in dp1.groups[0].cards], ["a", "b", "pavu"])
-        self.assertTrue(dp1.groups[0].cards[2].floating)
+        ws12 = next(g for g in dp1.groups if g.workspace == "12")
+        self.assertEqual([c.app_id for c in ws12.cards], ["a", "b", "pavu"])
+        self.assertTrue(ws12.cards[2].floating)
         self.assertTrue(dp1.focused)
         self.assertFalse(ov.build(self.t)[1].focused)
 
@@ -96,12 +97,11 @@ class Navigation(unittest.TestCase):
             output("R", "9", ws("9", view("r0"), view("r1")), x=1000, w=1000))
         self.vs = ov.build(self.t)
         self.by = {c.app_id: c.id for v in self.vs for c in v.cards()}
-        self.cols = {"L": 3, "R": 3}
 
     def go(self, start, *dirs):
         sel = self.by[start]
         for d in dirs:
-            sel = ov.move(self.vs, self.cols, sel, d)
+            sel = ov.move(self.vs, sel, d)
         return next(k for k, v in self.by.items() if v == sel)
 
     def test_selection_starts_on_focused_window(self):
@@ -113,31 +113,32 @@ class Navigation(unittest.TestCase):
         self.assertEqual([c.app_id for c in vs[1].cards() if c.id == ov.initial_selection(vs)], ["y"])
         self.assertIsNone(ov.initial_selection(ov.build(tree(output("E", "1", ws("1"))))))
 
-    def test_rows_restart_per_workspace(self):
-        rows = ov.rows(self.vs[0], 3)
-        self.assertEqual([[self.vs[0].cards()[0].id == r[0]] for r in rows][0], [True])
-        self.assertEqual([len(r) for r in rows], [3, 2, 1])
+    # columns: L = ws1 [l0..l4], ws2 [m0]; R = ws9 [r0, r1]
+    def test_up_down_stay_in_the_workspace_column(self):
+        self.assertEqual(self.go("l2", "down"), "l3")
+        self.assertEqual(self.go("l4", "down"), "l4")
+        self.assertEqual(self.go("l0", "up"), "l0")
+        self.assertEqual(self.go("r0", "down", "down"), "r1")
 
-    def test_left_right_clamp_inside_output(self):
-        self.assertEqual(self.go("l0", "left"), "l0")
-        self.assertEqual(self.go("l2", "right"), "l3")
-        self.assertEqual(self.go("m0", "right"), "m0")
-
-    def test_up_down_keep_column_clamped(self):
-        self.assertEqual(self.go("l2", "down"), "l4")    # row 2 has 2 cards
-        self.assertEqual(self.go("l4", "down"), "m0")    # next workspace row
-        self.assertEqual(self.go("m0", "up"), "l3")
-        self.assertEqual(self.go("l1", "up"), "l1")
+    def test_left_right_change_workspace_keeping_the_row_and_cross_outputs(self):
+        self.assertEqual(self.go("l3", "right"), "m0")      # row clamped
+        self.assertEqual(self.go("m0", "left"), "l0")
+        self.assertEqual(self.go("m0", "right"), "r0")      # next output
+        self.assertEqual(self.go("l1", "right", "right"), "r0")   # m0 clamps the row to 0
+        self.assertEqual(self.go("r1", "left"), "m0")
+        self.assertEqual(self.go("r0", "right"), "r0")      # right edge
+        self.assertEqual(self.go("l0", "left"), "l0")       # left edge
 
     def test_tab_crosses_outputs_and_wraps(self):
         self.assertEqual(self.go("m0", "next"), "r0")
         self.assertEqual(self.go("r1", "next"), "l0")
         self.assertEqual(self.go("l0", "prev"), "r1")
 
-    def test_columns_fit_the_output(self):
-        self.assertEqual(ov.columns(2560, 260), 8)
-        self.assertEqual(ov.columns(1152, 260), 3)       # rotated QHD at 1.25
-        self.assertEqual(ov.columns(200, 260), 1)
+    def test_card_width_shrinks_to_fit_the_columns(self):
+        self.assertEqual(ov.fit_card_width(2560, 260, 3), 260)
+        self.assertEqual(ov.fit_card_width(2560, 260, 12), 150)
+        self.assertEqual(ov.fit_card_width(1152, 260, 8), ov.MIN_CARD_WIDTH)   # then it scrolls sideways
+        self.assertEqual(ov.fit_card_width(1152, 260, 0), 260)
 
 
 class Guards(unittest.TestCase):

@@ -61,7 +61,9 @@ ICON_FALLBACK = "application-x-executable"
 CSS = """
 window.sa-overview { background-color: alpha(@sa_base00, 0.86); color: @sa_base05; }
 .sa-ov-content { padding: 40px 48px; }
-.sa-ov-ws { font-weight: 700; font-size: 1.05em; margin: 18px 0 8px 4px; opacity: 0.9; }
+.sa-ov-col { padding: 10px; border-radius: 18px; background-color: alpha(@sa_base01, 0.35); }
+.sa-ov-col.visible { background-color: alpha(@sa_base0D, 0.10); }
+.sa-ov-ws { font-weight: 700; font-size: 1.05em; margin: 2px 4px 0 4px; opacity: 0.9; }
 .sa-ov-ws .sa-ov-ws-tag { font-weight: 600; font-size: 0.8em; padding: 1px 8px; border-radius: 999px;
   background-color: alpha(@sa_base0D, 0.22); color: @sa_base0D; margin-left: 8px; }
 .sa-ov-card { padding: 8px; border-radius: 14px; border: 2px solid transparent;
@@ -130,7 +132,7 @@ class Panel:
         LS.set_exclusive_zone(win, -1)
         LS.set_keyboard_mode(win, LS.KeyboardMode.NONE)
         win.add_css_class("sa-overview")
-        self.scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER,
+        self.scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
                                            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC)
         win.set_child(self.scroller)
         keys = Gtk.EventControllerKey()
@@ -147,13 +149,12 @@ class Panel:
     def width(self) -> int:
         return self.monitor.get_geometry().width
 
-    def render(self, view: ov.OutputView, cols: int, selected: int | None) -> None:
+    def render(self, view: ov.OutputView, cw: int, selected: int | None) -> None:
         app = self.app
-        cw = app.card_width
         th = cw * 9 // 16
         self.cards.clear()
         self.thumbs.clear()
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, halign=Gtk.Align.CENTER, valign=Gtk.Align.START)
+        box = Gtk.Box(spacing=ov.CARD_GAP, halign=Gtk.Align.CENTER, valign=Gtk.Align.START)
         box.add_css_class("sa-ov-content")
         if not view.groups:
             box.set_valign(Gtk.Align.CENTER)
@@ -161,17 +162,22 @@ class Panel:
             lab = Gtk.Label(label="No windows on this monitor")
             lab.add_css_class("sa-ov-empty")
             box.append(lab)
+        scale = self.win.get_scale_factor()
         for g in view.groups:
-            head = Gtk.Box(halign=Gtk.Align.START)
+            col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=ov.CARD_GAP, valign=Gtk.Align.START)
+            col.add_css_class("sa-ov-col")
+            if g.visible:
+                col.add_css_class("visible")
+            head = Gtk.Box(spacing=8)
             head.add_css_class("sa-ov-ws")
-            head.append(Gtk.Label(label=f"Workspace {g.workspace}"))
+            head.append(Gtk.Label(label=f"Workspace {g.workspace}", xalign=0.0, ellipsize=3, max_width_chars=4,
+                                  hexpand=True))
             if g.visible:
                 tag = Gtk.Label(label="on screen")
                 tag.add_css_class("sa-ov-ws-tag")
                 head.append(tag)
-            box.append(head)
-            grid = Gtk.Grid(column_spacing=ov.CARD_GAP, row_spacing=ov.CARD_GAP, halign=Gtk.Align.START)
-            for i, c in enumerate(g.cards):
+            col.append(head)
+            for c in g.cards:
                 card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
                 card.add_css_class("sa-ov-card")
                 if c.id == selected:
@@ -181,7 +187,7 @@ class Panel:
                 if tex is not None:
                     thumb.texture = tex
                 else:
-                    thumb.icon = app.icon_paintable(c.app_id, 64, self.win.get_scale_factor())
+                    thumb.icon = app.icon_paintable(c.app_id, 64, scale)
                 card.append(thumb)
                 row = Gtk.Box(spacing=8)
                 row.append(Gtk.Image(gicon=app.gicon(c.app_id), pixel_size=20))
@@ -192,10 +198,10 @@ class Panel:
                 card.append(row)
                 card.set_tooltip_text(f"{c.title}\n{c.app_id}")
                 card._sa_id = c.id
-                grid.attach(card, i % cols, i // cols, 1, 1)
+                col.append(card)
                 self.cards[c.id] = card
                 self.thumbs[c.id] = thumb
-            box.append(grid)
+            box.append(col)
         self.scroller.set_child(box)
 
     def select(self, old: int | None, new: int | None) -> None:
@@ -207,12 +213,13 @@ class Panel:
         card.add_css_class("selected")
         ok, bounds = card.compute_bounds(self.scroller.get_child())
         if ok:
-            adj = self.scroller.get_vadjustment()
-            top, bottom = bounds.get_y() - 24, bounds.get_y() + bounds.get_height() + 24
-            if top < adj.get_value():
-                adj.set_value(top)
-            elif bottom > adj.get_value() + adj.get_page_size():
-                adj.set_value(bottom - adj.get_page_size())
+            for adj, lo, size in ((self.scroller.get_vadjustment(), bounds.get_y(), bounds.get_height()),
+                                  (self.scroller.get_hadjustment(), bounds.get_x(), bounds.get_width())):
+                top, bottom = lo - 24, lo + size + 24
+                if top < adj.get_value():
+                    adj.set_value(top)
+                elif bottom > adj.get_value() + adj.get_page_size():
+                    adj.set_value(bottom - adj.get_page_size())
 
     def _on_click(self, gesture, _n, x, y) -> None:
         w = self.win.pick(x, y, Gtk.PickFlags.DEFAULT)
@@ -237,7 +244,7 @@ class Overview:
         self.icon_theme = Gtk.IconTheme.get_for_display(self.display)
         self.panels: dict[str, Panel] = {}
         self.views: list[ov.OutputView] = []
-        self.cols: dict[str, int] = {}
+        self.cols: dict[str, dict[str, int]] = {}
         self.selected: int | None = None
         self.is_open = False
         self.painted = False
@@ -448,8 +455,9 @@ class Overview:
         by_name = {v.name: v for v in self.views}
         for name, p in self.panels.items():
             view = by_name.get(name) or ov.OutputView(name, 0, 0, p.width(), 0, 1.0, False)
-            self.cols[name] = ov.columns(p.width(), self.card_width)
-            p.render(view, self.cols[name], self.selected)
+            cw = ov.fit_card_width(p.width(), self.card_width, len(view.groups))
+            self.cols[name] = {"workspaces": len(view.groups), "card_width": cw}
+            p.render(view, cw, self.selected)
 
     def refresh(self) -> None:
         self.views = ov.build(self.conn.tree())
@@ -527,7 +535,7 @@ class Overview:
             direction = "next"
         if direction is None:
             return False
-        new = ov.move(self.views, self.cols, self.selected, direction)
+        new = ov.move(self.views, self.selected, direction)
         if new != self.selected:
             for p in self.panels.values():
                 p.select(self.selected, new)

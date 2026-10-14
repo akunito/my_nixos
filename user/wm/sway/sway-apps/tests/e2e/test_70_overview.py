@@ -200,17 +200,11 @@ def case_keyboard_enter_focuses_window_on_hidden_workspace():
         keys = Keys(s)
         keys.hyper_tab()
         o.wait_open()
-        keys.key("Down")  # row 1 = ws 1 (a, b), row 2 = ws 2 (c)
-        s.wait(lambda: o.state()["selected"] == w["c"].con_id, "Down selects e2e.c")
-        keys.key("Up")
-        s.wait(lambda: o.state()["selected"] == w["a"].con_id, "Up back to e2e.a")
-        keys.key("Right")
-        s.wait(lambda: o.state()["selected"] == w["b"].con_id, "Right selects e2e.b")
-        for want in ("c", "d", "a"):   # Tab crosses outputs and wraps
-            keys.key("Tab")
-            s.wait(lambda: o.state()["selected"] == w[want].con_id, f"Tab selects e2e.{want}")
-        keys.key("Down")
-        s.wait(lambda: o.state()["selected"] == w["c"].con_id, "Down selects e2e.c again")
+        # columns: HEADLESS-1 = ws 1 [a, b] | ws 2 [c]; HEADLESS-2 = ws 11 [d]
+        for key, want in (("Down", "b"), ("Up", "a"), ("Right", "c"), ("Right", "d"), ("Left", "c"),
+                          ("Tab", "d"), ("Tab", "a"), ("Tab", "b"), ("Right", "c")):
+            keys.key(key)
+            s.wait(lambda: o.state()["selected"] == w[want].con_id, f"{key} selects e2e.{want}")
         keys.key("Return")
         o.wait_closed()
         s.wait(lambda: s.focused() and s.focused().get("app_id") == "e2e.c", "Enter focused e2e.c")
