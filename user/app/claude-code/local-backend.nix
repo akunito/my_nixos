@@ -4,6 +4,13 @@
 #   claude-<name> [claude args]   whole Claude Code session on the local model,
 #                                 same ~/.claude (memory, skills, hooks, sync),
 #                                 no MCP servers unless CLAUDE_<NAME>_MCP=1.
+#   claude-<name> stop            kill every claude-<name> process tree on this
+#                                 machine and cut what the server still has in
+#                                 flight (POST /gate/abort). Esc only interrupts
+#                                 the foreground turn: background subagents and
+#                                 `claude-<name> -p` delegations started from
+#                                 Bash keep the card busy (2026-10-14: a session
+#                                 Diego had exited left 3 requests running).
 #   <name>-ask [-t] [-s SYS] PROMPT…   one answer from the local model, stdin =
 #                                 context. For Opus/Fable to delegate from Bash:
 #                                 `git diff | nas-ask "review this"`.
@@ -42,6 +49,25 @@ let
   py = "${pkgs.python3}/bin/python3";
 
   session = pkgs.writeShellScriptBin "claude-${name}" ''
+    if [ "''${1:-}" = "stop" ]; then
+      # Every process whose environment carries this backend URL: sessions, their
+      # subagents (same process), MCP children and Bash-tool delegations. Killed as
+      # trees (children first) rather than by process group: a pgid can be the
+      # caller's shell when the session was started without job control.
+      kill_tree() { local c; for c in $(${pkgs.procps}/bin/pgrep -P "$1"); do kill_tree "$c"; done; kill -TERM "$1" 2>/dev/null; }
+      roots=""
+      for p in $(${pkgs.procps}/bin/pgrep -u "$(id -u)" -x claude); do
+        [ "$p" = "$$" ] && continue
+        tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -qx "ANTHROPIC_BASE_URL=${url}" || continue
+        roots="$roots $p"
+      done
+      for p in $roots; do kill_tree "$p"; done
+      [ -n "$roots" ] && sleep 2
+      for p in $roots; do kill -KILL "$p" 2>/dev/null; done   # survivors; a reaped zombie just fails here
+      r=$(${curl} -s --max-time 5 -X POST "${url}/gate/abort" 2>/dev/null)
+      echo "claude-${name} stop: killed$( [ -n "$roots" ] && echo "$roots" || echo " nothing"); NAS: ''${r:-no answer (asleep?)}"
+      exit 0
+    fi
     # Not fatal: the first request wakes the model (6-15 s); an unreachable
     # host means the NAS sleeps (S3 23:00-16:00) and WoL is still F1 in the plan.
     if ! ${curl} -sf --max-time 3 "${url}/health" >/dev/null 2>&1; then

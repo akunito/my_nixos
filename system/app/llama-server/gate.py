@@ -14,7 +14,18 @@ request, queue the rest:
                                                         is busy or was used in the
                                                         last GRACE seconds, then
                                                         forwarded (the router switches)
-  POST /models/load|unload (widget, `ai preset set`) -> explicit: forwarded at once
+  POST /models/load|unload (widget, `ai preset set`) -> explicit: forwarded at once,
+                                                        after cutting every in-flight
+                                                        request (the router would wait
+                                                        for them: 2026-10-14 a session
+                                                        Diego had exited kept 3 running)
+  POST /gate/abort [{"model": id}]                   -> cuts in-flight requests, keeps
+                                                        the model (`claude-nas stop`)
+
+A client that goes away (Esc, Ctrl-C, killed session) is noticed at once: the
+client socket is watched while the backend answers, and the backend connection
+is dropped so llama-server stops generating (before, a dead client was only
+seen on the next write, i.e. after a prefill of minutes at 400k tokens).
 
 Replaces systemd-socket-proxyd: inherits the listening socket (LISTEN_FDS) from
 llama-proxy.socket; one backend connection per request (Connection: close), the
@@ -91,6 +102,7 @@ class Gate:
         self.last_used: dict[str, float] = {}
         self.queue: list[tuple[str, float]] = []
         self.changed = asyncio.Condition()
+        self.forwards: dict[int, tuple[str | None, asyncio.StreamWriter]] = {}  # id -> (model, backend writer)
 
     # ---- backend -------------------------------------------------------------------
     async def refresh_loaded(self, force: bool = False) -> None:
@@ -108,6 +120,32 @@ class Gate:
             self.loaded = hot[0] if hot else None
             self.loaded_at = time.monotonic()
         except (OSError, ValueError, IndexError, asyncio.TimeoutError):
+            pass
+
+    def abort(self, model: str | None = None) -> int:
+        """Drop the backend connection of every in-flight request (for `model`, or all).
+        llama-server aborts a generation whose client is gone; the client side sees EOF."""
+        n = 0
+        for key, (m, bw) in list(self.forwards.items()):
+            if model and m != model:
+                continue
+            try:
+                bw.transport.abort()
+            except Exception:
+                pass
+            self.forwards.pop(key, None)
+            n += 1
+        return n
+
+    async def _watch_client(self, reader: asyncio.StreamReader, bw: asyncio.StreamWriter) -> None:
+        # The request is fully read: any further read returns only on EOF (client gone).
+        try:
+            await reader.read(1)
+        except Exception:
+            pass
+        try:
+            bw.transport.abort()
+        except Exception:
             pass
 
     # ---- one client connection ---------------------------------------------------------
@@ -134,7 +172,16 @@ class Gate:
         body = await self._read_body(reader, headers)
         path = urlsplit(target).path
         if path == "/gate/status":
+            await self.refresh_loaded(force=self.loaded_at == 0)   # fresh after an unload
             await self._respond(writer, 200, json.dumps(self.status()).encode())
+            return
+        if path == "/gate/abort":
+            if method != "POST":
+                await self._respond(writer, 400, b'{"error":{"code":400,"message":"POST only"}}')
+                return
+            n = self.abort(request_model(method, target, headers, body))
+            self.loaded_at = 0
+            await self._respond(writer, 200, json.dumps({"aborted": n}).encode())
             return
         model = request_model(method, target, headers, body)
         explicit = path in EXPLICIT_PATHS
@@ -160,7 +207,7 @@ class Gate:
             if verdict is not None:
                 await self._respond(writer, *verdict)
                 return
-        await self._forward(method, target, raw_headers, body, writer, model, explicit, path)
+        await self._forward(method, target, raw_headers, body, writer, model, explicit, path, reader)
 
     async def _read_body(self, reader: asyncio.StreamReader, headers: dict[str, str]) -> bytes:
         if "content-length" in headers:
@@ -215,18 +262,26 @@ class Gate:
                 self.changed.notify_all()
 
     async def _forward(self, method: str, target: str, raw_headers: list[str], body: bytes,
-                       writer: asyncio.StreamWriter, model: str | None, explicit: bool, path: str) -> None:
+                       writer: asyncio.StreamWriter, model: str | None, explicit: bool, path: str,
+                       reader: asyncio.StreamReader | None = None) -> None:
         if model and not explicit:
             self.inflight[model] = self.inflight.get(model, 0) + 1
             if self.loaded != model:
                 self.loaded = model           # the router switches on this request
                 self.loaded_at = time.monotonic()
+        if explicit and (path == "/models/unload" or model != self.loaded):
+            self.abort()                      # the router unloads only once they finish
         try:
             br, bw = await asyncio.open_connection(BACKEND_HOST, BACKEND_PORT)
         except OSError:
             await self._respond(writer, 502, b'{"error":{"code":502,"message":"llama-server backend unreachable"}}')
             self._done(model, explicit)
             return
+        key = id(bw)
+        watch = None
+        if not explicit:
+            self.forwards[key] = (model, bw)
+            watch = asyncio.get_running_loop().create_task(self._watch_client(reader, bw))
         keep = [h for h in raw_headers if h.split(":", 1)[0].strip().lower()
                 not in ("connection", "content-length", "transfer-encoding", "keep-alive", NO_SWITCH_HEADER)]
         req = f"{method} {target} HTTP/1.1\r\n" + "".join(h + "\r\n" for h in keep)
@@ -243,6 +298,9 @@ class Gate:
         except (ConnectionError, OSError):
             pass
         finally:
+            self.forwards.pop(key, None)
+            if watch is not None:
+                watch.cancel()
             bw.close()
             try:
                 writer.close()

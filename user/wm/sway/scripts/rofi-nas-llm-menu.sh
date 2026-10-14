@@ -7,6 +7,7 @@
 set -uo pipefail
 PATH="$HOME/.nix-profile/bin:/run/current-system/sw/bin:$PATH"
 URL="${NAS_AI_URL:-http://100.64.0.1:8093/status}"
+GATE="${NAS_AI_GATE:-http://100.64.0.1:8090}"
 NAS="${NAS_AI_SSH:-akunito@100.64.0.1}"
 
 if [ $# -eq 0 ]; then
@@ -15,6 +16,10 @@ if [ $# -eq 0 ]; then
         printf 'NAS asleep or down (23:00-16:00) — nothing to switch\0nonselectable\x1ftrue\n'
         exit 0
     fi
+    # "Stop" goes straight to the gate over HTTP (no ssh, no sudo, no agent key):
+    # cuts every in-flight request and keeps the model. Switching/off still
+    # go through ssh + `ai preset set`, which cuts in-flight requests itself.
+    printf '⏹ Stop — cut what is running now (model stays loaded)\0info\x1fstop\n'
     jq -r '
       .preset as $cur
       | .presets[]
@@ -25,6 +30,15 @@ fi
 
 id="${ROFI_INFO:-}"
 [ -n "$id" ] || exit 0
+if [ "$id" = "stop" ]; then
+    if out=$(curl -fsS --max-time 5 -X POST "$GATE/gate/abort" 2>&1); then
+        notify-send -t 4000 "NAS 3090" "stopped: $out" >/dev/null 2>&1 || true
+    else
+        notify-send -u critical -t 8000 "NAS 3090" "stop failed: ${out:0:300}" >/dev/null 2>&1 || true
+    fi
+    pkill -RTMIN+7 -x '\.?waybar(-wrapped)?' 2>/dev/null || true
+    exit 0
+fi
 export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-$(gpgconf --list-dirs agent-ssh-socket 2>/dev/null)}"
 if out=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$NAS" "sudo -n /run/current-system/sw/bin/ai preset set $(printf '%q' "$id")" 2>&1); then
     notify-send -t 4000 "NAS 3090" "preset → $id" >/dev/null 2>&1 || true
