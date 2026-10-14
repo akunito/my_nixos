@@ -73,6 +73,27 @@ class Build(unittest.TestCase):
                          [("3", False), ("11", False), ("12", True), ("mail", False)])
         self.assertEqual([g.workspace for g in dp2.groups], ["21"])   # ws 22 empty
 
+    def test_empty_workspace_on_screen_is_a_column_and_carries_the_focus(self):
+        t = tree(output("L", "2", ws("1", view("a")), ws("2", focused=True), ws("3")))
+        (v,) = ov.build(t)
+        self.assertEqual([(g.workspace, g.visible, g.focused, len(g.cards)) for g in v.groups],
+                         [("1", False, False, 1), ("2", True, True, 0)])          # ws 3: empty, hidden
+        self.assertEqual(ov.focused_workspace([v]), "2")
+        a = v.cards()[0].id
+        self.assertEqual(ov.move([v], a, "right"), a)                            # empty columns are skipped
+        self.assertNotEqual(ov.signature([v]), ov.signature(ov.build(tree(output("L", "1", ws("1", view("a", focused=True)))))))
+
+    def test_focus_from_the_focus_stacks_when_a_layer_holds_the_keyboard(self):
+        a, b = view("a"), view("b")
+        w1, w2 = ws("1", a), ws("2", b)
+        o = output("L", "2", w1, w2)
+        o["id"], w1["id"], w2["id"] = 99, 98, 97
+        t = tree(o)
+        t["focus"], o["focus"], w2["focus"] = [99], [w2["id"]], [b["id"]]
+        (v,) = ov.build(t)               # no node has focused=true, as with the overview open
+        self.assertEqual([c.app_id for c in v.cards() if c.focused], ["b"])
+        self.assertEqual(ov.focused_workspace([v]), "2")
+
     def test_tiles_in_tree_order_then_floats(self):
         dp1 = ov.build(self.t)[0]
         ws12 = next(g for g in dp1.groups if g.workspace == "12")

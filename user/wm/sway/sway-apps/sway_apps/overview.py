@@ -86,6 +86,7 @@ class Group:
     num: int | None
     visible: bool
     cards: list[Card] = field(default_factory=list)
+    focused: bool = False          # sway's focus is on this workspace (window or the empty ws)
 
 
 @dataclass(slots=True)
@@ -132,12 +133,30 @@ def _has_focus(node: dict[str, Any]) -> bool:
     return False
 
 
+def _focus_chain(tree: dict[str, Any]) -> set[int]:
+    """Ids on sway's focus path (each node's focus stack, first entry). Measured on sway
+    1.11: while the overview's EXCLUSIVE layer surface holds the keyboard no node has
+    focused=true, but the focus stacks still name the focused output/workspace/window."""
+    ids: set[int] = set()
+    n = tree
+    while True:
+        f = n.get("focus") or []
+        if not f:
+            return ids
+        n = next((c for c in (n.get("nodes") or []) + (n.get("floating_nodes") or []) if c.get("id") == f[0]), None)
+        if n is None:
+            return ids
+        ids.add(n["id"])
+
+
 def build(tree: dict[str, Any]) -> list[OutputView]:
     """Outputs left to right (then top to bottom); per output one column per workspace
     by number, named ones last (Diego 2026-10-14: workspaces as columns in their spatial
     order, not the visible one first); per workspace tiles in tree order, then floats.
-    Empty workspaces and the scratchpad are left out."""
+    Empty workspaces are left out unless on screen (Hyper+Q/W/N into an empty one must
+    still show where focus went); the scratchpad always is."""
     views: list[OutputView] = []
+    chain = _focus_chain(tree)    # empty for trees without focus stacks (unit fixtures): flags then
     for o in tree.get("nodes") or []:
         name = o.get("name") or ""
         if name == "__i3" or o.get("type") != "output":
@@ -149,21 +168,22 @@ def build(tree: dict[str, Any]) -> list[OutputView]:
         for ws in o.get("nodes") or []:
             if ws.get("type") != "workspace":
                 continue
-            if _has_focus(ws) or ws.get("focused"):
+            wsfocus = ws.get("id") in chain if chain else _has_focus(ws)
+            if wsfocus:
                 ov.focused = True
             leaves: list[dict[str, Any]] = []
             _views(ws, leaves, False)
-            if not leaves:
-                continue
             wsname = ws.get("name") or ""
+            if not leaves and wsname != current:
+                continue
             g = Group(wsname, ws.get("num") if isinstance(ws.get("num"), int) and ws.get("num") >= 0 else None,
-                      wsname == current)
+                      wsname == current, focused=wsfocus)
             for n in leaves:
                 rr = n.get("rect") or {}
                 wr = n.get("window_rect") or {}
                 g.cards.append(Card(
                     id=n["id"], app_id=_app_id(n), title=n.get("name") or "", workspace=wsname, output=name,
-                    focused=bool(n.get("focused")), visible=bool(n.get("visible")),
+                    focused=n["id"] in chain if chain else bool(n.get("focused")), visible=bool(n.get("visible")),
                     fullscreen=bool(n.get("fullscreen_mode")), floating=n["_floating"],
                     x=rr.get("x", 0) + wr.get("x", 0), y=rr.get("y", 0) + wr.get("y", 0),
                     w=wr.get("width") or rr.get("width", 0), h=wr.get("height") or rr.get("height", 0),
@@ -222,8 +242,22 @@ def initial_selection(views: list[OutputView]) -> int | None:
     return None
 
 
+def signature(views: list[OutputView]) -> tuple:
+    """What the panels draw, minus the selection: equal signatures need no re-render."""
+    return tuple((v.name, tuple((g.workspace, g.visible, g.focused, tuple(c.id for c in g.cards)) for g in v.groups))
+                 for v in views)
+
+
+def focused_workspace(views: list[OutputView]) -> str | None:
+    for v in views:
+        for g in v.groups:
+            if g.focused:
+                return g.workspace
+    return None
+
+
 def move(views: list[OutputView], sel: int | None, direction: str) -> int | None:
-    cols = [[c.id for c in g.cards] for v in views for g in v.groups]
+    cols = [[c.id for c in g.cards] for v in views for g in v.groups if g.cards]
     order = [i for col in cols for i in col]
     if not order:
         return None
@@ -352,6 +386,17 @@ def crop_box(card: Card, view: OutputView, scale: float, img_w: int, img_h: int)
 # --------------------------------------------------------------------------
 # control socket (CLI -> resident process). `swaymsg nop …` emits no binding
 # event, so the CLI cannot go through sway.
+
+def selection_file() -> str:
+    """While the overview is open: the selected con_id, read by the workspace bindings'
+    wrapper (user/wm/sway/scripts/overview-selected.sh) to act on that window. Absent when
+    closed, so the bindings pay one `test -s`."""
+    explicit = os.environ.get("SWAY_APPS_OVERVIEW_SEL")
+    if explicit:
+        return explicit
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    return os.path.join(runtime, "sway-apps-overview.sel")
+
 
 def control_socket() -> str:
     explicit = os.environ.get("SWAY_APPS_OVERVIEW_SOCK")

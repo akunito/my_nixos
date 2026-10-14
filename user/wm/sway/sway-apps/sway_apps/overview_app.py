@@ -7,7 +7,17 @@ is dropped from the environment right after start so grim does not inherit it.
 
 Inputs, all on the GLib main loop, no polling:
   sway IPC events  binding (`nop sway-apps overview`), window (focus -> capture
-                   after capture_delay_ms, close -> drop the thumbnail), shutdown
+                   after capture_delay_ms, close -> drop the thumbnail), workspace,
+                   shutdown
+
+While open, the selected con_id is written to overview.selection_file(); the
+workspace bindings go through scripts/overview-selected.sh, which focuses that window
+first, so Hyper+Q/W/N switch workspace from it and Hyper+Shift+… move IT. Navigation
+itself never moves sway's focus: measured 2026-10-14, a `focus` command while the
+panel holds the keyboard hands it to the view for a moment and fast keys were lost
+(test_71 failed 2-8 runs in 10). Every focus/workspace/window event re-syncs the
+panels to sway (coalesced on idle; re-rendered only when signature() changes).
+Cards drag onto a workspace column.
   control socket   overview.control_socket(): the CLI's toggle/show/hide/state
 """
 from __future__ import annotations
@@ -36,7 +46,7 @@ gi.require_version("Gsk", "4.0")
 gi.require_version("Graphene", "1.0")
 gi.require_version("GdkPixbuf", "2.0")
 gi.require_version("Gtk4LayerShell", "1.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Graphene, Gsk, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Graphene, Gsk, Gtk  # noqa: E402
 from gi.repository import Gtk4LayerShell as LS  # noqa: E402
 
 from . import ipc, log  # noqa: E402
@@ -68,6 +78,9 @@ window.sa-overview { background-color: alpha(@sa_base00, 0.86); color: @sa_base0
 .sa-ov-content { padding: 40px 48px; }
 .sa-ov-col { padding: 10px; border-radius: 18px; background-color: alpha(@sa_base01, 0.35); }
 .sa-ov-col.visible { background-color: alpha(@sa_base0D, 0.10); }
+.sa-ov-col.focused { box-shadow: inset 0 0 0 2px alpha(@sa_base0D, 0.75); }
+.sa-ov-col.drop { background-color: alpha(@sa_base0B, 0.25); box-shadow: inset 0 0 0 2px @sa_base0B; }
+.sa-ov-col-empty { opacity: 0.5; padding: 24px 8px; }
 .sa-ov-ws { font-weight: 700; font-size: 1.05em; margin: 2px 4px 0 4px; opacity: 0.9; }
 .sa-ov-ws .sa-ov-ws-tag { font-weight: 600; font-size: 0.8em; padding: 1px 8px; border-radius: 999px;
   background-color: alpha(@sa_base0D, 0.22); color: @sa_base0D; margin-left: 8px; }
@@ -173,6 +186,14 @@ class Panel:
             col.add_css_class("sa-ov-col")
             if g.visible:
                 col.add_css_class("visible")
+            if g.focused:
+                col.add_css_class("focused")
+            drop = Gtk.DropTarget.new(GObject.TYPE_STRING, Gdk.DragAction.MOVE)
+            drop.connect("enter", lambda _t, _x, _y, c=col: (c.add_css_class("drop"), Gdk.DragAction.MOVE)[1])
+            drop.connect("leave", lambda _t, c=col: c.remove_css_class("drop"))
+            drop.connect("drop", lambda _t, value, _x, _y, ws=g.workspace, c=col:
+                         (c.remove_css_class("drop"), app.move_to(value, ws))[1])
+            col.add_controller(drop)
             head = Gtk.Box(spacing=8)
             head.add_css_class("sa-ov-ws")
             head.append(Gtk.Label(label=f"Workspace {g.workspace}", xalign=0.0, ellipsize=3, max_width_chars=4,
@@ -182,6 +203,10 @@ class Panel:
                 tag.add_css_class("sa-ov-ws-tag")
                 head.append(tag)
             col.append(head)
+            if not g.cards:
+                empty = Gtk.Label(label="empty", width_request=cw)
+                empty.add_css_class("sa-ov-col-empty")
+                col.append(empty)
             for c in g.cards:
                 card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
                 card.add_css_class("sa-ov-card")
@@ -203,6 +228,10 @@ class Panel:
                 card.append(row)
                 card.set_tooltip_text(f"{c.title}\n{c.app_id}")
                 card._sa_id = c.id
+                drag = Gtk.DragSource(actions=Gdk.DragAction.MOVE)
+                drag.connect("prepare", lambda _s, _x, _y, cid=c.id: Gdk.ContentProvider.new_for_value(str(cid)))
+                drag.connect("drag-begin", lambda s_, _d, t=thumb: s_.set_icon(Gtk.WidgetPaintable.new(t), 24, 24))
+                card.add_controller(drag)
                 col.append(card)
                 self.cards[c.id] = card
                 self.thumbs[c.id] = thumb
@@ -240,7 +269,7 @@ class Overview:
     def __init__(self) -> None:
         self.conn = ipc.Connection()
         self.events = ipc.Connection(self.conn.path)
-        self.events.subscribe(["window", "binding", "shutdown"])
+        self.events.subscribe(["window", "workspace", "binding", "shutdown"])
         self.session = ov.session_key(self.conn.path)
         self.root = ov.cache_root()
         (self.root / self.session).mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -258,6 +287,9 @@ class Overview:
         self._present_timer = 0
         self._focus_timer = 0
         self._focus_since: tuple[int, float] | None = None
+        self._sync_id = 0
+        self._sig: tuple = ()
+        self._keyed: str | None = None
         fmts = {f.get_name() for f in GdkPixbuf.Pixbuf.get_formats()}
         self.cap_fmt = "ppm" if "pnm" in fmts else "png"
         self._textures: dict[int, tuple[int, Gdk.Texture]] = {}
@@ -281,6 +313,7 @@ class Overview:
         live_ids = {c.id for v in self.views for c in v.cards()}
         removed = ov.prune(self.root, self.session, live_ids)
         self._warm()
+        self._write_sel()   # a crashed run may have left a selection behind
         _log.info("overview ready: session %s, %d panels, pruned %d thumbnails", self.session, len(self.panels), len(removed))
 
     # ---- setup -------------------------------------------------------------------------
@@ -370,6 +403,8 @@ class Overview:
                 self.handle(action, False, time.monotonic())
         elif event == "window":
             self._on_window(body or {})
+        elif event == "workspace" and self.is_open:
+            self._schedule_sync()
         elif event == "shutdown":
             return self._quit("sway shutdown", 0)
         return True
@@ -393,10 +428,8 @@ class Overview:
             self._textures.pop(cid, None)
             self._live.pop(cid, None)
             self.thumb_src.pop(cid, None)
-            if self.is_open:
-                self.refresh()
-        elif change in ("new", "move") and self.is_open:
-            self.refresh()
+        if self.is_open and change in ("focus", "close", "new", "move", "floating", "fullscreen_mode"):
+            self._schedule_sync()
 
     def _quit(self, why: str, code: int) -> bool:
         _log.info("overview exiting: %s", why)
@@ -456,6 +489,7 @@ class Overview:
         self.views = views
         self._live.clear()
         self.selected = ov.initial_selection(views)
+        self._write_sel()
         self._start_live(views)
         self._render()
         self.timing["rendered"] = time.monotonic()
@@ -473,13 +507,99 @@ class Overview:
             cw = ov.fit_card_width(p.width(), self.card_width, len(view.groups))
             self.cols[name] = {"workspaces": len(view.groups), "card_width": cw}
             p.render(view, cw, self.selected)
+        self._sig = ov.signature(self.views)
 
-    def refresh(self) -> None:
-        self.views = ov.build(self.conn.tree())
-        ids = {c.id for v in self.views for c in v.cards()}
-        if self.selected not in ids:
-            self.selected = ov.initial_selection(self.views)
-        self._render()
+    def _schedule_sync(self) -> None:
+        if not self._sync_id:
+            self._sync_id = GLib.idle_add(self._sync)
+
+    def _sync(self) -> bool:
+        """Panels follow sway: the selection is sway's focused window (None on an empty
+        workspace, whose column still shows as focused)."""
+        self._sync_id = 0
+        if not self.is_open:
+            return False
+        try:
+            views = ov.build(self.conn.tree())
+        except (ipc.IpcError, OSError):
+            return False
+        f = ov.focused_card(views)
+        new = f.id if f else None
+        self.views = views
+        self._rekey(next((v.name for v in views if v.focused), None))
+        if ov.signature(views) != self._sig:
+            self.selected = new
+            self._render()
+        elif new != self.selected:
+            for p in self.panels.values():
+                p.select(self.selected, new)
+            self.selected = new
+        self._write_sel()
+        return False
+
+    def _rekey(self, output: str | None) -> None:
+        """Hand the keyboard to the panel of the output sway's focus moved to (a binding run
+        from the overview can focus a window on the other output). The new panel goes
+        EXCLUSIVE first; the old one drops to NONE after the new one's next paint, as each
+        panel commits on its own frame clock."""
+        if not self.is_open or output is None or output == self._keyed or output not in self.panels:
+            return
+        old, self._keyed = self._keyed, output
+        win = self.panels[output].win
+        LS.set_keyboard_mode(win, LS.KeyboardMode.EXCLUSIVE)
+
+        def release():
+            if old in self.panels and old != self._keyed:
+                LS.set_keyboard_mode(self.panels[old].win, LS.KeyboardMode.NONE)
+        clock = win.get_frame_clock()
+        if clock is None:
+            release()
+            return
+        h = [0]
+
+        def after(clk):
+            clk.disconnect(h[0])
+            release()
+        h[0] = clock.connect("after-paint", after)
+        win.queue_draw()
+
+    def _write_sel(self) -> None:
+        path = ov.selection_file()
+        try:
+            if self.is_open and self.selected is not None:
+                tmp = path + ".tmp"
+                with open(tmp, "w") as f:
+                    f.write(f"{self.selected}\n")
+                os.replace(tmp, path)
+            else:
+                os.unlink(path)
+        except OSError:
+            pass
+
+    def _focus(self, con_id: int) -> None:
+        self._focus_now(con_id)
+
+    def _focus_now(self, con_id: int) -> None:
+        try:
+            self.conn.command(f"[con_id={con_id}] focus")
+        except ipc.IpcError as exc:
+            _log.warning("focus %s failed: %s", con_id, exc)
+
+    def move_to(self, value: str, workspace: str) -> bool:
+        """Drop of a card on a workspace column."""
+        try:
+            cid = int(value)
+        except (TypeError, ValueError):
+            return False
+        if any(c.id == cid and c.workspace == workspace for v in self.views for c in v.cards()):
+            return False
+        name = workspace.replace("\\", "\\\\").replace('"', '\\"')
+        try:
+            self.conn.command(f'[con_id={cid}] move container to workspace "{name}"')
+        except ipc.IpcError as exc:
+            _log.warning("move %s to %s failed: %s", cid, workspace, exc)
+            return False
+        return True
 
     def _present(self, gen: int) -> bool:
         self._present_timer = 0
@@ -492,6 +612,7 @@ class Overview:
         # (2026-10-14): an ON_DEMAND layer surface mapping after the EXCLUSIVE one on another
         # output takes the focus, then arrange_layers drops it (no exclusive on that output),
         # so the keyboard went to no panel at all and arrows/Enter/Esc never arrived.
+        self._keyed = keyed
         for name, p in sorted(self.panels.items(), key=lambda kv: kv[0] == keyed):
             LS.set_keyboard_mode(p.win, LS.KeyboardMode.EXCLUSIVE if name == keyed else LS.KeyboardMode.NONE)
             p.win.set_visible(True)
@@ -517,18 +638,18 @@ class Overview:
         if self._present_timer:
             GLib.source_remove(self._present_timer)
             self._present_timer = 0
+        if self._sync_id:
+            GLib.source_remove(self._sync_id)
+            self._sync_id = 0
+        self._write_sel()
         for p in self.panels.values():
             p.win.set_visible(False)
         _log.debug("overview hidden (%s)", why)
 
     def activate(self, con_id: int | None) -> None:
         self.hide("activate")
-        if con_id is None:
-            return
-        try:
-            self.conn.command(f"[con_id={con_id}] focus")
-        except ipc.IpcError as exc:
-            _log.warning("focus %s failed: %s", con_id, exc)
+        if con_id is not None:
+            self._focus(con_id)
 
     # ---- keyboard ---------------------------------------------------------------------
     def on_key(self, _ctrl, keyval, _code, state) -> bool:
@@ -555,6 +676,7 @@ class Overview:
             for p in self.panels.values():
                 p.select(self.selected, new)
             self.selected = new
+            self._write_sel()
         return True
 
     # ---- thumbnails -------------------------------------------------------------------
@@ -729,7 +851,7 @@ class Overview:
         return {
             "ok": True, "open": self.is_open, "painted": self.painted, "selected": self.selected,
             "outputs": {v.name: {"focused": v.focused, "columns": self.cols.get(v.name),
-                                 "groups": [{"workspace": g.workspace, "visible": g.visible,
+                                 "groups": [{"workspace": g.workspace, "visible": g.visible, "focused": g.focused,
                                              "cards": [{**c.to_dict(), "thumb": self.thumb_src.get(c.id, "icon")} for c in g.cards]}
                                             for g in v.groups]} for v in self.views},
             "panels": sorted(self.panels), "bounds": self._bounds() if self.is_open else {}, "latency_ms": lat, "t0": t.get("t0"), "painted_at": t.get("painted"),

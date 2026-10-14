@@ -10,6 +10,8 @@
 let
   # Hyper key combination (Super+Ctrl+Alt)
   hyper = "Mod4+Control+Mod1";
+  # Workspace bindings act on the overview's selected window while it is open (SWAY-15).
+  ovsel = "${pkgs.writeShellScript "overview-selected" (builtins.readFile ./scripts/overview-selected.sh)}";
 
   # SwayFX or upstream sway. Everything SwayFX-only in this file is gated on
   # this: the effects block, the `blur disable, shadows disable` fragments in
@@ -715,12 +717,12 @@ in
           # Workspace navigation with auto-creation and wrapping (Option B)
           # Hyper+Q/W: Navigate between workspaces in current group, wrap at boundaries
           # Hyper+Shift+Q/W: Move window to workspace in current group, wrap at boundaries
-          "${hyper}+q" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-prev.sh";
-          "${hyper}+w" = "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-next.sh";
+          "${hyper}+q" = "exec ${ovsel} ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-prev.sh";
+          "${hyper}+w" = "exec ${ovsel} ${config.home.homeDirectory}/.config/sway/scripts/workspace-nav-next.sh";
           "${hyper}+Shift+q" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-prev.sh";
+            "exec ${ovsel} ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-prev.sh";
           "${hyper}+Shift+w" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-next.sh";
+            "exec ${ovsel} ${config.home.homeDirectory}/.config/sway/scripts/workspace-move-next.sh";
 
           # Direct workspace bindings (using swaysome)
           #
@@ -814,29 +816,29 @@ in
         {
           # Relative workspace navigation (standard swaysome behavior):
           # - It uses the CURRENT output's workspace group and maps index -> workspace number block.
-          "${hyper}+1" = "exec ${pkgs.swaysome}/bin/swaysome focus 1";
-          "${hyper}+2" = "exec ${pkgs.swaysome}/bin/swaysome focus 2";
-          "${hyper}+3" = "exec ${pkgs.swaysome}/bin/swaysome focus 3";
-          "${hyper}+4" = "exec ${pkgs.swaysome}/bin/swaysome focus 4";
-          "${hyper}+5" = "exec ${pkgs.swaysome}/bin/swaysome focus 5";
-          "${hyper}+6" = "exec ${pkgs.swaysome}/bin/swaysome focus 6";
-          "${hyper}+7" = "exec ${pkgs.swaysome}/bin/swaysome focus 7";
-          "${hyper}+8" = "exec ${pkgs.swaysome}/bin/swaysome focus 8";
-          "${hyper}+9" = "exec ${pkgs.swaysome}/bin/swaysome focus 9";
+          "${hyper}+1" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 1";
+          "${hyper}+2" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 2";
+          "${hyper}+3" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 3";
+          "${hyper}+4" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 4";
+          "${hyper}+5" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 5";
+          "${hyper}+6" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 6";
+          "${hyper}+7" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 7";
+          "${hyper}+8" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 8";
+          "${hyper}+9" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 9";
           # IMPORTANT: swaysome expects index 10 for the \"0\" key.
-          "${hyper}+0" = "exec ${pkgs.swaysome}/bin/swaysome focus 10";
+          "${hyper}+0" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome focus 10";
 
           # Relative move (same group as current output)
-          "${hyper}+Shift+1" = "exec ${pkgs.swaysome}/bin/swaysome move 1";
-          "${hyper}+Shift+2" = "exec ${pkgs.swaysome}/bin/swaysome move 2";
-          "${hyper}+Shift+3" = "exec ${pkgs.swaysome}/bin/swaysome move 3";
-          "${hyper}+Shift+4" = "exec ${pkgs.swaysome}/bin/swaysome move 4";
-          "${hyper}+Shift+5" = "exec ${pkgs.swaysome}/bin/swaysome move 5";
-          "${hyper}+Shift+6" = "exec ${pkgs.swaysome}/bin/swaysome move 6";
-          "${hyper}+Shift+7" = "exec ${pkgs.swaysome}/bin/swaysome move 7";
-          "${hyper}+Shift+8" = "exec ${pkgs.swaysome}/bin/swaysome move 8";
-          "${hyper}+Shift+9" = "exec ${pkgs.swaysome}/bin/swaysome move 9";
-          "${hyper}+Shift+0" = "exec ${pkgs.swaysome}/bin/swaysome move 10";
+          "${hyper}+Shift+1" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 1";
+          "${hyper}+Shift+2" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 2";
+          "${hyper}+Shift+3" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 3";
+          "${hyper}+Shift+4" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 4";
+          "${hyper}+Shift+5" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 5";
+          "${hyper}+Shift+6" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 6";
+          "${hyper}+Shift+7" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 7";
+          "${hyper}+Shift+8" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 8";
+          "${hyper}+Shift+9" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 9";
+          "${hyper}+Shift+0" = "exec ${ovsel} ${pkgs.swaysome}/bin/swaysome move 10";
         }
       ]);
 
