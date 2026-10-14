@@ -18,7 +18,28 @@ RUST_HASH = re.compile(r"::h[0-9a-f]{16}$|\.abi0$")  # Rust hash, Go ABI0 wrappe
 ALIAS = {"_DT_INIT": "init", "_DT_FINI": "fini", "entry": "start"}
 
 
+TEMPLATE = re.compile(r"<.*>")
+WIDE = {"string", "ostream", "istream", "iostream", "ostringstream", "istringstream", "stringstream",
+        "ofstream", "ifstream", "fstream", "streambuf", "stringbuf", "filebuf", "ios"}
+
+
+def key(n: str) -> str:
+    """Canonical comparison key: last scope component without template arguments,
+    return type, spaces or leading underscores; basic_X == X (Ghidra names ctors by the
+    std typedef: `string` for basic_string, measured)."""
+    n = n.replace("(anonymous namespace)", "anon").replace("thunk to ", "")
+    n = TEMPLATE.sub("", n.split("(")[0]).replace(" ", "")
+    n = n.split("::")[-1].split("&")[-1].split("*")[-1]
+    dtor = n.startswith("~")
+    n = n.lstrip("~").lstrip("_")
+    n = n[6:] if n.startswith("basic_") else n
+    if n[:1] == "w" and n[1:] in WIDE:  # wostream == basic_ostream<wchar_t>
+        n = n[1:]
+    return ("~" if dtor else "") + n
+
+
 def norm(n: str) -> str:
+    n = n.removeprefix("FID_conflict:")  # Ghidra: several identical bodies matched
     n = n.split("::")[-1] if n.startswith("<EXTERNAL>::") else n
     n = ALIAS.get(n, n)
     n = RUST_HASH.sub("", n).split("(")[0].strip()
@@ -31,7 +52,9 @@ def truth(path: str) -> dict:
     for line in out.splitlines():
         p = line.split(None, 7)
         if len(p) == 8 and p[3] == "FUNC" and p[6] != "UND" and int(p[1], 16):
-            gt.setdefault(int(p[1], 16), norm(p[7].split("@")[0]))
+            # Every symbol at the address counts: libc aliases one body under several
+            # names (memcpy / __memcpy_avx_unaligned…) and FID may pick any of them.
+            gt.setdefault(int(p[1], 16), set()).add(norm(p[7].split("@")[0]))
     return gt
 
 
@@ -55,8 +78,8 @@ for fn in sorted(os.listdir(results)):
         g = by_off[a]["name"]
         if DEFAULT.match(g.split("::")[-1]) or DEFAULT.match(g):
             continue
-        gn, tn = norm(g), gt[a]
-        if gn == tn or gn.split("::")[-1] == tn.split("::")[-1]:
+        gn, names = norm(g), gt[a]
+        if gn in names or key(gn) in {key(t) for t in names}:
             named += 1
         else:
             wrong += 1
