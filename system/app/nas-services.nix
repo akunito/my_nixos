@@ -91,6 +91,11 @@ ${onDemandCases}
   nvidiaPm = nvidiaGpu && (systemSettings.nvidiaPowerManagementEnable or false);
   afterNvidiaResume = lib.optional nvidiaPm "nvidia-resume.service";
   dockerBin = "${config.virtualisation.docker.package}/bin/docker";
+  # nas-suspend guard 3: the 3090 LLM gate (system/app/llama-server/gate.py).
+  llamaOn = systemSettings.llamaServerEnable or false;
+  llamaPort = toString (systemSettings.llamaServerPort or 8090);
+  llamaBusyGrace = 300;      # s since the loaded model last answered = still "in use" (the gate's own grace)
+  suspendRetrySeconds = 1800;
 in
 {
   # Every zfs fileSystems entry, whatever its origin (profile list or a regenerated
@@ -685,6 +690,36 @@ HEADER
           echo "Outside the 23:00–16:00 sleep window (hour=$HOUR) — refusing to suspend."
           exit 0
         fi
+
+        # Guard 3 (Diego 2026-10-14, after the 23:00 sleep cut a claude-nas answer):
+        # a prompt in flight on the 3090 postpones the sleep; a transient timer
+        # re-runs this unit in ${toString (suspendRetrySeconds / 60)} min, and so on
+        # until the card is free (guard 2 ends the chain at 16:00). "In use" = a
+        # request in flight, or the loaded model answered < ${toString llamaBusyGrace} s
+        # ago (a session between two turns). Only asked while the proxy is up: a
+        # status GET on a cold socket would start backend + docker just to answer.
+        ${lib.optionalString llamaOn ''
+        if ${pkgs.systemd}/bin/systemctl is-active -q llama-proxy.service; then
+          BUSY=$(${pkgs.curl}/bin/curl -s -m 3 "http://127.0.0.1:${llamaPort}/gate/status" | ${pkgs.python3}/bin/python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+n = sum(d.get("inflight", {}).values())
+m = d.get("loaded")
+idle = d.get("idle_s", {}).get(m) if m else None
+if n: print(f"{n} request(s) in flight on {m}")
+elif m and idle is not None and idle < ${toString llamaBusyGrace}: print(f"{m} answered {int(idle)} s ago")
+' 2>/dev/null || true)
+          if [ -n "$BUSY" ]; then
+            echo "NAS 3090 busy ($BUSY) — suspend postponed ${toString (suspendRetrySeconds / 60)} min."
+            ${pkgs.systemd}/bin/systemctl stop nas-suspend-retry.timer nas-suspend-retry.service 2>/dev/null || true
+            ${pkgs.systemd}/bin/systemctl reset-failed nas-suspend-retry.service 2>/dev/null || true
+            ${pkgs.systemd}/bin/systemd-run --quiet --unit=nas-suspend-retry --on-active=${toString suspendRetrySeconds} \
+              --timer-property=AccuracySec=1s ${pkgs.systemd}/bin/systemctl start nas-suspend.service
+            /run/current-system/sw/bin/infra-notify send "💤 NAS: sleep postponed ${toString (suspendRetrySeconds / 60)} min — 3090 busy ($BUSY)" >/dev/null 2>&1 || true
+            exit 0
+          fi
+        fi
+        ''}
 
         echo "NAS suspending at $(date)"
         ${pkgs.systemd}/bin/systemctl suspend
