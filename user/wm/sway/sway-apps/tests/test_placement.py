@@ -286,6 +286,7 @@ class JournalRules(TmpFiles):
         self.assertEqual(pc.skip_reason(win(window_type="dialog"), "kitty", [], False), "dialog")
         self.assertEqual(pc.skip_reason(win(transient=True), "kitty", [], False), "dialog")
         self.assertEqual(pc.skip_reason(win(), "kitty", [], True), "placed by a rule")
+        self.assertEqual(pc.skip_reason(win(app_id="handtest.sink"), "handtest.sink", [], False), "test window")
 
     def test_rule_places(self):
         self.assertTrue(pc.rule_places("assign", ["workspace number 3"]))

@@ -227,6 +227,12 @@ def identity(win: Win, title_keys: dict[str, list[str]] | None = None) -> str | 
     return base
 
 
+# Claude's live hand tests (tests/live) open windows with this app_id prefix; remembering them
+# restored a test window onto another workspace and its 2 s verify undid a test's own move
+# (DESK 2026-10-14), and the daemon's debounced save re-added them after a CLI forget.
+TEST_APP_PREFIX = "handtest."
+
+
 def skip_reason(win: Win, key: str | None, exclude: Iterable[str], rule_placed: bool) -> str | None:
     """Why this window is neither remembered nor restored (None = eligible)."""
     if key is None:
@@ -235,6 +241,8 @@ def skip_reason(win: Win, key: str | None, exclude: Iterable[str], rule_placed: 
         return "game"
     if key in exclude or (win.app_id or win.cls) in exclude:
         return "excluded"
+    if (win.app_id or "").startswith(TEST_APP_PREFIX):
+        return "test window"
     if win.sticky or win.pinned:
         return "sticky/pinned"
     if win.transient or (win.window_type or "").lower() in DIALOG_TYPES:
