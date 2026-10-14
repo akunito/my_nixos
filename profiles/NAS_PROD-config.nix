@@ -90,33 +90,36 @@ in
       # and #29969 (Clef vision). Single forward passes: KV size is irrelevant
       # (f16), no chat template, none of the reasoner's sampling. The whole
       # prompt must fit ONE ubatch (default 512 rejects longer inputs), hence
-      # -ub/-b 4096. Requested by Diego via the NAS session 2026-10-14;
-      # VRAM not measured yet.
+      # -ub/-b 4096. Requested by Diego via the NAS session 2026-10-14.
+      # MEASURED 2026-10-14 (switch + /v1/systemone smoke tests, all pass;
+      # Clef fits at -ub 4096): laya 1.0 GB load 2.9 s 0.15 s/req; kev-9b
+      # 13.2 GB 4.1 s 0.18 s; decider 17.5 GB 13.4 s 0.40 s text / 0.48 s
+      # image; clef 20.1 GB 17.4 s 0.60 s text / 0.25 s image.
       decision = { kind = "decision"; ctx = 16384; slots = 1; kv = ""; template = null; };
       mm = f: [ "--mmproj" "/var/lib/llama-server/models/${f}" ];
       batch = [ "-ub" "4096" "-b" "4096" "-fa" "on" ];
     in {
       decider = decision // {
         label = "Decider pplx-decider v1.1 27B (Artemis GGUF) · vision · decisions";
-        short = "⚖ decider"; vramEst = "~17 GB"; alias = "decider";
+        short = "⚖ decider"; vramEst = "17.5 GB"; alias = "decider";
         model = "pplx-decider-27B-Artemis-15.3GB.gguf";
         extra = batch ++ mm "mmproj-pplx-decider-27B-Q8_0.gguf";
       };
       clef = decision // {
         label = "Clef 27B Q4_K_M (Cloudflare) · vision · decisions";
-        short = "⚖ clef"; vramEst = "~22 GB (tight)"; alias = "clef";
+        short = "⚖ clef"; vramEst = "20.1 GB"; alias = "clef";
         model = "Clef-Q4_K_M.gguf";   # OOM fallback: Clef-Flash-Q8_0.gguf (9.66 GB, not downloaded)
         extra = batch ++ mm "mmproj-Clef-Q8_0.gguf";
       };
       laya = decision // {
         label = "Laya (ModernBERT-large 421M) · text · decisions";
-        short = "⚖ laya"; vramEst = "~1.5 GB"; alias = "laya"; ctx = 512;   # 512-token window
+        short = "⚖ laya"; vramEst = "1.0 GB"; alias = "laya"; ctx = 512;   # 512-token window
         model = "Laya-BF16.gguf";
         extra = batch;
       };
       kev-9b = decision // {
         label = "Kev-9B Q8_0 (Qwen3.5-9B base) · text · decisions";
-        short = "⚖ kev-9b"; vramEst = "~11 GB"; alias = "kev-9b";
+        short = "⚖ kev-9b"; vramEst = "13.2 GB"; alias = "kev-9b";
         model = "Kev-9B-Q8_0.gguf";
         extra = batch;
       };
