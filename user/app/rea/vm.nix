@@ -1,4 +1,8 @@
-{ inputs, pkgs, rea-agents, uid, cacheDir, web ? false, extraModules ? [ ] }:
+{ inputs, pkgs, rea-agents, uid, cacheDir, web ? false, dynamic ? false, extraModules ? [ ] }:
+# dynamic = true: the F3b lane — the target is executed (REA capture_process_scenario)
+# with a fake network inside the guest: every name resolves to 10.99.0.1 / fd99::1,
+# all TCP is redirected to a transparent mitmproxy that records it, other UDP/ICMP is
+# logged; nothing can leave (still no NIC). Records land in <case>/out/net/.
 # extraModules: tests only (e.g. a root console for the escape test); empty in production.
 # web = true: the F3a web lane — no target/, Chromium, and an HTTP proxy that exists only
 # as a vsock relay to the per-session host squid (no NIC; libslirp 4.9.1 has
@@ -33,8 +37,20 @@ let
     HTTPS_PROXY = "http://127.0.0.1:3128";
     HTTP_PROXY = "http://127.0.0.1:3128";
     NODE_USE_ENV_PROXY = "1"; # Node >= 24: fetch (WebSourceMapFetcher) honours the proxy
+  } // pkgs.lib.optionalAttrs dynamic {
+    # Executed targets inherit REA's environment: give them an ordinary userland too
+    # (curl was "command not found" with the REA-only PATH, measured).
+    PATH = reaEnv.env.PATH + ":/run/current-system/sw/bin";
   };
   run = "/run/user/${toString uid}/rea-vm";
+  # Dynamic lane: every HTTP(S) request gets an empty 200 from mitmproxy itself (the flow
+  # is still recorded); nothing tries to reach an upstream that does not exist.
+  fakeResponder = pkgs.writeText "rea-fake-responder.py" ''
+    from mitmproxy import http
+
+    def request(flow: http.HTTPFlow) -> None:
+        flow.response = http.Response.make(200, b"", {"Content-Type": "text/plain"})
+  '';
   share = tag: ro: {
     proto = "9p"; inherit tag; source = "${run}/${tag}"; mountPoint = "/mnt/${tag}";
     readOnly = ro; securityModel = "none"; # writes land as the user running QEMU
@@ -97,7 +113,12 @@ let
           # moves it into the case only after QEMU has exited.
           shares = pkgs.lib.optional (!web) (share "target" true) ++ [
             { proto = "9p"; tag = "out"; source = "${run}/out-stage"; mountPoint = "/mnt/out"; readOnly = false; securityModel = "none"; }
-            (share "ctl" true) ];
+            (share "ctl" true) ]
+            # Network records get their own share with REAL permissions ("mapped": guest
+            # owner/mode kept in xattrs): out/ uses securityModel none, where every file looks
+            # owned by uid 1000 = the user the target runs as, so a target could rewrite its
+            # own records. Here only guest root writes.
+            ++ pkgs.lib.optional dynamic { proto = "9p"; tag = "net"; source = "${run}/net-stage"; mountPoint = "/mnt/net"; readOnly = false; securityModel = "mapped"; };
           # work/ (Ghidra temp, REA HOME) is a throwaway disk, not a host directory: nothing
           # from it ever reaches the host fs, and it cannot fill /home. rea-vm-mcp deletes
           # the image before every boot, so the runner mkfs'es a fresh one.
@@ -127,8 +148,10 @@ let
         };
         systemd.services.rea-mcp = {
           wantedBy = [ "multi-user.target" ];
-          after = [ "rea-case-mounts.service" ];
-          requires = [ "rea-case-mounts.service" ];
+          # Dynamic lane: no REA (so no execution) unless the fake network and its
+          # recorders are up — a failed rea-fakenet once ran the target with no records.
+          after = [ "rea-case-mounts.service" ] ++ lib.optionals dynamic [ "rea-fakenet.service" "rea-dnsmasq.service" "rea-mitm.service" ];
+          requires = [ "rea-case-mounts.service" ] ++ lib.optionals dynamic [ "rea-fakenet.service" "rea-dnsmasq.service" "rea-mitm.service" ];
           path = [ pkgs.socat pkgs.coreutils ];
           script = ''
             d=$(cat /mnt/ctl/case)
@@ -156,7 +179,121 @@ let
           path = [ pkgs.socat pkgs.coreutils ];
           script = "exec socat TCP-LISTEN:3128,bind=127.0.0.1,reuseaddr,fork VSOCK-CONNECT:2:$(cat /mnt/ctl/proxy-port)";
         };
-        environment.systemPackages = reaEnv.tools ++ lib.optional web pkgs.chromium;
+        # Dynamic lane: fake network. rea0 is a dummy interface holding the default routes,
+        # so every destination "exists" locally; packets that are not redirected are dropped
+        # by the dummy device.
+        networking.nameservers = lib.mkIf dynamic [ "127.0.0.1" ];
+        # dnsmasq and mitmproxy parse target-chosen bytes: unprivileged, so a bug in them
+        # does not make the records forgeable (audit 2026-10-14).
+        security.sudo.enable = false; # nobody here may use it; one setuid parser less
+        users.users.mitm = lib.mkIf dynamic { isSystemUser = true; group = "mitm"; };
+        users.groups.mitm = lib.mkIf dynamic { };
+        # Keep out/net/ about the target only: no NTP lookups, no IPv6 router solicitations.
+        services.timesyncd.enable = lib.mkIf dynamic false;
+        boot.kernel.sysctl = lib.mkIf dynamic {
+          "net.ipv6.conf.default.router_solicitations" = 0;
+          "net.ipv6.conf.default.accept_ra" = 0;
+        };
+        systemd.services.rea-fakenet = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-case-mounts.service" ];
+          requires = [ "rea-case-mounts.service" ];
+          before = [ "rea-mcp.service" "rea-dnsmasq.service" "rea-mitm.service" ];
+          serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
+          path = [ pkgs.iproute2 pkgs.iptables pkgs.coreutils pkgs.util-linux ];
+          script = ''
+            chown root:root /mnt/net && chmod 755 /mnt/net
+            # Pre-created for the unprivileged recorders: creating files on 9p is what failed
+            # for a non-root mitmproxy (Permission denied, measured); writing an owned file works.
+            install -o mitm -g mitm -m 644 /dev/null /mnt/net/dns.log
+            install -o mitm -g mitm -m 644 /dev/null /mnt/net/mitm.log
+            install -o mitm -g mitm -m 644 /dev/null /mnt/net/flows.mitm
+            d=$(cat /mnt/ctl/case)
+            mkdir -p "$d/out/net" && mount --bind /mnt/net "$d/out/net"
+            ip link add rea0 type dummy
+            ip addr add 10.99.0.1/24 dev rea0
+            ip -6 addr add fd99::1/64 dev rea0 nodad
+            ip link set rea0 up
+            ip route add default dev rea0
+            ip -6 route add default dev rea0
+            # Match "not loopback", never `-o rea0`: 10.99.0.1/fd99::1 are LOCAL addresses, so
+            # traffic to them leaves through lo and an `-o rea0` rule never saw it (measured:
+            # every connect got "Connection refused"). Only the target's user (rea: REA runs it
+            # as its own child) goes to the recorder.
+            for t in "iptables 127.0.0.0/8 icmp" "ip6tables ::1/128 ipv6-icmp"; do
+              set -- $t
+              $1 -t nat -A OUTPUT -p tcp ! -d "$2" -m owner --uid-owner rea -j REDIRECT --to-ports 8888
+              # a target with its own resolver (8.8.8.8 …) still lands in dnsmasq's log
+              $1 -t nat -A OUTPUT -p udp ! -d "$2" --dport 53 -j REDIRECT --to-ports 53
+              $1 -N rea-rec
+              $1 -A OUTPUT ! -d "$2" -m owner --uid-owner rea -j rea-rec
+              $1 -A rea-rec -p udp --dport 53 -j RETURN
+              $1 -A rea-rec -p udp -j LOG --log-prefix "REA-UDP "
+              $1 -A rea-rec -p udp -j RETURN
+              $1 -A rea-rec -p "$3" -j LOG --log-prefix "REA-ICMP "
+              $1 -A rea-rec -p "$3" -j RETURN
+              # Anything else (SCTP, DCCP, UDP-Lite…) is dropped by the dummy but recorded.
+              # Redirected TCP already has dst 127.0.0.1/::1 here and never gets this far.
+              $1 -A rea-rec -j LOG --log-prefix "REA-OTHER "
+            done
+            # Everything needed is loaded by now (dummy, xt_owner, xt_LOG, nat, 9p, vsock):
+            # no module autoload from socket() for the target (classic LPE surface).
+            echo 1 > /proc/sys/kernel/modules_disabled
+          '';
+        };
+        systemd.services.rea-dnsmasq = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-fakenet.service" ];
+          requires = [ "rea-fakenet.service" ];
+          script = ''
+            exec ${pkgs.dnsmasq}/bin/dnsmasq -k --user=mitm --group=mitm --no-resolv --no-hosts \
+              --listen-address=127.0.0.1,10.99.0.1 --bind-interfaces \
+              --address=/#/10.99.0.1 --address=/#/fd99::1 \
+              --log-queries --log-facility=/mnt/net/dns.log
+          '';
+        };
+        systemd.services.rea-mitm = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-fakenet.service" ];
+          requires = [ "rea-fakenet.service" ];
+          serviceConfig = {
+            User = "mitm"; Group = "mitm"; RuntimeDirectory = "mitm";
+            NoNewPrivileges = true; CapabilityBoundingSet = ""; ProtectSystem = "strict";
+            ProtectHome = "read-only"; ReadWritePaths = [ "/mnt/net" ];
+          };
+          script = ''
+            # Default listen host = v4 AND v6 sockets. `--listen-host ::` gives a v6-only socket
+            # (asyncio sets IPV6_V6ONLY) and every redirected IPv4 connect was refused (measured).
+            # The fake responder answers every request itself: there is no upstream to reach.
+            exec ${pkgs.mitmproxy}/bin/mitmdump --mode transparent --listen-port 8888 \
+              --set confdir=/run/mitm --set connection_strategy=lazy --set showhost=true \
+              -s ${fakeResponder} \
+              -w /mnt/net/flows.mitm >> /mnt/net/mitm.log 2>&1
+          '';
+        };
+        # The mitm CA is generated at boot (never in the store, which is readable); targets
+        # that honour SSL_CERT_FILE can be pointed at this bundle to expose their TLS payloads.
+        systemd.services.rea-ca-bundle = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-mitm.service" ];
+          serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
+          script = ''
+            for _ in $(seq 1 60); do [ -s /run/mitm/mitmproxy-ca-cert.pem ] && break; sleep 0.5; done
+            cat ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /run/mitm/mitmproxy-ca-cert.pem > /run/rea-ca-bundle.pem
+            chmod 644 /run/rea-ca-bundle.pem
+          '';
+          path = [ pkgs.coreutils ];
+        };
+        systemd.services.rea-packets = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-fakenet.service" ];
+          path = [ pkgs.systemd pkgs.gnugrep ];
+          script = ''
+            journalctl -k -f -o short-iso | grep --line-buffered -E 'REA-(UDP|ICMP|OTHER)' >> /mnt/net/packets.log
+          '';
+        };
+        environment.systemPackages = reaEnv.tools ++ lib.optional web pkgs.chromium
+          ++ lib.optionals dynamic [ pkgs.dnsmasq pkgs.iproute2 pkgs.iptables pkgs.curl pkgs.wget pkgs.python3 pkgs.dnsutils pkgs.netcat-openbsd pkgs.strace pkgs.ltrace ];
       })
     ] ++ extraModules;
   };

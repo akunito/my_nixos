@@ -94,7 +94,7 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
   
   Chromium (`pkgs.chromium`) va solo en la VM web.
 - **Node:** `HTTPS_PROXY`/`HTTP_PROXY` + `NODE_USE_ENV_PROXY=1` (Node ≥ 24; `WebSourceMapFetcher.ts` usa `fetch`).
-- **Privacidad:** la web ve la IP de casa. **Decisión pendiente de Diego:** salir por la VPN del NAS (gluetun como `cache_peer` padre con `never_direct`) o aceptarlo y documentarlo.
+- **Privacidad:** la web ve la IP pública de casa. **Decidido por Diego (2026-10-14): se acepta**, porque la conexión de casa va tras CGNAT y esa IP la comparten otros clientes del operador. No hay VPN del NAS de por medio, y el `proxy.log` de cada caso sigue registrando qué se pidió.
 - `proxy.log` contiene URLs: no se pasa al modelo sin redactar.
 - **Nivel:** las webs son nivel 1; una web sospechosa es nivel 2 (interactivo, `permissions.ask`).
 - **Pruebas:**
@@ -139,6 +139,61 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
   - Windows PE, fuera de alcance;
   - Android, F4.
 - **Pruebas** con un programa propio que intenta salir a internet y a la LAN (queda registrado en `out/net/` y nada sale), escribir fuera de `out/`, dejar symlinks, escalar a root y persistir.
+
+**Estado F3b (2026-10-14): implementado en DESK, sin Frida.** Uso: `rea-case new <caso> --dynamic --tier 1|2`. Nunca nivel 0, y nunca a la vez que `--web`.
+
+**Cómo funciona:**
+- La red falsa vive en el invitado, que sigue sin NIC:
+  - `rea0` es un interfaz *dummy* que tiene las rutas por defecto;
+  - `dnsmasq` contesta 10.99.0.1 / fd99::1 a cualquier nombre, y también recoge el DNS dirigido a resolvers propios (8.8.8.8…);
+  - **todo el TCP del usuario `rea`** va a un `mitmproxy` transparente. Un *addon* contesta a cada petición HTTP(S) con un 200 vacío, sin buscar ningún servidor real;
+  - el resto de UDP e ICMP se registra con `LOG` del kernel.
+- **Los registros van a un recurso 9p propio** con `securityModel = "mapped"`, montado en `<caso>/out/net/`:
+  - con `none`, el invitado ve todos los ficheros como del uid 1000, que es el mismo usuario que ejecuta el objetivo, y un programa podía falsificar o borrar sus propios registros (**medido: lo consiguió en los cuatro intentos**);
+  - con `mapped`, solo root del invitado escribe (**medido: los cuatro intentos, denegados**).
+- `rea-net-mirror` copia en el host, cada 2 s, `dns.log`, `mitm.log` y `packets.log` a `out/net-live/`. Así la sesión aislada, que corre en el host, puede leerlos mientras la VM sigue viva. Usa `openat` con `O_NOFOLLOW`, solo nombres de una lista permitida, solo ficheros regulares y como mucho 8 MiB.
+- Los flujos completos se leen dentro de la VM con `inspect_web_network_capture` sobre `out/net/flows.mitm`. REA no pide una versión exacta de mitmdump: le basta con `REA_MITMDUMP_COMMAND`.
+- **Si la red falsa no arranca, REA tampoco**: `rea-mcp` depende de `rea-fakenet`, `rea-dnsmasq` y `rea-mitm`.
+- **Para ver dentro de TLS**, `SSL_CERT_FILE=/run/rea-ca-bundle.pem`. La CA se genera al arrancar y solo existe en esa VM.
+
+**Pruebas (DESK, 2026-10-14):**
+- **Script de "telemetría" de prueba, por `rea-claude --ask`:** el agente lo ejecutó en la VM y reconstruyó desde los registros los dos hosts, el `GET` con el machine-id, el cuerpo del `POST` y el UDP a 198.51.100.7:5353.
+- **Script "beacon":**
+  - DNS y HTTP, registrados;
+  - LAN 192.168.8.1:22, al registrador, nunca a la LAN;
+  - `/etc`, `target/` y `sudo`, denegados.
+- **HTTPS** con la CA de la VM: se ven la URL completa con la *query* y el cuerpo `POST`. Sin la CA, el TLS falla, como se espera.
+- Al cerrar la sesión no queda ni QEMU, ni el espejo, ni el *staging*.
+
+**Hallazgos de la implementación:**
+1. **10.99.0.1 es una dirección local**: el kernel la enruta por `lo` y nunca por `rea0`, así que una regla `-o rea0` no veía nada y todo daba "Connection refused". Las reglas ahora usan "destino que no sea loopback".
+2. **`mitmdump --listen-host ::` abre un socket solo IPv6** (asyncio pone `IPV6_V6ONLY`), y el IPv4 redirigido se rechazaba. Ahora escucha con el *host* por defecto, que abre v4 y v6.
+3. Un `mitmproxy` con usuario propio no podía crear su log en el 9p `none` (Permission denied). Ahora corre como root del invitado y la redirección se aplica solo al uid `rea`.
+4. **El PATH de REA solo tenía sus herramientas**, y el objetivo heredaba "curl: command not found". El carril dinámico añade `/run/current-system/sw/bin` y un *userland* normal: curl, wget, python3, dig, nc, strace y ltrace.
+5. En las sesiones `--ask`, el agente aislado **informó del fallo en vez de inventarse un resultado**. En las dos primeras pruebas dijo que no había registros y lo que faltaba. Buen comportamiento, que hay que conservar en el `CLAUDE.md` del caso.
+
+**Auditoría independiente (Fable, 2026-10-14) y arreglos, todos probados con un objetivo hostil:**
+1. **Alta.** El objetivo podía dejar en `out/` una carpeta con modo 000: `find -delete` fallaba, `set -e` cortaba el barrido entero, los registros completos no llegaban al caso y la sesión siguiente los borraba.
+   - **Arreglo:** el barrido corre sin `errexit`, hace `chmod -R u+rwX` antes, barre primero `net-stage` y anota en el log del caso si un barrido queda incompleto.
+   - **Probado:** la trampa llega barrida y los registros completos.
+2. **Media.** `/run/user/1000` (tmpfs) no tiene cuota. **Arreglo:** el espejo suma lo que hay en el *staging* cada 10 s y, si pasa de 2 GiB, para el scope de la VM.
+3. **Media.** SCTP, DCCP y UDP-Lite no quedaban registrados.
+   - **Arreglo:** una cadena `rea-rec` con registro general `REA-OTHER`. Al final de `rea-fakenet` se pone `kernel.modules_disabled=1`, que impide que un `socket()` cargue módulos (una vía clásica de escalada).
+   - **Probado:** SCTP y DCCP dan "not supported"; UDP-Lite queda registrado.
+4. **Media.** `out/net-live/` llegaba a la sesión aislada sin pasar por el detector de inyección. **Arreglo:** el hook también mira `Read`, y el `CLAUDE.md` del caso marca todo `out/` como dato controlado por el objetivo.
+5. **Media/baja.** dnsmasq y mitmproxy corrían como root del invitado, analizando bytes elegidos por el objetivo.
+   - **Arreglo:** corren como el usuario `mitm`, sobre ficheros creados de antemano. mitmproxy, además, con `NoNewPrivileges`, sin capacidades y con `ProtectSystem=strict`.
+   - `sudo` desactivado en el invitado.
+6. **Baja.** Ampliado el `CLAUDE.md` del caso:
+   - las respuestas son inventadas por el sandbox; solo cuenta como evidencia lo que el objetivo envía;
+   - de UDP solo se guardan las cabeceras;
+   - leer `flows.mitm` cuando acabe el escenario;
+   - las variables de CA por runtime (`CURL_CA_BUNDLE`, `REQUESTS_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`…);
+   - informar de cualquier registro que encoja o se contradiga.
+7. **Baja.** El espejo podía morir con un error al escribir. **Arreglo:** cada fichero lleva su propio `try` y se salta el que no ha cambiado.
+8. **Informativo**, ya existía: un root del invitado puede inundar `log/vm-console.log`.
+
+**Riesgo asumido:** el objetivo corre con el mismo uid que REA. Puede estorbar al propio análisis de esa sesión (matar REA, tocar `work/`) y escribir en `out/`, que se barre al salir. Lo que no puede es alterar los registros de red sin ser root del invitado. El nivel 2 sigue aprobando cada llamada a mano.
 
 ## Sesión aislada del agente (`rea-claude <caso>`)
 
