@@ -470,7 +470,7 @@ in
       # Window name = Claude Code session title while claude runs in the active pane.
       # Claude sets the pane title (OSC 2) to "<glyph> <session name>": ✳ idle, a braille spinner while busy;
       # the glyph is stripped. A manual rename turns automatic-rename off for that window, as before.
-      set -g automatic-rename-format "#{?pane_in_mode,[tmux],#{?#{==:#{pane_current_command},claude},#{=15;s/^[^ ]+ //:pane_title},#{pane_current_command}}}#{?pane_dead,[dead],}"
+      set -g automatic-rename-format "#{?pane_in_mode,[tmux],#{?#{==:#{pane_current_command},claude},#{=50;s/^[^ ]+ //:pane_title},#{pane_current_command}}}#{?pane_dead,[dead],}"
 
       # Status bar with Stylix colors showing windows (tabs) and panes
       # CRITICAL: Check if Stylix is actually available (not just enabled)
@@ -481,9 +481,10 @@ in
         # No session name (fixed per launcher: alacritty/kitty) and no clock — only the tab pills.
         set -g status-left ""
         set -g status-right ""
-        # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps); the active one in the accent colour.
+        # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps); the active one in the accent colour and full-length,
+        # the others cut at 15 chars. tmux has no hover/mouse-motion event, so clicking a pill (select) is what expands it.
         setw -g window-status-separator " "
-        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#I:#W#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
         setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#I:#W#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
       ''}
       
