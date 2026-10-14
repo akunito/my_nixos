@@ -587,9 +587,15 @@ except Exception as e:
           set -euo pipefail
           DEST="${nextcloudFolder}/backups"
           mkdir -p "$DEST"
+          # ~/.claude is live while a session runs: tar exits 1 ("file changed as we
+          # read it", lock files removed mid-read) and the unit failed on 2026-10-14.
+          # Exit 1 = archive complete but some members differ; only >1 is an error.
+          set +e
           ${pkgs.gnutar}/bin/tar \
             --create \
             --zstd \
+            --warning=no-file-changed \
+            --warning=no-file-removed \
             --file "$DEST/claude-backup.tar.zst.tmp" \
             --directory="$HOME" \
             --exclude='.claude/debug' \
@@ -597,7 +603,12 @@ except Exception as e:
             --exclude='.claude/.credentials.json' \
             --exclude='.claude/settings.json.bak' \
             --exclude='.claude/mcp-env' \
+            --exclude='.claude/.oauth_refresh.lock*' \
+            --exclude='.claude/*.lock' \
             .claude/
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then rm -f "$DEST/claude-backup.tar.zst.tmp"; exit "$rc"; fi
           mv "$DEST/claude-backup.tar.zst.tmp" "$DEST/claude-backup.tar.zst"
         '';
       in "${backupScript}";
