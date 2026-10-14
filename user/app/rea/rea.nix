@@ -13,7 +13,8 @@ let
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;
   vmUid = 1000; # baked into the microVM share paths (/run/user/<uid>/rea-vm); the launcher checks it
-  vmRunner = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; };
+  vmCache = "${config.home.homeDirectory}/.cache/rea-vm"; # throwaway work disk image
+  vmRunner = import ./vm.nix { inherit inputs rea-agents; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; };
   socat = pkgs-unstable.socat;
   # The real binary, bypassing the claude-sync wrapper: with a foreign
   # CLAUDE_CONFIG_DIR the wrapper would turn ~/.claude-rea into a hub clone.
@@ -126,7 +127,7 @@ let
   # stream: everything else goes to stderr or the case log.
   rea-vm-mcp = pkgs.writeShellApplication {
     name = "rea-vm-mcp";
-    runtimeInputs = [ socat pkgs.coreutils pkgs.util-linux pkgs.systemd ];
+    runtimeInputs = [ socat pkgs.coreutils pkgs.findutils pkgs.util-linux pkgs.systemd ];
     text = ''
       d=$1; mode=''${2:-mcp}
       die() { echo "rea-vm: $*" >&2; exit 1; }
@@ -136,13 +137,27 @@ let
       mkdir -p "$V/ctl"
       exec 9>"$V.lock"
       flock -n 9 || die "another tier 1-2 session is running (one microVM at a time)"
-      for x in target out work; do ln -sfn "$d/$x" "$V/$x"; done
+      C=${vmCache}
+      mkdir -p "$C"
+      rm -f "$C/work.img"               # the runner mkfs'es a fresh work disk
+      rm -rf "$V/out-stage"; mkdir -m 700 "$V/out-stage"
+      ln -sfn "$d/target" "$V/target"
       printf '%s' "$d" > "$V/ctl/case"
       unit="rea-vm-$$"
+      # Only after QEMU is gone does anything the guest wrote reach the case: no symlinks,
+      # no FIFOs/sockets/devices, no exec/setuid bits (audit 2026-10-14).
       # shellcheck disable=SC2329 # invoked through the EXIT trap
       cleanup() {
         systemctl --user stop "$unit.scope" >/dev/null 2>&1 || true
-        rm -f "$V/target" "$V/out" "$V/work" "$V/ctl/case"
+        rm -f "$V/target" "$V/ctl/case" "$C/work.img"
+        if [ -n "$(ls -A "$V/out-stage" 2>/dev/null)" ]; then
+          find "$V/out-stage" -mindepth 1 \( -type l -o \( ! -type f ! -type d \) \) -delete
+          find "$V/out-stage" -type f -exec chmod a-xst {} +
+          dest="$d/out/vm-$(date +%Y%m%dT%H%M%S)"
+          mkdir -p "$dest"
+          cp -R --no-dereference --preserve=timestamps -- "$V/out-stage"/. "$dest"/
+        fi
+        rm -rf "$V/out-stage"
       }
       trap cleanup EXIT
       echo "$(date -Iseconds) boot" >> "$d/log/vm-console.log"
@@ -265,6 +280,7 @@ let
                    "Bash(docker *)", "Bash(nix *)", "Bash(env*)", "Bash(printenv*)",
                    "Read(~/.ssh/**)", "Read(~/.gnupg/**)", "Read(~/.claude/**)", "Read(~/.claude-rea/.credentials.json)",
                    "Read(~/.dotfiles/**)", "Read(~/Projects/**)", "Read(~/.config/**)", "Read(~/.local/**)",
+                   "Read(/run/user/**)", "Read(~/.cache/rea-vm/**)",
                    "Edit(~/.dotfiles/**)", "Edit(~/Projects/**)", "Edit(~/.config/**)", "Edit(~/.local/**)", "Edit(~/.claude/**)"]
           } + (if $t2 then {ask: ["mcp__rea__*"]} else {} end),
           sandbox: {

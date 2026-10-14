@@ -1,4 +1,4 @@
-{ inputs, pkgs, rea-agents, uid, extraModules ? [ ] }:
+{ inputs, pkgs, rea-agents, uid, cacheDir, extraModules ? [ ] }:
 # extraModules: tests only (e.g. a root console for the escape test); empty in production.
 # REA microVM for tiers 1-2 (AINF-408 F2). A user-run QEMU guest (microvm.nix):
 # no NIC at all, its own store (storeOnDisk: the host /nix/store is NOT shared — it
@@ -66,7 +66,19 @@ let
           interfaces = [ ];
           storeOnDisk = true;
           vsock.cid = 4242;
-          shares = [ (share "target" true) (share "out" false) (share "work" false) (share "ctl" true) ];
+          # out/ is NOT the case dir: a root-in-guest attacker could plant symlinks/setuid
+          # files there for a host reader at any time (audit 2026-10-14). The guest writes a
+          # staging dir in the user's tmpfs (also caps its size); rea-vm-mcp sweeps it and
+          # moves it into the case only after QEMU has exited.
+          shares = [ (share "target" true) { proto = "9p"; tag = "out"; source = "${run}/out-stage";
+                       mountPoint = "/mnt/out"; readOnly = false; securityModel = "none"; } (share "ctl" true) ];
+          # work/ (Ghidra temp, REA HOME) is a throwaway disk, not a host directory: nothing
+          # from it ever reaches the host fs, and it cannot fill /home. rea-vm-mcp deletes
+          # the image before every boot, so the runner mkfs'es a fresh one.
+          volumes = [ { image = "${cacheDir}/work.img"; size = 16384; fsType = "ext4"; mountPoint = "/mnt/work"; autoCreate = true; } ];
+          # Seccomp beyond the runner's `-sandbox on`: no exec, no privilege changes, no
+          # resource-control syscalls (nothing here needs them: no slirp cmd:, no bridge helper).
+          qemu.extraArgs = [ "-sandbox" "on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny" ];
         };
         users.users.rea = { isNormalUser = true; uid = 1000; group = "users"; home = "/tmp"; };
         systemd.services.rea-case-mounts = {
@@ -81,6 +93,7 @@ let
             mount --bind /mnt/target "$d/target"
             mount -o remount,bind,ro "$d/target"
             mount --bind /mnt/out "$d/out"
+            chown rea:users /mnt/work /mnt/out
             mount --bind /mnt/work "$d/work"
           '';
         };
@@ -96,7 +109,7 @@ let
               ${lib.concatStrings (lib.mapAttrsToList (k: v: ''echo 'export ${k}="${v}"'
               '') reaEnv.env)}
               echo "export TMPDIR=$d/work HOME=$d/work"
-              echo "exec ${rea-agents}/bin/rea mcp 2>>$d/work/rea-mcp.err"
+              echo "exec ${rea-agents}/bin/rea mcp 2>>$d/out/rea-mcp.err"
             } > /run/rea-mcp.sh
             chmod 755 /run/rea-mcp.sh
             exec socat VSOCK-LISTEN:5000,reuseaddr,fork EXEC:/run/rea-mcp.sh,su=rea

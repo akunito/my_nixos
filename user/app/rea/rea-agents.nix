@@ -11,8 +11,8 @@ buildNpmPackage {
     hash = "sha256-aAbOYpsT6QhlLAZDtVHZ1Acz6uIqrVEd4p49s/2FJgc=";
   };
   npmDepsHash = "sha256-XuiMtaM/MPDkhjiHCr9dGC7WlsRBmsWepuNHRxAs3Nw=";
-  # frida's install script downloads a prebuilt from GitHub (fails in the sandbox
-  # and is only needed for the dynamic lane, F3); husky is dev tooling.
+  # No install scripts: husky is dev tooling and nothing at 6.4.0 needs one (frida is
+  # NOT a dependency at this tag — it arrives in 4a4ae9b2b; F3b bumps the pin for it).
   npmFlags = [ "--ignore-scripts" ];
   npmPackFlags = [ "--ignore-scripts" ];
   env = { HUSKY = "0"; TURBO_TELEMETRY_DISABLED = "1"; };
