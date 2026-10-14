@@ -68,7 +68,8 @@ class Bars:
         self.env = {
             "SWAY_APPS_E2E": "1", "SWAY_APPS_GIT": "0", "SWAY_APPS_PROFILE": "E2E", "SWAY_APPS_DOTFILES": str(self.root),
             "SWAY_APPS_STATE_DIR": str(state), "SWAY_APPS_LOCAL_STATE_DIR": str(self.root / "local"),
-            "XDG_CONFIG_HOME": str(self.cfg), "PYTHONPATH": str(ROOT), "SWAY_APPS_TMUX_RELOAD": "0",
+            "XDG_CONFIG_HOME": str(self.cfg), "SWAY_APPS_TMUX_RELOAD": "0",
+            "PYTHONPATH": os.pathsep.join(x for x in (str(ROOT), os.environ.get("PYTHONPATH")) if x),
         }
         # Files first: the nested sway's config includes the bar blocks.
         pre = {**os.environ, **self.env, "SWAYSOCK": str(self.root / "none.sock"), "XDG_RUNTIME_DIR": str(self.root)}
@@ -317,3 +318,15 @@ print(json.dumps({"flip": med(flip), "same": med(same), "css": med(css), "tree":
         d = json.loads(r.stdout.strip().splitlines()[-1])
         print(f"  refresh with a mode change {d['flip']:.2f} ms, without {d['same']:.2f} ms (get_tree {d['tree']:.2f} ms); "
               f"CSS render+write {d['css']:.2f} ms; medians of 40", flush=True)
+
+
+def case_waybar_gui_panel():
+    """The GTK panel against the same scratch state, inside the nested sway."""
+    with Bars() as b:
+        env = {**b.s.env, **b.env}
+        r = subprocess.run([PYTHON, "-W", "ignore::DeprecationWarning", str(Path(__file__).resolve().parent / "gui_waybar_check.py")],
+                           env=env, capture_output=True, text=True, timeout=90)
+        bad = [l for l in r.stdout.splitlines() if l.startswith("FAIL")]
+        if r.returncode or bad:
+            raise E2EFailure("gui: " + " | ".join(bad) + " " + r.stderr[-800:])
+        b.wait_bar("HEADLESS-1", BAR_H)  # reset applied the profile default (main shown)

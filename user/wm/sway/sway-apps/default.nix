@@ -88,7 +88,7 @@ let
       export E2E_WAYBAR="''${E2E_WAYBAR:-${config.programs.waybar.package}/bin/waybar}"
       export E2E_GRIM="${pkgs.grim}/bin/grim"
       export E2E_PYTHON="${e2ePython}/bin/python3"
-      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
+      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 libadwaita glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
       export E2E_TMP="''${E2E_TMP:-''${XDG_RUNTIME_DIR:-/tmp}/sway-apps-e2e}"
       export E2E_RUNTIME_ROOT="''${E2E_RUNTIME_ROOT:-''${XDG_RUNTIME_DIR:-/tmp}}"
       mkdir -p "$E2E_TMP"
