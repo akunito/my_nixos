@@ -74,7 +74,7 @@
         }
       },
       "imported_from": "X13 ~/.config/sway/outputs (nwg-displays 2026-02-26, as read 2026-09-06) @ 2026-10-14",
-      "notes": "UNVERIFIED: imported on DESK while X13 was offline; HDMI-A-1's block was given to both dock monitors (today's connector-keyed file did the same). Check `sway-apps displays list` on X13; `sway-apps displays save-live` replaces it with the real layout."
+      "notes": "Verified 2026-10-14 against X13's live get_outputs (eDP-1 1920x1200@60.003 at 1920,1080 scale 1.1; Dell at 1745,0). 1.1 is a forced scale for 1920x1200 (logical 1745.45): exact ones are 1.2, 1.25, 1.5."
     },
     "placement": {
       "poweroff": {
