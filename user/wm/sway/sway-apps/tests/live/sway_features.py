@@ -39,6 +39,7 @@ def windows() -> dict[int, dict]:
         if n.get("pid") and n.get("type") in ("con", "floating_con") and not n.get("nodes"):
             r = n["rect"]
             out[n["id"]] = {"app": n.get("app_id") or (n.get("window_properties") or {}).get("class"), "ws": ws,
+                            "sticky": bool(n.get("sticky")),
                             "out": outp, "floating": n["type"] == "floating_con", "rect": (r["x"], r["y"], r["width"], r["height"])}
         for ch in (n.get("nodes") or []) + (n.get("floating_nodes") or []):
             walk(ch, ws, outp)
@@ -58,23 +59,33 @@ class Snapshot:
 
     def diff(self, ignore=()) -> dict:
         now = windows()
+        # sticky windows follow their output's visible workspace: their ws is not a position
         return {cid: (w, now.get(cid)) for cid, w in self.win.items()
-                if cid not in ignore and cid in now and (now[cid]["ws"], now[cid]["floating"], now[cid]["rect"] if w["floating"] else None)
+                if cid not in ignore and cid in now and not w["sticky"] and (now[cid]["ws"], now[cid]["floating"], now[cid]["rect"] if w["floating"] else None)
                 != (w["ws"], w["floating"], w["rect"] if w["floating"] else None)}
 
     def restore(self) -> list[str]:
         fixed = []
         for cid, (w, now) in self.diff().items():
-            if w["ws"] and now["ws"] != w["ws"] and not w["ws"].startswith("__i3"):
-                c.command(f'[con_id={cid}] move --no-auto-back-and-forth container to workspace "{w["ws"]}"')
-            if w["floating"] and w["rect"] != now["rect"]:
-                x, y, ww, hh = w["rect"]
-                c.command(f"[con_id={cid}] resize set {ww} {hh}, move absolute position {x} {y}")
-            fixed.append(f"{w['app']}#{cid}")
-        for name, out in self.vis:
-            c.command(f'focus output {out}; workspace --no-auto-back-and-forth "{name}"')
+            try:
+                if w["ws"] and now["ws"] != w["ws"] and not w["ws"].startswith("__i3"):
+                    c.command(f'[con_id={cid}] move --no-auto-back-and-forth container to workspace "{w["ws"]}"')
+                if w["floating"] and w["rect"] != now["rect"]:
+                    x, y, ww, hh = w["rect"]
+                    c.command(f"[con_id={cid}] resize set {ww} {hh}, move absolute position {x} {y}")
+                fixed.append(f"{w['app']}#{cid}")
+            except ipc.IpcError as exc:
+                fixed.append(f"{w['app']}#{cid}: {exc}")
+        for name, out in self.vis:       # every restore step runs even if one failed
+            try:
+                c.command(f'focus output {out}; workspace --no-auto-back-and-forth "{name}"')
+            except ipc.IpcError:
+                pass
         if self.focus:
-            c.command(f"[con_id={self.focus}] focus")
+            try:
+                c.command(f"[con_id={self.focus}] focus")
+            except ipc.IpcError:
+                pass
         return fixed
 
 
