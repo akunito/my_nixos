@@ -36,7 +36,14 @@
     }
   ],
   "settings": {
-    "auto_adopt": true
+    "auto_adopt": true,
+    "placement": {
+      "poweroff": {
+        "monitors": {
+          "main": "ignore"
+        }
+      }
+    }
   },
   "shortcuts": [],
   "tools": [],

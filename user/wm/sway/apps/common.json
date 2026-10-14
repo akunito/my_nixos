@@ -1899,6 +1899,38 @@
       "table": "prefix",
       "notes": "migrated 2026-09-07 from nix (was a plain exec; app-toggle focuses an open window instead of starting a second one)",
       "updated_at": 0
+    },
+    {
+      "id": "k-e781823c",
+      "keys": "Hyper+Shift+y",
+      "kind": "sway",
+      "app_id": "",
+      "command": "nop sway-apps bring offscreen",
+      "name": "Bring off-screen windows here",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "notes": "SWAY-10: floating windows overlapping every output by < 24 px (either axis) move into the focused output, size kept (trimmed only if larger). Handled by the sway-apps watch daemon (binding event), no process start.",
+      "category": "Windows",
+      "table": "prefix",
+      "updated_at": 1791963155
+    },
+    {
+      "id": "k-d420dc90",
+      "keys": "Hyper+Shift+z",
+      "kind": "sway",
+      "app_id": "",
+      "command": "nop sway-apps bring all",
+      "name": "Bring all windows here / send them back",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "notes": "SWAY-10: AkuWM fetch-windows toggle. 1st press lends every window of the other outputs' workspaces to this output's visible workspace; 2nd press returns those still where the loan put it. Loans also return when their screen is replugged.",
+      "category": "Windows",
+      "table": "prefix",
+      "updated_at": 1791963155
     }
   ],
   "tools": [
