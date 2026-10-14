@@ -144,6 +144,40 @@ let
   # Answers Claude Code's `server/discover` probe so rea-agents 6.4.0 does not close its
   # providers (details in mcp-filter.py).
   rea-mcp-filter = pkgs.writeScriptBin "rea-mcp-filter" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./mcp-filter.py);
+  # M1 benchmark (mejoras.md): Ghidra exactly as REA's image runs it (same extensions,
+  # krun, no network) over our own corpus; scored against the unstripped symbols.
+  benchCorpus = import ./bench/corpus.nix { pkgs = pkgs-unstable; };
+  benchScripts = pkgs.runCommand "rea-bench-scripts" { } "mkdir $out; cp ${./bench/BenchDump.java} $out/BenchDump.java";
+  rea-bench = pkgs.writeShellApplication {
+    name = "rea-bench";
+    runtimeInputs = [ docker pkgs.coreutils pkgs.gnused pkgs.python3 ];
+    text = common + ''
+      name=''${1:-bench-$(date +%Y%m%d-%H%M)}
+      d=$(case_dir "$name")
+      [ ! -e "$d" ] || die "case $name exists"
+      ${rea-case}/bin/rea-case new "$name" --tier 0 --brief "M1 benchmark over ${benchCorpus}" >/dev/null
+      ${rea-case}/bin/rea-case add "$name" ${benchCorpus}/*.stripped >/dev/null
+      ensure_image
+      as_root -v "$d/out:/o" -v "$d/work:/w" "$IMAGE" -c 'chown 1000:100 /o /w && chmod 700 /o /w'
+      times="$d/log/bench-times.txt"; : > "$times"
+      for t in "$d"/target/*.stripped; do
+        id=$(basename "$t" .stripped)
+        s=$(date +%s)
+        docker run --rm --runtime krun --annotation krun.ram_mib=6144 \
+          --network none --read-only --tmpfs /tmp:size=512m \
+          --cap-drop ALL --security-opt no-new-privileges --memory 8g --pids-limit 4096 \
+          -v "$d/target:$d/target:ro" -v "$d/out:$d/out" -v "$d/work:$d/work" \
+          -v ${benchScripts}:/bench:ro -e TMPDIR="$d/work" -e HOME="$d/work" \
+          --entrypoint /bin/sh "$IMAGE" -c '"$GHIDRA_INSTALL_DIR"/support/analyzeHeadless "$1" p -import "$2" -scriptPath /bench -postScript BenchDump.java "$3" -deleteProject -analysisTimeoutPerFile 1800 >"$4" 2>&1' \
+          _ "$d/work" "$t" "$d/out/$id.json" "$d/out/$id.ghidra.log" || echo "$id: analyzeHeadless failed" >&2
+        echo "$id $(( $(date +%s) - s ))" | tee -a "$times"
+      done
+      ${rea-case}/bin/rea-case close "$name" >/dev/null
+      python3 -I ${./bench/score.py} ${benchCorpus} "$d/out" ${pkgs.binutils-unwrapped}/bin/readelf > "$d/out/score.json"
+      python3 -I ${./bench/table.py} "$d/out/score.json" "$times" | tee "$d/out/score.txt"
+      echo "results: $d/out/score.json"
+    '';
+  };
   rea-net-mirror = pkgs.writeScriptBin "rea-net-mirror" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./net-mirror.py);
 
   # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
@@ -476,5 +510,5 @@ let
   };
 in
 lib.mkIf enabled {
-  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw ];
+  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw rea-bench ];
 }
