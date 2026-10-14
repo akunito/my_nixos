@@ -165,6 +165,17 @@ Recursos:
 
 Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llevar a Claude a proponer REA por su cuenta.
 
+**Estado F2 (2026-10-14):** implementado (`6abdceb0`) y probado desde el build en DESK; falta desplegar.
+- `microvm.nix` como input fijado y `vm.nix` (QEMU sin NIC, store propio, 9p, vsock).
+- `env.nix` compartido con la imagen.
+- `rea-vm-mcp`: una VM a la vez, scope con límites, sin `LD_LIBRARY_PATH`, y la VM se destruye al cerrar.
+- `rea-cli` rechaza los niveles 1–2.
+- `rea-claude` admite todos los niveles, con token de un año (`claude setup-token` + `rea-claude-token`), credenciales retiradas de los subprocesos y `--ask` sin interfaz para los niveles 0–1.
+- **Prueba:** un caso de nivel 1 → la VM arranca sola → `open_binary` + `search_strings` encuentran el secreto (96 s con el arranque) → la VM y su scope desaparecen al cerrar.
+- X13 tiene `/dev/kvm` y `/dev/vhost-vsock` accesibles.
+
+**Pendiente de F2:** `rea-triage` (DIE, YARA y firmas dentro de la VM) y una prueba de seguridad con un programa propio que intente salir de la VM.
+
 **F2: microVM (niveles 1 y 2, estático); DESK.**
 - Flake input `microvm.nix`, guest con `rea-env`, QEMU, relé vsock, virtiofs con la misma ruta y overlay que se tira al apagar.
 - `rea-triage` dentro de la VM.
