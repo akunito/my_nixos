@@ -88,7 +88,7 @@ KV por token (f16) = 2 × capas de atención completa × kv_heads × head_dim ×
 | **Qwen3.5-9B** abliterated, con visión | 8 × 4 | 32 KB | 8 GB | 9,5 GB Q8_0 | **~18,5 GB, cabe** |
 | Qwen3.6-35B-A3B (coder, MoE) | 10 × 2 | 20 KB | 5 GB | 17 GB IQ4_XS | ~22,5 GB, justo |
 
-Los tres están entrenados a 262 144; 512k exige YaRN ×2 (`--rope-scaling yarn --rope-scale 2 --yarn-orig-ctx 262144`) con pérdida en recuerdo lejano. Preset propuesto `reasoner-9b-512k`: Huihui-Qwen3.5-9B-abliterated Q8_0 + mmproj (en `hf-download.sh`), 1 slot, KV q8_0, YaRN ×2, `--reasoning-effort medium --reasoning-budget 16384`. Para "mucha calidad" sigue el 27B a 128-256k.
+Los tres están entrenados a 262 144; 512k exige YaRN ×2 (`--rope-scaling yarn --rope-scale 2 --yarn-orig-ctx 262144`) con pérdida en recuerdo lejano. Preset propuesto `reasoner-9b-512k`: Huihui-Qwen3.5-9B-abliterated Q8_0 + mmproj (en `hf-download.sh`), 1 slot, KV q8_0, YaRN ×2, `--reasoning-effort medium --reasoning-budget 16384`. Para "mucha calidad" sigue el 27B a 128-256k. **Medido 2026-10-14 (preset `reasoner-9b-512k`, sesión dotfiles-69):** 20,6 GB, carga 4,6 s, 77 tok/s en prompt corto; prueba de aguja con 411 734 tokens (README ×12, tres frases al 8/50/92 %): las tres exactas, prefill 292 s (1 409 tok/s), generación 28,5 tok/s a ese contexto. La plantilla de Qwen3.5 también rechazaba el `system` a mitad de turno de Claude Code → `qwen3.5-system-anywhere.jinja`.
 
 ## 7. Un solo servidor: modo router de llama-server
 
