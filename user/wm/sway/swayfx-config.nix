@@ -523,6 +523,10 @@ in
     ];
 
     config = {
+      # HM's default swaybar is bar-0, kept invisible by the `bar bar-0` block in
+      # extraConfig. With sway-apps that block is gone and bar-0 would dock with
+      # i3status: no HM bar at all (Waybar's bars come from sway-apps-bars.conf).
+      bars = lib.mkIf swayApps [ ];
       # Hyper key definition (Ctrl+Alt+Super)
       modifier = "Mod4"; # Super key
       # Note: Hyper key combinations are defined directly in keybindings

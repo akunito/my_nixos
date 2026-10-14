@@ -261,7 +261,7 @@ def case_waybar_auto_all_when_other_bar_hidden_or_fullscreen():
         t0 = time.perf_counter()
         g.cmd("fullscreen enable")
         b.wait_cols("HEADLESS-1", ALL_BUTTONS, "fullscreen on the other output -> all")
-        print(f"  fullscreen -> CSS applied and drawn within {(time.perf_counter() - t0) * 1000:.0f} ms (incl. grim polls)", flush=True)
+        print(f"  fullscreen -> other bar shows all workspaces, drawn, within {(time.perf_counter() - t0) * 1000:.0f} ms (incl. grim polls)", flush=True)
         g.cmd("fullscreen disable")
         b.wait_cols("HEADLESS-1", lambda c: 60 < c < 120, "fullscreen gone -> own workspaces")
 
