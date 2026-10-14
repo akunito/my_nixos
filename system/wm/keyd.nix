@@ -1,7 +1,44 @@
 { pkgs, lib, userSettings, systemSettings, ... }:
 let
+  # Keypad profiles (SWAY-18): every profile is an immutable /etc/keypad/<device>/<profile>
+  # built here; /etc/keyd/<device>.conf only includes /etc/keyd/<device>-active, a plain root
+  # file the activation script and `keypad-profile set` copy the chosen profile into (then
+  # keyd reload). Switching never takes arbitrary content: keyd's command() runs as root,
+  # so a user-writable include would be a root shell.
+  keydOn = (userSettings.wm == "sway" || 
+    systemSettings.enableSwayForDESK == true ||
+    userSettings.wm == "plasma6" ||
+    userSettings.wm == "hyprland" ||
+    (systemSettings ? wmEnableHyprland && systemSettings.wmEnableHyprland == true));
   keypads = (builtins.fromJSON (builtins.readFile ../../user/wm/sway/apps/keyd-devices.json)).devices;
-  keypadBoards = lib.mapAttrs (_: d: { ids = d.ids; settings = { main = d.main; } // (d.layers or { }); }) keypads;
+  profilesOf = d: d.profiles or { default = { name = "Default"; main = d.main or { }; }; };
+  defaultOf = d: d.default_profile or (builtins.head (builtins.attrNames (profilesOf d)));
+  # command() runs as root inside keyd: refused here too, not only in the GUI.
+  iniOf = p: assert lib.assertMsg (!(lib.hasInfix "command(" (builtins.toJSON p))) "keyd-devices.json: command() is not allowed in keypad profiles"; "[main]\n" + lib.concatStrings (lib.mapAttrsToList (k: v: "${k} = ${v}\n") (p.main or { }))
+    + lib.concatStrings (lib.mapAttrsToList (layer: binds: "\n[${layer}]\n"
+        + lib.concatStrings (lib.mapAttrsToList (k: v: "${k} = ${v}\n") binds)) (p.layers or { }));
+  keypadBoards = lib.mapAttrs (n: _: { ids = keypads.${n}.ids; extraConfig = "include ${n}-active"; }) keypads;
+  keypadEtc = lib.listToAttrs (lib.concatLists (lib.mapAttrsToList (n: d: lib.mapAttrsToList (pid: p:
+    lib.nameValuePair "keypad/${n}/${pid}" { text = iniOf p; mode = "0644"; }) (profilesOf d)) keypads));
+  keypadProfile = pkgs.writeShellScriptBin "keypad-profile" ''
+    # keypad-profile set|get|list DEVICE [PROFILE] - switch a keypad to a profile built by Nix.
+    set -eu
+    cmd=''${1:-}; dev=''${2:-}; pid=''${3:-}
+    case "$dev" in ""|*[!a-z0-9_]*) echo "bad device" >&2; exit 2;; esac
+    case "$cmd" in
+      list) ls /etc/keypad/"$dev" ;;
+      get) cat /var/lib/keypad/"$dev".profile 2>/dev/null || echo "${"$"}{dev}: none" ;;
+      set)
+        case "$pid" in ""|*[!a-z0-9_-]*) echo "bad profile" >&2; exit 2;; esac
+        [ -f /etc/keypad/"$dev"/"$pid" ] || { echo "no profile $pid for $dev (deploy it first)" >&2; exit 2; }
+        ${pkgs.coreutils}/bin/install -D -m 0644 /etc/keypad/"$dev"/"$pid" /etc/keyd/"$dev"-active
+        ${pkgs.coreutils}/bin/mkdir -p /var/lib/keypad
+        echo "$pid" > /var/lib/keypad/"$dev".profile
+        ${pkgs.keyd}/bin/keyd reload >/dev/null
+        echo "$dev -> $pid" ;;
+      *) echo "usage: keypad-profile set|get|list DEVICE [PROFILE]" >&2; exit 2 ;;
+    esac
+  '';
 in
 
 {
@@ -9,13 +46,7 @@ in
   # Keyd works at the kernel input level, so it works in Sway, Plasma, Hyprland, console, TTY, and login screens
   # Enable for all GUI environments: Sway, Plasma 6, Hyprland
   # This covers personal, desk, laptops, and work computers that use GUI
-  services.keyd = lib.mkIf (
-    userSettings.wm == "sway" || 
-    systemSettings.enableSwayForDESK == true ||
-    userSettings.wm == "plasma6" ||
-    userSettings.wm == "hyprland" ||
-    (systemSettings ? wmEnableHyprland && systemSettings.wmEnableHyprland == true)
-  ) {
+  services.keyd = lib.mkIf keydOn {
     enable = true;
     
     keyboards = keypadBoards // {
@@ -67,5 +98,27 @@ in
       };
     };
     };
+  };
+
+  environment.etc = lib.mkIf keydOn keypadEtc;
+  environment.systemPackages = lib.mkIf keydOn [ keypadProfile ];
+  # The GUI's profile switch: exactly `keypad-profile set`, which only copies a Nix-built profile.
+  security.sudo.extraRules = lib.mkIf keydOn [{
+    users = [ userSettings.username ];
+    commands = [{ command = "/run/current-system/sw/bin/keypad-profile set *"; options = [ "NOPASSWD" ]; }];
+  }];
+  # Re-apply each keypad's chosen profile (its content may have changed with this deploy);
+  # a profile that no longer exists falls back to the device's default_profile.
+  system.activationScripts.keypad = lib.mkIf keydOn {
+    deps = [ "etc" ];
+    text = lib.concatStrings (lib.mapAttrsToList (n: d: ''
+      mkdir -p /var/lib/keypad
+      sel=$(cat /var/lib/keypad/${n}.profile 2>/dev/null || true)
+      if [ -z "$sel" ] || [ ! -f /etc/keypad/${n}/"$sel" ]; then sel=${defaultOf d}; fi
+      ${pkgs.coreutils}/bin/install -D -m 0644 /etc/keypad/${n}/"$sel" /etc/keyd/${n}-active
+      echo "$sel" > /var/lib/keypad/${n}.profile
+    '') keypads) + ''
+      if ${pkgs.systemd}/bin/systemctl -q is-active keyd; then ${pkgs.keyd}/bin/keyd reload >/dev/null 2>&1 || true; fi
+    '';
   };
 }

@@ -1,10 +1,11 @@
 """Keypad mapping (SWAY-18): extra keypads (Razer Tartarus V2, …) remapped by keyd.
 
-Source of truth: user/wm/sway/apps/keyd-devices.json, read by system/wm/keyd.nix (one keyd
-keyboard per device, `main` = its [main] section). The GUI page "Keypad" draws the device,
-edits one key at a time and saves the JSON; keyd is a system service, so the change goes
-live with the next install.sh (the page offers it). `deployed()` reads /etc/keyd/<device>.conf
-to tell what is live.
+Source of truth: user/wm/sway/apps/keyd-devices.json, read by system/wm/keyd.nix. Each device
+has PROFILES (one per game: {"name", "main": {key: action}}); Nix builds each into
+/etc/keypad/<device>/<profile>, and /etc/keyd/<device>.conf includes /etc/keyd/<device>-active.
+Switching is instant: `sudo -n keypad-profile set <device> <profile>` copies a Nix-built
+profile there and runs `keyd reload` (no rebuild). Editing or adding a profile needs a deploy
+(install.sh), because the profile files come from the Nix build.
 
 keyd's `command()` runs a shell command AS ROOT on a key press: never accepted here."""
 from __future__ import annotations
@@ -27,6 +28,9 @@ GUI_PANELS = [("keypad", "Keypad", "Tartarus · keyd mapping", "input-gaming-sym
 
 FILE_NAME = "keyd-devices.json"
 KEYD_ETC = Path("/etc/keyd")
+KEYPAD_ETC = Path("/etc/keypad")              # Nix-built profiles
+KEYPAD_VAR = Path("/var/lib/keypad")           # <device>.profile = the live one
+PROFILE_BIN = "/run/current-system/sw/bin/keypad-profile"
 MODS = "CSAMG"                    # keyd: Control, Shift, Alt, Meta, AltGr
 FUNCTIONS = ("macro", "overload", "overloadt", "overloadt2", "overloadi", "lettermod", "layer", "layerm",
              "oneshot", "oneshotm", "toggle", "togglem", "swap", "swapm", "timeout", "clear", "setlayout",
@@ -85,6 +89,8 @@ def load(path: Path | None = None) -> dict[str, Any]:
     except FileNotFoundError:
         data = {"version": 1, "devices": {}}
     data.setdefault("devices", {})
+    for d in data["devices"].values():
+        profiles(d)
     return data
 
 
@@ -181,26 +187,64 @@ def device_model(dev: dict[str, Any]) -> Model | None:
     return MODELS.get(str(dev.get("model", "")))
 
 
-def action_of(dev: dict[str, Any], key: Key) -> str:
-    """What the key does now: its mapping, or its own code when unmapped."""
-    return str((dev.get("main") or {}).get(key.code, key.code))
+def profiles(dev: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """The device's profiles; a pre-profiles file (a bare "main") becomes one called default."""
+    if "profiles" not in dev:
+        dev["profiles"] = {"default": {"name": "Default", "main": dev.pop("main", {})}}
+        dev.setdefault("default_profile", "default")
+    return dev["profiles"]
 
 
-def set_action(dev: dict[str, Any], key: Key, action: str | None) -> None:
+def default_profile(dev: dict[str, Any]) -> str:
+    ps = profiles(dev)
+    d = dev.get("default_profile")
+    return d if d in ps else next(iter(ps))
+
+
+def slug(name: str, taken: set[str] = frozenset()) -> str:
+    base = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:24] or "profile"
+    pid, n = base, 2
+    while pid in taken:
+        pid, n = f"{base}_{n}", n + 1
+    return pid
+
+
+def new_profile(dev: dict[str, Any], name: str, copy_from: str | None = None) -> str:
+    ps = profiles(dev)
+    pid = slug(name, set(ps))
+    src = ps.get(copy_from or "", {})
+    ps[pid] = {"name": name.strip() or pid, "main": dict(src.get("main") or {})}
+    if src.get("layers"):
+        ps[pid]["layers"] = json.loads(json.dumps(src["layers"]))
+    return pid
+
+
+def delete_profile(dev: dict[str, Any], pid: str) -> str | None:
+    """None, or why not (the last one, or the default)."""
+    ps = profiles(dev)
+    if len(ps) < 2:
+        return "a device needs at least one profile"
+    if pid == default_profile(dev):
+        return "the default profile cannot be deleted (pick another default first)"
+    ps.pop(pid, None)
+    return None
+
+
+def action_of(profile: dict[str, Any], key: Key) -> str:
+    """What the key does in this profile: its mapping, or its own code when unmapped."""
+    return str((profile.get("main") or {}).get(key.code, key.code))
+
+
+def set_action(profile: dict[str, Any], key: Key, action: str | None) -> None:
     """None or the key's own code = back to the default (entry removed)."""
-    main = dev.setdefault("main", {})
+    main = profile.setdefault("main", {})
     if action is None or action.strip() == key.code:
         main.pop(key.code, None)
     else:
         main[key.code] = action.strip()
 
 
-def deployed(name: str, etc: Path = KEYD_ETC) -> dict[str, str] | None:
-    """[main] of /etc/keyd/<name>.conf as keyd runs it now; None when missing."""
-    try:
-        text = (etc / f"{name}.conf").read_text()
-    except OSError:
-        return None
+def parse_main(text: str) -> dict[str, str]:
     out: dict[str, str] = {}
     section = None
     for line in text.splitlines():
@@ -216,62 +260,126 @@ def deployed(name: str, etc: Path = KEYD_ETC) -> dict[str, str] | None:
     return out
 
 
-def pending(data: dict[str, Any], etc: Path = KEYD_ETC) -> list[str]:
-    """Devices whose saved mapping is not what keyd runs (needs install.sh)."""
-    return [n for n, d in data.get("devices", {}).items() if deployed(n, etc) != dict(d.get("main") or {})]
+def deployed(dev_name: str, pid: str, etc: Path = KEYPAD_ETC) -> dict[str, str] | None:
+    """[main] of the Nix-built profile file; None when that profile was never deployed."""
+    try:
+        return parse_main((etc / dev_name / pid).read_text())
+    except OSError:
+        return None
+
+
+def live_profile(dev_name: str, var: Path = KEYPAD_VAR) -> str | None:
+    try:
+        return (var / f"{dev_name}.profile").read_text().strip() or None
+    except OSError:
+        return None
+
+
+def pending(data: dict[str, Any], etc: Path = KEYPAD_ETC) -> list[str]:
+    """'device/profile' entries whose saved mapping is not what the last deploy built."""
+    out = []
+    for n, d in data.get("devices", {}).items():
+        for pid, p in profiles(d).items():
+            if deployed(n, pid, etc) != dict(p.get("main") or {}):
+                out.append(f"{n}/{pid}")
+    return out
+
+
+def activate(dev_name: str, pid: str) -> tuple[bool, str]:
+    """Switch the keypad now (sudo rule: exactly `keypad-profile set *`)."""
+    try:
+        r = subprocess.run(["sudo", "-n", PROFILE_BIN, "set", dev_name, pid], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, str(exc)
+    return r.returncode == 0, (r.stdout + r.stderr).strip()
 
 
 # --------------------------------------------------------------------------
 # CLI
 
 def register_cli(sub) -> None:
-    p = sub.add_parser("keypad", help="keypad key mapping (keyd), e.g. the Razer Tartarus").add_subparsers(dest="sub", required=True)
-    p.add_parser("list", help="every device and key with its action").set_defaults(func=_cmd_list)
-    s = p.add_parser("set", help="map a key: keypad set razer_tartarus 07 C-a")
-    s.add_argument("device"); s.add_argument("key"); s.add_argument("action")
-    s.add_argument("--no-git", action="store_true"); s.set_defaults(func=_cmd_set)
-    r = p.add_parser("reset", help="back to the key's own code")
-    r.add_argument("device"); r.add_argument("key")
-    r.add_argument("--no-git", action="store_true"); r.set_defaults(func=_cmd_set, action=None)
-    p.add_parser("status", help="saved vs live in keyd").set_defaults(func=_cmd_status)
+    p = sub.add_parser("keypad", help="keypad key mapping profiles (keyd), e.g. the Razer Tartarus").add_subparsers(dest="sub", required=True)
+    x = p.add_parser("list", help="keys of a profile (default: the live one)")
+    x.add_argument("--device"); x.add_argument("--profile"); x.set_defaults(func=_cmd_list)
+    x = p.add_parser("profiles", help="every device's profiles, the live one marked")
+    x.set_defaults(func=_cmd_profiles)
+    x = p.add_parser("use", help="switch a keypad to a deployed profile now (keyd reload, no rebuild)")
+    x.add_argument("device"); x.add_argument("profile"); x.set_defaults(func=_cmd_use)
+    x = p.add_parser("set", help="map a key in a profile: keypad set razer_tartarus 07 C-a [--profile l2]")
+    x.add_argument("device"); x.add_argument("key"); x.add_argument("action"); x.add_argument("--profile")
+    x.add_argument("--no-git", action="store_true"); x.set_defaults(func=_cmd_set)
+    x = p.add_parser("reset", help="key back to its own code")
+    x.add_argument("device"); x.add_argument("key"); x.add_argument("--profile")
+    x.add_argument("--no-git", action="store_true"); x.set_defaults(func=_cmd_set, action=None)
+    p.add_parser("status", help="saved vs deployed vs live").set_defaults(func=_cmd_status)
+
+
+def _dev(data: dict[str, Any], name: str | None) -> tuple[str, dict[str, Any]] | tuple[None, None]:
+    name = name or next(iter(data["devices"]), None)
+    return (name, data["devices"][name]) if name in data["devices"] else (None, None)
 
 
 def _cmd_list(a) -> int:
     data = load()
-    rows = []
-    for name, dev in data["devices"].items():
-        m = device_model(dev)
-        for k in (m.keys if m else ()):
-            rows.append({"device": name, "key": k.id, "code": k.code, "action": action_of(dev, k)})
-    print(json.dumps(rows) if getattr(a, "json", False) else "\n".join(f"{r['device']:16} {r['key']:6} {r['code']:10} -> {r['action']}" for r in rows))
+    name, dev = _dev(data, a.device)
+    if dev is None:
+        print("no such device")
+        return 2
+    pid = a.profile or live_profile(name) or default_profile(dev)
+    prof = profiles(dev).get(pid)
+    m = device_model(dev)
+    if prof is None or m is None:
+        print(f"no profile {pid!r}")
+        return 2
+    rows = [{"device": name, "profile": pid, "key": k.id, "code": k.code, "action": action_of(prof, k)} for k in m.keys]
+    print(json.dumps(rows) if getattr(a, "json", False) else "\n".join(f"{r['key']:6} {r['code']:10} -> {r['action']}" for r in rows))
     return 0
+
+
+def _cmd_profiles(a) -> int:
+    data = load()
+    rows = [{"device": n, "profile": pid, "name": p.get("name", pid), "live": live_profile(n) == pid,
+             "default": pid == default_profile(d), "deployed": deployed(n, pid) == dict(p.get("main") or {})}
+            for n, d in data["devices"].items() for pid, p in profiles(d).items()]
+    print(json.dumps(rows) if getattr(a, "json", False) else "\n".join(
+        f"{'*' if r['live'] else ' '} {r['device']:16} {r['profile']:16} {r['name']}{'' if r['deployed'] else '  (not deployed)'}" for r in rows))
+    return 0
+
+
+def _cmd_use(a) -> int:
+    ok, msg = activate(a.device, a.profile)
+    print(msg)
+    return 0 if ok else 1
 
 
 def _cmd_set(a) -> int:
     data = load()
-    dev = data["devices"].get(a.device)
+    name, dev = _dev(data, a.device)
     m = device_model(dev or {})
     key = m.key(a.key) if m else None
-    if dev is None or key is None:
-        print(f"no device {a.device!r} or key {a.key!r}")
+    pid = a.profile or (default_profile(dev) if dev else None)
+    prof = profiles(dev).get(pid) if dev else None
+    if dev is None or key is None or prof is None:
+        print(f"no device {a.device!r}, key {a.key!r} or profile {pid!r}")
         return 2
     if a.action is not None:
         err = validate(a.action)
         if err:
             print(f"refused: {err}")
             return 2
-    set_action(dev, key, a.action)
+    set_action(prof, key, a.action)
     p = save(data)
     if not a.no_git:
         from . import gitsync
-        gitsync.commit([p], f"sway-apps: keypad {a.device} {a.key} -> {a.action or 'default'}")
-    print(f"{a.device} {a.key} -> {action_of(dev, key)} (saved; live after install.sh)")
+        gitsync.commit([p], f"sway-apps: keypad {name}/{pid} {a.key} -> {a.action or 'default'}")
+    print(f"{name}/{pid} {a.key} -> {action_of(prof, key)} (saved; deploy to rebuild the profile)")
     return 0
 
 
 def _cmd_status(a) -> int:
     data = load()
     pend = pending(data)
-    print(json.dumps({"devices": sorted(data["devices"]), "pending_deploy": pend}) if getattr(a, "json", False)
-          else ("in sync with keyd" if not pend else "saved, not live yet (install.sh): " + ", ".join(pend)))
+    live = {n: live_profile(n) for n in data["devices"]}
+    print(json.dumps({"live": live, "pending_deploy": pend}) if getattr(a, "json", False)
+          else "live: " + ", ".join(f"{n}={p}" for n, p in live.items()) + ("" if not pend else " · not deployed: " + ", ".join(pend)))
     return 0

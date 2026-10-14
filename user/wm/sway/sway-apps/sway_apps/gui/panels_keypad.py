@@ -1,6 +1,8 @@
-"""Keypad (SWAY-18): the Razer Tartarus V2 drawn on a canvas, one key edited at a time.
-Click a key, type or capture its keyd action, Save writes keyd-devices.json, Deploy runs
-install.sh (keyd is a system service). Data and rules: sway_apps/keypad.py."""
+"""Keypad (SWAY-18): the Razer Tartarus V2 drawn on a canvas, one key edited at a time, in
+profiles (one per game). The strip on top picks the profile to edit; "Use now" makes it the
+live one at once (keyd reload, no rebuild). Editing or adding a profile is saved to
+keyd-devices.json and needs Deploy (install.sh builds the profile files). Data and rules:
+sway_apps/keypad.py."""
 from __future__ import annotations
 
 import copy
@@ -11,12 +13,12 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("PangoCairo", "1.0")
-from gi.repository import Adw, Gdk, Gtk, Pango, PangoCairo  # noqa: E402
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango, PangoCairo  # noqa: E402
 
 from .. import keypad as kp  # noqa: E402
 from .. import log, paths, swayipc  # noqa: E402
 from .panels_monitors import _rgba  # noqa: E402
-from .widgets import button, confirm  # noqa: E402
+from .widgets import ask_text, button, confirm  # noqa: E402
 
 _log = log.get("gui.keypad")
 
@@ -74,8 +76,8 @@ class KeypadCanvas(Gtk.DrawingArea):
         PangoCairo.show_layout(cr, layout)
 
     def _draw(self, _area, cr, width: int, height: int) -> None:
-        m, dev = self.panel.model, self.panel.device
-        if m is None or dev is None:
+        m, prof = self.panel.model, self.panel.profile
+        if m is None or prof is None:
             return
         self._view = f, ox, oy = self._fit(m, width, height)
         fg = _rgba(self, "window_fg_color", (0.9, 0.9, 0.9))
@@ -92,7 +94,7 @@ class KeypadCanvas(Gtk.DrawingArea):
             self._text(cr, label, ox + x * f, oy + (y + h / 2 - 7) * f, w * f, fg, 0.45, 8)
         for k in m.keys:
             x, y, w, h = ox + k.x * f, oy + k.y * f, k.w * f, k.h * f
-            action = kp.action_of(dev, k)
+            action = kp.action_of(prof, k)
             changed = action != k.code
             sel = k.id == self.panel.sel_key
             _round(cr, x, y, w, h, 8)
@@ -128,11 +130,31 @@ class KeypadPanel(Gtk.Box):
         self.data = kp.load()
         self.saved = copy.deepcopy(self.data)
         self.dev_name = next(iter(self.data["devices"]), None)
+        dev = self.device
+        self.pid = (kp.live_profile(self.dev_name) if dev else None) or (kp.default_profile(dev) if dev else None)
+        if dev and self.pid not in kp.profiles(dev):
+            self.pid = kp.default_profile(dev)
         self.sel_key: str | None = None
         self.capturing = False
 
         body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=12, margin_bottom=12,
                        margin_start=18, margin_end=18)
+        strip = Gtk.Box(spacing=8)
+        self.prof_box = Gtk.Box(css_classes=["linked"], hexpand=True)
+        strip.append(Gtk.ScrolledWindow(child=self.prof_box, hexpand=True, vscrollbar_policy=Gtk.PolicyType.NEVER,
+                                        propagate_natural_height=True))
+        self.use_btn = button("Use now", self._use, style="suggested-action", icon="media-playback-start-symbolic")
+        strip.append(self.use_btn)
+        menu = Gtk.Box(css_classes=["linked"])
+        for icon, tip, fn in (("list-add-symbolic", "New profile (a copy of this one)", self._new),
+                              ("document-edit-symbolic", "Rename", self._rename),
+                              ("starred-symbolic", "Make it the default (used after a reboot with no choice saved)", self._make_default),
+                              ("user-trash-symbolic", "Delete this profile", self._delete)):
+            b = Gtk.Button(icon_name=icon, tooltip_text=tip)
+            b.connect("clicked", lambda _b, f=fn: f())
+            menu.append(b)
+        strip.append(menu)
+        body.append(strip)
         self.canvas = KeypadCanvas(self)
         body.append(self.canvas)
         hint = Gtk.Label(label="Click a key. Highlighted keys differ from what the keypad sends by default.",
@@ -179,6 +201,11 @@ class KeypadPanel(Gtk.Box):
         return self.data["devices"].get(self.dev_name) if self.dev_name else None
 
     @property
+    def profile(self) -> dict | None:
+        dev = self.device
+        return kp.profiles(dev).get(self.pid) if dev and self.pid else None
+
+    @property
     def model(self) -> kp.Model | None:
         return kp.device_model(self.device or {})
 
@@ -191,23 +218,93 @@ class KeypadPanel(Gtk.Box):
             self.title.set_subtitle("no keypad in keyd-devices.json")
             return
         pend = kp.pending(self.saved)
+        live = kp.live_profile(self.dev_name)
+        ps = kp.profiles(dev)
+        built = f"{self.dev_name}/{self.pid}" not in pend
         state = ("unsaved changes" if self.dirty() else
-                 "saved · live after Deploy (install.sh)" if self.dev_name in pend else "in sync with keyd")
-        self.title.set_subtitle(f"{dev.get('name', m.name)} · {state}")
+                 "saved · Deploy builds it (install.sh)" if pend else "in sync with keyd")
+        live_name = ps.get(live, {}).get("name", live) if live else "none"
+        self.title.set_subtitle(f"{dev.get('name', m.name)} · live: {live_name} · {state}")
         self.save_btn.set_sensitive(self.dirty())
         self.deploy_btn.set_sensitive(not self.dirty())
+        can_use = self.pid != live and built and not self.dirty()
+        self.use_btn.set_sensitive(can_use)
+        self.use_btn.set_tooltip_text("Make this profile the live one now" if can_use else
+                                      "Already live" if self.pid == live else
+                                      "Save and Deploy it first: profiles are built by install.sh")
+        self._fill_profiles(ps, live)
         self.canvas.queue_draw()
 
+    def _fill_profiles(self, ps: dict, live: str | None) -> None:
+        while (c := self.prof_box.get_first_child()) is not None:
+            self.prof_box.remove(c)
+        first = None
+        dflt = kp.default_profile(self.device)
+        for pid, p in ps.items():
+            text = p.get("name", pid) + ("  ●" if pid == live else "") + ("  ★" if pid == dflt else "")
+            b = Gtk.ToggleButton(label=text, active=pid == self.pid, group=first)
+            b.set_tooltip_text(("live now · " if pid == live else "") + ("default · " if pid == dflt else "") + f"id {pid}")
+            b.connect("toggled", lambda btn, x=pid: btn.get_active() and x != self.pid and self.select_profile(x))
+            first = first or b
+            self.prof_box.append(b)
+
+    def select_profile(self, pid: str) -> None:
+        if pid not in kp.profiles(self.device):
+            return
+        self.pid = pid
+        if self.sel_key:
+            self.select_key(self.sel_key)
+        GLib.idle_add(lambda: (self.refresh(), False)[1])     # never rebuild the strip inside its own toggled
+
+    # ---- profiles -----------------------------------------------------------------------
+    def _use(self) -> None:
+        ok, msg = kp.activate(self.dev_name, self.pid)
+        self.win.toast(f"{self.profile.get('name', self.pid)} is live" if ok else f"Switch failed: {msg}", error=not ok)
+        self.refresh()
+
+    def _new(self) -> None:
+        ask_text(self.win, "New profile", f"Starts as a copy of {self.profile.get('name', self.pid)}.",
+                 "", "Create", self.new_profile)
+
+    def new_profile(self, name: str) -> None:
+        self.pid = kp.new_profile(self.device, name, copy_from=self.pid)
+        self.refresh()
+
+    def _rename(self) -> None:
+        ask_text(self.win, "Rename profile", "Only the name changes; the id stays.",
+                 self.profile.get("name", self.pid), "Rename", self.rename_profile)
+
+    def rename_profile(self, name: str) -> None:
+        self.profile["name"] = name
+        self.refresh()
+
+    def _make_default(self) -> None:
+        self.device["default_profile"] = self.pid
+        self.refresh()
+
+    def _delete(self) -> None:
+        err = kp.delete_profile(copy.deepcopy(self.device), self.pid)
+        if err:
+            self.win.toast(err, error=True)
+            return
+        confirm(self.win, f"Delete {self.profile.get('name', self.pid)}?", "Its mapping is removed when you Save.",
+                "Delete", self.delete_profile)
+
+    def delete_profile(self) -> None:
+        if kp.delete_profile(self.device, self.pid) is None:
+            self.pid = kp.default_profile(self.device)
+            self.refresh()
+
     def select_key(self, kid: str) -> None:
-        m, dev = self.model, self.device
+        m, prof = self.model, self.profile
         k = m.key(kid) if m else None
-        if k is None or dev is None:
+        if k is None or prof is None:
             return
         self.sel_key = kid
         self.group.set_description(None)
         self.key_row.set_title(f"Key {kid}")
         self.key_row.set_subtitle(f"sends {k.code} by default")
-        self._set_entry(kp.action_of(dev, k))
+        self._set_entry(kp.action_of(prof, k))
         self.canvas.queue_draw()
 
     def _set_entry(self, text: str) -> None:
@@ -226,14 +323,14 @@ class KeypadPanel(Gtk.Box):
             return
         err = self._validate()
         if err is None:
-            kp.set_action(self.device, self.model.key(self.sel_key), self.action_row.get_text())
+            kp.set_action(self.profile, self.model.key(self.sel_key), self.action_row.get_text())
             self.refresh()
 
     def _default(self) -> None:
         if self.sel_key is None:
             return
         k = self.model.key(self.sel_key)
-        kp.set_action(self.device, k, None)
+        kp.set_action(self.profile, k, None)
         self._set_entry(k.code)
         self.refresh()
 
@@ -269,23 +366,26 @@ class KeypadPanel(Gtk.Box):
 
     # ---- save / deploy ----------------------------------------------------------------
     def _save(self) -> None:
-        bad = [k.id for k in (self.model.keys if self.model else ()) if kp.validate(kp.action_of(self.device, k))]
+        bad = [f"{p.get('name', pid)} {k.id}" for pid, p in kp.profiles(self.device).items()
+               for k in (self.model.keys if self.model else ()) if kp.validate(kp.action_of(p, k))]
         if bad:
-            self.win.toast(f"Fix keys {', '.join(bad)} first", error=True)
+            self.win.toast(f"Fix {', '.join(bad)} first", error=True)
             return
         p = kp.save(self.data)
         if paths.git_enabled():
             from .. import gitsync
             try:
-                gitsync.commit([p], f"sway-apps: keypad {self.dev_name} mapping")
+                gitsync.commit([p], f"sway-apps: keypad {self.dev_name} profiles")
             except Exception as exc:   # noqa: BLE001 - the file is saved either way
                 _log.warning("keypad commit failed: %s", exc)
         self.saved = copy.deepcopy(self.data)
-        self.win.toast("Keypad mapping saved · Deploy to make it live")
+        self.win.toast("Keypad profiles saved · Deploy builds them, then Use now")
         self.refresh()
 
     def _discard(self) -> None:
         self.data = copy.deepcopy(self.saved)
+        if self.pid not in kp.profiles(self.device):
+            self.pid = kp.default_profile(self.device)
         if self.sel_key:
             self.select_key(self.sel_key)
         self.refresh()

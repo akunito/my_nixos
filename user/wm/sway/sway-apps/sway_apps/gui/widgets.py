@@ -109,6 +109,23 @@ def scrolled(child: Gtk.Widget) -> Gtk.ScrolledWindow:
     return sw
 
 
+def ask_text(parent: Gtk.Window, heading: str, body: str, initial: str, action: str,
+             on_ok: Callable[[str], None]) -> None:
+    dlg = Adw.AlertDialog(heading=heading, body=body)
+    entry = Gtk.Entry(text=initial, activates_default=True)
+    dlg.set_extra_child(entry)
+    dlg.add_response("cancel", "Cancel")
+    dlg.add_response("ok", action)
+    dlg.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
+    dlg.set_default_response("ok")
+
+    def _resp(_d, resp):
+        if resp == "ok" and entry.get_text().strip():
+            on_ok(entry.get_text().strip())
+    dlg.connect("response", _resp)
+    dlg.present(parent)
+
+
 def confirm(parent: Gtk.Window, heading: str, body: str, action: str, on_confirm: Callable[[], None]) -> None:
     dlg = Adw.AlertDialog(heading=heading, body=body)
     dlg.add_response("cancel", "Cancel")
