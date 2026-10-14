@@ -52,6 +52,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
 - **system/app/ai-presets.nix**: NAS 3090 preset manager (plan docs/akunito/plans/nas-3090-ai-presets.md, F1). *Enabled when:* `cfg.aiPresetsDefault or "off"`
+- **system/app/ai-presets/ini.nix**: aiPresets (Nix data, see ai-presets.nix) -> llama-server router-mode preset INI
 - **system/app/aion2-meter-daemon.nix**: AION 2 DPS meter, headless Linux daemon (aionmeter-daemon, Plane A2M-48 phase 2b). *Enabled when:* `cfg.aion2MeterDaemonEnable or false`
 - **system/app/akucraft-status-bot.nix**: AkuCraft Telegram bot (announcements + group commands) *Enabled when:* `status + commands`
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
@@ -161,6 +162,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/prometheus-snmp.nix**: SNMP Exporter for pfSense and network devices *Enabled when:* `systemSettings.prometheusSnmpExporterEnable or false`
 - **system/app/prometheus-workstation-exporter.nix**: Prometheus Workstation Exporter Module *Enabled when:* `(systemSettings.prometheusWorkstationExporterEnable or false) && !(systemSettings.prometheusExporterEnable or false)`
 - **system/app/proton.nix**: Only applying the overlay to fix Bottles warning globally (system-wide) *Enabled when:* `userSettings.protongamesEnable == true`
+- **system/app/rea-cases-mount.nix**: REA sandbox cases (AINF-408): ~/rea/cases is bind-mounted onto itself with *Enabled when:* `tmpfiles would order after # local-fs.target, which wants this mount: a cycle.`
 - **system/app/redis-server.nix**: Redis Server Module *Enabled when:*
    - `allows multiple instances if needed`
    - `systemSettings.prometheusRedisExporterEnable or false`
@@ -451,6 +453,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK.
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
+- **user/app/rea/image.nix**: pkgs = nixpkgs-unstable (Ghidra 12.1.4, crun 1.30.1; the stable channel is older).
+- **user/app/rea/rea-agents.nix**: rea-agents 6.4.0 built from our fork (akunito/rea) at the upstream release commit.
+- **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
@@ -691,6 +696,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/rea-sandbox/README.md**: REA (morluto/rea, MCP de ingeniería inversa) listo en DESK y X13 con aislamiento por niveles de riesgo (contenedor Docker rootless con krun para lo nuestro, microVM desechable para lo de terceros), sesión de Claude Code con configuración propia, todas las herramientas que REA sabe usar y un skill global para que Claude Code las proponga
 - **docs/akunito/plans/rea-sandbox/aislamiento.md**: Diseño de aislamiento de REA — contenedor rootless + krun, microVM, carril web, sesión aislada de Claude Code y ciclo de vida de los casos
 - **docs/akunito/plans/rea-sandbox/herramientas.md**: Herramientas de REA con versiones nixpkgs vs requeridas, motores comerciales (Hopper, IDA, JEB) y cadena de suministro/actualizaciones
+- **docs/akunito/plans/rea-sandbox/mejoras.md**: Segundo plan de REA — qué ya existe en open source para medir y mejorar Ghidra (DecBench, extensiones de nixpkgs, firmas abiertas, refinado con IA local) y cómo incorporarlo al sandbox sin clonar herramientas comerciales
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
