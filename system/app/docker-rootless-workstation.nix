@@ -50,15 +50,33 @@ lib.mkIf enabled {
   users.users.${user}.linger = true;
 
   # The maintenance module's activation hook only daemon-reloads the user manager
-  # and starts timers; docker.service is wantedBy default.target, so on the first
-  # deploy nothing starts it and `docker` fails until the next login. Start it
-  # here (no-op when already running).
+  # and starts timers. Two gaps, both measured on DESK 2026-10-14:
+  # - docker.service is wantedBy default.target, so on the first deploy nothing
+  #   starts it and `docker` fails until the next login → start it.
+  # - nixos-rebuild never restarts USER units: after a daemon.json change the
+  #   running rootless dockerd kept the old --config-file (the default-network-opts
+  #   port fix did not apply until a manual restart). Restart it when the running
+  #   config differs from the unit's — but only with no running containers (rootless
+  #   has no live-restore); otherwise say so and leave the restart to the user.
   system.activationScripts.startRootlessDockerWorkstation = lib.stringAfter [ "etc" "users" "reloadLingeringUserManager" ] ''
     _uid=$(${coreutils}/id -u ${user} 2>/dev/null || true)
     if [ -n "$_uid" ] && [ -S "/run/user/$_uid/bus" ]; then
-      ${runuser} -u ${user} -- ${coreutils}/env XDG_RUNTIME_DIR=/run/user/$_uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_uid/bus ${systemctl} --user start docker.service \
-        || echo "docker-rootless: could not start ${user}'s docker.service" >&2
+      _usc="${runuser} -u ${user} -- ${coreutils}/env XDG_RUNTIME_DIR=/run/user/$_uid DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_uid/bus ${systemctl} --user"
+      _want=$($_usc show docker.service -p ExecStart 2>/dev/null | ${pkgs.gnugrep}/bin/grep -o -- '--config-file=[^ ;]*' | ${coreutils}/head -1)
+      _pid=$(${pkgs.procps}/bin/pgrep -u "$_uid" -x dockerd | ${coreutils}/head -1)
+      _have=""
+      [ -n "$_pid" ] && _have=$(${coreutils}/tr '\0' '\n' < /proc/$_pid/cmdline | ${pkgs.gnugrep}/bin/grep -- '^--config-file=' | ${coreutils}/head -1)
+      if [ -z "$_pid" ]; then
+        $_usc start docker.service || echo "docker-rootless: could not start ${user}'s docker.service" >&2
+      elif [ -n "$_want" ] && [ "$_want" != "$_have" ]; then
+        _running=$(${runuser} -u ${user} -- ${coreutils}/env DOCKER_HOST=unix:///run/user/$_uid/docker.sock ${pkgs-unstable.docker}/bin/docker ps -q 2>/dev/null | ${coreutils}/wc -l)
+        if [ "$_running" = 0 ]; then
+          $_usc restart docker.service && echo "docker-rootless: daemon config changed, restarted ${user}'s docker.service" >&2
+        else
+          echo "docker-rootless: daemon config changed but $_running rootless container(s) are running; run 'systemctl --user restart docker' when convenient (until then the old config stays in effect)" >&2
+        fi
+      fi
     fi
-    unset _uid
+    unset _uid _usc _want _pid _have _running
   '';
 }
