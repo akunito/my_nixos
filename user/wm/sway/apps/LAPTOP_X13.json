@@ -82,6 +82,17 @@
           "main": "ignore"
         }
       }
+    },
+    "spacing": {
+      "inner": 4,
+      "edge": 4
+    },
+    "waybar": {
+      "margins": {
+        "top": 4,
+        "sides": 8,
+        "bottom": 0
+      }
     }
   },
   "shortcuts": [],
