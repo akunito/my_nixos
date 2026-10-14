@@ -53,6 +53,10 @@ let
     export CLAUDE_CODE_MAX_CONTEXT_TOKENS="''${live_ctx:-${ctx}}" CLAUDE_CODE_DISABLE_1M_CONTEXT=1
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
     export CLAUDE_CODE_ATTRIBUTION_HEADER=0 DISABLE_PROMPT_CACHING=1
+    # Thinking tokens count as output. The Qwen3.8 template defaults reasoning_effort to xhigh and a
+    # web-research session died with "exceeded the 32000 output token maximum" (2026-10-14); the real
+    # fix is --reasoning-budget / --reasoning-effort on the server preset, this only widens the backstop.
+    export CLAUDE_CODE_MAX_OUTPUT_TOKENS=65536
     if [ "''${CLAUDE_${lib.toUpper name}_MCP:-0}" = "1" ]; then
       exec claude "$@"
     fi
