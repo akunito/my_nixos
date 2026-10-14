@@ -350,6 +350,20 @@ class State:
         layer = self._layer(scope)
         layer.setdefault("settings", {})[key] = value
 
+    def feature(self, key: str) -> dict[str, Any]:
+        """A feature's settings namespace: defaults < common < profile, deep-merged."""
+        from . import features
+        out = features.deep_merge({}, features.settings_defaults().get(key, {}))
+        for layer in (self.common, self.profile):
+            part = (layer.get("settings") or {}).get(key)
+            if isinstance(part, dict):
+                out = features.deep_merge(out, part)
+        return out
+
+    def set_feature(self, key: str, value: dict[str, Any], scope: str = "profile") -> None:
+        """Replace the layer's copy of a feature namespace (callers pass the full dict for that layer)."""
+        self.set_setting(key, value, scope)
+
     # ---- symbolic targets ---------------------------------------------------
     def resolve_target(self, rule: Rule) -> tuple[int | None, str | None]:
         """(workspace number, problem). None/None when the rule has no target."""

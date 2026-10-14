@@ -69,5 +69,9 @@ def profile_file() -> Path:
     return STATE_DIR / f"{profile_name()}.json"
 
 
+# The e2e suite runs a nested headless sway whose outputs are all HEADLESS-n.
+E2E = os.environ.get("SWAY_APPS_E2E", "0") not in ("0", "false", "no", "")
+
+
 def git_enabled() -> bool:
     return os.environ.get("SWAY_APPS_GIT", "1") not in ("0", "false", "no")

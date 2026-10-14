@@ -1,6 +1,7 @@
 """Main window: sidebar navigation, per-section panels, footer with git state."""
 from __future__ import annotations
 
+import importlib
 import sys
 
 import gi
@@ -9,7 +10,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .. import __version__, gitsync, log, paths, swayipc  # noqa: E402
+from .. import __version__, features, gitsync, log, paths, swayipc  # noqa: E402
 from . import launch  # noqa: E402
 from . import theme  # noqa: E402
 from .controller import Controller, Outcome  # noqa: E402
@@ -76,7 +77,11 @@ class MainWindow(Adw.ApplicationWindow):
         self.nav = Gtk.ListBox()
         self.nav.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.nav.add_css_class("navigation-sidebar")
-        for key, title, sub, icon in NAV:
+        nav = list(NAV)
+        log_row = nav.pop()  # "log" stays last
+        nav += [(k, t, sb, i) for k, t, sb, i, _ref in features.gui_panels()]
+        nav.append(log_row)
+        for key, title, sub, icon in nav:
             row = Gtk.ListBoxRow()
             row.key = key  # type: ignore[attr-defined]
             box = Gtk.Box(spacing=10)
@@ -162,6 +167,10 @@ class MainWindow(Adw.ApplicationWindow):
             "profiles": ProfilesPanel(self),
             "log": LogPanel(self),
         }
+        for key, _title, _sub, _icon, ref in features.gui_panels():
+            mod_name, cls_name = ref.split(":")
+            mod = importlib.import_module(f"{__package__}.{mod_name}")
+            self.panels[key] = getattr(mod, cls_name)(self)
         for key, panel in self.panels.items():
             self.stack.add_named(panel, key)
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)

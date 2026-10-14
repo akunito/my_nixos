@@ -50,8 +50,20 @@ class LiveOutput:
 
 
 def hw_id(o: dict[str, Any]) -> str:
-    """Exactly what sway matches on: 'make model serial' (spaces preserved)."""
-    return f"{o.get('make', '')} {o.get('model', '')} {o.get('serial', '')}"
+    """Exactly what sway matches on: 'make model serial' (spaces preserved).
+
+    wlroots' headless backend and some cheap panels report all three as
+    "Unknown": every such output would share one id, so fall back to the
+    connector. One Unknown field (the NSL's serial) keeps the triple."""
+    make, model, serial = o.get("make", ""), o.get("model", ""), o.get("serial", "")
+    if make == model == serial == "Unknown" and o.get("name"):
+        return o["name"]
+    return f"{make} {model} {serial}"
+
+
+def skip_output(name: str) -> bool:
+    """HEADLESS-n outputs are sway's placeholders, except inside the e2e suite."""
+    return name.startswith("HEADLESS") and not paths.E2E
 
 
 def live_outputs() -> list[LiveOutput]:
@@ -91,7 +103,7 @@ def adopt_unknown(state: State) -> list[Monitor]:
     roles = {m.id for m in state.monitors()}
     created: list[Monitor] = []
     for o in live_outputs():
-        if not o.active or o.hw_id in known or o.name.startswith("HEADLESS"):
+        if not o.active or o.hw_id in known or skip_output(o.name):
             continue
         role = next((r for r in ROLE_ORDER if r not in roles), None) or f"mon{len(roles) + 1}"
         group = next((g for g in range(1, 10) if g not in used_groups), 0)

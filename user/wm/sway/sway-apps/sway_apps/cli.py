@@ -1892,6 +1892,10 @@ def build_parser() -> argparse.ArgumentParser:
     l = sub.add_parser("log", help="the action log").add_subparsers(dest="sub", required=True)
     l.add_parser("path").set_defaults(func=cmd_log_path)
     x = l.add_parser("tail"); x.add_argument("-n", "--lines", type=int, default=50); x.add_argument("-f", "--follow", action="store_true"); x.add_argument("--grep"); x.add_argument("--level", choices=["debug", "info", "warning", "error"]); x.set_defaults(func=cmd_log_tail)
+
+    # feature modules (features.FEATURES) own their sub-commands
+    from . import features
+    features.register_cli(sub)
     return p
 
 

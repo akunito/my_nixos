@@ -1152,6 +1152,15 @@
     # only; the for_window rule using it is emitted only with this flag, since
     # an unpatched sway rejects the unknown command.
     swayAboveFullscreen = false;
+    # Local sway patch patches/sway-window-stacking.patch (plan
+    # docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md §3): peek
+    # (`lift_tiled_on_press`), `pin`, `z raise|lower`, and window:move IPC
+    # events for floating drag/resize. Rebuilds sway only; relogin.
+    swayWindowStacking = false;
+    # sway-apps owns the output layout (mode/pos/scale/transform/enable by
+    # hardware id, xwayland_dpi): kanshi and the nwg-displays outputs include
+    # are dropped. Needs swayAppsEnable.
+    swayAppsOwnsOutputs = false;
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config

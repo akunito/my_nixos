@@ -1,5 +1,8 @@
 { config, pkgs, lib, systemSettings, userSettings, pkgs-unstable ? pkgs, pkgs-stable ? pkgs, ... }:
 
+let
+  swayApps = systemSettings.swayAppsEnable or false;
+in
 {
     # Volume/brightness OSD (matches Hyprland behavior)
     services.swayosd = {
@@ -58,7 +61,11 @@
     in {
       Unit = {
         PartOf = [ "sway-session.target" ];
-        After = [ "sway-session.target" "graphical-session.target" ];
+        # sway-apps owns the SNI watcher (sway-apps/default.nix): Waybar is a
+        # host only and can restart/reload without losing tray items.
+        Wants = lib.optional swayApps "sway-apps-tray.service";
+        After = [ "sway-session.target" "graphical-session.target" ]
+          ++ lib.optional swayApps "sway-apps-tray.service";
         # Note: HM already sets ConditionEnvironment=WAYLAND_DISPLAY
         # ExecStartPre checks for SWAYSOCK socket readiness
       };

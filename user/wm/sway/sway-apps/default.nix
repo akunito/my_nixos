@@ -67,10 +67,33 @@ let
     meta.description = "Window rules and startup apps manager for Sway";
     meta.mainProgram = "sway-apps";
   };
+  # On-demand driven suite (tests/e2e): nested headless sway, private D-Bus,
+  # virtual pointer. Runs the repo checkout (not the installed package), so a
+  # worktree can be tested before it is deployed:
+  #   sway-apps-e2e [-k SUBSTR] [--list] [--keep]   (SWAY_APPS_E2E_REPO=<dir> to point elsewhere)
+  e2ePython = pkgs.python3.withPackages (p: [ p.pygobject3 ]);
+  sway-apps-e2e = pkgs.writeShellApplication {
+    name = "sway-apps-e2e";
+    runtimeInputs = [ pkgs.dbus pkgs.coreutils ];
+    text = ''
+      repo="''${SWAY_APPS_E2E_REPO:-${dotfiles}}"
+      export E2E_SWAY="''${E2E_SWAY:-${swayPkg}/bin/sway}"
+      export E2E_WAYBAR="''${E2E_WAYBAR:-${config.programs.waybar.package}/bin/waybar}"
+      export E2E_GRIM="${pkgs.grim}/bin/grim"
+      export E2E_PYTHON="${e2ePython}/bin/python3"
+      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
+      export E2E_TMP="''${E2E_TMP:-''${XDG_RUNTIME_DIR:-/tmp}/sway-apps-e2e}"
+      export E2E_RUNTIME_ROOT="''${E2E_RUNTIME_ROOT:-''${XDG_RUNTIME_DIR:-/tmp}}"
+      mkdir -p "$E2E_TMP"
+      unset LD_LIBRARY_PATH
+      cd "$repo/user/wm/sway/sway-apps/tests/e2e"
+      exec "$E2E_PYTHON" run.py "$@"
+    '';
+  };
 in
 {
   config = lib.mkIf enabled {
-    home.packages = [ sway-apps ];
+    home.packages = [ sway-apps sway-apps-e2e ];
 
     # Published so swayfx-config.nix / startup-apps.nix can call it by store path.
     user.wm.sway._internal.scripts.swayApps = sway-apps;
@@ -88,8 +111,30 @@ in
         Type = "simple";
         EnvironmentFile = "-%t/sway-session.env";
         ExecStart = "${sway-apps}/bin/sway-apps watch";
-        Restart = "on-failure";
-        RestartSec = "3";
+        # Every feature hotkey is a `nop` binding this daemon reacts to: down = dead keys.
+        Restart = "always";
+        RestartSec = "1";
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
+    };
+
+    # Owns org.kde.StatusNotifierWatcher so Waybar restarts/reloads never lose
+    # tray items (sway_apps/tray.py says why; Type=dbus orders on the name).
+    systemd.user.services.sway-apps-tray = {
+      Unit = {
+        Description = "sway-apps: StatusNotifierWatcher (tray items survive Waybar restarts)";
+        PartOf = [ "sway-session.target" ];
+        After = [ "sway-session.target" ];
+        Before = [ "waybar.service" ];
+      };
+      Service = {
+        Type = "dbus";
+        BusName = "org.kde.StatusNotifierWatcher";
+        ExecStart = "${sway-apps}/bin/sway-apps tray-watcher";
+        Restart = "always";
+        RestartSec = "1";
       };
       Install = {
         WantedBy = [ "sway-session.target" ];

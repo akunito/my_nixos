@@ -1,7 +1,6 @@
 """Thin wrapper around swaymsg. No third-party IPC library on purpose."""
 from __future__ import annotations
 
-import glob
 import json
 import os
 import re
@@ -10,7 +9,7 @@ import tempfile
 from dataclasses import dataclass, field
 from typing import Any, Iterator
 
-from . import log, paths
+from . import ipc, log, paths
 
 _log = log.get("sway")
 
@@ -23,12 +22,10 @@ def _ensure_socket() -> None:
     """Over ssh SWAYSOCK is unset; find the live session socket."""
     if os.environ.get("SWAYSOCK") and os.path.exists(os.environ["SWAYSOCK"]):
         return
-    uid = os.getuid()
-    runtime = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{uid}")
-    candidates = sorted(glob.glob(f"{runtime}/sway-ipc.{uid}.*.sock"))
-    if candidates:
-        os.environ["SWAYSOCK"] = candidates[-1]
-        _log.debug("SWAYSOCK discovered: %s", candidates[-1])
+    found = ipc.socket_path()
+    if found:
+        os.environ["SWAYSOCK"] = found
+        _log.debug("SWAYSOCK discovered: %s", found)
 
 
 def available() -> bool:
