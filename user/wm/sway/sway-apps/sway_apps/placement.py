@@ -37,6 +37,23 @@ def _edit(st, fn: Callable[[dict], None], scope: str = "profile") -> None:
     st.set_feature(SETTINGS_KEY, layer, scope)
 
 
+def persist(st, message: str) -> str:
+    """write -> commit -> sync, as cli._persist; nothing to render (no include lines)."""
+    from . import gitsync, log
+    st.write()
+    try:
+        sha = gitsync.commit(st.files(), message)
+    except RuntimeError as exc:
+        log.get("placement").warning("commit failed: %s", exc)
+        return f" · commit failed: {exc}"
+    if sha and gitsync.auto_sync_enabled():
+        try:
+            gitsync.sync()
+        except Exception as exc:  # network down: the commit is safe locally
+            log.get("placement").warning("sync failed: %s", exc)
+    return f" · committed {sha}" if sha else ""
+
+
 def journal_rows() -> list[dict[str, Any]]:
     from .placement_run import Journal
     j = Journal()
