@@ -638,7 +638,7 @@ in
     # llama-stop (Waybar "Stop" row): only this exact command, nothing else.
     security.sudo.extraRules = [{
       users = [ userSettings.username ];
-      commands = [{ command = "/run/current-system/sw/bin/ss -K -tn sport eq :${toString port}"; options = [ "NOPASSWD" ]; }];
+      commands = [{ command = "/run/current-system/sw/bin/ss -K -tn sport eq \\:${toString port}"; options = [ "NOPASSWD" ]; }];
     }];
 
     # Tailscale only. openFirewall would punch the port on every interface, and
