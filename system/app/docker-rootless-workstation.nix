@@ -27,6 +27,14 @@ lib.mkIf enabled {
       # every tailnet peer. Ports that must be reachable are published explicitly
       # on the machine's tailscale IP in the compose file.
       "ip" = "127.0.0.1";
+      # "ip" only covers the default bridge. Compose creates its own networks, and
+      # there `ports:` bound 0.0.0.0 AND [::] — leftyworkout's Vite 3111 was open to
+      # the whole tailnet (measured 2026-10-14 from NAS_PROD). The bridge option
+      # below is applied to every network created afterwards (existing networks
+      # keep their options: recreate them); with it only 127.0.0.1 is bound, no [::].
+      "default-network-opts" = {
+        bridge = { "com.docker.network.bridge.host_binding_ipv4" = "127.0.0.1"; };
+      };
       # No "dns": DESK/X13 run without resolved and /etc/resolv.conf points at
       # pfSense, which slirp reaches; forcing public DNS loses split-horizon.
     }
