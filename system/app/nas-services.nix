@@ -93,6 +93,20 @@ ${onDemandCases}
   dockerBin = "${config.virtualisation.docker.package}/bin/docker";
 in
 {
+  # Every zfs fileSystems entry, whatever its origin (profile list or a regenerated
+  # hardware-configuration.nix), mounts with zfsutil + nofail. The generated entries are
+  # NOT mountpoint=legacy, so plain mount.zfs refuses them ("cannot be mounted using
+  # 'mount'") — zfsutil makes the units work; nofail keeps a failing one from taking
+  # local-fs.target (and the whole box, via emergency.target) down with it. Declared on
+  # the submodule because `fileSystems = f config.fileSystems` would recurse.
+  options.fileSystems = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.submodule ({ config, ... }: {
+      config = lib.mkIf (nasEnabled && config.fsType == "zfs") {
+        options = [ "zfsutil" "nofail" ];
+      };
+    }));
+  };
+
   config = lib.mkIf nasEnabled {
     # ========================================================================
     # Kernel modules — drivetemp for SATA disk temperature via hwmon
@@ -339,11 +353,11 @@ HEADER
     # ZFS
     # ========================================================================
     boot.supportedFilesystems = [ "zfs" ];
-    # The generated hardware-config lists every mounted dataset as an fstab entry. They are
-    # NOT mountpoint=legacy, so plain mount.zfs refuses them ("cannot be mounted using
-    # 'mount'") — zfsutil makes the units work; nofail keeps a failing one from taking
-    # local-fs.target (and the whole box, via emergency.target) down with it.
-    fileSystems = lib.genAttrs nasZfsMountPoints (_: { options = [ "zfsutil" "nofail" ]; });
+    # zfsutil/nofail for EVERY zfs entry comes from the options.fileSystems submodule
+    # below (not from nasZfsMountPoints, which only orders nas-zfs-unlock before the
+    # known mounts). 2026-10-14: autoSystemUpdate regenerated the hardware-config while
+    # the migration pool ssdtmp was mounted; its entries got neither flag, and the first
+    # boot without that pool went to emergency mode (gens 88/89).
     # OpenZFS 2.4.x: carries the fix for the snapshot-automount race that panicked the
     # kernel on 2026-09-12 (openzfs/zfs#17659, PR #17943 — absent from the 2.3.x line).
     boot.zfs.package = pkgs.zfs_unstable;
