@@ -35,12 +35,13 @@ def out(name, make, model, serial, ws, focused=False, nodes=None):
     """A get_tree output node (also good enough as a get_outputs entry)."""
     return {"type": "output", "name": name, "make": make, "model": model, "serial": serial, "active": True,
             "focused": focused, "current_workspace": ws,
-            "nodes": nodes if nodes is not None else [{"type": "workspace", "name": ws, "nodes": [], "floating_nodes": []}]}
+            "nodes": nodes if nodes is not None else [{"type": "workspace", "name": ws, "fullscreen_mode": 1,
+                                                      "nodes": [], "floating_nodes": []}]}
 
 
 def ws(name, fullscreen=0, floating=False):
     con = {"type": "con", "fullscreen_mode": fullscreen, "nodes": [], "floating_nodes": []}
-    node = {"type": "workspace", "name": name, "nodes": [], "floating_nodes": []}
+    node = {"type": "workspace", "name": name, "fullscreen_mode": 1, "nodes": [], "floating_nodes": []}  # as sway reports it
     node["floating_nodes" if floating else "nodes"].append(con)
     return node
 
@@ -216,7 +217,8 @@ class Generation(Base):
         for b in bars:
             self.assertTrue(b["ipc"])
             self.assertEqual(b["name"], b["id"])
-            self.assertEqual(b["modes"], {"dock": {"layer": "top"}})
+            shown = {"layer": "top", "exclusive": True, "passthrough": False, "visible": True}
+            self.assertEqual(b["modes"], {"dock": shown, "overlay": shown})
             self.assertTrue(b["reload_style_on_change"])
             self.assertTrue(b["sway/workspaces"]["all-outputs"])
         self.assertEqual(main["modules-left"], ["pulseaudio", "custom/llm"])
@@ -232,9 +234,10 @@ class Generation(Base):
 
     def test_bars_conf(self):
         text = waybar.render_bars(self.model())
-        self.assertIn("bar wb-main {\n    swaybar_command true\n    mode dock\n}", text)
-        self.assertIn("bar wb-second {\n    swaybar_command true\n    mode invisible\n}", text)
-        self.assertIn("bar wb-other {", text)
+        self.assertIn("bar {\n    id wb-main\n    swaybar_command true\n    mode dock\n}", text)  # no window info: dock
+        self.assertIn("bar {\n    id wb-second\n    swaybar_command true\n    mode invisible\n}", text)
+        self.assertIn("id wb-other\n", text)
+        self.assertEqual(waybar.parse_bars(text), {"wb-main": "dock", "wb-second": "invisible", "wb-other": "invisible"})
 
     def test_style_imports_generated_css_first(self):
         text = waybar.render_style("* { a: b; }\n")
@@ -248,22 +251,22 @@ class EffectiveVisibility(Base):
         super().setUp()
         self.both = {"bars": {"second": {"visible": True}}, "connectors": {}}
 
-    def css(self, model, outputs):
-        return waybar.render_css(model, waybar.windows(model, {"nodes": outputs}))
+    def modes(self, model, outputs):
+        return waybar.bar_modes(model, waybar.windows(model, {"nodes": outputs}))
 
-    def test_two_visible_bars_collapse_each(self):
-        css = self.css(self.model(local=self.both), [DP1(), DP2()])
-        self.assertIn("window#waybar.wb-main #workspaces button:not(.current_output)", css)
-        self.assertIn("window#waybar.wb-second #workspaces button:not(.current_output)", css)
+    def test_two_visible_bars_show_their_own(self):
+        self.assertEqual(self.modes(self.model(local=self.both), [DP1(), DP2()]),
+                         {"main": "dock", "second": "dock", "other": "invisible"})
 
     def test_single_visible_bar_shows_all(self):
-        css = self.css(self.model(), [DP1(), DP2()])  # second hidden by default
-        self.assertNotIn("wb-main #workspaces", css)
+        self.assertEqual(self.modes(self.model(), [DP1(), DP2()])["main"], "overlay")  # second hidden by default
+
+    def test_monitor_absent_leaves_one_bar(self):
+        self.assertEqual(self.modes(self.model(local=self.both), [DP1()])["main"], "overlay")
 
     def test_fullscreen_on_other_output_makes_solo(self):
-        css = self.css(self.model(local=self.both), [DP1(nodes=[ws("11", fullscreen=1)]), DP2()])
-        self.assertNotIn("wb-second #workspaces", css)
-        self.assertIn("wb-main #workspaces", css)  # drawn under the game, rule harmless
+        modes = self.modes(self.model(local=self.both), [DP1(nodes=[ws("11", fullscreen=1)]), DP2()])
+        self.assertEqual((modes["main"], modes["second"]), ("dock", "overlay"))  # main stays docked under the game
 
     def test_fullscreen_floating_counts(self):
         wins = waybar.windows(self.model(local=self.both), {"nodes": [DP1(nodes=[ws("11", 1, floating=True)]), DP2()]})
@@ -271,24 +274,24 @@ class EffectiveVisibility(Base):
 
     def test_fullscreen_on_hidden_workspace_ignored(self):
         dp1 = DP1(nodes=[ws("11"), ws("12", fullscreen=1)])
-        css = self.css(self.model(local=self.both), [dp1, DP2()])
-        self.assertIn("wb-main #workspaces", css)
-        self.assertIn("wb-second #workspaces", css)
+        modes = self.modes(self.model(local=self.both), [dp1, DP2()])
+        self.assertEqual((modes["main"], modes["second"]), ("dock", "dock"))
 
     def test_global_fullscreen_hides_every_bar(self):
         wins = waybar.windows(self.model(local=self.both), {"nodes": [DP1(nodes=[ws("11", fullscreen=2)]), DP2()]})
         self.assertFalse(any(w.effective for w in wins))
 
-    def test_ws_all_has_no_rule(self):
+    def test_ws_all(self):
         local = {"bars": {"second": {"visible": True, "ws": "all"}}, "connectors": {}}
-        css = self.css(self.model(local=local), [DP1(), DP2()])
-        self.assertIn("wb-main #workspaces", css)
-        self.assertNotIn("wb-second #workspaces", css)
+        modes = self.modes(self.model(local=local), [DP1(), DP2()])
+        self.assertEqual((modes["main"], modes["second"]), ("dock", "overlay"))
 
-    def test_catch_all_on_two_outputs_exempts_only_the_visible_window(self):
+    def test_catch_all_on_two_outputs(self):
         local = {"bars": {"main": {"visible": False}, "other": {"visible": True}}, "connectors": {}}
-        css = self.css(self.model(local=local), [DP1(), HDMI(), HDMI2(nodes=[ws("41", fullscreen=1)])])
-        self.assertIn("window#waybar.wb-other:not(.HDMI-A-1) #workspaces button:not(.current_output)", css)
+        modes = self.modes(self.model(local=local), [DP1(), HDMI(), HDMI2(nodes=[ws("41", fullscreen=1)])])
+        self.assertEqual(modes["other"], "overlay")  # its only drawn window is HDMI-A-1
+        modes = self.modes(self.model(local=local), [DP1(), HDMI(), HDMI2()])
+        self.assertEqual(modes["other"], "dock")
 
     def test_inactive_and_headless_outputs_skipped(self):
         dp2 = DP2()
@@ -298,62 +301,78 @@ class EffectiveVisibility(Base):
             wins = waybar.windows(self.model(), {"nodes": [DP1(), dp2, headless]})
         self.assertEqual([w.output for w in wins], ["DP-1"])
 
-    def test_size_css(self):
-        local = {"bars": {"main": {"size": 150}}, "connectors": {}}
-        css = self.css(self.model(local=local), [DP1()])
+    def test_css_static_collapse_and_sizes(self):
+        css = waybar.render_css(self.model(local={"bars": {"main": {"size": 150}}, "connectors": {}}))
+        rule = [l for l in css.splitlines() if l.startswith("window#waybar.mode-dock #workspaces button:not(.current_output) label")][0]
+        for prop in ("min-width: 0", "padding: 0", "margin: 0", "font-size: 0", "opacity: 0"):
+            self.assertIn(prop, rule)
         self.assertIn("window#waybar.wb-main * { font-size: 20px; }", css)  # 13 * 1.5 = 19.5 -> 20
         self.assertIn("window#waybar.wb-main #workspaces button { min-width: 30px;", css)
         self.assertIn("window#waybar.wb-main #custom-notifications.hidden { margin: 0; padding: 0; }", css)
-        self.assertNotIn("wb-second *", css)
-
-    def test_collapse_rule_shape(self):
-        css = self.css(self.model(local=self.both), [DP1(), DP2()])
-        rule = [l for l in css.splitlines() if l.startswith("window#waybar.wb-main #workspaces button:not(.current_output) label")][0]
-        for prop in ("min-width: 0", "padding: 0", "margin: 0", "font-size: 0", "opacity: 0"):
-            self.assertIn(prop, rule)
+        self.assertNotIn("wb-second", css)  # 100 % = the base CSS untouched
+        self.assertEqual(css, waybar.render_css(self.model(local={"bars": {"main": {"size": 150}}, "connectors": {}})))
 
 
 class RuntimeOps(Base):
-    def test_toggle_hides_one_bar_and_persists(self):
+    def synced(self, outputs, **kw):
         rt = waybar.Runtime()
-        sway = FakeSway([DP1(focused=True), DP2()])
-        res = rt.set_live(["main"], sway, visible=None)
-        self.assertEqual(sway.cmds, ["bar wb-main mode invisible"])
-        self.assertFalse(res["bars"]["main"]["visible"])
-        self.assertEqual(waybar.load_local()["bars"]["main"], {"visible": False})
-        self.assertIn("bar wb-main {\n    swaybar_command true\n    mode invisible", waybar.BARS_FILE.read_text())
-        rt.set_live(["main"], sway, visible=None)
-        self.assertEqual(sway.cmds[-1], "bar wb-main mode dock")
+        sway = FakeSway(outputs, bar_ids=kw.pop("bar_ids", ["wb-main", "wb-second", "wb-other"]), **kw)
+        with mock.patch.object(waybar, "reload_waybar", return_value=True):
+            rt.sync(sway)
+        sway.cmds.clear()
+        return rt, sway
+
+    def test_sync_sends_every_mode(self):
+        sway = FakeSway([DP1(), DP2()], bar_ids=["wb-main", "wb-second", "wb-other"])
+        with mock.patch.object(waybar, "reload_waybar", return_value=True):
+            waybar.Runtime().sync(sway)
+        self.assertEqual(sway.cmds, ["bar wb-main mode overlay; bar wb-second mode invisible; bar wb-other mode invisible"])
+
+    def test_toggle_hides_one_bar_and_persists(self):
+        rt, sway = self.synced([DP1(focused=True), DP2()])
+        rt.set_live(["second"], sway, visible=True)  # two bars: both show their own
+        self.assertEqual(sway.cmds, ["bar wb-main mode dock; bar wb-second mode dock"])
+        res = rt.set_live(["second"], sway, visible=None)
+        self.assertEqual(sway.cmds[-1], "bar wb-main mode overlay; bar wb-second mode invisible")
+        self.assertFalse(res["bars"]["second"]["visible"])
+        self.assertEqual(waybar.load_local()["bars"]["second"], {"visible": False})
+        self.assertEqual(waybar.parse_bars(waybar.BARS_FILE.read_text())["wb-second"], "invisible")
+        # a new process (CLI) reads what sway was told from the file
+        waybar.Runtime().set_live(["second"], sway, visible=True)
+        self.assertEqual(sway.cmds[-1], "bar wb-main mode dock; bar wb-second mode dock")
 
     def test_unchanged_visibility_sends_nothing(self):
-        sway = FakeSway([DP1(focused=True)])
-        waybar.Runtime().set_live(["main"], sway, visible=True)
+        rt, sway = self.synced([DP1(focused=True)])
+        rt.set_live(["main"], sway, visible=True)
         self.assertEqual(sway.cmds, [])
 
     def test_unknown_bar_triggers_sway_reload(self):
-        sway = FakeSway([DP1(focused=True)], bar_ids=["bar-0"], fail=True)
+        rt, sway = self.synced([DP1(focused=True)])
+        sway.fail, sway._bar_ids = True, ["bar-0"]
         with mock.patch.object(waybar, "reload_waybar", return_value=True) as rw:
-            res = waybar.Runtime().set_live(["main"], sway, visible=False)
+            rt.set_live(["main"], sway, visible=False)
         self.assertIn("reload", sway.cmds)
-        self.assertTrue(res["sync"]["sway_reloaded"])
         rw.assert_called()
 
-    def test_ws_change_rewrites_css_only(self):
-        rt = waybar.Runtime()
-        sway = FakeSway([DP1(), DP2()])
+    def test_ws_change_is_ipc_only(self):
+        rt, sway = self.synced([DP1(), DP2()])
         rt.set_live(["second"], sway, visible=True)
-        self.assertIn("wb-second #workspaces", waybar.CSS_FILE.read_text())
+        css = waybar.CSS_FILE.read_text()
         res = rt.set_live(["second"], sway, ws="all")
-        self.assertTrue(res["css_changed"])
-        self.assertNotIn("wb-second #workspaces", waybar.CSS_FILE.read_text())
-        self.assertFalse(rt.refresh_css(sway))  # same text: no write
+        self.assertEqual(res["modes"], {"wb-second": "overlay"})
+        self.assertEqual(sway.cmds[-1], "bar wb-second mode overlay")
+        self.assertEqual(waybar.CSS_FILE.read_text(), css)
 
-    def test_size_change_regenerates_and_reloads_waybar(self):
-        rt = waybar.Runtime()
-        sway = FakeSway([DP1(), DP2()], bar_ids=["wb-main", "wb-second", "wb-other"])
+    def test_fullscreen_refresh(self):
+        rt, sway = self.synced([DP1(), DP2()])
+        rt.set_live(["second"], sway, visible=True)
+        sway._outputs = [DP1(), DP2(nodes=[ws("21", fullscreen=1)])]
+        self.assertEqual(rt.refresh(sway), {"wb-main": "overlay"})
+        self.assertEqual(rt.refresh(sway), {})
+
+    def test_size_change_regenerates_and_restarts_waybar(self):
+        rt, sway = self.synced([DP1(), DP2()])
         with mock.patch.object(waybar, "reload_waybar", return_value=True) as rw:
-            rt.sync(sway)
-            rw.reset_mock()
             res = rt.set_live(["main"], sway, size=120)
         self.assertTrue(res["sync"]["config_changed"])
         rw.assert_called_once_with(None)
@@ -368,6 +387,7 @@ class RuntimeOps(Base):
         self.assertFalse(second["config_changed"] or second["bars_changed"] or second["style_changed"] or second["css_changed"])
         self.assertEqual(rw.call_count, 1)
         self.assertNotIn("reload", sway.cmds)
+        self.assertTrue(waybar.CSS_FILE.read_text().startswith(waybar.CSS_HEADER))
         self.assertEqual(waybar.load_local()["connectors"], {"main": "DP-1", "second": "DP-2"})
 
     def test_sync_without_reload_leaves_pending_for_later(self):
@@ -405,7 +425,30 @@ class RuntimeOps(Base):
         st = waybar.status(self.model(), FakeSway([DP1(focused=True), DP2()]))
         self.assertEqual(st["focused_output"], "DP-1")
         main = st["bars"][0]
-        self.assertEqual((main["outputs"], main["effective"], main["shows_all"]), (["DP-1"], True, True))
+        self.assertEqual((main["outputs"], main["effective"], main["shows_all"], main["mode"]), (["DP-1"], True, True, "overlay"))
+
+
+class WaybarProcess(Base):
+    def test_restart_via_systemd(self):
+        calls = []
+
+        def run(argv, **kw):
+            calls.append(argv)
+            return mock.Mock(returncode=0, stdout="4242\n")
+        with mock.patch.dict(os.environ, {"SWAY_APPS_WAYBAR_PIDFILE": ""}), mock.patch.object(paths, "E2E", False), \
+                mock.patch.object(waybar.subprocess, "run", side_effect=run), \
+                mock.patch.object(waybar, "_proc_start", return_value=100.0):
+            os.environ.pop("SWAY_APPS_WAYBAR_PIDFILE")
+            self.assertFalse(waybar.reload_waybar(since=50.0))  # started after the change
+            self.assertTrue(waybar.reload_waybar(since=150.0))
+        self.assertEqual(calls[-1], ["systemctl", "--user", "--no-block", "restart", "waybar.service"])
+
+    def test_e2e_never_touches_the_session_waybar(self):
+        with mock.patch.object(paths, "E2E", True), mock.patch.object(waybar.subprocess, "run") as run, \
+                mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SWAY_APPS_WAYBAR_PIDFILE", None)
+            self.assertFalse(waybar.reload_waybar())
+        run.assert_not_called()
 
 
 class Hooks(Base):
@@ -466,25 +509,26 @@ class Watch(Base):
 
     def test_hotkey_toggles_focused_monitor(self):
         self.reg.dispatch("binding", {"binding": {"command": "nop sway-apps waybar toggle"}})
-        self.assertEqual(self.sway.cmds, ["bar wb-second mode dock"])
+        self.assertEqual(self.sway.cmds, ["bar wb-main mode dock; bar wb-second mode dock; bar wb-other mode invisible"])
         self.assertTrue(waybar.load_local()["bars"]["second"]["visible"])
 
     def test_verb_all_and_bar(self):
         self.reg.dispatch("binding", {"binding": {"command": "nop sway-apps waybar hide --all"}})
-        self.assertEqual(self.sway.cmds, ["bar wb-main mode invisible"])  # the others were hidden already
+        self.assertEqual(waybar.parse_bars(waybar.BARS_FILE.read_text()),
+                         {"wb-main": "invisible", "wb-second": "invisible", "wb-other": "invisible"})
         self.reg.dispatch("binding", {"binding": {"command": "nop sway-apps waybar show other"}})
-        self.assertEqual(self.sway.cmds[-1], "bar wb-other mode dock")
+        self.assertEqual(self.sway.cmds[-1], "bar wb-other mode dock")  # no window of its own: not the solo bar
 
-    def test_events_throttled_to_one_css_pass(self):
+    def test_events_throttled_to_one_pass(self):
         self.reg.cancel("waybar.start")
         for _ in range(5):
             self.reg.dispatch("workspace", {"change": "focus"})
             self.reg.dispatch("window", {"change": "fullscreen_mode"})
         self.reg.dispatch("window", {"change": "focus"})
         live = [k for k in self.reg._timer_fns if k.startswith("waybar.")]
-        self.assertEqual(live, ["waybar.css"])
-        with mock.patch.object(waybar.Runtime, "refresh_css") as rc:
-            self.reg._timer_fns["waybar.css"][1](self.reg.ctx)
+        self.assertEqual(live, ["waybar.modes"])
+        with mock.patch.object(waybar.Runtime, "refresh") as rc:
+            self.reg._timer_fns["waybar.modes"][1](self.reg.ctx)
         rc.assert_called_once()
 
     def test_output_event_schedules_sync(self):

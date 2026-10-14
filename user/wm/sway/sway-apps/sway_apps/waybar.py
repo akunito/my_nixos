@@ -2,15 +2,18 @@
 
 One Waybar process, one bar per monitor role ("wb-<role>") plus a catch-all
 "wb-other" for unregistered outputs. Every bar has "ipc": true and an id that
-matches a sway `bar <id> { swaybar_command true; mode dock|invisible }` block
-in ~/.config/sway/sway-apps-bars.conf: `bar <id> mode …` hides ONE bar of the
-process. `swaymsg reload` resends the file's modes, so the file always carries
-the current state.
+matches a sway `bar { id …; swaybar_command true; mode … }` block in
+~/.config/sway/sway-apps-bars.conf. The sway bar mode drives each bar:
+  invisible  hidden
+  dock       shown, this monitor's workspaces (static CSS on .mode-dock)
+  overlay    shown, every workspace (Waybar's overlay preset is remapped to dock's)
+`swaymsg reload` resends the file's modes, so the file always carries the
+current ones. Live changes are IPC only; no CSS reload (see COLLAPSE_CSS).
 
 Generated (only when the text changes, atomically, as regular files):
   ~/.config/waybar/config           bars; module definitions from the Nix catalog
   ~/.config/waybar/style.css        Nix base CSS + @import of the next one
-  ~/.config/waybar/sway-apps.css    workspace mode, effective visibility, sizes
+  ~/.config/waybar/sway-apps.css    collapse rule + per-bar sizes
   ~/.config/sway/sway-apps-bars.conf
 Layers: Nix catalog < settings.waybar (common < profile JSON; "save as
 default") < ~/.local/state/sway-apps/waybar.json (hotkey and live changes).
@@ -50,7 +53,7 @@ SIZE_MIN, SIZE_MAX = 50, 250
 WORKSPACES = "sway/workspaces"
 WINDOW_CHANGES = frozenset(("new", "close", "move", "fullscreen_mode"))
 WORKSPACE_CHANGES = frozenset(("focus", "init", "empty", "move", "reload"))
-CSS_THROTTLE = 0.15     # one get_tree per burst of workspace/window events
+MODES_THROTTLE = 0.15   # one get_tree per burst of workspace/window events
 OUTPUTS_SETTLE = 2.0    # after watch.reconcile (1.5 s), which may adopt a monitor
 
 CATALOG_FILE = paths.XDG_CONFIG_HOME / "sway-apps" / "waybar-modules.json"
@@ -74,7 +77,7 @@ FALLBACK_CATALOG: dict[str, Any] = {
 # scaled per bar when its size is not 100 %. Keep the two in step.
 _MODULE_IDS = ("#clock", "#battery", "#backlight", "#network", "#pulseaudio", "#bluetooth", "#idle_inhibitor",
                "#custom-mic", "#custom-cpu", "#custom-gpu", "#custom-vram", "#custom-ram", "#custom-cpu-temp",
-               "#custom-gpu-temp", "#custom-llm", "#custom-gcal", "#custom-notifications", "#custom-power-menu")
+               "#custom-gpu-temp", "#custom-llm", "#custom-notifications", "#custom-power-menu")
 _CLUSTER_IDS = frozenset(("#battery", "#backlight", "#pulseaudio", "#custom-mic", "#custom-cpu", "#custom-gpu",
                           "#custom-vram", "#custom-ram", "#custom-cpu-temp", "#custom-gpu-temp"))
 
@@ -262,6 +265,13 @@ def _scaled(v: float, pct: int) -> int:
     return max(0, round(v * pct / 100))
 
 
+def _output_names(connector: str | None, criteria: str) -> list[str]:
+    """Waybar matches an output by connector or by the identifier it parses
+    from the xdg-output description; the description of some panels (NSL:
+    model padded, serial Unknown) need not equal sway's hardware id, so both."""
+    return [x for x in dict.fromkeys((connector, criteria)) if x]
+
+
 def render_config(model: Model, connectors: dict[str, str]) -> str:
     cat = model.catalog
     base = cat["bar"]
@@ -269,20 +279,23 @@ def render_config(model: Model, connectors: dict[str, str]) -> str:
     named: list[str] = []
     for b in model.bars:
         if b.key != OTHER:
-            named.extend(x for x in (connectors.get(b.key), b.criteria) if x)
+            named.extend(_output_names(connectors.get(b.key), b.criteria))
     bars = []
     for b in model.bars:
         if b.key == OTHER:
             output: list[str] = [f"!{x}" for x in named] + ["*"]
         else:
-            output = [x for x in (connectors.get(b.key), b.criteria) if x]
+            output = _output_names(connectors.get(b.key), b.criteria)
         cfg: dict[str, Any] = {"name": b.bar_id, "id": b.bar_id, "ipc": True, "output": output}
         cfg.update(base)
         if b.size != 100 and isinstance(base.get("height"), int):
             cfg["height"] = _scaled(base["height"], b.size)
-        # Waybar's "dock" preset is layer BOTTOM (bar.cpp PRESET_MODES): without
-        # this, sway's `mode dock` would push the bar under floating windows.
-        cfg["modes"] = {"dock": {"layer": base.get("layer", "top")}}
+        # sway's bar mode drives each bar: invisible = hidden, dock = this
+        # monitor's workspaces (CSS on .mode-dock), overlay = all workspaces.
+        # Waybar's presets are dock=layer BOTTOM and overlay=no exclusive zone
+        # (bar.cpp PRESET_MODES): both become today's top, exclusive bar.
+        shown = {"layer": base.get("layer", "top"), "exclusive": True, "passthrough": False, "visible": True}
+        cfg["modes"] = {"dock": shown, "overlay": shown}
         cfg["reload_style_on_change"] = True
         for sec in SECTIONS:
             cfg[f"modules-{sec}"] = list(b.layout.get(sec, ()))
@@ -308,11 +321,28 @@ BARS_HEADER = """# Generated by sway-apps (waybar) -- DO NOT EDIT BY HAND.
 """
 
 
-def render_bars(model: Model) -> str:
+def render_bars(model: Model, modes: dict[str, str] | None = None) -> str:
+    # `bar { id X ... }`, never `bar X { ... }`: sway resets its current bar
+    # only for a block named exactly "bar" (config.c CMD_BLOCK/CMD_BLOCK_END),
+    # so a second `bar Y {` block edits bar X (measured: one bar, last mode).
+    modes = modes if modes is not None else bar_modes(model, [])
     out = [BARS_HEADER]
     for b in model.bars:
-        out.append(f"bar {b.bar_id} {{\n    swaybar_command true\n    mode {'dock' if b.visible else 'invisible'}\n}}\n")
+        out.append(f"bar {{\n    id {b.bar_id}\n    swaybar_command true\n    mode {modes[b.key]}\n}}\n")
     return "".join(out)
+
+
+def parse_bars(text: str) -> dict[str, str]:
+    """bar id -> mode, from a rendered bars file (what sway was last told)."""
+    out: dict[str, str] = {}
+    bid = None
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0] == "id":
+            bid = parts[1]
+        elif len(parts) == 2 and parts[0] == "mode" and bid:
+            out[bid] = parts[1]
+    return out
 
 
 def render_style(base_css: str) -> str:
@@ -335,9 +365,12 @@ class Win:
         return self.enabled and not self.fullscreen
 
 
-def _fullscreen_mode(node: dict[str, Any]) -> int:
+def _fullscreen_mode(ws: dict[str, Any]) -> int:
+    # Children only: sway reports fullscreen_mode 1 on every workspace node
+    # itself (i3 compat; measured nested sway 1.11), which made each output
+    # look fullscreen.
     best = 0
-    stack = [node]
+    stack = list(ws.get("nodes") or ()) + list(ws.get("floating_nodes") or ())
     while stack:
         n = stack.pop()
         fm = n.get("fullscreen_mode") or 0
@@ -372,27 +405,40 @@ def windows(model: Model, tree: dict[str, Any]) -> list[Win]:
     return wins
 
 
-CSS_HEADER = "/* Generated by sway-apps (waybar): workspace mode, auto-all, sizes. DO NOT EDIT BY HAND. */\n"
-_COLLAPSE = "{ min-width: 0; min-height: 0; padding: 0; margin: 0; border: 0; font-size: 0; opacity: 0; box-shadow: none; }"
-
-
-def render_css(model: Model, wins: list[Win]) -> str:
+def bar_modes(model: Model, wins: list[Win]) -> dict[str, str]:
+    """Sway bar mode per bar: invisible | dock (this monitor) | overlay (all).
+    Exactly one effectively visible bar shows every workspace."""
     eff = [w for w in wins if w.effective]
-    solo = eff[0] if len(eff) == 1 else None
-    out = [CSS_HEADER]
+    solo = eff[0].key if len(eff) == 1 else None
+    out = {}
     for b in model.bars:
-        sel = f"window#waybar.{b.bar_id}"
-        if b.ws == "output":
-            ws_sel: str | None = sel
-            if solo is not None and solo.key == b.key:
-                # The only visible bar shows every workspace. The catch-all may
-                # draw on several outputs: exempt just the one that is visible.
-                ws_sel = None if sum(1 for w in wins if w.key == b.key) <= 1 else f"{sel}:not(.{solo.output})"
-            if ws_sel:
-                btn = f"{ws_sel} #workspaces button:not(.current_output)"
-                out.append(f"{btn},\n{btn} label {_COLLAPSE}\n")
+        if not b.visible:
+            out[b.key] = "invisible"
+        elif b.ws == "all" or b.key == solo:
+            out[b.key] = "overlay"
+        else:
+            out[b.key] = "dock"
+    return out
+
+
+CSS_HEADER = "/* Generated by sway-apps (waybar): this-monitor workspaces, sizes. DO NOT EDIT BY HAND. */\n"
+# Static on purpose. Waybar's setupCss (client.cpp) adds a NEW GtkCssProvider
+# on every style reload and on SIGUSR2 without removing the old one, so a rule
+# can be added live but never taken away until Waybar restarts (measured: an
+# emptied sway-apps.css left every collapse rule in force). The workspace mode
+# therefore rides on the sway bar mode (window class mode-dock / mode-overlay),
+# and a CSS change (sizes, base) restarts Waybar instead of reloading it.
+COLLAPSE_CSS = ("window#waybar.mode-dock #workspaces button:not(.current_output),\n"
+                "window#waybar.mode-dock #workspaces button:not(.current_output) label "
+                "{ min-width: 0; min-height: 0; padding: 0; margin: 0; border: 0; font-size: 0; opacity: 0; "
+                "box-shadow: none; }\n")
+
+
+def render_css(model: Model) -> str:
+    out = [CSS_HEADER, COLLAPSE_CSS]
+    for b in model.bars:
         if b.size != 100:
-            out.append(_size_css(sel, b.size, model.catalog["sizes"]))
+            out.append(_size_css(f"window#waybar.{b.bar_id}", b.size, model.catalog["sizes"]))
     return "".join(out)
 
 
@@ -415,9 +461,12 @@ def _size_css(sel: str, pct: int, sizes: dict[str, Any]) -> str:
 # Waybar process
 
 def waybar_pid() -> int | None:
-    env = os.environ.get("SWAY_APPS_WAYBAR_PID", "")
-    if env:
-        return int(env) if env.isdigit() else None
+    pidfile = os.environ.get("SWAY_APPS_WAYBAR_PIDFILE")
+    if pidfile:
+        try:
+            return int(Path(pidfile).read_text().strip())
+        except (OSError, ValueError):
+            return None
     if paths.E2E:
         return None  # never signal the live session's Waybar from the suite
     try:
@@ -429,20 +478,26 @@ def waybar_pid() -> int | None:
 
 
 def _proc_start(pid: int) -> float | None:
+    # Boot time from /proc/uptime (10 ms), not /proc/stat btime (whole
+    # seconds): with btime a Waybar started 0.3 s after a change looked older
+    # than it and was restarted for nothing (measured in the e2e suite).
     try:
         with open(f"/proc/{pid}/stat") as fh:
             stat = fh.read()
-        with open("/proc/stat") as fh:
-            btime = next(int(line.split()[1]) for line in fh if line.startswith("btime"))
-    except (OSError, StopIteration, ValueError):
+        with open("/proc/uptime") as fh:
+            boot = time.time() - float(fh.read().split()[0])
+    except (OSError, ValueError, IndexError):
         return None
     ticks = int(stat[stat.rfind(")") + 2:].split()[19])
-    return btime + ticks / os.sysconf("SC_CLK_TCK")
+    return boot + ticks / os.sysconf("SC_CLK_TCK")
 
 
 def reload_waybar(since: float | None = None) -> bool:
-    """SIGUSR2 (safe since sway-apps-tray owns the SNI watcher). With `since`,
-    a Waybar started after that moment already read the change: skip."""
+    """Restart Waybar onto the generated files (safe since sway-apps-tray owns
+    the SNI watcher). A restart, not SIGUSR2: a reload keeps every old CSS
+    provider (see COLLAPSE_CSS), and it is the path the e2e suite exercises.
+    With `since`, a Waybar started after that moment already read the change:
+    skip."""
     pid = waybar_pid()
     if not pid:
         return False
@@ -450,6 +505,24 @@ def reload_waybar(since: float | None = None) -> bool:
         started = _proc_start(pid)
         if started is not None and started > since:
             return False
+    if os.environ.get("SWAY_APPS_WAYBAR_PIDFILE"):
+        # The e2e suite: its Waybar (private D-Bus) aborts on SIGUSR2 in
+        # g_application_impl_command_line (object_id != 0) while the session's
+        # does not (journal 2026-10-14 09:19); a supervisor respawns it.
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            return False
+        _log.info("waybar %s terminated for its supervisor to respawn", pid)
+        return True
+    try:
+        ok = subprocess.run(["systemctl", "--user", "--no-block", "restart", "waybar.service"], capture_output=True,
+                            timeout=15).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        ok = False
+    if ok:
+        _log.info("waybar restarted")
+        return True
     try:
         os.kill(pid, signal.SIGUSR2)
     except OSError as exc:
@@ -500,7 +573,6 @@ class Runtime:
         self._state = state
         self._model: Model | None = None
         self._stamp: tuple | None = None
-        self._css: str | None = None
 
     def _sources(self) -> tuple:
         return (_mtime(paths.common_file()), _mtime(paths.profile_file()), _mtime(CATALOG_FILE), _mtime(LOCAL_FILE))
@@ -524,20 +596,36 @@ class Runtime:
         if self._state is None:
             self._stamp = self._sources()
 
+    @staticmethod
+    def told() -> dict[str, str]:
+        """bar id -> mode sway was last given. Read from the bars file every
+        time: the daemon, the CLI and the GUI all send modes, and a per-process
+        cache went stale (measured: the daemon skipped a fullscreen auto-all
+        because it still believed what it had sent before a CLI change)."""
+        try:
+            return parse_bars(BARS_FILE.read_text())
+        except OSError:
+            return {}
+
+    def _windows(self, m: Model, sway: SwayLink | None) -> list[Win]:
+        if sway is None:
+            return []
+        try:
+            return windows(m, sway.tree())
+        except (ipc.IpcError, OSError) as exc:
+            _log.warning("get_tree failed: %s", exc)
+            return []
+
     # ---- live state -------------------------------------------------------
     def set_live(self, keys: list[str], sway: SwayLink | None, **values: Any) -> dict[str, Any]:
         """Set visible / ws / size for bars (machine-local). visible=None toggles."""
         m = self.model()
-        changed_vis: list[Bar] = []
         resize = False
         for k in keys:
             b = m.by_key[k]
             loc = m.local["bars"].setdefault(k, {})
             if "visible" in values:
-                v = (not b.visible) if values["visible"] is None else bool(values["visible"])
-                if v != b.visible:
-                    changed_vis.append(b)
-                b.visible = loc["visible"] = v
+                b.visible = loc["visible"] = (not b.visible) if values["visible"] is None else bool(values["visible"])
             if "ws" in values:
                 if values["ws"] not in WS_MODES:
                     raise ValueError(f"ws must be one of {WS_MODES}")
@@ -549,41 +637,39 @@ class Runtime:
             b.local = {kk: loc[kk] for kk in ("visible", "ws", "size") if kk in loc}
         save_local(m.local)
         self._local_written()
-        res: dict[str, Any] = {"bars": {k: m.by_key[k].to_dict() for k in keys}}
-        if changed_vis and sway is not None:
-            cmd = "; ".join(f"bar {b.bar_id} mode {'dock' if b.visible else 'invisible'}" for b in changed_vis)
+        res: dict[str, Any] = {}
+        if resize:
+            res["sync"] = self.sync(sway, reload=True)
+        else:
+            res["modes"] = self.refresh(sway)
+        res["bars"] = {k: m.by_key[k].to_dict() for k in keys}
+        return res
+
+    def refresh(self, sway: SwayLink | None) -> dict[str, str]:
+        """Effective visibility -> sway bar modes. Sends only what changed (one
+        IPC message) and keeps the bars file in step for `reload`."""
+        m = self.model()
+        modes = bar_modes(m, self._windows(m, sway))
+        told = self.told()
+        changed = {b.bar_id: modes[b.key] for b in m.bars if told.get(b.bar_id) != modes[b.key]}
+        if not changed:
+            return changed
+        if sway is not None:
+            cmd = "; ".join(f"bar {bid} mode {md}" for bid, md in changed.items())
             try:
                 sway.command(cmd)
             except ipc.IpcError as exc:
                 _log.warning("%s: %s (bar unknown to sway? syncing)", cmd, exc)
-                res["sync"] = self.sync(sway, reload=True)
-        write_if_changed(BARS_FILE, render_bars(m))
-        if resize:
-            res["sync"] = self.sync(sway, reload=True)
-        else:
-            res["css_changed"] = self.refresh_css(sway)
-        return res
-
-    def refresh_css(self, sway: SwayLink | None) -> bool:
-        m = self.model()
-        wins: list[Win] = []
-        if sway is not None:
-            try:
-                wins = windows(m, sway.tree())
-            except (ipc.IpcError, OSError) as exc:
-                _log.warning("get_tree failed: %s", exc)
-        text = render_css(m, wins)
-        if text == self._css:
-            return False
-        changed = write_if_changed(CSS_FILE, text)
-        self._css = text
+                self.sync(sway, reload=True)
+                return changed
+        write_if_changed(BARS_FILE, render_bars(m, modes))
         return changed
 
     # ---- full regeneration -------------------------------------------------
     def sync(self, sway: SwayLink | None, reload: bool = True) -> dict[str, Any]:
-        """Regenerate every file. reload: also bring sway's bar list and Waybar
-        up to date (sway reload only when a bar id is new to it: sway cannot
-        create a bar at runtime)."""
+        """Regenerate every file. reload: also bring sway (every bar mode; a sway
+        reload only when a bar id is new to it: sway cannot create a bar at
+        runtime) and Waybar (when its config changed) up to date."""
         m = self.model()
         res: dict[str, Any] = {}
         conns = dict(m.local.get("connectors") or {})
@@ -604,28 +690,33 @@ class Runtime:
             base = BASE_CSS_FILE.read_text()
         except OSError:
             _log.warning("%s missing; style.css without base", BASE_CSS_FILE)
+        modes = bar_modes(m, self._windows(m, sway))
         cfg_changed = write_if_changed(CONFIG_FILE, render_config(m, conns))
         res["style_changed"] = write_if_changed(STYLE_FILE, render_style(base))
-        bars_changed = write_if_changed(BARS_FILE, render_bars(m))
-        res.update(config_changed=cfg_changed, bars_changed=bars_changed)
+        res["css_changed"] = write_if_changed(CSS_FILE, render_css(m))
+        res["bars_changed"] = write_if_changed(BARS_FILE, render_bars(m, modes))
+        res["config_changed"] = cfg_changed
+        res["modes"] = {b.bar_id: modes[b.key] for b in m.bars}
         sway_reloaded = False
         if reload and sway is not None:
             try:
-                have = set(sway.bar_ids())
-                if not {b.bar_id for b in m.bars} <= have:
+                if not {b.bar_id for b in m.bars} <= set(sway.bar_ids()):
                     sway.command("reload")
                     sway_reloaded = True
-                elif bars_changed:
-                    sway.command("; ".join(f"bar {b.bar_id} mode {'dock' if b.visible else 'invisible'}" for b in m.bars))
+                else:
+                    # every mode, not a diff: activation may have rewritten the
+                    # file while this session's sway kept the old modes
+                    sway.command("; ".join(f"bar {bid} mode {md}" for bid, md in res["modes"].items()))
             except (ipc.IpcError, OSError) as exc:
                 _log.warning("sway bar sync failed: %s", exc)
         res["sway_reloaded"] = sway_reloaded
         pending = m.local.get("pending_reload")
-        if cfg_changed or sway_reloaded:
+        fresh = cfg_changed or sway_reloaded or res["css_changed"] or res["style_changed"]
+        if fresh:
             pending = time.time()
         if reload and pending:
             # a Waybar started after the change already has it
-            res["waybar_reloaded"] = reload_waybar(None if (cfg_changed or sway_reloaded) else pending)
+            res["waybar_reloaded"] = reload_waybar(None if fresh else pending)
             pending = None
         if pending != m.local.get("pending_reload"):
             local_dirty = True
@@ -636,8 +727,6 @@ class Runtime:
         if local_dirty:
             save_local(m.local)
             self._local_written()
-        self._css = None
-        res["css_changed"] = self.refresh_css(sway)
         return res
 
 
@@ -705,6 +794,7 @@ def status(model: Model, sway: SwayLink | None) -> dict[str, Any]:
         except (ipc.IpcError, OSError):
             pass
     eff = [w for w in wins if w.effective]
+    modes = bar_modes(model, wins)
     rows = []
     for b in model.bars:
         mine = [w for w in wins if w.key == b.key]
@@ -712,7 +802,8 @@ def status(model: Model, sway: SwayLink | None) -> dict[str, Any]:
         d["outputs"] = [w.output for w in mine]
         d["fullscreen"] = [w.output for w in mine if w.fullscreen]
         d["effective"] = any(w.effective for w in mine)
-        d["shows_all"] = b.ws == "all" or (len(eff) == 1 and eff[0].key == b.key)
+        d["mode"] = modes[b.key]
+        d["shows_all"] = modes[b.key] == "overlay"
         rows.append(d)
     return {"bars": rows, "focused_output": next((o["name"] for o in outs if o.get("focused")), None),
             "effective_count": len(eff)}
@@ -756,30 +847,30 @@ def after_apply(state, reloaded: bool) -> None:
 
 def setup_watch(reg) -> None:
     rt = Runtime()
-    pending = {"css": False}
+    pending = {"modes": False}
 
     def link(ctx) -> SwayLink:
         return SwayLink(ctx=ctx)
 
-    def css_now(ctx) -> None:
-        pending["css"] = False
-        rt.refresh_css(link(ctx))
+    def modes_now(ctx) -> None:
+        pending["modes"] = False
+        rt.refresh(link(ctx))
 
-    def css_soon(ctx) -> None:
-        if not pending["css"]:
-            pending["css"] = True
-            ctx.schedule("waybar.css", CSS_THROTTLE, css_now)
+    def modes_soon(ctx) -> None:
+        if not pending["modes"]:
+            pending["modes"] = True
+            ctx.schedule("waybar.modes", MODES_THROTTLE, modes_now)
 
     def on_workspace(ev, ctx) -> None:
         if (ev or {}).get("change") in WORKSPACE_CHANGES:
-            css_soon(ctx)
+            modes_soon(ctx)
 
     def on_window(ev, ctx) -> None:
         if (ev or {}).get("change") in WINDOW_CHANGES:
-            css_soon(ctx)
+            modes_soon(ctx)
 
     def on_output(_ev, ctx) -> None:
-        css_soon(ctx)
+        modes_soon(ctx)
         ctx.schedule("waybar.outputs", OUTPUTS_SETTLE, lambda c: rt.sync(link(c), reload=True))
 
     def verb(args: list[str], ctx) -> None:
