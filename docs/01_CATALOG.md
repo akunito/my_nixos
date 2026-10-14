@@ -51,6 +51,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### App
 
 - **system/app/adb.nix**: Android Debug Bridge (adb / fastboot) host support
+- **system/app/aion2-meter-daemon.nix**: AION 2 DPS meter, headless Linux daemon (aionmeter-daemon, Plane A2M-48 phase 2b). *Enabled when:* `cfg.aion2MeterDaemonEnable or false`
 - **system/app/akucraft-status-bot.nix**: AkuCraft Telegram bot (announcements + group commands) *Enabled when:* `status + commands`
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
 - **system/app/appimage.nix**: System module: appimage.nix
@@ -100,7 +101,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/infra-restart.nix**: infra-restart — the one write action the Infra Alerts bot may perform (AINF-368 F4) *Enabled when:* `what `sudo infra-restart` # resolves to`
 - **system/app/litellm.nix**: LiteLLM — OpenAI-compatible LLM gateway (AkuCraft AI backend). *Enabled when:* `verified 2026-08-18 — two # days of villager traffic logged with this ON, zero conversations # recorded`
 - **system/app/llama-server.nix**: Local LLM inference server — llama.cpp `llama-server`, Vulkan backend, *Enabled when:*
-   - `Vulkan`
+   - `got \"${backend}\"`
    - `never through a derivation`
    - `apiKeySecret != ""`
 - **system/app/llama-wake-proxy.nix**: Wake-and-wait proxy for the DESK local LLM. *Enabled when:* `WoL via pfSense API`
@@ -108,6 +109,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `including exporter user if monitoring enabled`
    - `systemSettings.prometheusMariadbExporterEnable or false`
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
+   - `nasEnabled && config.fsType == "zfs"`
    - `onDemandProjects != [ ]`
    - `systemSettings.nfsServerEnable or false`
    - `backupAclPaths != [ ]`
@@ -261,7 +263,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `docker 25+`
    - `ctk && rootless`
    - `s.nvidiaGpuExporterEnable or false`
-- **system/hardware/opengl.nix**: OpenGL (renamed to graphics) *Enabled when:*
+- **system/hardware/opengl.nix**: Unstable's Mesa recipe evaluated with THIS package set (callPackage from *Enabled when:*
+   - `mesaUnstableRecipe pkgs`
+   - `mesaUnstableRecipe pkgs.pkgsi686Linux`
    - `systemSettings.gpuType == "amd"`
    - `systemSettings.amdLACTdriverEnable == true`
 - **system/hardware/performance.nix**: Consolidated performance optimizations for all profile types *Enabled when:*
@@ -281,7 +285,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `s.resourceLimitsEnable or false`
    - `(s.nixMaxJobs or null) != null`
    - `(s.nixBuildCores or null) != null`
-- **system/hardware/rgb-off.nix**: One-shot OpenRGB call that switches RGB off, re-run after every resume: the MSI GPU and *Enabled when:* `args != [ ]`
+- **system/hardware/rgb-off.nix**: One-shot OpenRGB call re-run at boot, after every resume and on hotplug of rgbOffUsbIds: the MSI *Enabled when:* `args != [ ]`
 - **system/hardware/suspend-debug.nix**: Suspend/resume debug instrumentation *Enabled when:* `systemSettings.suspendDebugEnable or false`
 - **system/hardware/systemd.nix**: Journald limits - prevent disk thrashing and limit log size
 - **system/hardware/thinkpad.nix**: Lenovo Thinkpad hardware optimizations via nixos-hardware *Enabled when:*
@@ -411,8 +415,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/claude-code/claude-code.nix**: Standalone mode: claudeCodeEnable without full developmentToolsEnable (for VPS/headless) *Enabled when:*
    - `lib.mapAttrsToList (k: v: "${k}=${v}") mcpSessionVars`
    - `lib.mapAttrsToList (k: v: "export ${k}=\"${v}\"") mcpSessionVars`
+   - `"file changed as we # read it", lock files removed mid-read`
 - **user/app/claude-code/claude-sync-pkg.nix**: claude-sync package builder — shared by claude-code.nix (hooks need the
 - **user/app/claude-code/claude-sync.nix**: claude-sync — Home Manager side: package, `claude` wrapper, 15-minute timer. *Enabled when:* `Claude killed, hand-edited skill, # machine rebooted mid-session`
+- **user/app/claude-code/local-backend.nix**: Claude Code on a local Anthropic-compatible server (the NAS 3090 llama-server, *Enabled when:* `url != ""`
 - **user/app/claude-code/projects-workspace.nix**: ~/Projects as a single Claude Code workspace for several projects.
 - **user/app/colima/colima.nix**: Colima settings - can be overridden in profile config *Enabled when:* `systemSettings.profile == "darwin"`
 - **user/app/database/db-credentials.nix**: Database Credentials Module *Enabled when:* `the attribute NAME`
@@ -520,9 +526,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `systemSettings.ollamaServerEnable or false`
 - **user/wm/sway/kanshi.nix**: Declarative mode: Nix manages kanshi config *Enabled when:*
    - `systemSettings.swayUseSwayfx or true`
-   - `lib.mkIf imperativeMode { # Create a default config if none exists home.activation.kanshiCreateDefaultConfig = lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] '' KANSHI_CONFIG="$HOME/.config/kanshi/config" if [ ! -f "$KANSHI_CONFIG" ]; then mkdir -p "$(dirname "$KANSHI_CONFIG")" cat > "$KANSHI_CONFIG" << 'EOF' # Kanshi Configuration (User-Managed) # Edit this file directly or use nwg-displays to configure outputs # # Example profile: # profile { # output eDP-1 mode 1920x1080 position 0,0 # output HDMI-A-1 mode 1920x1080 position 1920,0 # } # Default profile - enable all outputs profile default-auto { output * enable ${swaysomeExecLines} } EOF fi ''; }`
-   - `laptops`
-   - `imperativeMode && nativeGroups`
+   - `declarativeMode && kanshiEnabled`
+   - `imperativeMode && kanshiEnabled`
+   - `imperativeMode && nativeGroups && kanshiEnabled`
 - **user/wm/sway/kde-apps.nix**: KDE companion apps, Wayland-native viewers, and MIME associations for Sway session.
 - **user/wm/sway/nwg-displays.nix**: User module: nwg-displays.nix
 - **user/wm/sway/rofi.nix**: Theme content (Stylix or fallback)
@@ -536,17 +542,18 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/wm/sway/startup-apps.nix**: CRITICAL: Restore qt5ct files on Sway startup to ensure correct content
 - **user/wm/sway/sway-apps/default.nix**: sway-apps: window rules + manual startup apps manager (CLI now, GTK4 GUI next). *Enabled when:*
    - `settings.auto_adopt`
-   - `run 'sway-apps doctor'`
+   - `HM's old waybar/config symlink is # gone; the apply also writes the Waybar config/CSS and the sway bar blocks, # sway_apps/waybar.py`
 - **user/wm/sway/sway.nix**: User module: sway.nix
 - **user/wm/sway/swayfx-config.nix**: Hyper key combination (Super+Ctrl+Alt) *Enabled when:*
    - `systemSettings.swayIdlePowerAwareEnable or false`
    - `systemSettings.stylixEnable == true`
+   - `Ctrl+Alt+Super`
    - `{ _type = "if"; content = ...; }`
    - `systemSettings.waypaperEnable or false`
    - `systemSettings.gamemodeEnable == true`
 - **user/wm/sway/waybar.nix**: Some GPU tooling is optional depending on hardware / nixpkgs settings. *Enabled when:*
-   - `systemSettings.ollamaServerEnable or false`
-   - `ps: [ ps.icalendar ps.recurring-ical-events ]`
+   - `!swayApps`
+   - `sway-apps/default.nix`
 - **user/wm/sway/xcompose.nix**: US-International dead-keys fix: make the acute dead key (') accent VOWELS only.
 - **user/wm/xmonad/xmonad.nix**: User module: xmonad.nix
 
@@ -674,6 +681,8 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/plane-test-suite/catalog.md**: Plane fork regression suite — full test catalogue by layer, mapped to register IDs A-xx/B-xx, with combination matrices
 - **docs/akunito/plans/plane-v1.4.0-upgrade.md**: **Status:** planned, not started · **Audited:** 2026-08-13 · **Ticket:** APLANE-1 (related)
 - **docs/akunito/plans/sine-web-panels-maintainer-issue.md**: Open at: https://github.com/dehyde/sine-web-panels/issues/new
+- **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
+- **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
 
 ### Akunito / System-Modules

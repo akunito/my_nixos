@@ -57,12 +57,20 @@ if systemctl --user is-active --quiet sway-session.target 2>/dev/null; then
   # have to be restarted by hand after a sync — worth knowing when an icon
   # vanishes, because "the program is running" and "its icon exists" are separate
   # facts.
-  sleep 1.5  # Wait for waybar to initialize SNI host
+  #
+  # Not needed where sway-apps-tray owns org.kde.StatusNotifierWatcher (SWAY-1,
+  # 2026-10-14): Waybar is then a host only, items stay registered across its
+  # restarts (verified on DESK: restart, SIGUSR2 and a watcher restart all kept
+  # every icon). There only inactive services are started.
+  OWN_WATCHER=0
+  systemctl --user is-active --quiet sway-apps-tray.service 2>/dev/null && OWN_WATCHER=1
+  [ "$OWN_WATCHER" = 1 ] || sleep 1.5  # Wait for waybar to initialize SNI host
   for svc in nm-applet blueman-applet nextcloud-client sunshine trayscale; do
-    if systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
+    if [ "$OWN_WATCHER" = 0 ] && systemctl --user is-active --quiet "$svc.service" 2>/dev/null; then
       echo "Restarting $svc.service (re-register tray icon)"
       systemctl --user restart "$svc.service"
-    elif systemctl --user is-enabled --quiet "$svc.service" 2>/dev/null; then
+    elif ! systemctl --user is-active --quiet "$svc.service" 2>/dev/null \
+        && systemctl --user is-enabled --quiet "$svc.service" 2>/dev/null; then
       echo "Starting $svc.service (was inactive after rebuild)"
       systemctl --user start "$svc.service"
     fi

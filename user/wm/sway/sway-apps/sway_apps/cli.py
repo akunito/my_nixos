@@ -8,6 +8,7 @@ import shlex
 import signal
 import subprocess
 import sys
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -1011,6 +1012,15 @@ def cmd_sc_doc(args: argparse.Namespace) -> int:
     st = State()
     md = sc_mod.doc_markdown(st.shortcuts())
     if args.write:
+        # Keep the hand-written head (frontmatter + intro, everything before the
+        # first "## "): docs need frontmatter and the generator only owns the tables.
+        try:
+            old = Path(args.write).read_text()
+            cut = old.find("\n## ")
+            head = re.sub(r"generated \d{4}-\d{2}-\d{2}", "generated " + time.strftime("%Y-%m-%d"), old[:cut + 1]) if cut >= 0 else ""
+        except OSError:
+            head = ""
+        md = head + md
         Path(args.write).write_text(md)
         _out(args, {"written": args.write, "lines": md.count("\n")}, lambda: print(f"wrote {args.write}"))
     else:

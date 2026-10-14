@@ -4,7 +4,7 @@ summary: Generated table of every binding on DESK grouped by category — sway-a
 tags: [sway, tmux, kitty, keybindings, sway-apps, generated]
 ---
 
-# Bindings (generated 2026-09-07 on DESK)
+# Bindings (generated 2026-10-14 on DESK)
 
 Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps shortcuts`; `nix` / `tmux (nix)` / `kitty (nix)` = read-only, defined in nix (take a key over with a shortcut marked *override*).
 
@@ -16,7 +16,6 @@ Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps sh
 | `Hyper+c` | VS Code | `exec ~/.config/sway/scripts/app-toggle.sh code code --enable-features=UseOzonePlatform,Way` | sway-apps |
 | `Hyper+d` | Obsidian | `exec ~/.config/sway/scripts/app-toggle.sh md.Obsidian obsidian --no-sandbox --ozone-platfo` | sway-apps |
 | `Hyper+e` | Dolphin | `exec ~/.config/sway/scripts/app-toggle.sh org.kde.dolphin dolphin` | sway-apps |
-| `Hyper+g` | Chromium | `exec ~/.config/sway/scripts/app-toggle.sh chromium-browser chromium` | sway-apps |
 | `Hyper+l` | Telegram | `exec ~/.config/sway/scripts/app-toggle.sh org.telegram.desktop Telegram` | sway-apps |
 | `Hyper+o` | Element | `exec ~/.config/sway/scripts/app-toggle.sh 'title:^Element' element-desktop --password-stor` | sway-apps |
 | `Hyper+p` | Bitwarden | `exec ~/.config/sway/scripts/app-toggle.sh Bitwarden bitwarden` | sway-apps |
@@ -46,16 +45,20 @@ Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps sh
 | Keys | Name | Command | Owner |
 |---|---|---|---|
 | `Hyper+F9` | Gamescope: force fullscreen | `exec swaymsg '[app_id=gamescope] fullscreen enable' 2>/dev/null; swaymsg '[class=gamescope` | sway-apps |
+| `Hyper+g` | AION 2 meter overlay: show/hide | `exec aionmeter-overlay-toggle` | sway-apps |
+| `Hyper+Shift+g` | AION 2 meter: click-through | `exec aionmeter-clicks` | sway-apps |
+| `Hyper+Shift+m` | AION 2 meter card: show and raise | `exec aionmeter-overlay --show` | sway-apps |
 
 ## Windows
 
 | Keys | Name | Command | Owner |
 |---|---|---|---|
+| `Hyper+Shift+y` | Bring off-screen windows here | `nop sway-apps bring offscreen` | sway-apps |
+| `Hyper+Shift+z` | Bring all windows here / send them back | `nop sway-apps bring all` | sway-apps |
 | `Down` |  | `resize grow height 10 px` | nix |
 | `h` |  | `resize shrink width 10 px` | nix |
 | `Hyper+Down` |  | `focus output down` | nix |
 | `Hyper+Escape` |  | `kill` | nix |
-| `Hyper+f` |  | `fullscreen toggle` | nix |
 | `Hyper+greater` |  | `focus up` | nix |
 | `Hyper+h` |  | `focus left` | nix |
 | `Hyper+j` |  | `focus down` | nix |
@@ -67,7 +70,6 @@ Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps sh
 | `Hyper+Right` |  | `focus output right` | nix |
 | `Hyper+Shift+comma` |  | `focus left` | nix |
 | `Hyper+Shift+f` |  | `floating toggle` | nix |
-| `Hyper+Shift+g` |  | `fullscreen toggle` | nix |
 | `Hyper+Shift+i` |  | `resize grow height 5 ppt` | nix |
 | `Hyper+Shift+Left` |  | `move container to output left` | nix |
 | `Hyper+Shift+minus` |  | `move scratchpad` | nix |
@@ -145,15 +147,18 @@ Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps sh
 | Keys | Name | Command | Owner |
 |---|---|---|---|
 | `Escape` |  | `mode default` | nix |
+| `Hyper+button2` |  | `pin toggle` | nix |
+| `Hyper+button4` |  | `z raise` | nix |
+| `Hyper+button5` |  | `z lower` | nix |
 | `Hyper+colon` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh right` | nix |
-| `Hyper+F5` |  | `exec /nix/store/n8dhhs93wxlhpl7j32ja4yg7y3sd8g5f-sway-refresh-wallpaper` | nix |
+| `Hyper+F5` |  | `exec /nix/store/44xw593g2p6g864a4axiwr3v3mrspm2x-sway-refresh-wallpaper` | nix |
 | `Hyper+grave` |  | `exec /home/akunito/.nix-profile/bin/sway-apps gui --section monitors` | nix |
 | `Hyper+period` |  | `exec rofi -show emoji` | nix |
-| `Hyper+Return` |  | `exec /nix/store/cr4h8m35wzmg3j2v739axb6mwagdm68b-keyboard-layout-switch/bin/keyboard-layou` | nix |
-| `Hyper+s` |  | `exec /home/akunito/.nix-profile/bin/sway-apps` | nix |
+| `Hyper+Return` |  | `exec /nix/store/8vhns518l9p6ar8mm872cz29sc2xdycn-keyboard-layout-switch/bin/keyboard-layou` | nix |
+| `Hyper+s` |  | `exec /home/akunito/.nix-profile/bin/sway-apps gui --toggle` | nix |
 | `Hyper+Shift+BackSpace` |  | `exec rofi -show power -show-icons` | nix |
 | `Hyper+Shift+End` |  | `exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit Sway` | nix |
-| `Hyper+Shift+h` |  | `exec /home/akunito/.config/sway/scripts/waybar-toggle.sh` | nix |
+| `Hyper+Shift+h` |  | `nop sway-apps waybar toggle` | nix |
 | `Hyper+Shift+j` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh left` | nix |
 | `Hyper+Shift+k` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh down` | nix |
 | `Hyper+Shift+l` |  | `exec /home/akunito/.config/sway/scripts/window-move.sh up` | nix |
@@ -165,7 +170,7 @@ Owner `sway-apps` = editable in the GUI (Hyper+s → Shortcuts) or `sway-apps sh
 | `Hyper+Tab` |  | `exec /home/akunito/.config/sway/scripts/window-overview-grouped.sh` | nix |
 | `Hyper+XF86AudioMute` |  | `exec /home/akunito/.config/sway/scripts/idle-inhibit-toggle.sh` | nix |
 | `Return` |  | `mode default` | nix |
-| `Super+l` |  | `exec /nix/store/lk18ikzwg50822gq10szs31218w43f6y-swaylock-with-grace/bin/swaylock-with-gra` | nix |
+| `Super+l` |  | `exec /nix/store/5ijql9f54z73xz3r6wf3qwiml2vxhv1s-swaylock-with-grace/bin/swaylock-with-gra` | nix |
 | `Super+v` |  | `exec voxtype record start` | nix |
 | `Super+v` |  | `exec voxtype record stop` | nix |
 
