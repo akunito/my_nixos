@@ -68,6 +68,12 @@ HOME_EXCLUDES=(
   ".local/share/Steam/config/librarycache"
   ".local/share/bottles"
   ".local/share/containers"
+  # Rootless docker (DESK/X13 since AINF-407): image layers and the build cache are
+  # re-pulled; 27 GB of containerd blobs went into every home snapshot (2026-10-14).
+  # volumes/ (dev DBs) and containers/ stay in.
+  ".local/share/docker/containerd"
+  ".local/share/docker/buildkit"
+  ".local/share/docker/tmp"
   ".local/share/suyu"
   ".var"
   ".lmstudio/models"
