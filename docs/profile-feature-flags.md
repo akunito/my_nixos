@@ -404,6 +404,17 @@ systemSettings = {
 
 Gotchas: `swaymsg reload` resets every output to the config and drops runtime `output` changes (measured 2026-10-14, nested sway 1.11), so a live change is only durable after Keep regenerates the include. The HM activation regenerates the include before HM's sway reload (`onFilesChange`), otherwise a deploy would reload against the old include and drop the layout. X13's lid script still disables eDP-1 with swaymsg; sway-apps never saves that runtime state, and when no output is left active (lid closed, dock unplugged) the watch daemon enables the connected ones (what kanshi's `output * enable` did).
 
+## Flag Reference: Docker Rootless on Workstations
+
+AINF-407, plan `docs/akunito/plans/docker-rootless-workstations.md`.
+
+| Flag | Default | On in | Effect |
+|---|---|---|---|
+| `dockerRootlessEnable` (user) | `false` | DESK, NAS_PROD, VPS_PROD | Rootless daemon; coexists with `dockerEnable` (hybrid). On workstations it comes from `system/app/docker-rootless-workstation.nix`: `ip=127.0.0.1` default bind, no forced DNS, linger, the user's `docker.service` started at activation. |
+| `dockerRootRequiresSudo` (user) | `false` | DESK | The user is not in the root-equivalent `docker` group; the root daemon is socket-activated only and reached with `sudo docker`. |
+| `dockerRootlessHostLoopback` (system) | `true` | off on DESK | `false` sets rootlesskit `--disable-host-loopback`: containers cannot reach the host's 127.0.0.1 via 10.0.2.2. |
+| `dockerRootlessKrunEnable` (system) | `false` | DESK | Registers the `krun` runtime (crun + libkrun from pkgs-unstable): `docker run --runtime krun` runs the container in its own KVM microVM. |
+
 ## Related Documentation
 
 - [Configuration Guide](configuration.md) - General configuration patterns

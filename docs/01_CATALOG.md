@@ -77,7 +77,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `(systemSettings.redisServerEnable or false) && (systemSettings.redisServerPassword or "") != ""`
    - `(systemSettings.postfixRelayEnable or false) && (systemSettings.postfixRelaySmtpUser or "") != ""`
 - **system/app/docker-rootless-maintenance.nix**: Rootless Docker daemon maintenance — shared by every profile that sets *Enabled when:* `databases, Redis, Postfix`
-- **system/app/docker.nix**: Track docker from pkgs-unstable so we don't have to bump pins each time *Enabled when:* `userSettings.dockerEnable == true`
+- **system/app/docker-rootless-workstation.nix**: Rootless Docker as the default daemon on workstations (DESK, LAPTOP_X13) — *Enabled when:* `docker-firewall.nix`
+- **system/app/docker.nix**: dockerRootRequiresSudo (workstations, AINF-407): the root daemon is the *Enabled when:*
+   - `userSettings.dockerEnable == true`
+   - `userSettings.dockerEnable == true && !(userSettings.dockerRootRequiresSudo or false)`
 - **system/app/docs-sites.nix**: Private-repo documentation sites, published from git without a system rebuild. *Enabled when:* `name: _: { isSystemUser = true; group = name; # The git-crypt key file is shared between sites, so it cannot be owned by one # publisher at 0400. It belongs to group `docs-crypt` (0440) and every publisher # is a member — see the service doc for the one-time chgrp. extraGroups = [ "docs-crypt" ]; home = "/var/lib/${name}"; description = "${name} site publisher"; }`
 - **system/app/flatpak.nix**: Need some flatpaks
 - **system/app/freesm-launcher.nix**: FreeSM Launcher (Freesm Launcher)
