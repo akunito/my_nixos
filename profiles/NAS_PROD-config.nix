@@ -43,8 +43,47 @@ in
     llamaServerParallelSlots = 1;         # Claude Code / OpenCode are one stream; a second client queues
     llamaServerModelAlias = "qwen3.8-27b-abliterated";   # the id OpenCode / claude-nas use; llama-server accepts any model name anyway (verified), this only makes /v1/models honest
     llamaServerChatTemplateFile = ../system/app/llama-server/templates/qwen3.8-system-anywhere.jinja;   # Claude Code sends a role=system "# Environment" message after the first user turn; the GGUF's template raises on it (every request 500 on 2026-10-14)
-    llamaServerExtraArgs = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" "-ctk" "q8_0" "-ctv" "q8_0" ];   # q8_0 KV halves the cache (needs -fa on); near-lossless
+    llamaServerExtraArgs = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];   # sampling only (Qwen thinking-mode card); -fa on is what q8_0/q4_0 KV needs. KV type: llamaServerKvType
+    llamaServerKvType = "q8_0";            # q8_0 KV halves the cache (needs -fa on); near-lossless. Presets override it (ai-presets.nix)
     llamaServerVramBusyBytes = 2147483648; # nothing else may hold the card: 24 GB - 17.4 GB weights
+
+    # NAS 3090 preset manager (system/app/ai-presets.nix): `ai preset set NAME`,
+    # Waybar custom/nas-llm + rofi on DESK. KV per token MEASURED 2026-10-14 on
+    # Qwen3.8-27B: 64 KB f16, 32 KB q8_0, ~16 KB q4_0; weights 17.4 GB, ~5 GB
+    # left for KV. 256k (n_ctx_train) only fits with q4_0 KV (f16 OOMed).
+    # Qwen3.6-35B-A3B: 10 of 40 layers are full attention, 2 KV heads x 256 ->
+    # 20 KB/token f16 (computed from config.json, NOT measured yet).
+    aiPresetsEnable = true;
+    aiPresetsDefault = "reasoner-128k";
+    aiPresets = let
+      reasoner = {
+        model = "Huihui-Qwen3.8-27B-abliterated-UD-Q4_K_XL.gguf";
+        alias = "qwen3.8-27b-abliterated";
+        template = ../system/app/llama-server/templates/qwen3.8-system-anywhere.jinja;
+        extra = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];
+      };
+    in {
+      reasoner-128k = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 1×128k · KV q8_0";
+        short = "R 128k"; vramEst = "21.1 GB"; ctx = 131072; slots = 1; kv = "q8_0";
+      };
+      reasoner-256k = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 1×256k · KV q4_0";
+        short = "R 256k"; vramEst = "~21.4 GB"; ctx = 262144; slots = 1; kv = "q4_0";
+      };
+      reasoner-2x128k = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 2×128k · KV q4_0";
+        short = "R 2×128k"; vramEst = "~21.4 GB"; ctx = 131072; slots = 2; kv = "q4_0";   # -c is PER SLOT in b11580 (measured: 4 slots x -c 65536 = 20.8 GB)
+      };
+      coder = {
+        label = "Coder Qwen3.6-35B-A3B (MoE) · 1×256k · KV q8_0";
+        short = "Coder"; vramEst = "~22 GB"; ctx = 262144; slots = 1; kv = "q8_0";
+        model = "Qwen3.6-35B-A3B-UD-IQ4_XS.gguf";   # unsloth, 17.7 GB
+        alias = "qwen3.6-35b-a3b";
+        template = null;                           # the GGUF's own (OpenCode only; Claude Code needs the system-anywhere fix)
+        extra = [ "--jinja" "--temp" "0.6" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];   # model card: thinking mode, precise coding
+      };
+    };
 
     # ============================================================================
     # HEADLESS SERVER — disable GUI/desktop features

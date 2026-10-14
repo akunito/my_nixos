@@ -239,6 +239,14 @@
     llamaServerChatTemplateFile = null;                    # nix path to a .jinja that overrides the GGUF's template (--chat-template-file). Qwen3.8's embedded template raises on a system message after turn 1, and Claude Code 2.1.296 sends its "# Environment" block exactly like that -> system/app/llama-server/templates/qwen3.8-system-anywhere.jinja
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
     llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
+    llamaServerKvType = "";                                # -ctk/-ctv type ("" = f16); q8_0/q4_0 need -fa on. Presets override it
+    # NAS 3090 preset manager (system/app/ai-presets.nix; needs llamaServerEnable):
+    # `ai preset list|status|set|sync`, GET /status on tailscale0, sudo rule for `ai preset set`.
+    aiPresetsEnable = false;
+    aiPresets = { };                                       # name -> { label short vramEst model ctx slots kv alias template extra }
+    aiPresetsDefault = "off";
+    aiPresetsStatusPort = 8093;
+    nasAiWidgetEnable = false;                             # DESK Waybar custom/nas-llm + rofi switcher for the NAS presets above
 
     # === Local LLM inference server (Ollama, ROCm) ===
     # The alternative backend to llamaServer above; the two share port 8090 and

@@ -169,6 +169,18 @@ in
       executable = true;
     };
 
+  home.file.".config/sway/scripts/waybar-nas-llm.sh" =
+    lib.mkIf (systemSettings.nasAiWidgetEnable or false) {
+      source = ./scripts/waybar-nas-llm.sh;
+      executable = true;
+    };
+
+  home.file.".config/sway/scripts/rofi-nas-llm-menu.sh" =
+    lib.mkIf (systemSettings.nasAiWidgetEnable or false) {
+      source = ./scripts/rofi-nas-llm-menu.sh;
+      executable = true;
+    };
+
   home.file.".config/sway/scripts/ssh-smart.sh" = {
     source = ./scripts/ssh-smart.sh;
     executable = true;

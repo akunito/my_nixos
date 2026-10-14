@@ -112,7 +112,8 @@
             "battery",
             "custom/ram",
             "custom/vram",
-            "custom/llm"
+            "custom/llm",
+            "custom/nas-llm"
           ],
           "center": [
             "sway/workspaces"

@@ -844,6 +844,7 @@ in
     claudeSyncEnable = true; # ~/.claude memory/skills/sessions synced with the VPS hub (hooks + 15-min timer + `claude` wrapper)
     claudeCodeTuiFullscreen = true; # drag-select inside Claude copies without wrap breaks
     claudeCodeLocalBackendUrl = "http://100.64.0.1:8090"; # `claude-nas` / `nas-ask` on the NAS 3090 reasoner (tailscale0 only; model unloads after 15 min idle)
+    nasAiWidgetEnable = true; # Waybar custom/nas-llm right of custom/llm: NAS 3090 preset + VRAM/temp, click = rofi switcher (ai-presets.nix on NAS_PROD)
     # Infra Alerts bot identity for infra-notify (direct Telegram transport; relay is the fallback)
     grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";

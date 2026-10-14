@@ -226,6 +226,9 @@ let
   # ~/.config/waybar/{config,style.css}. Without sway-apps, today's bar.
   swayApps = systemSettings.swayAppsEnable or false;
   llmEnabled = systemSettings.ollamaServerEnable or false;
+  # NAS 3090 preset widget (status from the NAS's GET /status, switch via rofi
+  # -> ssh -> `ai preset set`; system/app/ai-presets.nix on NAS_PROD).
+  nasAiEnabled = systemSettings.nasAiWidgetEnable or false;
 
   # Ordered so the eye walks it in one direction: machine state first
   # (screen, power), then input/output, then the CPU triplet, then the
@@ -253,7 +256,8 @@ let
   # the module is absent from BOTH this list and the settings attrset,
   # so nothing renders and nothing is clickable — verified against
   # LAPTOP_X13's generated config.
-  ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
+  ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm"
+  ++ lib.optional nasAiEnabled "custom/nas-llm";
   modulesCenter = [ "sway/workspaces" ];
   modulesRight =
     # Flat, no drawer (2026-09-02). The extras group hid the tray behind
@@ -328,6 +332,14 @@ let
     # signal 6 lets the rofi menu refresh the bar the instant an action
     # lands, instead of waiting out `interval`. The script pkill's
     # -RTMIN+6, so the two numbers must stay in step.
+    "custom/nas-llm" = {
+      return-type = "json";
+      interval = 10;   # one curl to the NAS; the NAS side is a short-lived socket-activated process
+      signal = 7;      # rofi-nas-llm-menu.sh refreshes it after a switch
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-nas-llm.sh";
+      on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show nas -modi nas:${config.home.homeDirectory}/.config/sway/scripts/rofi-nas-llm-menu.sh\"";
+      tooltip = true;
+    };
     "custom/llm" = {
       return-type = "json";
       interval = 5;
@@ -415,7 +427,8 @@ let
       tooltip = true;
       tooltip-format = "Power menu";
     };
-  } (lib.optional (!llmEnabled) "custom/llm" ++ lib.optional (!systemSettings.goaCalendarEnable) "custom/gcal");
+  } (lib.optional (!llmEnabled) "custom/llm" ++ lib.optional (!nasAiEnabled) "custom/nas-llm"
+     ++ lib.optional (!systemSettings.goaCalendarEnable) "custom/gcal");
 
   # all-outputs is set per bar by sway-apps (CSS decides what each bar shows).
   workspacesDef = builtins.removeAttrs primaryWorkspaces [ "all-outputs" ];
@@ -548,6 +561,7 @@ let
     #custom-cpu-temp,
     #custom-gpu-temp,
     #custom-llm,
+    #custom-nas-llm,
     #custom-notifications,
     #custom-power-menu {
       margin: 4px 4px;
@@ -568,6 +582,14 @@ let
     #custom-llm.locked { color: #${config.lib.stylix.colors.base0E}; }
     #custom-llm.down   { color: #${config.lib.stylix.colors.base08}; }
     #custom-llm.idle   { color: #${config.lib.stylix.colors.base04}; }
+
+    /* NAS 3090 preset: asleep (23:00-16:00 S3, no WoL) is normal, so dim, not red. */
+    #custom-nas-llm.ok      { color: #${config.lib.stylix.colors.base0B}; }
+    #custom-nas-llm.busy    { color: #${config.lib.stylix.colors.base0D}; }
+    #custom-nas-llm.loading { color: #${config.lib.stylix.colors.base0A}; }
+    #custom-nas-llm.idle    { color: #${config.lib.stylix.colors.base04}; }
+    #custom-nas-llm.off,
+    #custom-nas-llm.asleep  { color: #${config.lib.stylix.colors.base03}; }
 
     /* Stylix color groups (left cluster) */
     #battery,

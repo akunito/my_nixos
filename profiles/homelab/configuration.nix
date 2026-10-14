@@ -9,5 +9,6 @@
                 inherit lib; })
             ]
             # On-demand llama.cpp backend (NAS_PROD: the RTX 3090 reasoner preset). Same module as DESK.
-            ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix;
+            ++ lib.optional (systemSettings.llamaServerEnable or false) ../../system/app/llama-server.nix
+            ++ lib.optional (systemSettings.aiPresetsEnable or false) ../../system/app/ai-presets.nix;
 }

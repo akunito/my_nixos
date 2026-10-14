@@ -55,6 +55,9 @@ let
   apiKeySecret = cfg.llamaServerApiKeySecret or "";
   apiKeyFile = "/var/lib/llama-server-secrets/api-key";
   extraArgs = cfg.llamaServerExtraArgs or [ "--jinja" ];
+  # KV cache type for -ctk/-ctv ("" = f16). q8_0/q4_0 need flash attention
+  # (-fa on in extraArgs). An option, not extraArgs, so a preset can override it.
+  kvType = cfg.llamaServerKvType or "";
   modelAlias = cfg.llamaServerModelAlias or "";
   # Template override. In the container the store path is bind-mounted read-only
   # at a fixed name; the nix backend reads the store path directly.
@@ -85,25 +88,45 @@ let
   dockerBin = "${config.virtualisation.docker.package}/bin/docker";
   stateDir = "/var/lib/llama-server";
 
-  args = [
-    # Backend is localhost-only; the proxy fronts it. Inside the container the
-    # server must bind all interfaces, docker publishes it on 127.0.0.1 only.
-    "--host" (if isDocker then "0.0.0.0" else "127.0.0.1")
-    "--port" (toString internalPort)
-    "-ngl" (toString gpuLayers)   # offload all layers to the GPU
-    "-c" (toString ctxSize)
-  ]
-  ++ (if modelFile != "" then [ "-m" modelFile ]
-      else [ "-hf" modelRef ])    # auto-download GGUF (cached in StateDirectory)
-  # --api-key-file keeps the key out of both the store AND the process table
-  # (`--api-key <secret>` would be visible in `ps` to every local user).
-  ++ lib.optionals (apiKeySecret != "") [ "--api-key-file" "%d/api-key" ]
-  ++ lib.optionals (apiKeySecret == "" && apiKey != "") [ "--api-key" apiKey ]
-  ++ lib.optionals (modelAlias != "") [ "-a" modelAlias ]
-  ++ lib.optionals (parallelSlots != null) [ "-np" (toString parallelSlots) ]
-  ++ lib.optionals (chatTemplateFile != null)
-       [ "--chat-template-file" (if isDocker then chatTemplateInContainer else "${chatTemplateFile}") ]
-  ++ extraArgs;
+  # The model-shaped arguments are built at START time, not eval time, so the
+  # NAS preset manager (system/app/ai-presets.nix, `ai preset set`) can switch
+  # model/ctx/slots/KV/alias/template/sampling with a restart and no rebuild.
+  # ${stateDir}/preset.env (written by `ai`) overrides these Nix defaults; with
+  # the file absent the server starts exactly as configured in Nix.
+  presetEnvFile = "${stateDir}/preset.env";
+  presetDefaults = {
+    LLAMA_MODEL_FILE = modelFile;
+    LLAMA_HF = modelRef;
+    LLAMA_CTX = toString ctxSize;
+    LLAMA_SLOTS = if parallelSlots != null then toString parallelSlots else "";
+    LLAMA_KV = kvType;
+    LLAMA_ALIAS = modelAlias;
+    LLAMA_TEMPLATE = if chatTemplateFile != null then "${chatTemplateFile}" else "";
+    # extraArgs elements carry no spaces (flags and values), so a word list is exact.
+    LLAMA_EXTRA = lib.concatStringsSep " " extraArgs;
+  };
+  # Bash that leaves the backend's argv in "''${ARGS[@]}" (and, for docker, the
+  # template mount in "''${MOUNT[@]}").
+  buildArgs = ''
+    # `=` not `:=`: a preset may set a value EMPTY on purpose (no chat template).
+    ${lib.concatStrings (lib.mapAttrsToList (k: v: ": \"\${${k}=${v}}\"\n") presetDefaults)}
+    ARGS=(--host ${if isDocker then "0.0.0.0" else "127.0.0.1"} --port ${toString internalPort} -ngl ${toString gpuLayers} -c "$LLAMA_CTX")
+    if [ -n "$LLAMA_MODEL_FILE" ]; then ARGS+=(-m "$LLAMA_MODEL_FILE"); else ARGS+=(-hf "$LLAMA_HF"); fi
+    ${lib.optionalString (apiKeySecret != "") ''ARGS+=(--api-key-file "$CREDENTIALS_DIRECTORY/api-key")''}
+    ${lib.optionalString (apiKeySecret == "" && apiKey != "") ''ARGS+=(--api-key ${lib.escapeShellArg apiKey})''}
+    [ -n "$LLAMA_ALIAS" ] && ARGS+=(-a "$LLAMA_ALIAS")
+    [ -n "$LLAMA_SLOTS" ] && ARGS+=(-np "$LLAMA_SLOTS")
+    [ -n "$LLAMA_KV" ] && ARGS+=(-ctk "$LLAMA_KV" -ctv "$LLAMA_KV")
+    MOUNT=()
+    if [ -n "$LLAMA_TEMPLATE" ]; then
+      ${if isDocker then ''
+      MOUNT=(-v "$LLAMA_TEMPLATE:${chatTemplateInContainer}:ro")
+      ARGS+=(--chat-template-file ${chatTemplateInContainer})'' else ''
+      ARGS+=(--chat-template-file "$LLAMA_TEMPLATE")''}
+    fi
+    # shellcheck disable=SC2206 # word list by design (see presetDefaults)
+    ARGS+=($LLAMA_EXTRA)
+  '';
 
   # Preflight gate: refuse to load while gaming (lock present, or GPU already busy).
   preflight = pkgs.writeShellScript "llama-preflight" ''
@@ -152,13 +175,18 @@ let
   # the same strings for both backends. --rm + a fixed name: a stale container
   # from a crash is removed in ExecStartPre, never left to block the next start.
   dockerStart = pkgs.writeShellScript "llama-docker-start" ''
+    ${buildArgs}
     exec ${dockerBin} run --rm --name llama-server \
       --device nvidia.com/gpu=all \
       -v ${stateDir}:${stateDir} \
-      ${lib.optionalString (chatTemplateFile != null) "-v ${chatTemplateFile}:${chatTemplateInContainer}:ro"} \
+      "''${MOUNT[@]}" \
       -e LLAMA_CACHE=${stateDir} -e HOME=${stateDir} \
       -p 127.0.0.1:${toString internalPort}:${toString internalPort} \
-      ${dockerImage} ${lib.escapeShellArgs args}
+      ${dockerImage} "''${ARGS[@]}"
+  '';
+  vulkanStart = pkgs.writeShellScript "llama-vulkan-start" ''
+    ${buildArgs}
+    exec ${lib.getExe' llamaVulkan "llama-server"} "''${ARGS[@]}"
   '';
 in
 {
@@ -202,6 +230,8 @@ in
         ExecCondition = "${preflight}";
         ExecStartPost = "${waitReady}";
         TimeoutStartSec = "360";      # covers first-run GGUF download / image pull + model load
+        # The preset manager's choice (ai-presets.nix); absent = the Nix defaults above.
+        EnvironmentFile = "-${presetEnvFile}";
         StateDirectory = "llama-server";
         Restart = "on-failure";
         RestartSec = 5;
@@ -211,7 +241,7 @@ in
         ExecStop = "${dockerBin} stop -t 30 llama-server";
         TimeoutStopSec = "45";
       } else {
-        ExecStart = "${lib.getExe' llamaVulkan "llama-server"} ${lib.escapeShellArgs args}";
+        ExecStart = "${vulkanStart}";
         DynamicUser = true;
         # These are NOT optional. They used to sit inside the api-key branch
         # below, which meant a server configured WITHOUT an api key got no

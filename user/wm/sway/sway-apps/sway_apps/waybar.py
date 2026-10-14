@@ -77,7 +77,7 @@ FALLBACK_CATALOG: dict[str, Any] = {
 # scaled per bar when its size is not 100 %. Keep the two in step.
 _MODULE_IDS = ("#clock", "#battery", "#backlight", "#network", "#pulseaudio", "#bluetooth", "#idle_inhibitor",
                "#custom-mic", "#custom-cpu", "#custom-gpu", "#custom-vram", "#custom-ram", "#custom-cpu-temp",
-               "#custom-gpu-temp", "#custom-llm", "#custom-notifications", "#custom-power-menu")
+               "#custom-gpu-temp", "#custom-llm", "#custom-nas-llm", "#custom-notifications", "#custom-power-menu")
 _CLUSTER_IDS = frozenset(("#battery", "#backlight", "#pulseaudio", "#custom-mic", "#custom-cpu", "#custom-gpu",
                           "#custom-vram", "#custom-ram", "#custom-cpu-temp", "#custom-gpu-temp"))
 
