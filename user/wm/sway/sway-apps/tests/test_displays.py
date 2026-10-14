@@ -67,10 +67,11 @@ output "DP-1" {
 class ScaleMath(unittest.TestCase):
     def test_4k_exact_scales_from_the_plan(self):
         got = {s: (w, h) for s, w, h in d.exact_scales(3840, 2160)}
-        for s, size in ((1.2, (3200, 1800)), (1.25, (3072, 1728)), (1.5, (2560, 1440)), (1.6, (2400, 1350)),
+        for s, size in ((1.25, (3072, 1728)), (1.5, (2560, 1440)), (1.6, (2400, 1350)),
                         (1.875, (2048, 1152)), (2.0, (1920, 1080))):
             self.assertEqual(got[s], size)
         self.assertNotIn(1.4, got)
+        self.assertNotIn(1.2, got)   # the plan listed it; measured: sway makes 3840 at 1.2 3199 wide
         self.assertTrue(all(1.0 <= s <= 3.0 for s in got))
 
     def test_qhd_exact_scales(self):
@@ -392,3 +393,37 @@ class Snap(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Reflow(unittest.TestCase):
+    def test_desk_scale_change_pushes_the_right_neighbour(self):
+        # DESK 2026-10-14: DP-1 (2103,1394 2560x1440) at 1.5 -> 1.25 = 3072x1728; DP-2 portrait at 4663,786
+        rects = {"DP-1": (2103, 1394, 2560, 1440), "DP-2": (4663, 786, 1152, 2048)}
+        self.assertEqual(d.reflow(rects, "DP-1", (2103, 1394, 3072, 1728)), {"DP-2": (5175, 786)})
+        self.assertEqual(d.reflow(rects, "DP-1", (2103, 1394, 2048, 1152)), {"DP-2": (4151, 786)})   # shrink: stays touching
+
+    def test_chain_and_below_and_untouched(self):
+        rects = {"A": (0, 0, 100, 100), "B": (100, 0, 100, 100), "C": (200, 0, 50, 50), "D": (0, 100, 100, 50),
+                 "far": (1000, 1000, 10, 10)}
+        moved = d.reflow(rects, "A", (0, 0, 120, 130))
+        self.assertEqual(moved, {"B": (120, 0), "C": (220, 0), "D": (0, 130)})
+        self.assertEqual(d.reflow(rects, "A", (0, 0, 100, 100)), {})
+
+
+class Float32Sizes(unittest.TestCase):
+    def test_measured_in_sway_1_11(self):
+        # nested sway 2026-10-14, 3840x2160: what sway reported as the output rect
+        for sc, want in ((1.066667, (3599, 2024)), (1.333333, (2880, 1620)), (1.666667, (2304, 1296)),
+                         (1.6, (2400, 1350)), (1.875, (2048, 1152)), (1.2, (3199, 1799)), (1.25, (3072, 1728)),
+                         (1.1, (3490, 1963)), (1.4, (2742, 1542)), (2.4, (1599, 899)), (3.0, (1280, 720))):
+            self.assertEqual(d.logical_size(3840, 2160, "normal", sc), want, sc)
+        self.assertEqual(d.logical_size(1920, 1080, "normal", 1.1), (1745, 981))
+        self.assertEqual(d.logical_size(2560, 1440, "normal", 1.1), (2327, 1309))
+        self.assertEqual(d.logical_size(2560, 1440, "normal", 1.2), (2133, 1200))
+
+    def test_exact_list_drops_what_sway_truncates(self):
+        scales = [s for s, _, _ in d.exact_scales(3840, 2160)]
+        for s in (1.066667, 1.2, 2.4):           # integral on paper, truncated by sway
+            self.assertNotIn(s, scales)
+        for s in (1.0, 1.25, 1.333333, 1.5, 1.6, 1.666667, 1.875, 2.0, 2.5, 2.666667, 3.0):
+            self.assertIn(s, scales)

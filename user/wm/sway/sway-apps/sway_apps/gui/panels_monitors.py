@@ -239,6 +239,18 @@ class MonitorsPanel(Panel):
             w, h = o.rect[2], o.rect[3]
         return c.x, c.y, w, h
 
+    def resized(self, hw: str, before: dict[str, tuple[int, int, int, int]]) -> None:
+        """After a scale/mode/transform edit of `hw`: neighbours that touched its right or
+        bottom edge follow it (dsp.reflow), so Apply never overlaps outputs."""
+        new = self.rect_of(hw)
+        if new is None or hw not in before:
+            return
+        for k, (x, y) in dsp.reflow(before, hw, new).items():
+            self.work[k].x, self.work[k].y = x, y
+
+    def rects(self) -> dict[str, tuple[int, int, int, int]]:
+        return {k: r for k in self.work if (r := self.rect_of(k)) is not None and self.work[k].enabled}
+
     def role_of(self, hw: str) -> Monitor | None:
         return self.ctl.state.monitor_by_criteria(hw)
 
@@ -506,6 +518,7 @@ class MonitorsPanel(Panel):
         py = Adw.SpinRow.new_with_range(-20000, 20000, 1); py.set_title("Position Y"); py.set_value(c.y)
         g.add(px); g.add(py)
         scales: list[float | None] = []
+        shown: list[list[str] | None] = [None]
         busy = [False]
 
         def fill_scales() -> None:
@@ -522,8 +535,15 @@ class MonitorsPanel(Panel):
                 scales.insert(0, c.scale)
                 labels.insert(0, f"{dsp.fmt_scale(c.scale)}  —  {lw}x{lh} (forced)" if size else dsp.fmt_scale(c.scale))
             scales.append(None); labels.append("Custom (forced)…")
-            scale.set_model(Gtk.StringList.new(labels))
-            scale.set_selected(next(i for i, s in enumerate(scales) if s is not None and abs(s - c.scale) < 1e-6))
+            # Replace the model only when the list changed: picking an exact scale used to
+            # set_model() on this row from inside its own notify::selected, with the popover
+            # still open, and GTK spun at 100 % CPU, the GUI frozen (DESK 2026-10-14).
+            if labels != shown[0]:
+                shown[0] = labels
+                scale.set_model(Gtk.StringList.new(labels))
+            want = next(i for i, s in enumerate(scales) if s is not None and abs(s - c.scale) < 1e-6)
+            if scale.get_selected() != want:
+                scale.set_selected(want)
             not_exact = bool(size) and not dsp.is_exact(*size, c.scale)
             forced.set_visible(not_exact); forced_warn.set_visible(not_exact)
             forced.set_text(dsp.fmt_scale(c.scale))
@@ -540,10 +560,12 @@ class MonitorsPanel(Panel):
         def on_mode(*_a) -> None:
             i = mode.get_selected()
             if 0 <= i < len(mode_keys):
-                c.mode = mode_keys[i]; fill_scales(); changed()
+                before = self.rects()
+                c.mode = mode_keys[i]; self.resized(hw, before); fill_scales(); changed()
 
         def on_transform(*_a) -> None:
-            c.transform = combo_value(transform); fill_scales(); changed()
+            before = self.rects()
+            c.transform = combo_value(transform); self.resized(hw, before); fill_scales(); changed()
 
         def on_scale(*_a) -> None:
             if busy[0]:
@@ -554,7 +576,10 @@ class MonitorsPanel(Panel):
             if scales[i] is None:
                 forced.set_visible(True); forced_warn.set_visible(True); forced.grab_focus()
                 return
-            c.scale = scales[i]; fill_scales(); changed()
+            before = self.rects()
+            c.scale = scales[i]
+            self.resized(hw, before)
+            GLib.idle_add(lambda: (fill_scales(), changed(), False)[2])   # after the popover closed
 
         def on_forced(*_a) -> None:
             try:
@@ -562,7 +587,8 @@ class MonitorsPanel(Panel):
             except ValueError:
                 return
             if 0.25 <= v <= 10:
-                c.scale = dsp.norm_scale(v); fill_scales(); changed()
+                before = self.rects()
+                c.scale = dsp.norm_scale(v); self.resized(hw, before); fill_scales(); changed()
 
         def on_pos(*_a) -> None:
             if busy[0]:

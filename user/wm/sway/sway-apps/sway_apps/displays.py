@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import struct
 import secrets
 import subprocess
 import sys
@@ -104,13 +105,29 @@ def oriented(w: int, h: int, transform: str) -> tuple[int, int]:
     return (h, w) if transform in ROTATED else (w, h)
 
 
+_F32 = struct.Struct("=f")
+
+
+def _f32(x: float) -> float:
+    return _F32.unpack(_F32.pack(x))[0]
+
+
+def _eff(n: int, scale: float) -> int:
+    """One axis of wlr_output_effective_resolution as sway 1.11 runs it: the scale snapped
+    to k/120, stored as a C float, n / scale in float, truncated. Matches every size
+    measured in nested sway 2026-10-14 (4K: 1.2 -> 3199x1799, 2.4 -> 1599x899,
+    1.066667 -> 3599x2024, 1.333333 -> 2880x1620, 1.666667 -> 2304x1296; 1920/1.1 -> 1745)."""
+    s32 = _f32(round((float(scale) or 1.0) * SCALE_DEN) / SCALE_DEN)
+    return int(_f32(float(n) / s32))
+
+
 def logical_size(w: int, h: int, transform: str, scale: float) -> tuple[int, int]:
-    """wlr_output_effective_resolution: transformed size / scale, truncated in
-    float32 (1920/1.1 -> 1745, as nwg-displays placed X13's dock monitor). The
-    epsilon keeps exact scales exact (3840/1.6f = 2399.99996 in double)."""
+    """wlr_output_effective_resolution: transformed size / scale, float32, truncated
+    (1920/1.1 -> 1745, as nwg-displays placed X13's dock monitor; 3840/1.6 -> 2400).
+    Emulated (_eff), not approximated with an epsilon: several k/120 scales that are
+    integral on paper are truncated by sway (3840 at 1.2 is 3199)."""
     w, h = oriented(w, h, transform)
-    s = float(scale) or 1.0
-    return int(w / s + 1e-3), int(h / s + 1e-3)
+    return _eff(w, scale), _eff(h, scale)
 
 
 def is_exact(w: int, h: int, scale: float) -> bool:
@@ -128,7 +145,10 @@ def exact_scales(w: int, h: int, transform: str = "normal", lo: float = 1.0, hi:
     out = []
     for k in range(int(round(lo * SCALE_DEN)), int(round(hi * SCALE_DEN)) + 1):
         if W % k == 0 and H % k == 0:
-            out.append((round(k / SCALE_DEN, 6), W // k, H // k))
+            sc = round(k / SCALE_DEN, 6)
+            # integral on paper is not enough: sway divides in float32 and truncates
+            if (_eff(ow, sc), _eff(oh, sc)) == (W // k, H // k):
+                out.append((sc, W // k, H // k))
     return out
 
 
@@ -488,6 +508,28 @@ def attach(others: list[Rect], w: int, h: int, x: int, y: int) -> tuple[int, int
     if any(_overlap((nx, ny, w, h), r) for r in others):
         return x, y
     return nx, ny
+
+
+def reflow(rects: dict[str, Rect], key: str, new: Rect) -> dict[str, tuple[int, int]]:
+    """Outputs that touched the right/bottom edge of `key` follow that edge when a scale,
+    mode or transform change resizes it (chained), so the layout neither overlaps nor opens
+    a gap. Live 2026-10-14: DP-1 4K at 1.5 -> 1.25 grew 2560 -> 3072 wide and slid under
+    DP-2, which stayed at x 4663. Returns the new (x, y) of every output that moves."""
+    old = rects[key]
+    dx, dy = (new[0] + new[2]) - (old[0] + old[2]), (new[1] + new[3]) - (old[1] + old[3])
+    moved: dict[str, tuple[int, int]] = {}
+    queue = [(old, dx, dy)]
+    while queue:
+        src, mx, my = queue.pop()
+        for k, r in rects.items():
+            if k == key or k in moved:
+                continue
+            right = mx and r[0] == src[0] + src[2] and r[1] < src[1] + src[3] and src[1] < r[1] + r[3]
+            below = my and r[1] == src[1] + src[3] and r[0] < src[0] + src[2] and src[0] < r[0] + r[2]
+            if right or below:
+                moved[k] = (r[0] + (mx if right else 0), r[1] + (my if below else 0))
+                queue.append((r, mx if right else 0, my if below else 0))
+    return moved
 
 
 def normalize(layout: dict[str, OutputConf], sizes: dict[str, tuple[int, int]]) -> None:

@@ -119,7 +119,7 @@ def _cmd(a) -> int:
             if a.verb == "serve":
                 return _serve(b, a)
             out = _run(b, a)
-    except (InputError, KeymapError, OSError) as exc:
+    except (InputError, KeymapError, OSError, ValueError) as exc:   # ValueError: a malformed target
         print(dumps({"ok": False, "error": str(exc), "ms": round(1000 * (time.monotonic() - t), 1)}))
         return 1
     print(dumps({"ok": True, **out, "ms": round(1000 * (time.monotonic() - t), 1)}))
