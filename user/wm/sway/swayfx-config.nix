@@ -607,8 +607,10 @@ in
           # Grid layout: 3 columns, large icons (48px), vertical orientation
           # Rofi inherits Stylix colors automatically via existing rofi.nix configuration
           # Default: grouped app -> window picker (less noisy when apps have multiple windows)
+          # With sway-apps: the resident Task-View overview (sway_apps/overview.py), a nop binding.
           "${hyper}+Tab" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
+            if swayApps then "nop sway-apps overview"
+            else "exec ${config.home.homeDirectory}/.config/sway/scripts/window-overview-grouped.sh";
 
           # Workspace toggle (back and forth)
           "Mod4+Tab" = "workspace back_and_forth";
