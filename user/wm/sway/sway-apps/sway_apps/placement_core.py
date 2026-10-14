@@ -365,9 +365,10 @@ def offscreen_plan(world: World) -> list[tuple[int, str]]:
 # and still there at all; anything else was the person's doing since, and stands".
 
 def make_loan(source: str, source_hw: str, host: Out, reason: str, epoch: str,
-              items: list[tuple[Win, Rect | None, Rect | None]]) -> tuple[dict[str, Any], list[tuple[int, str]]]:
-    """items: (window, its rect at home or None, the home output's usable area or None)."""
-    host_ws = host.visible_ws or ""
+              items: list[tuple[Win, Rect | None, Rect | None]], host_ws: str | None = None) -> tuple[dict[str, Any], list[tuple[int, str]]]:
+    """items: (window, its rect at home or None, the home output's usable area or None).
+    host_ws: the workspace to lend to (default: the host's visible one)."""
+    host_ws = host_ws or host.visible_ws or ""
     entries, plan = [], []
     move = f"move --no-auto-back-and-forth container to workspace {quote(host_ws)}"
     for win, home_rect, home_area in items:

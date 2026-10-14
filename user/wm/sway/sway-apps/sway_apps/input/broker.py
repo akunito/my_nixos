@@ -260,6 +260,10 @@ class Broker:
         for k in (keys if down else reversed(keys)):
             self.kbd.key(k, down)
             (self.held_mods.add if down else self.held_mods.discard)(k)
+        # Keys travel uinput -> libinput, the pointer a Wayland socket: no ordering between
+        # them. Measured live 2026-10-14: a Super+drag started before sway had the Super, so
+        # the window did not move. The ack (bound with every modifier) closes the gap.
+        self.ack()
 
     # ---- pointer -----------------------------------------------------------------------
     def box(self) -> tuple[int, int, int, int]:

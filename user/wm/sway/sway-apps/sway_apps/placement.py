@@ -31,10 +31,22 @@ def setup_watch(reg) -> None:
 # --------------------------------------------------------------------------
 # operations shared by the CLI and the GUI (each returns a JSON-able dict)
 
+def _prune(d: dict) -> dict:
+    """Drop dicts left empty (removing the last per-monitor override must leave the profile
+    JSON as it was, not `"placement": {"poweroff": {"monitors": {}}}` - seen 2026-10-14)."""
+    for k in [k for k, v in d.items() if isinstance(v, dict)]:
+        if not _prune(d[k]):
+            del d[k]
+    return d
+
+
 def _edit(st, fn: Callable[[dict], None], scope: str = "profile") -> None:
     layer = copy.deepcopy(((st._layer(scope).get("settings") or {}).get(SETTINGS_KEY)) or {})
     fn(layer)
-    st.set_feature(SETTINGS_KEY, layer, scope)
+    if _prune(layer):
+        st.set_feature(SETTINGS_KEY, layer, scope)
+    else:
+        (st._layer(scope).get("settings") or {}).pop(SETTINGS_KEY, None)
 
 
 def persist(st, message: str) -> str:

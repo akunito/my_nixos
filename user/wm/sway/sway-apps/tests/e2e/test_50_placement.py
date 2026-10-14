@@ -252,6 +252,30 @@ def case_poweroff_move_after_grace_and_restore():
             raise E2EFailure(f"loans left {e.loans()}")
 
 
+def case_poweroff_move_when_the_departing_output_had_focus():
+    """DESK 2026-10-14: focus on the output that goes away. sway carries its focused workspace
+    to the remaining output as the VISIBLE one; lending there put the windows on a workspace
+    of the departed output, which went home with them, so nothing returned to 21/22."""
+    with Nested(outputs=OUTS, config=BINDINGS) as s:
+        e = Env(s, {"poweroff": {"default": "move", "grace_seconds": 1.5}}).start()
+        layout(s)
+        focus_ws(s, "HEADLESS-2", "21")
+        launch(s, "e2e.tile")
+        focus_ws(s, "HEADLESS-1", "11")
+        focus_ws(s, "HEADLESS-2", "23")
+        launch(s, "e2e.focused")                  # ws 23 visible + focused on the output that leaves
+        time.sleep(0.4)
+        s.cmd("output HEADLESS-2 disable")
+        s.wait(lambda: find(s, "e2e.tile")[1] == "11" and find(s, "e2e.h22")[1] == "11",
+               "lent to HEADLESS-1's own ws 11, not to the carried ws 23", 6)
+        s.cmd("output HEADLESS-2 enable")
+        s.wait(lambda: find(s, "e2e.tile")[1] == "21" and find(s, "e2e.h22")[1] == "22", "restored after return", 6)
+        if find(s, "e2e.tile")[2] != "HEADLESS-2" or find(s, "e2e.focused")[1] != "23":
+            raise E2EFailure(f"not home: tile {find(s, 'e2e.tile')[1:]}, focused {find(s, 'e2e.focused')[1:]}")
+        if e.loans():
+            raise E2EFailure(f"loans left {e.loans()}")
+
+
 def case_poweroff_ignore_moves_nothing_extra():
     with Nested(outputs=OUTS, config=BINDINGS) as s:
         e = Env(s, {"poweroff": {"default": "move", "monitors": {"second": "ignore"}, "grace_seconds": 1.0}}).start()

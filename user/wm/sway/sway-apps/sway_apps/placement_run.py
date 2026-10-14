@@ -275,7 +275,8 @@ class Placer:
         return {"action": "lent", "host": host_key, "host_ws": host.visible_ws,
                 "loans": [{"source": l["source"], "windows": len(l["windows"])} for l in made]}
 
-    def lend(self, world: World, source: str, source_hw: str, items, reason: str) -> dict[str, Any] | None:
+    def lend(self, world: World, source: str, source_hw: str, items, reason: str,
+             avoid_ws: set[str] = frozenset(), native_ws: dict[str, str | None] | None = None) -> dict[str, Any] | None:
         loans = load_loans(self.epoch)
         if any(l.get("source_hw") == source_hw for l in loans):
             return None  # already on loan (AkuWM: _loans.ContainsKey(role))
@@ -284,11 +285,21 @@ class Placer:
             host = next((o for o in world.outputs.values() if o.hw != source_hw), None)
         if host is None:
             return None  # every screen is gone; there is nowhere to lend to
-        loan, plan = make_loan(source, source_hw, host, reason, self.epoch, items)
+        host_ws = host.visible_ws
+        if host_ws in avoid_ws:
+            own = (native_ws or {}).get(host.hw)
+            if own and own not in avoid_ws:
+                host_ws = own
+        loan, plan = make_loan(source, source_hw, host, reason, self.epoch, items, host_ws)
         if not loan["windows"]:
             return None
         with log.action("placement.lend", source=source, host=host.name, reason=reason) as res:
             res["windows"] = self._exec(plan)
+            if host_ws != host.visible_ws:   # show the host's own workspace again, now holding the loan
+                try:
+                    self.command(f"workspace --no-auto-back-and-forth {quote(host_ws)}")
+                except (ipc.IpcError, swayipc.SwayError) as exc:
+                    _log.warning("show %s failed: %s", host_ws, exc)
         save_loans(loans + [loan])
         return loan
 
@@ -552,7 +563,9 @@ class Tracker:
     def _snapshot(self, world: World) -> None:
         by_out: dict[str, dict[str, Any]] = {}
         for o in world.outputs.values():
-            by_out[o.name] = {"hw": o.hw, "name": o.name, "area": o.area, "role": self.cfg.role_of(o.hw), "windows": {}}
+            by_out[o.name] = {"hw": o.hw, "name": o.name, "area": o.area, "role": self.cfg.role_of(o.hw), "windows": {},
+                              "visible_ws": o.visible_ws,
+                              "workspaces": {n for n, ws in world.workspaces.items() if ws.output == o.name}}
         for w in world.windows.values():
             e = by_out.get(w.output)
             if e is not None and w.ws != SCRATCH:
@@ -598,7 +611,12 @@ class Tracker:
                 w = world.windows.get(cid)
                 if w is not None and w.ws != SCRATCH:
                     items.append((w, rect, snap["area"]))
-            loan = placer.lend(world, snap["role"], hw, items, "poweroff")
+            # sway carries the departed output's workspaces over, its focused one as the host's
+            # VISIBLE workspace: lending there would park the windows on a workspace that goes
+            # home with them (DESK 2026-10-14: nothing returned). Lend to the host's own one.
+            native = {h: e.get("visible_ws") for h, e in self.snap.items() if h != hw}
+            loan = placer.lend(world, snap["role"], hw, items, "poweroff",
+                               avoid_ws=set(snap.get("workspaces") or ()), native_ws=native)
             if loan:
                 _log.info("output %s left: %d window(s) lent to %s ws %s", hw, len(loan["windows"]), loan["host_output"], loan["host_ws"])
                 world = World.from_tree(self._fresh_tree(ctx))

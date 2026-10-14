@@ -718,6 +718,12 @@ class Policy(TmpFiles):
         with self.assertRaises(ValueError):
             placement.set_policy(st, None, "default")
 
+    def test_dropping_the_only_override_leaves_no_empty_settings(self):
+        st = make_state(self.tmp, [Monitor(id="second", criteria="Make B S", group=2)])
+        placement.set_policy(st, "second", "move")
+        placement.set_policy(st, "second", "default")
+        self.assertNotIn("placement", st._layer("profile").get("settings") or {})
+
     def test_x13_lid_panel_defaults_to_ignore(self):
         apps = Path(__file__).resolve().parents[2] / "apps"
         st = State(apps / "common.json", apps / "LAPTOP_X13.json")

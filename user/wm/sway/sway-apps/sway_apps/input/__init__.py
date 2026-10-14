@@ -19,6 +19,12 @@ SETTINGS_KEY = "input"
 SETTINGS_DEFAULTS: dict = {}   # nothing tunable yet: the guards are fixed on purpose
 
 
+def setup_watch(reg) -> None:
+    # The broker reads its own ack/abort binding events; this keeps the watch daemon from
+    # logging "no handler for verb 'input'" on every ack (seen live 2026-10-14).
+    reg.verb("input", lambda _args, _ctx: None)
+
+
 def register_cli(sub) -> None:
     p = sub.add_parser("input", help="inject keyboard/pointer input (hand tests, e2e)")
     p.add_argument("--force", action="store_true", help="skip the safety guards")
@@ -76,7 +82,6 @@ def _run(b, a) -> dict:
         finally:
             if a.mods:
                 b.hold(a.mods, False)
-                b.ack()
     elif v == "scroll":
         out = b.scroll(a.target, a.notches)
     elif v == "move":
