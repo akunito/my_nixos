@@ -46,7 +46,11 @@ let
     export ANTHROPIC_DEFAULT_OPUS_MODEL="${model}" ANTHROPIC_DEFAULT_SONNET_MODEL="${model}"
     export ANTHROPIC_DEFAULT_HAIKU_MODEL="${model}" ANTHROPIC_DEFAULT_FABLE_MODEL="${model}"
     export CLAUDE_CODE_SUBAGENT_MODEL="${model}" CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1
-    export CLAUDE_CODE_MAX_CONTEXT_TOKENS=${ctx} CLAUDE_CODE_DISABLE_1M_CONTEXT=1
+    # The live window wins over the Nix value: presets (system/app/ai-presets.nix)
+    # change the server's ctx without a DESK rebuild. /props answers only when
+    # the model is loaded; otherwise (asleep, loading) the Nix default stands.
+    live_ctx=$(${curl} -sf --max-time 3 "${url}/props" 2>/dev/null | ${py} -c 'import json,sys; print(json.load(sys.stdin)["default_generation_settings"]["n_ctx"])' 2>/dev/null || true)
+    export CLAUDE_CODE_MAX_CONTEXT_TOKENS="''${live_ctx:-${ctx}}" CLAUDE_CODE_DISABLE_1M_CONTEXT=1
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
     export CLAUDE_CODE_ATTRIBUTION_HEADER=0 DISABLE_PROMPT_CACHING=1
     if [ "''${CLAUDE_${lib.toUpper name}_MCP:-0}" = "1" ]; then
