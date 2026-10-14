@@ -20,7 +20,9 @@ let
 
   # Nix-side preset schema (profiles set systemSettings.aiPresets):
   #   label, short, vramEst, model (file name under modelsDir), ctx, slots,
-  #   kv ("" = f16), alias, template (path or null = the GGUF's own), extra (list).
+  #   kv ("" = f16), alias, template (path or null = the GGUF's own), extra (list),
+  #   kind ("chat" | "decision": decision models answer only /v1/systemone,
+  #   chat completions return 501 — the DESK widget shows the kind).
   toEnv = p: {
     LLAMA_MODEL_FILE = "${modelsDir}/${p.model}";
     LLAMA_CTX = toString p.ctx;
@@ -32,6 +34,7 @@ let
   };
   presets = lib.mapAttrs (_: p: {
     inherit (p) label short;
+    kind = p.kind or "chat";
     vram_est = p.vramEst or "?";
     env = toEnv p;
   }) (cfg.aiPresets or { });

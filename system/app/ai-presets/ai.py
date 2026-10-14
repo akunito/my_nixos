@@ -75,8 +75,11 @@ def apply(cfg: dict, name: str, preload: bool) -> str:
             systemctl("stop", u)
         return "off: socket, proxy and backend stopped"
     p = cfg["presets"][name]
-    if not os.path.exists(p["env"]["LLAMA_MODEL_FILE"]):
-        raise SystemExit(f"preset {name}: model file missing: {p['env']['LLAMA_MODEL_FILE']} (pre-download it first)")
+    extra = p["env"]["LLAMA_EXTRA"].split()
+    needed = [p["env"]["LLAMA_MODEL_FILE"]] + [extra[i + 1] for i, a in enumerate(extra[:-1]) if a == "--mmproj"]
+    missing = [f for f in needed if not os.path.exists(f)]
+    if missing:
+        raise SystemExit(f"preset {name}: missing {', '.join(missing)} (still downloading? pre-download it first)")
     text = env_text(p)
     try:
         unchanged = open(ENV_FILE).read() == text
@@ -148,7 +151,8 @@ def status(cfg: dict) -> dict:
     name = current(cfg)
     st: dict = {"preset": name, "default": cfg["default"],
                 "presets": [{"id": "off", "label": "Off — unload everything", "short": "off", "vram_est": "0 GB"}]
-                + [{"id": k, **{f: v[f] for f in ("label", "short", "vram_est")}} for k, v in cfg["presets"].items()],
+                + [{"id": k, "kind": v.get("kind", "chat"), **{f: v[f] for f in ("label", "short", "vram_est")}}
+                   for k, v in cfg["presets"].items()],
                 "gpu": gpu()}
     if name == "off":
         st["state"] = "off"
@@ -162,6 +166,7 @@ def status(cfg: dict) -> dict:
     st["ctx"] = gen.get("n_ctx") or int(p["env"]["LLAMA_CTX"])
     st["slots"] = (props or {}).get("total_slots") or int(p["env"]["LLAMA_SLOTS"] or 1)
     st["kv"] = p["env"]["LLAMA_KV"] or "f16"
+    st["kind"] = p.get("kind", "chat")
     return st
 
 

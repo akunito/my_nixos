@@ -33,6 +33,7 @@ jq -c '
              else "󰒋 \($cur.short // .preset) · \($g.vram_used_mb | gb) · \($g.temp_c // "?")°" end),
       tooltip: ("NAS 3090 — preset: \(.preset // "off") (\($cur.label // "-"))\n"
                 + "state: \(.state // "?")   model: \(.model_alias // "-")   ctx: \(.ctx // "-") × \(.slots // "-") slot(s), KV \(.kv // "-")\n"
+                + (if (.kind // "chat") == "decision" then "decision model: answers only POST /v1/systemone (chat → 501)\n" else "" end)
                 + "VRAM \($g.vram_used_mb | gb) / \($g.vram_total_mb | gb)   \($g.temp_c // "?")°C   \($g.power_w // "?") W   GPU \($g.util_pct // "?") %\n"
                 + "click: switch preset"),
       class: $cls
