@@ -288,6 +288,7 @@
     aion2MeterDaemonInstallDir = null;                     # null = ~user/.local/opt/aionmeter-daemon
     aion2MeterDaemonDataDir = null;                        # null = ~user/.local/share/AionMeter
     aion2MeterDaemonExtraArgs = [ ];                       # e.g. [ "--json-events" ] when a UI reads stdout
+    aion2MeterDaemonForward = null;                        # "ip:port" -> --forward (A2M-27): pcap stream of the game traffic for a Windows meter (VM 192.168.122.1:47013 / Wine 127.0.0.1:47013); null = off
     aion2MeterOverlayInstallDir = null;                    # null = ~user/.local/opt/aionmeter-overlay (AionMeter.Overlay publish; `aionmeter-overlay`)
     aion2MeterOverlayMonitor = "DP-1";                     # sway connector of `aionmeter-overlay --layer` (window mode ignores it)
     # --- VRAM peak sampler ---
