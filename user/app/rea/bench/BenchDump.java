@@ -39,11 +39,19 @@ public class BenchDump extends GhidraScript {
         if (f.isExternal()) continue;
         total++;
         boolean ok = true;
+        int lines = 0, gotos = 0, warns = 0;
         long ft = System.nanoTime();
         if (!f.isThunk()) {
           DecompileResults r = di.decompileFunction(f, 30, monitor);
           ok = r != null && r.decompileCompleted();
           if (!ok) fails++;
+          else if (r.getDecompiledFunction() != null) {
+            // Output-shape metrics (sailr-eval style) to compare engines (M3).
+            String c = r.getDecompiledFunction().getC();
+            for (int i = c.indexOf('\n'); i >= 0; i = c.indexOf('\n', i + 1)) lines++;
+            for (int i = c.indexOf("goto "); i >= 0; i = c.indexOf("goto ", i + 5)) gotos++;
+            for (int i = c.indexOf("WARNING"); i >= 0; i = c.indexOf("WARNING", i + 7)) warns++;
+          }
         }
         long ms = (System.nanoTime() - ft) / 1_000_000;
         if (!first) w.write(',');
@@ -52,7 +60,8 @@ public class BenchDump extends GhidraScript {
             + ",\"name\":\"" + esc(f.getName(true)) + "\""
             + ",\"src\":\"" + f.getSymbol().getSource() + "\""
             + ",\"thunk\":" + f.isThunk()
-            + ",\"ok\":" + ok + ",\"ms\":" + ms + "}");
+            + ",\"ok\":" + ok + ",\"ms\":" + ms
+            + ",\"lines\":" + lines + ",\"gotos\":" + gotos + ",\"warns\":" + warns + "}");
       }
       w.write("],\"total\":" + total + ",\"decompile_fail\":" + fails
           + ",\"decompile_ms\":" + (System.nanoTime() - t0) / 1_000_000 + "}");

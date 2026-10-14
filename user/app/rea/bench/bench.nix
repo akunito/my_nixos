@@ -1,8 +1,9 @@
-{ pkgs, label, extraExtensions ? [ ] }:
+{ pkgs, label, extraExtensions ? [ ], ghidraHome ? "${pkgs.ghidra}/lib/ghidra" }:
 # M1/M2 (AINF-408): the benchmark as a Nix build — same Ghidra and extension wiring as
 # env.nix (NIX_GHIDRAHOME, never GHIDRA_INSTALL_DIR), plus optional extra extensions —
 # so a candidate (e.g. the M2 FID set) is measured against the baseline before it ever
 # reaches REA's image. No network in the build sandbox; corpus = our own programs.
+# ghidraHome: another install tree (M3: kuna.nix's tree with Kuna as `decompile`).
 let
   corpus = import ./corpus.nix { inherit pkgs; };
   ghidraExt = pkgs.ghidra.withExtensions (e: [ e.ghidra-golanganalyzerextension e.findcrypt ] ++ extraExtensions);
@@ -13,7 +14,7 @@ pkgs.runCommand "rea-bench-${label}" { nativeBuildInputs = [ pkgs.ghidra pkgs.py
   mkdir -p $out/raw $TMPDIR/p
   for t in ${corpus}/*.stripped; do
     id=$(basename $t .stripped); s=$(date +%s)
-    ${pkgs.ghidra}/lib/ghidra/support/analyzeHeadless $TMPDIR/p p -import $t \
+    ${ghidraHome}/support/analyzeHeadless $TMPDIR/p p -import $t \
       -scriptPath ${scripts} -postScript BenchDump.java $out/raw/$id.json \
       -deleteProject -analysisTimeoutPerFile 1800 > $out/raw/$id.log 2>&1 \
       || { grep -v "^INFO" $out/raw/$id.log | tail -30; exit 1; }

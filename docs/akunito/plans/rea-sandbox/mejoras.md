@@ -111,6 +111,52 @@ Parte del plan [REA en un sandbox](README.md). Investigación del 2026-10-14 (tr
 - FID/BSim propios de glibc, musl y Rust std generados desde nixpkgs.
 - **Medido con M1:** porcentaje de funciones identificadas antes y después.
 
+**Estado M1 (2026-10-14): hecho.** Hay dos formas de lanzarlo:
+- `rea-bench` mide la imagen de REA tal como corre (nivel 0, krun, sin red);
+- `bench/bench.nix` hace la misma medida como derivación de Nix, con extensiones opcionales, para probar candidatos. **Reproduce exactamente** los números de la imagen de REA.
+
+Detalles:
+- **Corpus propio** (`bench/corpus.nix`): C, C++, Rust y Go; gcc y clang, `-O0` y `-O2`, glibc dinámico y estático, y musl estático. Una derivación por cadena de compilación: un cc de musl dentro de un stdenv de glibc enlazaba `glibc.static` y fallaba (medido).
+- **Verdad de referencia:** los símbolos `FUNC` e `IFUNC` del binario sin *strip*, con todos los alias de cada dirección.
+- **Métricas:** inicios de función encontrados; nombres correctos y equivocados; `FID_conflict` y *thunks* contados aparte; fallos de decompilación y tiempo.
+- **Línea base** (resultados completos en `workbench/rea-bench/`):
+
+| Binario | Nombres correctos |
+|---|---|
+| Go | 98 % (extensión golang) |
+| C/C++/Rust estáticos | 0–0,7 % |
+| inicios de función | 86–100 % |
+
+- **Fallo real de Ghidra que mide el banco:** una función que termina con un salto a `strcmp` se toma por un *thunk* y se llama `strcmp`.
+
+**Estado M2 (2026-10-14): auditado, veredicto "adoptar con cambios"; pendiente de activar en REA.**
+- **Bases Function ID de Ghidra** generadas en el sandbox de Nix desde las librerías estáticas de nixpkgs:
+  - glibc, libm, musl y libgcc/libgcc_eh;
+  - libstdc++, para gnu y para musl;
+  - core/alloc/std de Rust;
+  - todo en dos versiones (unstable y stable).
+- **Empaquetado:** como extensión de Ghidra con `data/*.fidbf`. Ghidra carga los `.fidbf` de cualquier módulo, mientras que un `.fidb` "de usuario" no lo vería la configuración vacía de REA.
+- **Sin firmas de IDA ni conjuntos de terceros.** Licencias sin problema: son datos locales y el repo solo guarda la receta.
+- **Resultado** (nombres correctos; los equivocados quedan en torno al 1 %, más los conflictos que marca Ghidra):
+
+| Binario | Misma versión | Otra versión (caso real) |
+|---|---|---|
+| glibc estático | 58,8 % | 14,2 % |
+| musl estático | 63,8 % | 17,4 % |
+| C++ estático | 44,8 % | 7,8 % |
+| Rust | 27,5–41,9 % | 11,5 % |
+
+- **Cambios exigidos por la auditoría, aplicados:**
+  - puntuador corregido;
+  - filtro de nombres basura de libstdc++;
+  - libgcc y libm añadidos;
+  - aviso al agente de que un nombre con `source: analysis` es una suposición de FID.
+- **Medido:** construir las bases a la vez agotó la memoria de DESK (un Ghidra de hasta 6 GB por librería). Siempre con `--max-jobs` 1 o 2.
+- **Pendiente:**
+  - Debian/Ubuntu glibc y Alpine musl para tener más versiones;
+  - una lista de símbolos comunes como la que usa Ghidra para MSVC;
+  - exponer en REA el comentario PLATE con los candidatos de `FID_conflict`.
+
 **M3 — motores alternativos.** Kuna va en una **imagen aparte** con un `GHIDRA_INSTALL_DIR` alternativo (un `symlinkJoin` que sustituye `Decompiler/os/linux_x86_64/decompile`), con commit fijado y compilado con Nix. Nunca es el motor por defecto. Kuna como decompilador alternativo en headless, comparado con el nativo en M1. Nunca lo sustituye. Opcional: RetDec y Reko desde los runners de dogbolt.
 
 **M4 — IA local como anotación.**

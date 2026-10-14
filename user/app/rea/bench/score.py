@@ -113,5 +113,8 @@ for fn in sorted(os.listdir(results)):
         "thunk_named": thunk,
         "decompile_fail": d["decompile_fail"],
         "decompile_s": round(d["decompile_ms"] / 1000, 1),
+        "c_lines": sum(f.get("lines", 0) for f in d["functions"]),
+        "gotos": sum(f.get("gotos", 0) for f in d["functions"]),
+        "warnings": sum(f.get("warns", 0) for f in d["functions"]),
     })
 json.dump(rows, sys.stdout, indent=1)
