@@ -60,7 +60,10 @@ in
         model = "Huihui-Qwen3.8-27B-abliterated-UD-Q4_K_XL.gguf";
         alias = "qwen3.8-27b-abliterated";
         template = ../system/app/llama-server/templates/qwen3.8-system-anywhere.jinja;
-        extra = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];
+        # Qwen3.8's template defaults reasoning_effort to xhigh: a claude-nas web-research
+        # session thought past Claude Code's 32000-token output limit and died (2026-10-14).
+        extra = [ "--jinja" "--temp" "1.0" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on"
+                  "--reasoning-effort" "medium" "--reasoning-budget" "16384" ];
       };
     in {
       reasoner-128k = reasoner // {
