@@ -1,4 +1,4 @@
-{ pkgs, pkgs-unstable, lib, userSettings, ... }:
+{ pkgs, pkgs-unstable, lib, userSettings, systemSettings, ... }:
 
 # Rootless Docker daemon maintenance — shared by every profile that sets
 # userSettings.dockerRootlessEnable (VPS_PROD, NAS_PROD). Self-gates on the flag.
@@ -93,8 +93,11 @@ lib.mkIf enabled {
     environment = {
       # Let containers reach host services (databases, Redis, Postfix) through
       # the slirp4netns gateway at 10.0.2.2. rootlesskit's default is
-      # --disable-host-loopback.
-      DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK = "false";
+      # --disable-host-loopback. Workstations turn it off
+      # (dockerRootlessHostLoopback = false, AINF-407): there it would hand every
+      # container the host's 127.0.0.1 (llama-server, dev databases).
+      DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK =
+        if (systemSettings.dockerRootlessHostLoopback or true) then "false" else "true";
       # See (1) above.
       DOCKERD = "${dockerdChild}";
     };

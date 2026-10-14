@@ -966,6 +966,15 @@
     #   [ { interface = "tailscale0"; port = 3110; protocol = "tcp"; } ]
     dockerFirewallAllowedPorts = [ ];
 
+    # === Rootless Docker tuning (AINF-407) ===
+    # Containers reach the host's 127.0.0.1 via 10.0.2.2 (VPS/NAS rely on it for
+    # host databases/Postfix). Workstations set false: there it would expose
+    # llama-server and dev databases to every container.
+    dockerRootlessHostLoopback = true;
+    # Register the `krun` runtime (crun + libkrun: one KVM microVM per container)
+    # on the rootless daemon. Opt-in per container with `--runtime krun`.
+    dockerRootlessKrunEnable = false;
+
     # === Database Client Credentials (for workstations) ===
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;
@@ -1403,7 +1412,8 @@
 
     # Feature flags
     dockerEnable = true;
-    dockerRootlessEnable = false; # Rootless Docker (VPS); mutually exclusive with dockerEnable
+    dockerRootlessEnable = false; # Rootless Docker (VPS, NAS, workstations); coexists with dockerEnable (hybrid, as on NAS_PROD)
+    dockerRootRequiresSudo = false; # Workstations (AINF-407): user NOT in the root-equivalent docker group; root daemon socket-activated, reached via sudo only
     virtualizationEnable = true;
     qemuGuestAddition = false;
 

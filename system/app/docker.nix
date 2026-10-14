@@ -14,7 +14,10 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
 {
   virtualisation.docker = lib.mkIf (userSettings.dockerEnable == true) {
     enable = true;
-    enableOnBoot = true;
+    # dockerRootRequiresSudo (workstations, AINF-407): the root daemon is the
+    # exception, not the default — socket-activated only when someone runs
+    # `sudo docker`. docker.socket stays enabled either way.
+    enableOnBoot = !(userSettings.dockerRootRequiresSudo or false);
     # Track docker from pkgs-unstable so we don't have to bump pins each time
     # the stable channel's default docker is flagged unmaintained.
     package = pkgs-unstable.docker;
@@ -82,7 +85,10 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     };
   };
 
-  users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.dockerEnable == true) [ "docker" ];
+  # The docker group is root-equivalent (any process of the user can mount / into
+  # a container). With dockerRootRequiresSudo the user stays out of it and the
+  # root daemon is reached through sudo only.
+  users.users.${userSettings.username}.extraGroups = lib.mkIf (userSettings.dockerEnable == true && !(userSettings.dockerRootRequiresSudo or false)) [ "docker" ];
   environment.systemPackages = lib.mkIf (userSettings.dockerEnable == true) [
     pkgs-unstable.docker
     pkgs-unstable.docker-compose

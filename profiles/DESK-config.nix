@@ -603,6 +603,11 @@ in
       { interface = "tailscale0"; port = 6006; } # Storybook (dev)
       { interface = "tailscale0"; port = 6007; } # Storybook (dev2)
     ];
+    # The list above protects the ROOT daemon only. Rootless (default since
+    # AINF-407) publishes on 127.0.0.1; the dev ports above must be published
+    # explicitly on DESK's tailscale IP in the compose file once each stack moves.
+    dockerRootlessHostLoopback = false; # containers must not reach the host's 127.0.0.1
+    dockerRootlessKrunEnable = true;    # REA sandbox (AINF-408): `--runtime krun`
 
     # Drives
     mount2ndDrives = true;
@@ -1021,6 +1026,12 @@ in
       "input"
       "dialout"
     ];
+
+    # Rootless Docker by default; the root daemon only via sudo for the closed
+    # list of exceptions (host packet capture, NET_ADMIN, devices). AINF-407,
+    # docs/akunito/plans/docker-rootless-workstations.md.
+    dockerRootlessEnable = true;
+    dockerRootRequiresSudo = true;
 
     theme = "ashes";
     wm = "sway";  # Switched from plasma6 for faster builds (no KDE compilation)

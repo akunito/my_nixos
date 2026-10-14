@@ -115,6 +115,8 @@ in
     # VIRTUALIZATION - Override for VM
     # ============================================================================
     dockerEnable = false; # Override - Keep false for VM
+    dockerRootlessEnable = false; # Override - DESK enables rootless (AINF-407); not for the VM
+    dockerRootRequiresSudo = false;
     virtualizationEnable = true; # Override - Enable VM guest features
     qemuGuestAddition = true; # Override - Enable QEMU guest agent
 
