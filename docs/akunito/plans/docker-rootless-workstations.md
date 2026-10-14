@@ -133,6 +133,14 @@ Pendiente de R1:
 - Comprobar `sudo docker ps` y que `docker` sin sudo no llega al daemon root, tras el próximo login.
 - Migrar leftyworkout (dev y dev2) la próxima vez que se use.
 
+**Estado R2 (2026-10-14):** desplegado en X13 (`install.sh ~/.dotfiles LAPTOP_X13 -s -d` por tailscale, EXIT=0) y probado.
+- Rootless activo con `krun`; grupo `docker` vacío; daemon root solo por socket.
+- `krun`: kernel del guest 6.12.91 (host 7.2.8), RAM según `krun.ram_mib`, sin red.
+- El loopback del host está bloqueado.
+- En una red estilo compose, el puerto solo escucha en `127.0.0.1`.
+
+X13 no tenía contenedores ni volúmenes que migrar.
+
 **R2: X13**, cuando esté encendido. Hoy no tiene `dockerFirewallEnable`, así que los puertos del daemon root van a la LAN, ni `virtualizationEnable` (sin qemu/kvm). Antes del deploy:
 - inventario de contenedores y volúmenes;
 - activar `dockerFirewallEnable` para el daemon root que queda;
