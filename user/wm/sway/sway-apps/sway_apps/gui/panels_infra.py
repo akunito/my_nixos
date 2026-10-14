@@ -130,7 +130,8 @@ class NodesPanel(Panel):
 
         def do_deploy():
             x = collect(); prof = x.profile or x.id
-            script = (f"cd {paths.DOTFILES} && ./install.sh {paths.DOTFILES} {prof} -s -u" if x.is_local else f"cd {paths.DOTFILES} && ./deploy.sh --profile {prof}")
+            # never -u: it updates flake.lock (repo rule: only when a flake update is the intent)
+            script = (f"cd {paths.DOTFILES} && ./install.sh {paths.DOTFILES} {prof} -s" if x.is_local else f"cd {paths.DOTFILES} && ./deploy.sh --profile {prof}")
             inner = f"{script}; echo; echo '--- deploy finished (exit '$?') --- press Enter to close'; read -r _"
             import shlex
             confirm(self.win, f"Deploy {prof}?", ("Runs install.sh here" if x.is_local else "Runs deploy.sh --profile " + prof) + " in a terminal. Push your changes first: it resets the target to origin/main.", "Deploy",

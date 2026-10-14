@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "devices": {
+    "razer_tartarus": {
+      "model": "razer_tartarus_v2",
+      "name": "Razer Tartarus V2",
+      "ids": ["1532:022b"],
+      "notes": "Aion 2 layout, dictated by Diego 2026-10-13",
+      "main": {
+        "1": "esc", "2": "f2", "3": "m", "4": "i", "5": "f3",
+        "tab": "f1", "q": "5", "w": "6", "e": "q", "r": "e",
+        "capslock": "leftshift", "a": "1", "s": "2", "d": "3", "f": "4",
+        "leftshift": "leftcontrol", "z": "x", "x": "c", "c": "v",
+        "space": "f",
+        "leftalt": "leftalt",
+        "up": "w", "down": "s", "left": "a", "right": "d"
+      }
+    }
+  }
+}
