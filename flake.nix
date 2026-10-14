@@ -164,5 +164,10 @@
     # as above: the guest is security-relevant and must not move per machine.
     microvm.url = "github:microvm-nix/microvm.nix/f13928fe9900e91709d7ce581eefa47eaafa79e1";
     microvm.inputs.nixpkgs.follows = "nixpkgs";
+    # pwndbg for REA's recorded-crash adapter (AINF-408 F4): the exact commit REA verifies
+    # (third_party/pwndbg/README.md: 2026.09.15). Only its venv + gdbinit.py are used,
+    # only inside the REA sandbox.
+    pwndbg.url = "github:pwndbg/pwndbg/55596aa676a2756efb8d67034f31675170eabe48";
+    pwndbg.inputs.nixpkgs.follows = "nixpkgs";
   };
 }

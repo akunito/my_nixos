@@ -23,21 +23,34 @@ nixpkgs (`nixos-unstable` del `flake.lock` actual) frente a lo que exige REA, co
 | rea-agents | 6.4.0 | fork + `buildNpmPackage` | ver decisión 5 del README | F1 |
 | objdump / Rizin | sin comprobación de versión | 2.46 / 0.9.1 ✓ | — | F1 |
 | pwntools | 4.15.0 | 4.15.0 ✓ | — | F1 |
-| WABT | **exige banner `1.0.42`** (`WabtArtifactProvider.ts:222-228`) | 1.0.41 ✗ | override a 1.0.42 | F1 |
+| WABT | **exige banner `1.0.42`** (`WabtArtifactProvider.ts:222-228`) | 1.0.41 ✗ | **hecho F4:** override a 1.0.42 (`env.nix`) | F4 ✓ |
 | TShark + capinfos | major 4 | 4.6.9 ✓ | — | F1 |
 | prlimit, ps | ruta absoluta / en PATH | util-linux, procps ✓ | variables | F1 |
 | mitmproxy | 12.2.3 | 12.2.3 ✓ | — | F1 (grabados), F3 (en vivo) |
-| jadx-headless-mcp | 0.7.1, sha256 en `src/android/JadxRelease.ts` | `fetchurl` | JAR de un tercero (`1013503897`), no de morluto: revisarlo antes | F1 |
+| jadx-headless-mcp | 0.7.1, sha256 en `src/android/JadxRelease.ts` | `fetchurl` | **hecho F4:** el mismo sha256; auditado (Fable): JAR del CI del autor, sin nativos, REA lo usa por stdio | F4 ✓ |
 | Apktool | ≥ 2.7.0 | 3.0.3 ✓ | — | F1 |
 | ilspycmd | — | 9.1 | — | F1 |
 | Binwalk / Unblob | 3.1.0 / 26.6.4 | ✓ / ✓ | — | F1 |
 | DIE, UPX, YARA, file | — | 3.21 / 5.2.1 / 4.5.7 | triaje | F1 |
 | Chromium | Chrome-family | 155 | carril web | F3 |
-| Wakaru | 1.14.0 | npm | derivación propia | F4 |
-| GDB + pwndbg | MI2/MI3, sin versión | 17.2 ✓, pwndbg por su flake | — | F4 |
-| sigrok-cli | **exige `0.7.2`** (`SigrokRecordingProvider.ts:235-241`) | 0.8.0-unstable ✗ | override a 0.7.2 + libsigrokdecode | F4 |
+| Wakaru | ^1.13 (1.14.0 verificada) | binario oficial | **hecho F4:** release del CI por hash + autoPatchelf; auditado (Fable): Rust, sin código de red | F4 ✓ |
+| GDB + pwndbg | pwndbg 2026.09.15 (`55596aa6`), venv + `gdbinit.py` | 17.2 ✓; pwndbg no está en nixpkgs | **hecho F4:** input del flake fijado al commit de REA (uv2nix, su `uv.lock`); el adaptador de crashes también exige pyelftools 0.33 y unicorn 2.1.2 (overrides) | F4 ✓ |
+| sigrok-cli | **exige `0.7.2`** (`SigrokRecordingProvider.ts:235-241`) | 0.8.0-unstable ✗ | **hecho F4:** tarball 0.7.2 sobre la libsigrok de nixpkgs (131 decoders) | F4 ✓ |
 | Frida | 17.23.2 | npm opcional | derivación con prebuilt fijado por hash | F3 |
-| adb + emulador | — | android-tools 37.0.0 | en la microVM | F3 |
+| adb + emulador | `REA_ADB_PATH` | android-tools 37.0.0 | **adb hecho F4**; emulador pendiente (KVM anidado, imagen del SDK no libre: decisión de Diego) | F4 |
+
+**F4 (2026-10-14), probado con `rea-claude --ask` en nivel 1:**
+- `inspect_wasm_artifact`: WABT 1.0.42;
+- `recover_javascript_sources`: Wakaru detectó webpack5, 3 módulos;
+- `inspect_signal_decoders`: 131 decoders;
+- `inspect_adb_client`;
+- `start_gdb_session` y `gdb_console`;
+- JADX sobre un APK libre de F-Droid (`inspect_android_package`, `search_android_classes`, `inspect_android_class`);
+- `inspect_recorded_crash` con el contexto de pwndbg sobre un *core* propio.
+
+**Arreglos de la misma tanda:**
+- **`REA_OBJDUMP` no existe**: la variable buena es `REA_OBJDUMP_COMMAND`.
+- **Salidas grandes de REA:** Claude Code guarda las que superan unos 80k caracteres en `~/.claude-rea/projects/<caso>/…/tool-results/`, y el sandbox de Bash no podía leerlas. Ahora puede leer solo el directorio de ese caso.
 
 ## Motores comerciales (investigado 2026-10-14)
 

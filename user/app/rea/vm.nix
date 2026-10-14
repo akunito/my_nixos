@@ -15,7 +15,8 @@
 # only takes absolute paths). REA's MCP is relayed over vsock (CID 4242, port 5000).
 # Prototype measurements and gotchas: docs/akunito/plans/rea-sandbox/aislamiento.md.
 let
-  reaEnv = import ./env.nix { inherit pkgs rea-agents; };
+  pwndbg = inputs.pwndbg.packages.${pkgs.stdenv.hostPlatform.system}.pwndbg.meta.pwndbgVenv;
+  reaEnv = import ./env.nix { inherit pkgs rea-agents pwndbg; };
   # Playwright 1.58.2 always appends --no-sandbox (REA never passes chromiumSandbox) and
   # no proxy. This wrapper drops the former (namespace sandbox works in the guest) and
   # forces every request through the relay; QUIC, non-proxied WebRTC UDP and DoH are off.

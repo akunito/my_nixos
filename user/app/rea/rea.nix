@@ -9,7 +9,7 @@
 let
   enabled = systemSettings.reaSandboxEnable or false;
   rea-agents = pkgs-unstable.callPackage ./rea-agents.nix { };
-  image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents; };
+  image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;
   vmUid = 1000; # baked into the microVM share paths (/run/user/<uid>/rea-vm); the launcher checks it
@@ -390,7 +390,11 @@ let
       jq -n --arg cmd "${rea-run}/bin/rea-run" --arg c "$name" --arg home "$HOME" --arg rt "/run/user/$uid" \
         '{mcpServers: {rea: {type: "stdio", command: $cmd, args: [$c, "mcp"],
           env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}}}}' > "$s/mcp.json"
-      jq -n --arg d "$d" --arg hook "${rea-hook}/bin/rea-hook" --argjson t2 "$([ "$tier" = 2 ] && echo true || echo false)" '
+      # Claude Code persists MCP results above its inline limit under the case's project dir
+      # (tool-results/); the Bash sandbox must be able to read them or the agent cannot use
+      # them (measured: jq "No such file" on a 79k-char inspect_android_class result).
+      tr="$HOME/.claude-rea/projects/$(printf '%s' "$d" | sed 's/[^A-Za-z0-9]/-/g')"
+      jq -n --arg d "$d" --arg tr "$tr" --arg hook "${rea-hook}/bin/rea-hook" --argjson t2 "$([ "$tier" = 2 ] && echo true || echo false)" '
         {
           disableClaudeAiConnectors: true,
           disableAutoMode: "disable",
@@ -409,7 +413,7 @@ let
             enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
             autoAllowBashIfSandboxed: ($t2 | not),
             network: {allowedDomains: []},
-            filesystem: {denyRead: ["~/"], allowRead: [$d]}
+            filesystem: {denyRead: ["~/"], allowRead: [$d, $tr]}
           },
           hooks: {
             PreToolUse:  [{matcher: "", hooks: [{type: "command", command: ($hook + " " + $d + " pre")}]}],
