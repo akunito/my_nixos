@@ -67,6 +67,7 @@ let
         --set-default SWAY_APPS_SWAY_BIN "${swayPkg}/bin/sway"
         --set-default SWAY_APPS_SWAYMSG_BIN "${swayPkg}/bin/swaymsg"
         --set-default SWAY_APPS_SWAY_FEATURES "${swayFeatures}"
+        --set-default SWAY_APPS_XWAYLAND_DPI "${toString (systemSettings.swayXwaylandDpi or 96)}"
         --prefix PATH : "${lib.makeBinPath [ pkgs.git pkgs.libnotify pkgs.coreutils ]}"
       )
     '';
@@ -153,8 +154,11 @@ in
     # Regenerate the include from the repo state on every activation. No
     # reload here: the session picks it up on the next reload/login, and the
     # tool reloads itself after every edit. No git: activation must never
-    # create commits.
-    home.activation.swayAppsGenerate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    # create commits. Before onFilesChange: HM's sway module reloads sway there
+    # when its config changed, and with swayAppsOwnsOutputs the output layout
+    # lives in this include — a reload against the previous include would drop
+    # every output to sway's defaults.
+    home.activation.swayAppsGenerate = lib.hm.dag.entryBetween [ "onFilesChange" ] [ "writeBoundary" ] ''
       if [ -d "${dotfiles}/user/wm/sway/apps" ]; then
         SWAY_APPS_GIT=0 ${sway-apps}/bin/sway-apps --json apply --no-reload --no-validate >/dev/null 2>&1 \
           || echo "sway-apps: include generation failed (run 'sway-apps doctor')" >&2

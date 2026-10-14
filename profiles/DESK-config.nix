@@ -770,6 +770,10 @@ in
     # rules and swayWorkspaceOutputPins); the nix-hardcoded ones are no longer
     # emitted. Hyper+s (rules), Hyper+grave (monitors).
     swayAppsEnable = true;
+    # Output layout (mode/position/scale/transform by hardware id) lives in
+    # DESK.json settings.displays, imported once from nwg-displays' file on
+    # 2026-10-14; kanshi and the outputs include are off (lib/defaults.nix).
+    swayAppsOwnsOutputs = true;
     stylixEnable = true; # Enable Stylix for system-wide theming
     swwwEnable = true; # Enable swww wallpaper daemon for Sway (robust across reboot + HM rebuilds)
     waypaperEnable = true; # Enable Waypaper GUI wallpaper manager (Hyper+Shift+S)
@@ -876,7 +880,8 @@ in
     swayUseSwayfx = false;
 
     # X11 at physical pixels on the 4K Samsung (see lib/defaults.nix). DPI for
-    # its 1.5 scale; at 1.6 use 154.
+    # its 1.5 scale; the default only: sway-apps' Monitors view offers
+    # round(96 x scale) when the primary's scale changes (DESK.json wins).
     swayXwaylandZeroScaling = true;
     swayXwaylandDpi = 144;
     # AION 2 meter card (Wayland, app_id aionmeter) above fullscreen gamescope.

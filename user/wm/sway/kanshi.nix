@@ -25,8 +25,11 @@ let
     else ''
   exec $HOME/.config/sway/scripts/swaysome-groups-setup.sh'';
 
-  # Either mode enables kanshi
-  kanshiEnabled = declarativeMode || imperativeMode;
+  # Either mode enables kanshi, unless sway-apps owns the output layout: kanshi
+  # is restarted on every HM switch (and by exec_always with enableSwayForDESK)
+  # and its `output * enable` would undo the outputs sway-apps disables.
+  ownsOutputs = (systemSettings.swayAppsEnable or false) && (systemSettings.swayAppsOwnsOutputs or false);
+  kanshiEnabled = (declarativeMode || imperativeMode) && !ownsOutputs;
 in
 {
   config = lib.mkMerge [
@@ -48,7 +51,7 @@ in
     })
 
     # Declarative mode - Nix manages the config
-    (lib.mkIf declarativeMode {
+    (lib.mkIf (declarativeMode && kanshiEnabled) {
       services.kanshi.settings = systemSettings.swayKanshiSettings;
 
       # Ensure Home Manager owns kanshi config robustly
@@ -56,7 +59,7 @@ in
     })
 
     # Imperative mode - User manages ~/.config/kanshi/config directly
-    (lib.mkIf imperativeMode {
+    (lib.mkIf (imperativeMode && kanshiEnabled) {
       # Create a default config if none exists
       home.activation.kanshiCreateDefaultConfig =
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
@@ -86,7 +89,7 @@ EOF
     # 2026-09-07: the hotplug snapshot/restore exec was removed from the repo.
     # Strip it from live user-managed configs so kanshi stops calling a
     # script that no longer exists. Idempotent.
-    (lib.mkIf imperativeMode {
+    (lib.mkIf (imperativeMode && kanshiEnabled) {
       home.activation.kanshiDropHotplugRestore =
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
           KANSHI_CONFIG="$HOME/.config/kanshi/config"
@@ -100,7 +103,7 @@ EOF
     # the focus-immune path — drop the focus-fragile assign-groups.sh exec and
     # ensure `swaysome init` runs. Idempotent. Gated on the flag so DESK's live
     # config is never touched.
-    (lib.mkIf (imperativeMode && nativeGroups) {
+    (lib.mkIf (imperativeMode && nativeGroups && kanshiEnabled) {
       home.activation.kanshiMigrateNativeGroups =
         lib.hm.dag.entryBefore [ "kanshiReapplyAfterSwitch" ] ''
           KANSHI_CONFIG="$HOME/.config/kanshi/config"

@@ -394,6 +394,15 @@ systemSettings = {
 };
 ```
 
+## Flag Reference: Sway Output Ownership
+
+| Flag | Default | On in | Effect |
+|------|---------|-------|--------|
+| `swayAppsOwnsOutputs` | `false` | DESK, LAPTOP_X13 | sway-apps is the only writer of the output layout: `output "<make model serial>" {mode, position, scale, transform, adaptive_sync, enable/disable}` and `xwayland_dpi` are rendered into `~/.config/sway/sway-apps.conf` from `settings.displays` in `user/wm/sway/apps/<PROFILE>.json`. kanshi (`kanshi.nix`), the `include ~/.config/sway/outputs` line and the enableSwayForDESK kanshi restart are dropped. Needs `swayAppsEnable`. Edit through the GUI Monitors canvas (Apply, then Keep within 15 s or it reverts) or `sway-apps displays …` (`list`, `exact-scales`, `set`, `keep`, `revert`, `import-nwg`, `save-live`, `dpi`). |
+| `swayXwaylandZeroScaling` | `false` | DESK, LAPTOP_X13 | Patched wlroots + sway: X11 at physical pixels. `swayXwaylandDpi` (DESK 144, X13 106) is only the default when the profile JSON sets no `xwayland_dpi`; the include emits `xwayland_dpi` only on machines with this flag (an unpatched sway rejects it). |
+
+Gotchas: `swaymsg reload` resets every output to the config and drops runtime `output` changes (measured 2026-10-14, nested sway 1.11), so a live change is only durable after Keep regenerates the include. The HM activation regenerates the include before HM's sway reload (`onFilesChange`), otherwise a deploy would reload against the old include and drop the layout. X13's lid script still disables eDP-1 with swaymsg; sway-apps never saves that runtime state, and when no output is left active (lid closed, dock unplugged) the watch daemon enables the connected ones (what kanshi's `output * enable` did).
+
 ## Related Documentation
 
 - [Configuration Guide](configuration.md) - General configuration patterns

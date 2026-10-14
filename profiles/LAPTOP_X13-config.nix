@@ -300,6 +300,14 @@ in
     # placement; `sway-apps monitors fix-orphans` runs once at login for the
     # group-0 workspace sway creates by default.
     swaysomeNativeGroups = false;
+    # Output layout in LAPTOP_X13.json settings.displays (sway-apps, by hardware
+    # id); kanshi + the nwg-displays include are off. The lid script still
+    # disables/enables eDP-1 with swaymsg; sway-apps never saves that state.
+    swayAppsOwnsOutputs = true;
+    # X11 at physical pixels (local wlroots + sway patches, from-source build,
+    # relogin). DPI = round(96 x 1.1), the panel's scale (1920x1200 at 1.1).
+    swayXwaylandZeroScaling = true;
+    swayXwaylandDpi = 106;
     goaCalendarEnable = true; # GNOME Online Accounts + gnome-calendar + Waybar widget (click opens calendar.google.com in default browser)
 
     # === Package Modules ===

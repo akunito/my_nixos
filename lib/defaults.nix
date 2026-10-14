@@ -1165,8 +1165,10 @@
     # events for floating drag/resize. Rebuilds sway only; relogin.
     swayWindowStacking = false;
     # sway-apps owns the output layout (mode/pos/scale/transform/enable by
-    # hardware id, xwayland_dpi): kanshi and the nwg-displays outputs include
-    # are dropped. Needs swayAppsEnable.
+    # hardware id, xwayland_dpi) from settings.displays in the profile JSON
+    # (GUI Monitors canvas, `sway-apps displays`): kanshi and the nwg-displays
+    # outputs include are dropped, swayXwaylandDpi becomes the default only.
+    # Needs swayAppsEnable.
     swayAppsOwnsOutputs = false;
 
     # Monitor management (imperative GUI approach)
