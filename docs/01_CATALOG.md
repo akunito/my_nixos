@@ -457,7 +457,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/rea/image.nix**: REA sandbox image for tier 0 (AINF-408 F1): rootless Docker + krun. Tools and
 - **user/app/rea/rea-agents.nix**: rea-agents 6.4.0 built from our fork (akunito/rea) at the upstream release commit.
 - **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
-- **user/app/rea/vm.nix**: extraModules: tests only (e.g. a root console for the escape test); empty in production.
+- **user/app/rea/vm.nix**: extraModules: tests only (e.g. a root console for the escape test); empty in production. *Enabled when:* `cat /mnt/ctl/proxy-port`
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
