@@ -1899,6 +1899,22 @@
       "table": "prefix",
       "notes": "migrated 2026-09-07 from nix (was a plain exec; app-toggle focuses an open window instead of starting a second one)",
       "updated_at": 0
+    },
+    {
+      "id": "k-84b79cb7",
+      "keys": "Hyper+i",
+      "kind": "sway",
+      "app_id": "",
+      "command": "pin toggle",
+      "name": "Pin floating window",
+      "enabled": true,
+      "release": false,
+      "locked": false,
+      "override": false,
+      "notes": "SWAY-7: pin band of patches/sway-window-stacking.patch (floating only; tiled = error)",
+      "category": "Windows",
+      "table": "prefix",
+      "updated_at": 0
     }
   ],
   "tools": [

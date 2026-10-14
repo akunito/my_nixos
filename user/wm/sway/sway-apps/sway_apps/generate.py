@@ -49,7 +49,11 @@ def render(state: State, include_disabled: bool = False) -> str:
         if r.problems():
             _log.warning("skipping invalid rule %s: %s", r.id, "; ".join(r.problems()))
             continue
-        by_kind[r.kind].append(r)
+        fit = r.for_sway(paths.SWAY_FEATURES)
+        if fit is None:
+            _log.warning("skipping rule %s: every action needs a sway patch this machine lacks", r.id)
+            continue
+        by_kind[r.kind].append(fit)
     for kind, title in (("assign", "Workspace assignments"), ("no_focus", "No-focus"), ("for_window", "Window rules")):
         rules = by_kind[kind]
         if not rules:
