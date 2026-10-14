@@ -1,5 +1,7 @@
 """Live check of the overview following sway (SWAY-15) with Diego's REAL bindings:
-Hyper+Shift+9 moves the selected window, Hyper+9 switches workspace, a drag moves it back.
+Hyper+Shift+9 moves the selected window (swaysome follows it: the overview's focused
+column becomes 9), Hyper+9 there goes back (workspace_auto_back_and_forth), a drag
+moves the window home.
 
 Only a test window is moved: it is focused before the overview opens, so even a broken
 wrapper would move it and nothing else. Target = workspace <group>9 of the focused
@@ -93,11 +95,11 @@ try:
     if not res["selected_is_test_window"]:
         raise SystemExit("selection is not the test window")
 
-    chord("9", shift=True)               # real binding: overview-selected.sh + swaysome move 9
-    res["shift9_moved_it"] = bool(until(lambda: sid in columns(state()).get(target, [])))
-    until(lambda: state()["selected"] != sid)   # sway's focus stayed home after the move
-    chord("9")                           # real binding: swaysome focus 9
-    res["hyper9_focused_col"] = bool(until(lambda: focused_cols(state()) == [target] and state()["selected"] == sid))
+    chord("9", shift=True)               # real binding: overview-selected.sh + swaysome move 9 (it follows)
+    res["shift9_moved_and_followed"] = bool(until(lambda: sid in columns(state()).get(target, [])
+                                                  and focused_cols(state()) == [target] and state()["selected"] == sid))
+    chord("9")                           # real binding: swaysome focus 9; already on it, so
+    res["hyper9_back_and_forth"] = bool(until(lambda: focused_cols(state()) == [home]))   # auto_back_and_forth: home
     subprocess.run(["grim", "-s", "0.5", os.path.join(OUT, "overview-follow.png")])
 
     st = state()
@@ -156,5 +158,7 @@ finally:
     time.sleep(0.2)
     f1 = ov.focused_card(ov.build(c.tree()))
     res["restored"] = visible() == vis0 and f1 is not None and f1.id == f0.id
+    # the placement journal must not keep the test window's spot
+    subprocess.run(["sway-apps", "placement", "journal", "forget", "handtest.follow"], capture_output=True)
 print(json.dumps(res))
 sys.exit(0 if ok and res["restored"] else 1)
