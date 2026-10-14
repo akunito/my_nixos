@@ -467,6 +467,11 @@ in
       bind -n C-M-f select-pane -L
       bind -n C-M-g select-pane -U
       
+      # Window name = Claude Code session title while claude runs in the active pane.
+      # Claude sets the pane title (OSC 2) to "<glyph> <session name>": ✳ idle, a braille spinner while busy;
+      # the glyph is stripped. A manual rename turns automatic-rename off for that window, as before.
+      set -g automatic-rename-format "#{?pane_in_mode,[tmux],#{?#{==:#{pane_current_command},claude},#{=25;s/^[^ ]+ //:pane_title},#{pane_current_command}}}#{?pane_dead,[dead],}"
+
       # Status bar with Stylix colors showing windows (tabs) and panes
       # CRITICAL: Check if Stylix is actually available (not just enabled)
       # Stylix is disabled for Plasma 6 even if stylixEnable is true
