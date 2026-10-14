@@ -288,6 +288,14 @@ in
     systemd.sockets.llama-proxy = {
       description = "On-demand socket for llama-server";
       wantedBy = [ "sockets.target" ];
+      # Stop with the backend before S3. 2026-10-14 23:00:02: the backend's
+      # Conflicts=sleep.target stopped the proxy mid-answer, the client
+      # reconnected, the socket tried to re-spawn the service inside the suspend
+      # transaction ("Transaction ... is destructive"), was marked FAILED and
+      # nothing listened on :8090 after resume (widget: "Connection refused").
+      # llama-resume below re-arms it.
+      before = [ "sleep.target" ];
+      unitConfig.Conflicts = [ "sleep.target" ];
       socketConfig = {
         ListenStream = "${host}:${toString port}";
         # Don't let bursts of connections (e.g. repeated refused requests while
@@ -379,6 +387,19 @@ in
             ${pkgs.systemd}/bin/systemctl start llama-proxy.socket
           fi
         '';
+      };
+    };
+
+    # After resume: same reconcile as the lock watcher (lock present → stay down,
+    # else reset-failed + start the socket). After=suspend.target on a unit wanted
+    # by it runs once the sleep is over (NixOS's post-resume pattern).
+    systemd.services.llama-resume = {
+      description = "Re-arm the llama-server socket after resume";
+      after = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target" ];
+      wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.systemd}/bin/systemctl start llama-gaming.service";
       };
     };
 

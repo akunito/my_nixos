@@ -70,13 +70,23 @@ def env_text(p: dict) -> str:
     return "".join(f'{k}="{p["env"].get(k, "")}"\n' for k in keys)
 
 
-def _post(url: str, body: dict, timeout: float = 60) -> dict:
+def _post(url: str, body: dict, timeout: float = 60, retry: bool = True) -> dict:
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read() or b"{}")
     except urllib.error.HTTPError as exc:
         raise SystemExit(f"{url} {body}: HTTP {exc.code}: {exc.read().decode(errors='replace')[:300]}")
+    except urllib.error.URLError as exc:
+        # :8090 not listening = llama-proxy.socket down (gaming lock, or FAILED after
+        # the 23:00 suspend, 2026-10-14). We run as root: re-arm it once and retry,
+        # instead of the traceback the widget showed.
+        if retry and os.geteuid() == 0 and not os.path.exists("/run/llama-gaming/lock"):
+            systemctl("reset-failed", "llama-proxy.socket", "llama-proxy.service", "llama-server.service")
+            systemctl("start", "llama-proxy.socket")
+            time.sleep(0.5)
+            return _post(url, body, timeout, retry=False)
+        raise SystemExit(f"{url}: {exc.reason} — llama-proxy.socket is down (gaming lock? `systemctl status llama-proxy.socket`)")
 
 
 def router_models(base: str = BACKEND) -> list[dict]:
