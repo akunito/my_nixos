@@ -26,14 +26,15 @@ _EV = struct.Struct("=qqHHi")   # struct input_event on 64-bit: timeval + type +
 
 
 class UInputKeyboard:
-    def __init__(self, keys: range | set[int] = range(1, 249)) -> None:
+    def __init__(self, keys: range | set[int] = range(1, 249), ids: tuple[int, int] = (VENDOR, PRODUCT),
+                 name: bytes = NAME) -> None:
         self.fd = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK | os.O_CLOEXEC)
         self.held: set[int] = set()
         try:
             fcntl.ioctl(self.fd, UI_SET_EVBIT, EV_KEY)
             for k in set(keys) | set(range(1, 33)):      # KEY_ESC..KEY_D for udev's keyboard tag
                 fcntl.ioctl(self.fd, UI_SET_KEYBIT, k)
-            fcntl.ioctl(self.fd, UI_DEV_SETUP, struct.pack("=HHHH80sI", BUS_USB, VENDOR, PRODUCT, 1, NAME, 0))
+            fcntl.ioctl(self.fd, UI_DEV_SETUP, struct.pack("=HHHH80sI", BUS_USB, ids[0], ids[1], 1, name, 0))
             fcntl.ioctl(self.fd, UI_DEV_CREATE)
         except OSError:
             os.close(self.fd)
