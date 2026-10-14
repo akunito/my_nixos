@@ -5,6 +5,9 @@ Each module in FEATURES may define:
                                     defaults < common.json < <PROFILE>.json)
   register_cli(sub)                 add argparse sub-commands
   setup_watch(reg)                  register handlers on the watch daemon (watch.Registry)
+  render_include(state) -> str      text appended to ~/.config/sway/sway-apps.conf (validated
+                                    with the session's sway; gate patch-only commands on
+                                    paths.SWAY_FEATURES)
   GUI_PANELS                        [(key, title, subtitle, icon, "gui.module:Class")]
 Owning files per feature keeps parallel work out of cli.py/state.py/watch.py/gui/app.py.
 """
@@ -42,6 +45,15 @@ def setup_watch(reg) -> None:
         fn = getattr(m, "setup_watch", None)
         if fn:
             fn(reg)
+
+
+def include_fragments(state) -> Iterator[str]:
+    for m in modules():
+        fn = getattr(m, "render_include", None)
+        if fn:
+            text = fn(state)
+            if text:
+                yield text
 
 
 def gui_panels() -> Iterator[tuple[str, str, str, str, str]]:

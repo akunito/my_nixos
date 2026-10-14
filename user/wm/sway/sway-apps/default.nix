@@ -14,6 +14,12 @@ let
   swayPkg = if useFx then pkgs.swayfx else pkgs.sway;
   dotfiles = systemSettings.dotfilesPath or "${config.home.homeDirectory}/.dotfiles";
   profile = systemSettings.envProfile or "default";
+  # paths.SWAY_FEATURES: which patch-only commands this machine's sway accepts.
+  swayFeatures = lib.concatStringsSep "," (
+    lib.optional (systemSettings.swayWindowStacking or false) "stacking"
+    ++ lib.optional (systemSettings.swayAboveFullscreen or false) "above_fullscreen"
+    ++ lib.optional (systemSettings.swayXwaylandZeroScaling or false) "xwayland_zero_scaling"
+    ++ lib.optional (systemSettings.swayAppsOwnsOutputs or false) "owns_outputs");
 
   # Stylix -> GTK CSS tokens. Written only when stylix is on; the GUI falls
   # back to its built-in dark palette otherwise. Same guard as extras.nix.
@@ -60,6 +66,7 @@ let
         --set-default SWAY_APPS_PROFILE "${profile}"
         --set-default SWAY_APPS_SWAY_BIN "${swayPkg}/bin/sway"
         --set-default SWAY_APPS_SWAYMSG_BIN "${swayPkg}/bin/swaymsg"
+        --set-default SWAY_APPS_SWAY_FEATURES "${swayFeatures}"
         --prefix PATH : "${lib.makeBinPath [ pkgs.git pkgs.libnotify pkgs.coreutils ]}"
       )
     '';

@@ -69,6 +69,11 @@ def profile_file() -> Path:
     return STATE_DIR / f"{profile_name()}.json"
 
 
+# Compositor features this machine's sway was built with (Nix flags), e.g.
+# "stacking,above_fullscreen,xwayland_zero_scaling,owns_outputs". Patch-only
+# commands must not reach the include on a sway that lacks them.
+SWAY_FEATURES = frozenset(f for f in os.environ.get("SWAY_APPS_SWAY_FEATURES", "").split(",") if f)
+
 # The e2e suite runs a nested headless sway whose outputs are all HEADLESS-n.
 E2E = os.environ.get("SWAY_APPS_E2E", "0") not in ("0", "false", "no", "")
 

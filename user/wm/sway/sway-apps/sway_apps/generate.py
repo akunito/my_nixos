@@ -39,6 +39,9 @@ def render(state: State, include_disabled: bool = False) -> str:
     tool_rules = toolrun.render_rules(state)
     if tool_rules:
         lines.append(tool_rules)
+    from . import features  # noqa: WPS433
+    for frag in features.include_fragments(state):
+        lines.append(frag)
     by_kind = {"assign": [], "no_focus": [], "for_window": []}
     for r in state.resolved_rules():
         if not r.enabled and not include_disabled:
