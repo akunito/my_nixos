@@ -43,6 +43,7 @@ import datetime as dt
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -488,6 +489,13 @@ def handle_callback(cq):
     data = cq.get("data", "")
     user = str(cq.get("from", {}).get("id"))
     cq_id = cq.get("id")
+    if data.startswith("aiset:"):
+        # a preset button under /ai: the same path as `/ai set <id>` (admin gate, confirm)
+        msg = cq.get("message") or {}
+        out = cmd_ai(["set", data[6:]], user, msg.get("message_thread_id"), msg.get("message_id"))
+        telegram("answerCallbackQuery", callback_query_id=cq_id,
+                 text=re.sub(r"<[^>]+>", "", out).replace("&lt;", "<").replace("&gt;", ">")[:190] if out else "confirm below")
+        return
     try:
         _, nonce, answer = data.split(":")
     except ValueError:
@@ -688,8 +696,17 @@ def ai_status_text(st, gate):
     for p in st.get("presets") or []:
         mark = "▶" if p["id"] == cur else "·"
         lines.append(f"{mark} <code>{esc(p['id'])}</code> — {esc(p.get('label', ''))} ({esc(p.get('vram_est', ''))})")
-    lines.append("/ai set &lt;preset&gt; — admins, asks to confirm")
+    lines.append("Tap a preset (admins, asks to confirm) or /ai set &lt;preset&gt;")
     return "\n".join(lines)
+
+
+def ai_keyboard(st):
+    """One button per preset except the loaded one, two per row; callback_data 'aiset:<id>'
+    (Telegram caps it at 64 bytes; preset ids are short)."""
+    cur = st.get("preset") if st.get("state") != "off" else None
+    btns = [{"text": p["id"], "callback_data": f"aiset:{p['id']}"}
+            for p in st.get("presets") or [] if p["id"] != cur and len(p["id"]) <= 56]
+    return {"inline_keyboard": [btns[i:i + 2] for i in range(0, len(btns), 2)]}
 
 
 def ai_unreachable():
@@ -703,7 +720,10 @@ def cmd_ai(args, user=None, thread=None, message_id=None):
         return "no NAS AI host configured."
     st, gate = ai_fetch()
     if not args or args[0].lower() == "status":
-        return ai_status_text(st, gate) if st else ai_unreachable()
+        if not st:
+            return ai_unreachable()
+        send(ai_status_text(st, gate), thread, reply_to=message_id, reply_markup=ai_keyboard(st))
+        return None  # already answered
     if args[0].lower() != "set" or len(args) != 2:
         return "usage: /ai — status · /ai set &lt;preset&gt;"
     if str(user) not in ADMIN_USER_IDS:

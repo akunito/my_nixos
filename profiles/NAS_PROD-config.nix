@@ -104,7 +104,7 @@ in
       };
       coder = {
         label = "Coder Qwen3.6-35B-A3B (MoE) · 1×256k · KV q8_0";
-        short = "Coder"; vramEst = "~22 GB"; ctx = 262144; slots = 1; kv = "q8_0";
+        short = "Coder"; vramEst = "20.3 GB"; ctx = 262144; slots = 1; kv = "q8_0";
         model = "Qwen3.6-35B-A3B-UD-IQ4_XS.gguf";   # unsloth, 17.7 GB
         alias = "qwen3.6-35b-a3b";
         template = null;                           # the GGUF's own (OpenCode only; Claude Code needs the system-anywhere fix)

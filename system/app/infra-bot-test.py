@@ -77,8 +77,11 @@ ST = {"preset": "reasoner-256k", "state": "loaded",
 GATE = {"loaded": "reasoner-256k", "grace_s": 300.0, "inflight": {}, "idle_s": {"reasoner-256k": 30.0}, "queue": []}
 m.ai_fetch = lambda: (ST, GATE)
 sent.clear(); m.PENDING.clear()
-out = m.cmd_ai([], user="2")
+assert m.cmd_ai([], user="2") is None and len(sent) == 1
+out, kb = sent[0]
 assert "▶ <code>reasoner-256k</code>" in out and "VRAM 21.5/24 GB" in out and "used 30 s ago" in out, out
+assert [b["callback_data"] for row in kb["inline_keyboard"] for b in row] == ["aiset:off", "aiset:coder"], kb
+sent.clear()
 assert "admins" in m.cmd_ai(["set", "coder"], user="2") and not sent
 assert "Unknown preset" in m.cmd_ai(["set", "../x"], user="1") and not sent
 assert "already the preset" in m.cmd_ai(["set", "reasoner-256k"], user="1") and not sent
@@ -86,6 +89,16 @@ assert m.cmd_ai(["set", "coder"], user="1") is None and len(sent) == 1
 assert "used 30 s ago" in sent[0][0] and sent[0][1]["inline_keyboard"][0][0]["callback_data"].startswith("ai:")
 p = next(iter(m.PENDING.values()))
 assert (p["kind"], p["name"], p["user"]) == ("ai", "coder", "1")
+# a preset button = /ai set: non-admins get a toast, admins a confirmation
+answers = []
+m.telegram = lambda method, timeout=20, **kw: answers.append(kw.get("text"))
+sent.clear(); m.PENDING.clear()
+m.handle_callback({"id": "q", "data": "aiset:coder", "from": {"id": 2}, "message": {"message_id": 9}})
+assert answers[-1].startswith("⛔") and not sent and not m.PENDING, answers
+m.handle_callback({"id": "q", "data": "aiset:coder", "from": {"id": 1}, "message": {"message_id": 9}})
+assert answers[-1] == "confirm below" and len(sent) == 1 and len(m.PENDING) == 1
+m.handle_callback({"id": "q", "data": "aiset:reasoner-256k", "from": {"id": 1}, "message": {"message_id": 9}})
+assert "already the preset" in answers[-1] and "<b>" not in answers[-1], answers
 GATE.update(idle_s={"reasoner-256k": 900.0})
 assert m.ai_busy(GATE) == ""
 GATE.update(inflight={"reasoner-256k": 2})
