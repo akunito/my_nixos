@@ -183,6 +183,8 @@ let
       echo "results: $d/out/score.json"
     '';
   };
+  # M4: local LLM4Decompile annotations for the isolated session (DESK Ollama / NAS preset).
+  rea-llm-mcp = pkgs.writeScriptBin "rea-llm-mcp" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./llm-mcp.py);
   rea-net-mirror = pkgs.writeScriptBin "rea-net-mirror" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./net-mirror.py);
 
   # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
@@ -380,7 +382,7 @@ let
       printf '%s %s %s\n' "$(date -Iseconds)" "$phase" "$(jq -c '{tool_name, tool_input}' <<<"$in")" >> "$d/log/tools.log"
       [ "$phase" = post ] || exit 0
       # Read covers out/net-live/ and out/vm-*/: free text chosen by an executed target.
-      case "$tool" in mcp__rea__*|Read) ;; *) exit 0 ;; esac
+      case "$tool" in mcp__rea__*|mcp__rea-llm__*|Read) ;; *) exit 0 ;; esac
       out=$(jq -r '.tool_response | tostring' <<<"$in")
       # Large MCP outputs are persisted to a file and only referenced here.
       f=$(grep -oE '/[^" ]*tool-results/[^" ]+' <<<"$out" | head -1 || true)
@@ -426,9 +428,10 @@ let
       unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
       s="$d/.session"; mkdir -p "$s"
       uid=$(id -u)
-      jq -n --arg cmd "${rea-run}/bin/rea-run" --arg c "$name" --arg home "$HOME" --arg rt "/run/user/$uid" \
+      jq -n --arg cmd "${rea-run}/bin/rea-run" --arg llm "${rea-llm-mcp}/bin/rea-llm-mcp" --arg c "$name" --arg home "$HOME" --arg rt "/run/user/$uid" \
         '{mcpServers: {rea: {type: "stdio", command: $cmd, args: [$c, "mcp"],
-          env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}}}}' > "$s/mcp.json"
+          env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}},
+          "rea-llm": {type: "stdio", command: $llm, args: []}}}' > "$s/mcp.json"
       # Claude Code persists MCP results above its inline limit under the case's project dir
       # (tool-results/); the Bash sandbox must be able to read them or the agent cannot use
       # them (measured: jq "No such file" on a 79k-char inspect_android_class result).
@@ -447,7 +450,7 @@ let
                    "Read(~/.dotfiles/**)", "Read(~/Projects/**)", "Read(~/.config/**)", "Read(~/.local/**)",
                    "Read(/run/user/**)", "Read(~/.cache/rea-vm/**)",
                    "Edit(~/.dotfiles/**)", "Edit(~/Projects/**)", "Edit(~/.config/**)", "Edit(~/.local/**)", "Edit(~/.claude/**)"]
-          } + (if $t2 then {ask: ["mcp__rea__*"]} else {} end),
+          } + (if $t2 then {ask: ["mcp__rea__*", "mcp__rea-llm__*"]} else {} end),
           sandbox: {
             enabled: true, failIfUnavailable: true, allowUnsandboxedCommands: false,
             autoAllowBashIfSandboxed: ($t2 | not),
@@ -465,7 +468,7 @@ let
       if [ -n "$ask" ]; then
         exec env CLAUDE_CONFIG_DIR="$HOME/.claude-rea" ENABLE_CLAUDEAI_MCP_SERVERS=false \
           claude-raw -p "$ask" --output-format text \
-          --allowedTools "mcp__rea__*" "Read" "Glob" "Grep" "$@"
+          --allowedTools "mcp__rea__*" "mcp__rea-llm__*" "Read" "Glob" "Grep" "$@"
       fi
       exec env CLAUDE_CONFIG_DIR="$HOME/.claude-rea" ENABLE_CLAUDEAI_MCP_SERVERS=false \
         claude-raw --permission-mode default "$@"

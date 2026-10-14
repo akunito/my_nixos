@@ -517,6 +517,21 @@ in
           min_p = 0.0;
         };
       }
+
+      # REA M4 (AINF-408): LLM4Decompile-Ref 9B v2 (MIT, Yi-Coder-9B base) turns Ghidra
+      # pseudo-code into readable C — an ANNOTATION for the RE agent, never ground truth
+      # (DecompileBench: LLM output reads better but is ~52 % less correct). Used raw
+      # (/api/generate raw=true, the paper's prompt) by rea-llm-mcp; the NAS has the
+      # same model as a preset and the tool falls back to it when this GPU is busy.
+      # Q6_K 7.25 GB: Q8_0 (9.4 GB) would not leave room under the desktop's measured
+      # peak; mradermacher's quant (tensorblock/DevQuasar only publish <= Q3 or mirror).
+      { name = "llm4decompile-9b";
+        from = "hf.co/mradermacher/llm4decompile-9b-v2-GGUF:Q6_K";
+        parameters = {
+          num_ctx = 8192;
+          temperature = 0.0; # the paper decodes greedily
+        };
+      }
     ];
     # Auth: still OFF, deliberately. The endpoint is tailscale-only + firewalled,
     # and VPS_PROD fronts it with llamaWakeProxyEnable — that proxy forwards

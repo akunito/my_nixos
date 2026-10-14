@@ -110,6 +110,18 @@ in
         template = null;                           # the GGUF's own (OpenCode only; Claude Code needs the system-anywhere fix)
         extra = [ "--jinja" "--temp" "0.6" "--top-p" "0.95" "--top-k" "20" "--min-p" "0.0" "-fa" "on" ];   # model card: thinking mode, precise coding
       };
+      # REA M4 (AINF-408): LLM4Decompile-Ref 9B v2 (MIT) — Ghidra pseudo-code -> readable C,
+      # an annotation for the RE agent, never ground truth. Same model as DESK's Ollama
+      # `llm4decompile-9b` (Q6_K there, 16 GB card); rea-llm-mcp uses whichever is up.
+      # Raw /v1/completions with the paper's prompt: no chat template, greedy decoding.
+      llm4decompile = {
+        label = "LLM4Decompile-Ref 9B v2 Q8_0 · pseudo-code → C (REA)";
+        short = "🔧 l4d"; vramEst = "~10.5 GB"; ctx = 16384; slots = 1; kv = "";
+        model = "llm4decompile-9b-v2.Q8_0.gguf";   # mradermacher, sha256 04d6d729…760d
+        alias = "llm4decompile-9b";
+        template = null;
+        extra = [ "--temp" "0" "-fa" "on" ];
+      };
     } // (let
       # Decision models (System One API, POST /v1/systemone: state + typed
       # questions -> probabilities; chat completions return 501). The pinned
