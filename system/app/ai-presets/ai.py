@@ -77,10 +77,21 @@ def apply(cfg: dict, name: str, preload: bool) -> str:
     p = cfg["presets"][name]
     if not os.path.exists(p["env"]["LLAMA_MODEL_FILE"]):
         raise SystemExit(f"preset {name}: model file missing: {p['env']['LLAMA_MODEL_FILE']} (pre-download it first)")
+    text = env_text(p)
+    try:
+        unchanged = open(ENV_FILE).read() == text
+    except OSError:
+        unchanged = False
+    if unchanged and not preload:
+        # sync after a rebuild with the same preset: leave a loaded model alone.
+        # Stopping it here raced switch-to-configuration's own restart of the
+        # changed unit and left llama-server "failed" (deploy 2026-10-14 11:36).
+        systemctl("start", PROXY_SOCKET)
+        return f"{name}: unchanged"
     # Stop BEFORE writing: the container has a fixed name and the running one
     # must release the card before the next load.
     systemctl("stop", "llama-proxy.service", "llama-server.service")
-    atomic_write(ENV_FILE, env_text(p))
+    atomic_write(ENV_FILE, text)
     systemctl("start", PROXY_SOCKET)
     if preload:
         # The backend is socket-activated and StopWhenUnneeded: a bare

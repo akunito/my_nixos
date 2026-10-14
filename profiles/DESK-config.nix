@@ -362,6 +362,11 @@ in
         models = [
           { id = "qwen3.8-27b-abliterated"; label = "Qwen3.8 27B abliterated UD-Q4_K_XL (128k, NAS)";
             contextLimit = 131072; outputLimit = 32768; }
+          # NAS preset `coder` (ai-presets.nix; switch with the Waybar NAS widget).
+          # llama-server answers ANY model name with whatever preset is loaded,
+          # so pick the id that matches the active preset.
+          { id = "qwen3.6-35b-a3b"; label = "Qwen3.6 35B-A3B coder UD-IQ4_XS (256k, NAS preset coder)";
+            contextLimit = 262144; outputLimit = 32768; }
         ]; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot

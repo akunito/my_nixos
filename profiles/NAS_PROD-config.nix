@@ -69,11 +69,11 @@ in
       };
       reasoner-256k = reasoner // {
         label = "Reasoner Qwen3.8-27B · 1×256k · KV q4_0";
-        short = "R 256k"; vramEst = "~21.4 GB"; ctx = 262144; slots = 1; kv = "q4_0";
+        short = "R 256k"; vramEst = "22.0 GB"; ctx = 262144; slots = 1; kv = "q4_0";
       };
       reasoner-2x128k = reasoner // {
         label = "Reasoner Qwen3.8-27B · 2×128k · KV q4_0";
-        short = "R 2×128k"; vramEst = "~21.4 GB"; ctx = 131072; slots = 2; kv = "q4_0";   # -c is PER SLOT in b11580 (measured: 4 slots x -c 65536 = 20.8 GB)
+        short = "R 2×128k"; vramEst = "~22 GB"; ctx = 262144; slots = 2; kv = "q4_0";   # -c is the TOTAL, split across slots: -c 131072 -np 2 gave n_ctx 65536 per slot, 19.1 GB (measured 2026-10-14)
       };
       coder = {
         label = "Coder Qwen3.6-35B-A3B (MoE) · 1×256k · KV q8_0";
