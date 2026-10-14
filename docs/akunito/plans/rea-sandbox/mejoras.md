@@ -201,7 +201,20 @@ Detalles:
   - cambia el signo de los bytes en el bucle.
 
   El agente aislado los detectó contra el pseudocódigo de REA y el desensamblado, y se fió de REA. Confirma que es una anotación, nunca evidencia.
-- **Pendiente:** medirlo en el corpus de M1 compilando y ejecutando lo que propone, y probar VarBERT (modelo de Ghidra) para nombres de variables.
+- **Medido (2026-10-15, `bench/m4/`, al estilo HumanEval-Decompile):** 14 funciones propias × 3 compilaciones (gcc `-O0`, gcc `-O2`, clang `-O2`). Cada candidata se compila y se compara con la original en miles de entradas, dentro del sandbox de Nix.
+
+| | Pasan | Compilan pero mal | No compilan |
+|---|---|---|---|
+| C de Ghidra tal cual | 23/42 (55 %) | **1** | 18 |
+| LLM4Decompile 9B | 26/42 (62 %) | **13 (31 %)** | 3 |
+
+  El modelo produce más código compilable y algo más de aciertos, pero **casi un tercio compila y está mal sin avisar**. Ejemplos:
+  - el signo de `char` en `fnv1a`, el mismo error que en `vault`;
+  - `clamp` convertida en `max3`;
+  - `crc8` con una tabla inventada.
+
+  Ghidra, cuando falla, casi siempre falla de forma visible. Conclusión: solo como anotación, que es como está montado; las respuestas se guardan en `workbench/rea-bench/m4-llm/`.
+- **Pendiente:** VarBERT (el modelo entrenado con Ghidra) para nombres de variables.
 
 **M5 — aportar upstream.** Lo que mejore en M2/M3 va como PR a Ghidra (Apache) o a REA (MIT) desde el fork. DecBench no acepta PRs autónomos de IA: ahí solo issues escritos por Diego.
 
