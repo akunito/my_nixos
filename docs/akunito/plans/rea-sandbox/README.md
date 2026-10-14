@@ -125,6 +125,15 @@ Segundo plan, con lo que ya existe en open source para medir y mejorar Ghidra (D
 
 **Requisito previo: R1 del plan rootless en DESK** (y R2 en X13 antes de F5). F1 no empieza hasta que `docker info` muestre `rootless`.
 
+**Estado F1 (2026-10-14):** implementado (`c2f12eb6`) y desplegado en DESK y X13.
+- Montaje `noexec` activo: ejecutar un objetivo del caso desde el host da *permission denied*.
+- Dentro de `krun`, Ghidra recupera la regla de un binario de prueba sin símbolos.
+- MCP con 170 herramientas.
+- El nivel 1 se rechaza.
+- `rea-case close` borra symlinks y quita los bits `setuid` y de ejecución.
+
+Pendiente: prueba interactiva de `rea-claude`, que necesita que Diego inicie sesión una vez en `~/.claude-rea`.
+
 **F1: nivel 0 + sesión aislada + skill; DESK.** `rea-env`, imagen OCI, `rea-case`, `rea-cli`, `claude-raw`, `rea-claude`, `~/.claude-rea`, montaje `~/rea/cases` y skill global.
 
 Funcionalidad (solo builds nuestros):
