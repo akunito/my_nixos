@@ -54,7 +54,7 @@ let
         for a in ${lib.concatStringsSep " " syms}; do
           [ "$(head -c 7 "$a" 2>/dev/null)" = '!<arch>' ] || continue
           nm -g --defined-only "$a" 2>/dev/null | awk '$2 ~ /^[TW]$/ {print $3}'
-        done | sort -u | awk 'BEGIN{print "EXTERN("} {print $1} END{print ")"}' > externs.ld
+        done | sort -u | awk 'BEGIN{print "EXTERN("} {print "\"" $1 "\""} END{print ")"}' > externs.ld   # quoted: libm names broke the script syntax (measured)
         echo 'int main(void){return 0;}' > m.c && cc -O2 -fno-pie -c m.c -o m.o
         arch=""; for a in ${lib.concatStringsSep " " link}; do [ "$(head -c 7 "$a" 2>/dev/null)" = '!<arch>' ] && arch="$arch $a"; done
         ld -static -o linked ${lib.concatStringsSep " " crtPre} m.o externs.ld --start-group $arch --end-group           ${lib.concatStringsSep " " crtPost} --unresolved-symbols=ignore-all --allow-multiple-definition -z noexecstack 2> ld.log           || { tail -20 ld.log; exit 1; }

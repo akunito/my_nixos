@@ -16,8 +16,10 @@ let
   # + Debian 12 / Ubuntu 24.04 / Alpine 3.20 sets (fid/distro.nix): on binaries built with
   # those toolchains, nixpkgs-only FIDs named 0.4-11 % and these 54-60 % (C), 27-36 % (C++),
   # wrong <= 0.7 % (measured 2026-10-15, workbench/rea-bench).
+  # Linked variants (ld's TLS/GOT relaxations, fid.nix mkLinkedFid) raise that to 64-83 % (C)
+  # and 51-65 % (C++), wrong <= 1.1 % (2026-10-15).
   ghidraExtensions = [ (fid.extension (fid.libSet pkgs-unstable "u" ++ fid.libSet pkgs-stable-x86 "s"
-    ++ import ./bench/fid/distro.nix { pkgs = pkgs-unstable; inherit (fid) mkFid; })) ];
+    ++ import ./bench/fid/distro.nix { pkgs = pkgs-unstable; inherit (fid) mkFid mkLinkedFid; })) ];
   image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents ghidraExtensions; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;

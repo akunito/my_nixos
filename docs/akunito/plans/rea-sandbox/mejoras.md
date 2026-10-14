@@ -163,6 +163,11 @@ Detalles:
 | C++ | 0,5–8 % | **27–36 %** |
 
   - Nombres equivocados: 0,7 % o menos. Las firmas de nixpkgs solas apenas sirven con binarios de terceros; las de las distribuciones donde se compilan, sí.
+- **Firmas desde binarios enlazados (2026-10-15, `mkLinkedFid`).**
+  - **Diagnóstico** (`FidDiag.java`): `free`, `malloc`, `calloc`, `fgets`, `fclose` y `perror` de Debian tenían **el mismo número de unidades de código** que su firma, pero otro hash completo. Al enlazar en estático, `ld` relaja el código: el TLS initial-exec pasa a local-exec (`mov x@GOTTPOFF(%rip)` → `mov $imm`) y los accesos GOTPCRELX pasan a `lea`/`mov $imm`. Eso cambia códigos de operación y tipos de operando, que el hash conserva, así que nada que toque `errno` o la caché de malloc podía coincidir desde los `.o`.
+  - **Solución:** enlazar un ejecutable estático no-PIE que fuerza todas las funciones globales de la librería (`EXTERN`, con los `crt*.o` de la propia distribución) y firmar sus funciones tal como quedan.
+  - **Resultado:** C de 54–60 % a **64–83 %**; C++ de 27–36 % a **51–65 %**; equivocados 1,1 % o menos.
+  - Las firmas de `.o` se quedan para los binarios *static-pie*, que se relajan de otra forma.
 - **Pendiente:**
   - una lista de símbolos comunes como la que usa Ghidra para MSVC;
   - exponer en REA el comentario PLATE con los candidatos de `FID_conflict`.
