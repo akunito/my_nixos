@@ -666,10 +666,16 @@ class Runtime:
         return changed
 
     # ---- full regeneration -------------------------------------------------
-    def sync(self, sway: SwayLink | None, reload: bool = True) -> dict[str, Any]:
+    def sync(self, sway: SwayLink | None, reload: bool = True, from_event: bool = False) -> dict[str, Any]:
         """Regenerate every file. reload: also bring sway (every bar mode; a sway
         reload only when a bar id is new to it: sway cannot create a bar at
-        runtime) and Waybar (when its config changed) up to date."""
+        runtime) and Waybar (when its config changed) up to date.
+
+        from_event: an output event never reloads sway. A reload re-applies every
+        `output` line, so it re-enabled an output that had just been disabled
+        (e2e power-off case; X13's lid disables eDP-1 the same way). New bar ids
+        arrive through apply/activation/monitor registration instead, and an
+        unknown monitor is served by wb-other, which always exists."""
         m = self.model()
         res: dict[str, Any] = {}
         conns = dict(m.local.get("connectors") or {})
@@ -700,10 +706,11 @@ class Runtime:
         sway_reloaded = False
         if reload and sway is not None:
             try:
-                if not {b.bar_id for b in m.bars} <= set(sway.bar_ids()):
+                missing = not {b.bar_id for b in m.bars} <= set(sway.bar_ids())
+                if missing and not from_event:
                     sway.command("reload")
                     sway_reloaded = True
-                else:
+                elif not missing:
                     # every mode, not a diff: activation may have rewritten the
                     # file while this session's sway kept the old modes
                     sway.command("; ".join(f"bar {bid} mode {md}" for bid, md in res["modes"].items()))
@@ -871,7 +878,7 @@ def setup_watch(reg) -> None:
 
     def on_output(_ev, ctx) -> None:
         modes_soon(ctx)
-        ctx.schedule("waybar.outputs", OUTPUTS_SETTLE, lambda c: rt.sync(link(c), reload=True))
+        ctx.schedule("waybar.outputs", OUTPUTS_SETTLE, lambda c: rt.sync(link(c), reload=True, from_event=True))
 
     def verb(args: list[str], ctx) -> None:
         t0 = time.perf_counter()

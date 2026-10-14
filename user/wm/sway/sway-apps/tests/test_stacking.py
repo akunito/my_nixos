@@ -179,10 +179,12 @@ class Cli(unittest.TestCase):
         a = p.parse_args(["stacking", "always-pin", "steam_app_1", "--class", "--above-fullscreen"])
         self.assertTrue(a.is_class and a.above_fullscreen)
 
-    def test_pin_shortcut_in_common_json(self):
+    def test_pin_is_a_mouse_binding_not_a_key(self):
+        # Hyper+middle click on the window under the pointer (swayfx-config.nix), not Hyper+i
         common = json.loads((Path(__file__).resolve().parents[2] / "apps" / "common.json").read_text())
-        pin = [s for s in common["shortcuts"] if s["kind"] == "sway" and s["command"] == "pin toggle"]
-        self.assertEqual([s["keys"] for s in pin], ["Hyper+i"])
+        self.assertEqual([s for s in common["shortcuts"] if s.get("command") == "pin toggle"], [])
+        nix = (Path(__file__).resolve().parents[2] / "swayfx-config.nix").read_text()
+        self.assertIn("bindsym --whole-window ${hyper}+button2 pin toggle", nix)
 
 
 if __name__ == "__main__":

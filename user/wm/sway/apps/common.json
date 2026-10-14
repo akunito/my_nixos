@@ -1931,22 +1931,6 @@
       "category": "Windows",
       "table": "prefix",
       "updated_at": 1791963155
-    },
-    {
-      "id": "k-84b79cb7",
-      "keys": "Hyper+i",
-      "kind": "sway",
-      "app_id": "",
-      "command": "pin toggle",
-      "name": "Pin floating window",
-      "enabled": true,
-      "release": false,
-      "locked": false,
-      "override": false,
-      "notes": "SWAY-7: pin band of patches/sway-window-stacking.patch (floating only; tiled = error)",
-      "category": "Windows",
-      "table": "prefix",
-      "updated_at": 0
     }
   ],
   "tools": [

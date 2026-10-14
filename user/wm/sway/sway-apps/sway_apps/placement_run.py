@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import ipc, log, paths, swayipc
+from .monitors import hw_id, skip_output
 from .placement_core import (SCRATCH, Rect, Win, World, identity, make_loan, offscreen_plan, quote, reclaim_plan,
                              record_of, resolve_policy, restore_command, rule_places, same_record, skip_reason)
 
@@ -378,8 +379,16 @@ class Tracker:
 
     def on_output(self, _ev: Any, ctx) -> None:
         # Never snapshot while an output is missing: "recording a layout with a
-        # monitor missing would memorise exactly the damage" (AkuWM).
-        self.frozen = True
+        # monitor missing would memorise exactly the damage" (AkuWM). Only then:
+        # a mode/scale/position change also emits `output`, and freezing on it
+        # left the snapshot without the windows mapped in the next 2 s (an
+        # output disabled in that window lent nothing; e2e 2026-10-14).
+        try:
+            active = {hw_id(o) for o in ctx.conn.outputs() if o.get("active") and not skip_output(o.get("name", ""))}
+        except (OSError, ipc.IpcError):
+            active = None
+        if active is None or self.baseline is None or not self.baseline <= active:
+            self.frozen = True
         ctx.schedule("placement.settle", SETTLE_S, self.settle)
         grace = float((self.cfg.settings().get("poweroff") or {}).get("grace_seconds", 5))
         ctx.schedule("placement.grace", max(grace, 0.1), self.grace)

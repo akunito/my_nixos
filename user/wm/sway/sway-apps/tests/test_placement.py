@@ -372,7 +372,9 @@ class FakeCtx:
     def __init__(self, sway: FakeSway, reg=None):
         self.sway = sway
         self.timers: dict[str, object] = {}
-        self.conn = type("C", (), {"path": "/run/sway-ipc.test.sock"})()
+        # get_outputs shape: the output nodes of the fake tree carry the same identity fields
+        outputs = lambda _self: [dict(o, active=True) for o in sway.tree().get("nodes", []) if o.get("type") == "output"]
+        self.conn = type("C", (), {"path": "/run/sway-ipc.test.sock", "outputs": outputs})()
 
     def tree(self):
         return self.sway.tree()

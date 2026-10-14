@@ -1422,11 +1422,14 @@ in
 
       # ---- Window stacking (SWAY-6/7, patches/sway-window-stacking.patch) ----
       # Hyper+wheel raises/lowers the floating window under the pointer one
-      # step within its band (pinned among pinned). Mouse bindings act on the
-      # container under the cursor; --whole-window so they fire over contents.
+      # step within its band (pinned among pinned); Hyper+middle click pins /
+      # unpins it (Diego's choice over Hyper+i, 2026-10-14). Mouse bindings act
+      # on the container under the cursor; --whole-window so they fire over
+      # contents.
       ${lib.optionalString windowStacking ''
       bindsym --whole-window ${hyper}+button4 z raise
       bindsym --whole-window ${hyper}+button5 z lower
+      bindsym --whole-window ${hyper}+button2 pin toggle
       ''}
 
       ${lib.optionalString (!swayApps) ''

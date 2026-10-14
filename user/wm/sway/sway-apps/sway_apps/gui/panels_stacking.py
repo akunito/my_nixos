@@ -14,7 +14,7 @@ from .widgets import button, list_row, switch_row  # noqa: E402
 
 _log = log.get("gui.stacking")
 
-KEYS = (("Hyper+i", "pin / unpin the focused floating window"),
+KEYS = (("Hyper+middle click", "pin / unpin the floating window under the pointer"),
         ("Hyper+wheel up / down", "raise / lower the floating window under the pointer, one step within its band"),
         ("Hold left or right button on a tile", "peek: the tile is drawn above the floats until you let go"))
 
