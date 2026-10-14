@@ -75,6 +75,13 @@
       },
       "imported_from": "X13 ~/.config/sway/outputs (nwg-displays 2026-02-26, as read 2026-09-06) @ 2026-10-14",
       "notes": "UNVERIFIED: imported on DESK while X13 was offline; HDMI-A-1's block was given to both dock monitors (today's connector-keyed file did the same). Check `sway-apps displays list` on X13; `sway-apps displays save-live` replaces it with the real layout."
+    },
+    "placement": {
+      "poweroff": {
+        "monitors": {
+          "main": "ignore"
+        }
+      }
     }
   },
   "shortcuts": [],
