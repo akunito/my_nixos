@@ -54,6 +54,11 @@ let
   apiKeySecret = cfg.llamaServerApiKeySecret or "";
   apiKeyFile = "/var/lib/llama-server-secrets/api-key";
   extraArgs = cfg.llamaServerExtraArgs or [ "--jinja" ];
+  modelAlias = cfg.llamaServerModelAlias or "";
+  # Template override. In the container the store path is bind-mounted read-only
+  # at a fixed name; the nix backend reads the store path directly.
+  chatTemplateFile = cfg.llamaServerChatTemplateFile or null;
+  chatTemplateInContainer = "/etc/llama-chat-template.jinja";
   openFwTs = cfg.llamaServerOpenFirewallTailscale or true;
   vramBusy = cfg.llamaServerVramBusyBytes or 5368709120;
 
@@ -93,6 +98,9 @@ let
   # (`--api-key <secret>` would be visible in `ps` to every local user).
   ++ lib.optionals (apiKeySecret != "") [ "--api-key-file" "%d/api-key" ]
   ++ lib.optionals (apiKeySecret == "" && apiKey != "") [ "--api-key" apiKey ]
+  ++ lib.optionals (modelAlias != "") [ "-a" modelAlias ]
+  ++ lib.optionals (chatTemplateFile != null)
+       [ "--chat-template-file" (if isDocker then chatTemplateInContainer else "${chatTemplateFile}") ]
   ++ extraArgs;
 
   # Preflight gate: refuse to load while gaming (lock present, or GPU already busy).
@@ -145,6 +153,7 @@ let
     exec ${dockerBin} run --rm --name llama-server \
       --device nvidia.com/gpu=all \
       -v ${stateDir}:${stateDir} \
+      ${lib.optionalString (chatTemplateFile != null) "-v ${chatTemplateFile}:${chatTemplateInContainer}:ro"} \
       -e LLAMA_CACHE=${stateDir} -e HOME=${stateDir} \
       -p 127.0.0.1:${toString internalPort}:${toString internalPort} \
       ${dockerImage} ${lib.escapeShellArgs args}

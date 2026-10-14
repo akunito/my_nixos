@@ -400,6 +400,7 @@ in
   imports = [
     ./claude-sync.nix # package, `claude` wrapper, 15-min timer (flag claudeSyncEnable)
     ./projects-workspace.nix # ~/Projects router + settings + .mcp.json (flag claudeProjectsWorkspaceEnable)
+    ./local-backend.nix # `claude-nas` + `nas-ask`: Claude Code / one-shot answers on the NAS 3090 llama-server (flag claudeCodeLocalBackendUrl)
   ];
 
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs

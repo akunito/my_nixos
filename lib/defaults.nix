@@ -234,6 +234,8 @@
     llamaServerApiKey = "";                                # legacy literal; leaks into the store AND `ps` — prefer llamaServerApiKeySecret
     llamaServerApiKeySecret = "";                          # attribute NAME in secrets/domains.nix; resolved at activation into a 0400 file passed via LoadCredential
     llamaServerExtraArgs = [ "--jinja" ];                  # --jinja enables the tool-calling chat template
+    llamaServerModelAlias = "";                            # -a: the model id /v1/models lists (clients like OpenCode store this id); "" = the GGUF path
+    llamaServerChatTemplateFile = null;                    # nix path to a .jinja that overrides the GGUF's template (--chat-template-file). Qwen3.8's embedded template raises on a system message after turn 1, and Claude Code 2.1.296 sends its "# Environment" block exactly like that -> system/app/llama-server/templates/qwen3.8-system-anywhere.jinja
     llamaServerOpenFirewallTailscale = true;               # open the port only on tailscale0
     llamaServerVramBusyBytes = 5368709120;                 # gaming VRAM guard: refuse to load if GPU already uses > this (5 GiB)
 
@@ -259,6 +261,7 @@
     openCodeRuntimeConfigRel = ".local/state/opencode/model.json";
     openCodeDefaultModel = "";                             # "ollama/<id>" the TUI and `opencode run` start on; "" = ask every time
     openCodeModels = [ ];                                  # [{ id = "gpt-oss:20b"; label = "..."; contextLimit = 8192; outputLimit = 4096; }] — id must match /v1/models exactly; BOTH limits are required or OpenCode refuses to start
+    openCodeExtraProviders = [ ];                          # more OpenAI-compatible endpoints, e.g. the NAS 3090: [{ id = "nas"; name = "NAS 3090 (llama.cpp)"; baseURL = "http://100.64.0.1:8090/v1"; models = [ { id; label; contextLimit; outputLimit; } ]; }] — model ref becomes "<id>/<model id>"
     ollamaServerBackend = "rocm";                          # "rocm" | "vulkan". On RDNA4 vulkan is both FASTER and honest about free VRAM — measured figures in system/app/ollama-server.nix
     ollamaServerOpenFirewallTailscale = true;              # open the port only on tailscale0
     ollamaServerVramNeededBytes = 6442450944;              # GAMING BACKSTOP only (6 GiB free), NOT "does the model fit". See the long note in system/app/ollama-server.nix
@@ -644,6 +647,10 @@
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeGuiEnvEnable = false; # Put the MCP credentials in the SESSION env (environment.d + Plasma env), so a GUI-launched VS Code extension can expand them
     claudeCodeTuiFullscreen = false; # Seed "tui": "fullscreen" into settings.json: Claude owns mouse selection and copies logical lines (tmux/terminal selection copies the wrap breaks)
+    claudeCodeLocalBackendUrl = ""; # Root URL (no /v1) of an Anthropic+OpenAI-compatible llama-server; "" = off. Installs `claude-<name>` (whole session on it) and `<name>-ask` (one-shot, stdin = context) — user/app/claude-code/local-backend.nix
+    claudeCodeLocalBackendName = "nas"; # command suffix/prefix
+    claudeCodeLocalBackendModel = "qwen3.8-27b-abliterated"; # model id sent (llama-server serves whatever is loaded under any name; matches llamaServerModelAlias for honesty)
+    claudeCodeLocalBackendCtx = 65536; # the server's real window (llamaServerCtxSize) -> CLAUDE_CODE_MAX_CONTEXT_TOKENS
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
     claudeProjectsWorkspaceDir = "Projects"; # Directory under $HOME that holds the project repositories
     developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)

@@ -354,6 +354,16 @@ in
       { id = "gpt-oss:20b";      label = "gpt-oss 20B (fast, 32k)";
         contextLimit = 32768; outputLimit = 8192; }
     ];
+    # The NAS 3090 reasoner (system/app/llama-server.nix docker-cuda, tailscale0
+    # only). Pick it with /models or `opencode --model nas/qwen3.8-27b-abliterated`;
+    # it wakes the model on the first request (6-15 s) and unloads 15 min later.
+    openCodeExtraProviders = [
+      { id = "nas"; name = "NAS 3090 — llama.cpp (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1";
+        models = [
+          { id = "qwen3.8-27b-abliterated"; label = "Qwen3.8 27B abliterated UD-Q4_K_XL (64k, NAS)";
+            contextLimit = 65536; outputLimit = 16384; }
+        ]; }
+    ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
     # both be resident on a 16 GiB card.
     ollamaServerMaxLoadedModels = 1;
@@ -829,6 +839,7 @@ in
     infraNotifyEnable = true; infraNodeName = "desk"; infraBotUrl = "http://100.64.0.6:8765"; # deploy announcements to Infra Alerts (AINF-368)
     claudeSyncEnable = true; # ~/.claude memory/skills/sessions synced with the VPS hub (hooks + 15-min timer + `claude` wrapper)
     claudeCodeTuiFullscreen = true; # drag-select inside Claude copies without wrap breaks
+    claudeCodeLocalBackendUrl = "http://100.64.0.1:8090"; # `claude-nas` / `nas-ask` on the NAS 3090 reasoner (tailscale0 only; model unloads after 15 min idle)
     # Infra Alerts bot identity for infra-notify (direct Telegram transport; relay is the fallback)
     grafanaTelegramBotToken = secrets.grafanaTelegramBotToken or "";
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";

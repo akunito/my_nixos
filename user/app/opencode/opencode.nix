@@ -43,7 +43,7 @@ let
   # context = the window the server will actually honour (Modelfile num_ctx, or
   # OLLAMA_CONTEXT_LENGTH); output = the ceiling on a single reply, which has to
   # leave room for the prompt inside that same window.
-  modelAttrs = lib.listToAttrs (map (m: {
+  mkModels = ms: lib.listToAttrs (map (m: {
     name = m.id;
     value = {
       name = m.label or m.id;
@@ -52,7 +52,24 @@ let
         output = m.outputLimit;
       };
     };
-  }) models);
+  }) ms);
+  modelAttrs = mkModels models;
+
+  # Remote OpenAI-compatible endpoints (the NAS 3090's llama-server, 2026-10-14).
+  # llama-server answers to ANY model name (verified: "qwen-reasoner" was served
+  # by the only loaded GGUF), so the id here is what `-a` on the server
+  # advertises, not something the request must prove. Same two-key `limit`
+  # rule as above.
+  extraProviders = systemSettings.openCodeExtraProviders or [ ];
+  extraProviderAttrs = lib.listToAttrs (map (p: {
+    name = p.id;
+    value = {
+      npm = "@ai-sdk/openai-compatible";
+      name = p.name or p.id;
+      options.baseURL = p.baseURL;
+      models = mkModels (p.models or [ ]);
+    };
+  }) extraProviders);
 
   # Which model a bare `opencode` starts on. Without it OpenCode asks on every
   # session and `opencode run` needs an explicit --model every time.
@@ -61,12 +78,14 @@ let
 
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
-    provider.ollama = {
-      npm = "@ai-sdk/openai-compatible";
-      name = "Ollama (DESK GPU)";
-      options.baseURL = host;
-      models = modelAttrs;
-    };
+    provider = {
+      ollama = {
+        npm = "@ai-sdk/openai-compatible";
+        name = "Ollama (DESK GPU)";
+        options.baseURL = host;
+        models = modelAttrs;
+      };
+    } // extraProviderAttrs;
   } // lib.optionalAttrs (defaultModel != "") { model = defaultModel; };
 in
 {
