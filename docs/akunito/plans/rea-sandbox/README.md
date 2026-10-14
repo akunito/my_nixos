@@ -87,7 +87,7 @@ No es objetivo un carril de modelos locales. Cualquier modelo vale, y para lo pr
 Antes de abrir nada, `rea-triage <fichero>` saca lo siguiente. Corre **en la microVM sin red**, porque YARA y DIE también parsean el fichero hostil; si el fichero viene de un repo nuestro, en el contenedor.
 - hashes, `file`, firma (Authenticode/APK);
 - packer, con Detect It Easy;
-- reglas YARA (incluidas firmas de antitrampas y DRM conocidos, que hacen que el triaje **rechace** el objetivo).
+- reglas YARA (incluidas firmas de antitrampas y DRM conocidos, que hacen que el triaje **proponga REJECT** — Diego decide, y un match de nombre puede ser falso positivo).
 
 Claude propone un nivel con su motivo y Diego lo confirma. Ante la duda, el nivel más alto.
 
@@ -175,8 +175,8 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 - X13 tiene `/dev/kvm` y `/dev/vhost-vsock` accesibles.
 
 **F2 completado (2026-10-14):**
-- **`rea-triage <caso>`:** dentro de la VM, en unos 8 s, saca por fichero el tipo, los hashes, Detect It Easy (con sus bases de firmas pasadas a mano: sin ellas todo sale "Unknown"), la prueba de UPX, Authenticode (`osslsigncode`) y nuestras reglas YARA (`user/app/rea/triage.yar`, solo nombres: antitrampas/DRM → REJECT; protectores y UPX → nivel 2).
-  - **Comprobado:** binario limpio → nivel 1; empaquetado con UPX → nivel 2; fichero con "EasyAntiCheat" → REJECT.
+- **`rea-triage <caso>`:** dentro de la VM, en unos 8 s, saca por fichero el tipo, los hashes, Detect It Easy (con sus bases de firmas pasadas a mano: sin ellas todo sale "Unknown"), la prueba de UPX, Authenticode (`osslsigncode`) y nuestras reglas YARA (`user/app/rea/triage.yar`, solo nombres: antitrampas/DRM → REJECT propuesto, overridable si Diego lo pide (2026-10-14); protectores y UPX → nivel 2).
+  - **Comprobado:** binario limpio → nivel 1; empaquetado con UPX → nivel 2; fichero con "EasyAntiCheat" → REJECT propuesto.
 - **Prueba de escape**, con una VM de prueba que tiene consola root (`extraModules`, vacío en producción). Como el usuario `rea`, lo que obtendría un exploit en Ghidra:
   - solo `lo` y 0 rutas;
   - LAN, internet, el VPS por tailscale y la pasarela slirp, bloqueados;
