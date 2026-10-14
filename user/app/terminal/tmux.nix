@@ -505,7 +505,9 @@ in
         # Line 0 is a blank margin between the app and the pills; rows 1-4 hold the windows whose @row matches,
         # assigned by tmux-status-rows. status = rows + 1 is set per session by the same script.
         set -g status 2
-        set -g status-format[0] ""
+        # #() reruns the layout every status-interval: the hooks alone were lost once at runtime (2026-10-14, cause unknown)
+        # and every window opened after that sat unassigned on row 1, clipped past the 7th pill. The script prints nothing.
+        set -g status-format[0] "#(${tmux-status-rows})"
         set -g status-format[1] "#[align=left]#{W:#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
         set -g status-format[2] "#[align=left]#{W:#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
         set -g status-format[3] "#[align=left]#{W:#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
