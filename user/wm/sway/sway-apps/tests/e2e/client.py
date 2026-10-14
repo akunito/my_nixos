@@ -2,7 +2,8 @@
 
 python3 client.py --app-id e2e.a [--title T] [--size 400x300] [--log FILE] [--fullscreen] [--color RRGGBB]
 --color: undecorated window painted one solid colour (pixel checks on grim crops).
-Each press/release appends "press|release <button> <x> <y>" (surface coords) to --log.
+Each press/release appends "press|release <button> <x> <y>" (surface coords) to --log, and
+text committed through GTK's input method (dead keys composed) appends "text <repr>".
 Prints "mapped" on stdout once the window is shown.
 """
 from __future__ import annotations
@@ -51,6 +52,12 @@ def main() -> int:
         click.connect("pressed", lambda g, n, x, y: log.write(f"press {g.get_current_button()} {int(x)} {int(y)}\n"))
         click.connect("released", lambda g, n, x, y: log.write(f"release {g.get_current_button()} {int(x)} {int(y)}\n"))
         win.add_controller(click)
+        im = Gtk.IMMulticontext()
+        keys = Gtk.EventControllerKey()
+        keys.set_im_context(im)
+        im.connect("commit", lambda _im, text: log.write(f"text {text!r}\n"))
+        win.add_controller(keys)
+        win.connect("notify::is-active", lambda w, _p: im.focus_in() if w.is_active() else im.focus_out())
     win.connect("close-request", lambda *_: (loop.quit(), False)[1])
     win.connect("map", lambda *_: print("mapped", flush=True))
     if a.fullscreen:

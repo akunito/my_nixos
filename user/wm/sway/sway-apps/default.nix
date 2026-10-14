@@ -71,6 +71,7 @@ let
         --set-default SWAY_APPS_GAPS_INNER "${toString (config.wayland.windowManager.sway.config.gaps.inner or 8)}"
         --set-default SWAY_APPS_XWAYLAND_DPI "${toString (systemSettings.swayXwaylandDpi or 96)}"
         --set-default SWAY_APPS_GRIM_BIN "${pkgs.grim}/bin/grim"
+        --set-default SWAY_APPS_XKBCOMMON "${pkgs.libxkbcommon}/lib/libxkbcommon.so.0"
         --prefix PATH : "${lib.makeBinPath [ pkgs.git pkgs.libnotify pkgs.coreutils ]}"
       )
     '';

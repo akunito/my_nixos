@@ -21,7 +21,7 @@ from typing import Any, Iterator
 
 from . import log
 
-FEATURES = ("tray", "waybar", "stacking", "displays", "placement", "spacing", "overview")
+FEATURES = ("tray", "waybar", "stacking", "displays", "placement", "spacing", "overview", "input")
 
 _loaded: list[ModuleType] | None = None
 

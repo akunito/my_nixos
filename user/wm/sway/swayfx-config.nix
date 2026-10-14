@@ -14,6 +14,12 @@ let
   # Only the moves: a focus-first wrapper on the switches broke with
   # workspace_auto_back_and_forth (selected window already on N -> "workspace N" went back).
   ovsel = "${pkgs.writeShellScript "overview-selected" (builtins.readFile ./scripts/overview-selected.sh)}";
+  # sway-apps input (SWAY-17): ack sentinel = keycode 202 (KEY_F24 has no keysym in
+  # us(intl),es,pl, so bindsym never matches) in every mode with all 32 Shift/Control/Mod1/Mod4/
+  # Mod5 combinations (sway matches modifiers exactly; Diego may be holding one); --inhibited
+  # so VMs/remote desktops do not swallow it. Same text as sway_apps.input.broker.ack_bindings.
+  inputAckMods = lib.foldl' (acc: m: acc ++ map (c: c + m + "+") acc) [ "" ] [ "Shift" "Control" "Mod1" "Mod4" "Mod5" ];
+  inputAckLines = lib.concatMapStrings (c: "bindcode --no-repeat --locked --inhibited ${c}202 nop sway-apps input ack\n") inputAckMods;
 
   # SwayFX or upstream sway. Everything SwayFX-only in this file is gated on
   # this: the effects block, the `blur disable, shadows disable` fragments in
@@ -1349,6 +1355,10 @@ in
     };
 
     extraConfig = ''
+      ${lib.optionalString swayApps (inputAckLines
+        + "bindsym --no-repeat Mod4+Control+Mod1+Shift+Pause nop sway-apps input abort\n"
+        + lib.concatMapStrings (m: "mode \"${m}\" {\n${inputAckLines}}\n")
+            (builtins.attrNames config.wayland.windowManager.sway.config.modes))}
       ${lib.optionalString zeroScaling ''
       # X11 clients see a physical-pixel screen and are drawn 1:1 (patched sway)
       xwayland_zero_scaling yes

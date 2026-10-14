@@ -15,7 +15,10 @@
     enable = true;
     
     keyboards.default = {
-      ids = [ "*" ];  # Apply to all keyboards (and keyboards with mouse buttons)
+      # "-5341:0001": sway-apps input's uinput keyboard (SWAY-17) stays out of keyd, so sway
+      # groups it with keyd's virtual keyboard (Diego's keymap, one modifier state) instead of
+      # it sharing keyd's layer state and phantom-Ctrl modifier guard with Diego's keyboards.
+      ids = [ "*" "-5341:0001" ];  # Apply to all keyboards (and keyboards with mouse buttons)
       settings = {
         main = {
           # Map CapsLock to Ctrl+Alt+Meta (Super) - this equals Hyper key (Mod4+Control+Mod1)

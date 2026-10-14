@@ -21,6 +21,9 @@ SUBSCRIBE = 2
 GET_OUTPUTS = 3
 GET_TREE = 4
 GET_BAR_CONFIG = 6
+GET_CONFIG = 9
+GET_BINDING_STATE = 12
+GET_INPUTS = 100
 GET_SEATS = 101
 EVENT_BIT = 0x80000000
 
@@ -132,6 +135,15 @@ class Connection:
 
     def workspaces(self) -> list[dict[str, Any]]:
         return self.request(GET_WORKSPACES)
+
+    def inputs(self) -> list[dict[str, Any]]:
+        return self.request(GET_INPUTS)
+
+    def config(self) -> str:
+        return (self.request(GET_CONFIG) or {}).get("config", "")
+
+    def binding_state(self) -> str:
+        return (self.request(GET_BINDING_STATE) or {}).get("name", "default")
 
     def subscribe(self, events: list[str]) -> None:
         res = self.request(SUBSCRIBE, json.dumps(events))
