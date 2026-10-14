@@ -233,6 +233,23 @@ let
     fi
   '';
 
+  # Wraps the tab pills onto extra status lines (rows 1-4; line 0 is a blank margin above the bar).
+  # Pill width = "I:" + name cut at 15 (+…) + 2 caps + 1 separator; #{w:} is display width (#{n:} counts bytes).
+  # Runs from hooks on window link/unlink/rename (auto-rename fires window-renamed), client attach/resize.
+  tmux-status-rows = pkgs.writeShellScript "tmux-status-rows" ''
+    T=${pkgs.tmux}/bin/tmux
+    $T list-clients -F '#{client_session} #{client_width}' 2>/dev/null | while read -r s w; do
+      row=1 x=0
+      while read -r i pw cur; do
+        pw=$((pw + 3))
+        if (( x > 0 && x + pw > w + 1 && row < 4 )); then row=$((row + 1)); x=0; fi
+        x=$((x + pw))
+        [ "$cur" = "$row" ] || $T set -wq -t "$s:$i" @row "$row"
+      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{window_index}:#{=/15/…:window_name}} #{@row}')
+      [ "$($T show -qv -t "$s" status)" = "$((row + 1))" ] || $T set -q -t "$s" status "$((row + 1))"
+    done
+  '';
+
   # Ensure a detached bootstrap session exists so continuum's auto-save has a target
   # and the save-wrapper's "skip empty" guard only fires when there are no real sessions.
   # Matches the '__bootstrap' name the restore-wrapper already expects (see below).
@@ -481,11 +498,18 @@ in
         # No session name (fixed per launcher: alacritty/kitty) and no clock — only the tab pills.
         set -g status-left ""
         set -g status-right ""
-        # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps); the active one in the accent colour and full-length,
-        # the others cut at 15 chars. tmux has no hover/mouse-motion event, so clicking a pill (select) is what expands it.
+        # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps), name cut at 15 chars; the active one in the accent colour.
         setw -g window-status-separator " "
         setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
-        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#I:#W#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
+        # Line 0 is a blank margin between the app and the pills; rows 1-4 hold the windows whose @row matches,
+        # assigned by tmux-status-rows. status = rows + 1 is set per session by the same script.
+        set -g status 2
+        set -g status-format[0] ""
+        set -g status-format[1] "#[align=left]#{W:#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
+        set -g status-format[2] "#[align=left]#{W:#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
+        set -g status-format[3] "#[align=left]#{W:#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
+        set -g status-format[4] "#[align=left]#{W:#{?#{==:#{@row},4},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},4},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
       ''}
       
       # ============================================================================
@@ -513,6 +537,14 @@ in
 
       # Restore on first client attach (server may start without a client)
       set-hook -g client-attached "run-shell '${tmux-resurrect-restore-wrapper}/bin/tmux-resurrect-restore-wrapper'"
+      # Pill rows: relayout on anything that changes the tab set, a name or the width. Indices [9] so they never replace other hooks.
+      set-hook -g 'window-linked[9]' "run-shell -b '${tmux-status-rows}'"
+      set-hook -g 'window-unlinked[9]' "run-shell -b '${tmux-status-rows}'"
+      set-hook -g 'window-renamed[9]' "run-shell -b '${tmux-status-rows}'"
+      set-hook -g 'client-attached[9]' "run-shell -b '${tmux-status-rows}'"
+      set-hook -g 'client-resized[9]' "run-shell -b '${tmux-status-rows}'"
+      set-hook -g 'client-session-changed[9]' "run-shell -b '${tmux-status-rows}'"
+      run-shell -b '${tmux-status-rows}'
       
       # Save on session close/detach to prevent data loss
       # Hook to save when session is closed (all windows in session are closed)
