@@ -80,6 +80,15 @@ in
     # cache pulls from DESK, went over the Frankfurt DERP relay.
     firewallReversePathLoose = true;
 
+    # Docker (AINF-407 R2): rootless is the default daemon; the root daemon is
+    # sudo-only. The backstop below still guards whatever the root daemon
+    # publishes (it also turns its userland proxy off). Interfaces: wifi, the
+    # built-in NIC, the Thunderbolt-dock USB ethernet, and tailscale0.
+    dockerFirewallEnable = true;
+    dockerFirewallExternalInterfaces = [ "wlp3s0" "enp2s0f0" "enp5s0f3u1u4u5" "tailscale0" ];
+    dockerRootlessHostLoopback = false; # containers must not reach the host's 127.0.0.1
+    dockerRootlessKrunEnable = true;    # REA sandbox (AINF-408): `--runtime krun`
+
     # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
     # (priority 30 vs 40). Reachable over Tailscale, so it works off-LAN too.
     # Extra substituter only — cache.nixos.org stays, and fallback +
@@ -419,7 +428,11 @@ in
     theme = "ashes";
 
     dockerEnable = true;
-    virtualizationEnable = false;
+    # Rootless by default; root daemon only via sudo (AINF-407 R2,
+    # docs/akunito/plans/docker-rootless-workstations.md).
+    dockerRootlessEnable = true;
+    dockerRootRequiresSudo = true;
+    virtualizationEnable = false; # REA microVM (AINF-408 F5) will need it; krun only needs /dev/kvm, present already
     qemuGuestAddition = false; # VM
 
     # Home packages
