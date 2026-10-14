@@ -610,6 +610,7 @@ in
     # explicitly on DESK's tailscale IP in the compose file once each stack moves.
     dockerRootlessHostLoopback = false; # containers must not reach the host's 127.0.0.1
     dockerRootlessKrunEnable = true;    # REA sandbox (AINF-408): `--runtime krun`
+    reaSandboxEnable = true;            # rea-case / rea-cli / rea-claude (AINF-408)
 
     # Drives
     mount2ndDrives = true;

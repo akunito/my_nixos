@@ -41,6 +41,7 @@
     })
     ../../system/app/docker-rootless-workstation.nix # rootless daemon as default (self-gates on dockerRootlessEnable; AINF-407)
     ../../system/app/docker-rootless-maintenance.nix # GC-proof daemon ns, docker-prune, user-manager reload (self-gates on dockerRootlessEnable)
+    ../../system/app/rea-cases-mount.nix # noexec ~/rea/cases for the REA sandbox (self-gates on reaSandboxEnable; AINF-408)
     ../../system/security/sudo.nix # Doas instead of sudo
     ../../system/security/gpg.nix # GnuPG (ssh/key agent)
     ../../system/security/blocklist.nix # Blocklist for hosts

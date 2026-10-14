@@ -88,6 +88,7 @@ in
     dockerFirewallExternalInterfaces = [ "wlp3s0" "enp2s0f0" "enp5s0f3u1u4u5" "tailscale0" ];
     dockerRootlessHostLoopback = false; # containers must not reach the host's 127.0.0.1
     dockerRootlessKrunEnable = true;    # REA sandbox (AINF-408): `--runtime krun`
+    reaSandboxEnable = true;            # rea-case / rea-cli / rea-claude (AINF-408)
 
     # Pull prebuilt paths from DESK's harmonia cache before cache.nixos.org
     # (priority 30 vs 40). Reachable over Tailscale, so it works off-LAN too.

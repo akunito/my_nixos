@@ -980,6 +980,11 @@
     # on the rootless daemon. Opt-in per container with `--runtime krun`.
     dockerRootlessKrunEnable = false;
 
+    # === REA sandbox (AINF-408) ===
+    # rea-case/rea-cli/rea-claude + the Nix-built image (Ghidra 12.1.4 & tools) and
+    # the noexec ~/rea/cases mount. Needs dockerRootlessEnable + dockerRootlessKrunEnable.
+    reaSandboxEnable = false;
+
     # === Database Client Credentials (for workstations) ===
     # Generate ~/.pgpass and ~/.my.cnf for CLI tools and DBeaver
     dbCredentialsEnable = false;

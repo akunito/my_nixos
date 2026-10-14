@@ -410,10 +410,11 @@ AINF-407, plan `docs/akunito/plans/docker-rootless-workstations.md`.
 
 | Flag | Default | On in | Effect |
 |---|---|---|---|
-| `dockerRootlessEnable` (user) | `false` | DESK, NAS_PROD, VPS_PROD | Rootless daemon; coexists with `dockerEnable` (hybrid). On workstations it comes from `system/app/docker-rootless-workstation.nix`: `ip=127.0.0.1` default bind, no forced DNS, linger, the user's `docker.service` started at activation. |
-| `dockerRootRequiresSudo` (user) | `false` | DESK | The user is not in the root-equivalent `docker` group; the root daemon is socket-activated only and reached with `sudo docker`. |
-| `dockerRootlessHostLoopback` (system) | `true` | off on DESK | `false` sets rootlesskit `--disable-host-loopback`: containers cannot reach the host's 127.0.0.1 via 10.0.2.2. |
-| `dockerRootlessKrunEnable` (system) | `false` | DESK | Registers the `krun` runtime (crun + libkrun from pkgs-unstable): `docker run --runtime krun` runs the container in its own KVM microVM. |
+| `dockerRootlessEnable` (user) | `false` | DESK, LAPTOP_X13, NAS_PROD, VPS_PROD | Rootless daemon; coexists with `dockerEnable` (hybrid). On workstations it comes from `system/app/docker-rootless-workstation.nix`: `ip=127.0.0.1` default bind, no forced DNS, linger, the user's `docker.service` started at activation. |
+| `dockerRootRequiresSudo` (user) | `false` | DESK, LAPTOP_X13 | The user is not in the root-equivalent `docker` group; the root daemon is socket-activated only and reached with `sudo docker`. |
+| `dockerRootlessHostLoopback` (system) | `true` | off on DESK, LAPTOP_X13 | `false` sets rootlesskit `--disable-host-loopback`: containers cannot reach the host's 127.0.0.1 via 10.0.2.2. |
+| `reaSandboxEnable` (system) | `false` | DESK, LAPTOP_X13 | REA sandbox (AINF-408): `rea-case`/`rea-cli`/`rea-run`/`rea-claude`/`claude-raw` (`user/app/rea/rea.nix`), the Nix-built image (Ghidra 12.1.4 + tools, `user/app/rea/image.nix`) and the `noexec,nosuid,nodev` bind mount of `~/rea/cases` (`system/app/rea-cases-mount.nix`). Needs `dockerRootlessEnable` + `dockerRootlessKrunEnable`. |
+| `dockerRootlessKrunEnable` (system) | `false` | DESK, LAPTOP_X13 | Registers the `krun` runtime (crun + libkrun from pkgs-unstable): `docker run --runtime krun` runs the container in its own KVM microVM. |
 
 ## Related Documentation
 

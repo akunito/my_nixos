@@ -531,6 +531,16 @@ cmd_status() {
 }
 
 cmd=${1:-help}; shift || true
+# A session with its own CLAUDE_CONFIG_DIR (the REA sandbox: ~/.claude-rea, AINF-408)
+# must never become a hub clone: ensure_repo would git-init it and pull_state would
+# merge every machine's memory, skills and history into a session that reads hostile
+# binaries. Run claude untouched and make every hook a no-op there.
+if [ "$CLAUDE_DIR" != "$HOME/.claude" ]; then
+  case "$cmd" in
+    wrap) exec "$REAL_CLAUDE" "$@" ;;
+    hook-start|hook-stop|hook-end|bg-push|bg-end|sync|pull|push|init) exit 0 ;;
+  esac
+fi
 case "$cmd" in
   init)       cmd_init ;;
   sync)       with_lock -w do_sync ;;
