@@ -662,7 +662,7 @@
     claudeCodeLocalBackendName = "nas"; # command suffix/prefix
     claudeCodeLocalBackendModel = "reasoner-256k"; # model id sent = an aiPresets name (llama-server router mode loads it by name; an unknown name is HTTP 400). Also the haiku alias and the subagent model: Claude Code runs background work (titles, summaries) on haiku, and with --models-max 1 a different name there would evict the main model mid-session
     claudeCodeLocalBackendAliasOpus = "reasoner-256k"; # what /model "Opus" picks — picking another alias switches the LOADED model on the NAS (5-15 s)
-    claudeCodeLocalBackendAliasSonnet = "reasoner-128k";
+    claudeCodeLocalBackendAliasSonnet = "reasoner-9b-512k"; # the long-context fast one (Qwen3.5-9B abliterated, 512k via YaRN)
     claudeCodeLocalBackendAliasFable = "coder"; # Qwen3.6-35B-A3B MoE: fastest of the chat presets
     claudeCodeLocalBackendCtx = 262144; # fallback for CLAUDE_CODE_MAX_CONTEXT_TOKENS when /props?model= does not answer (NAS asleep)
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos

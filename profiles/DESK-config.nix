@@ -369,6 +369,8 @@ in
             contextLimit = 131072; outputLimit = 32768; }
           { id = "coder";           label = "Qwen3.6 35B-A3B coder (MoE, fast) · 256k · KV q8_0";
             contextLimit = 262144; outputLimit = 32768; }
+          { id = "reasoner-9b-512k"; label = "Qwen3.5 9B abliterated + vision · 512k YaRN · KV q8_0";
+            contextLimit = 524288; outputLimit = 32768; }
         ]; }
     ];
     # One at a time: gpt-oss:20b (~12 GiB) and qwen3.8-agent (~12 GiB) cannot
