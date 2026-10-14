@@ -425,6 +425,23 @@ class JournalDaemon(TmpFiles):
         saved = json.loads(placement_run.JOURNAL_FILE.read_text())["records"]["kitty"]
         self.assertEqual(saved["rect"], [50, 30, 320, 210])
 
+    def test_a_deliberate_move_during_the_patience_is_left_alone(self):
+        sway, cfg = two_monitors(self.tmp)
+        ctx = FakeCtx(sway)
+        t = tracker(cfg)
+        t.journal.put("kitty", {"workspace": "21", "floating": True, "output": "second", "rect": [10, 20, 300, 200]})
+        t.journal.save()
+        cid = sway.add("kitty", "11")
+        t.on_window({"change": "new", "container": {"id": cid}}, ctx)
+        ctx.fire(f"placement.verify.{cid}")          # seen on ws 21
+        n = len(sway.log)
+        sway.wins[cid]["ws"] = "22"                    # Hyper+Shift+2 within the 2 s
+        while f"placement.verify.{cid}" in ctx.timers:
+            ctx.fire(f"placement.verify.{cid}")
+        self.assertEqual(sway.wins[cid]["ws"], "22")
+        self.assertEqual(len(sway.log), n)           # never sent back
+        self.assertFalse(t.cons[cid].settling)
+
     def test_a_stale_client_commit_is_asked_again_and_not_recorded(self):
         sway, cfg = two_monitors(self.tmp)
         ctx = FakeCtx(sway)

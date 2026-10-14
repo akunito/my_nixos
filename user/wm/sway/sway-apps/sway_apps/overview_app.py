@@ -47,7 +47,7 @@ gi.require_version("Gsk", "4.0")
 gi.require_version("Graphene", "1.0")
 gi.require_version("GdkPixbuf", "2.0")
 gi.require_version("Gtk4LayerShell", "1.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Graphene, Gsk, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, Graphene, Gsk, Gtk  # noqa: E402
 from gi.repository import Gtk4LayerShell as LS  # noqa: E402
 
 from . import ipc, log  # noqa: E402
@@ -59,6 +59,7 @@ os.environ.pop("LD_PRELOAD", None)
 _log = log.get("overview")
 
 GRIM = os.environ.get("SWAY_APPS_GRIM_BIN", "grim")
+DRAG_THRESHOLD = 8   # logical px, GTK's gtk-dnd-drag-threshold default
 
 
 def _screen_locked() -> bool:
@@ -82,6 +83,7 @@ window.sa-overview { background-color: alpha(@sa_base00, 0.86); color: @sa_base0
 .sa-ov-col.focused { box-shadow: inset 0 0 0 2px alpha(@sa_base0D, 0.75); }
 .sa-ov-col.drop { background-color: alpha(@sa_base0B, 0.25); box-shadow: inset 0 0 0 2px @sa_base0B; }
 .sa-ov-col-empty { opacity: 0.5; padding: 24px 8px; }
+.sa-ov-card.dragging { opacity: 0.45; }
 .sa-ov-ws { font-weight: 700; font-size: 1.05em; margin: 2px 4px 0 4px; opacity: 0.9; }
 .sa-ov-ws .sa-ov-ws-tag { font-weight: 600; font-size: 0.8em; padding: 1px 8px; border-radius: 999px;
   background-color: alpha(@sa_base0D, 0.22); color: @sa_base0D; margin-left: 8px; }
@@ -160,6 +162,17 @@ class Panel:
         click = Gtk.GestureClick(button=0)
         click.connect("released", self._on_click)
         win.add_controller(click)
+        # Our own drag, not GtkDragSource: measured 2026-10-14 in nested sway 1.11, a
+        # GtkDragSource on these layer-surface cards never began its Wayland drag once the
+        # pointer had rested >= 0.2 s before the press (0.05 s: fine) - and a hand always
+        # rests. Motion keeps coming to the pressed panel under sway's implicit grab, also
+        # past its edge, so the target is found in layout coordinates on any panel.
+        drag = Gtk.GestureDrag(button=Gdk.BUTTON_PRIMARY)
+        drag.connect("drag-begin", self._drag_begin)
+        drag.connect("drag-update", self._drag_update)
+        drag.connect("drag-end", self._drag_end)
+        win.add_controller(drag)
+        self._press: tuple[int, float, float] | None = None
         self.win = win
 
     def connector(self) -> str:
@@ -189,12 +202,7 @@ class Panel:
                 col.add_css_class("visible")
             if g.focused:
                 col.add_css_class("focused")
-            drop = Gtk.DropTarget.new(GObject.TYPE_STRING, Gdk.DragAction.MOVE)
-            drop.connect("enter", lambda _t, _x, _y, c=col: (c.add_css_class("drop"), Gdk.DragAction.MOVE)[1])
-            drop.connect("leave", lambda _t, c=col: c.remove_css_class("drop"))
-            drop.connect("drop", lambda _t, value, _x, _y, ws=g.workspace, c=col:
-                         (c.remove_css_class("drop"), app.move_to(value, ws))[1])
-            col.add_controller(drop)
+            col._sa_ws = g.workspace
             head = Gtk.Box(spacing=8)
             head.add_css_class("sa-ov-ws")
             head.append(Gtk.Label(label=f"Workspace {g.workspace}", xalign=0.0, ellipsize=3, max_width_chars=4,
@@ -229,10 +237,6 @@ class Panel:
                 card.append(row)
                 card.set_tooltip_text(f"{c.title}\n{c.app_id}")
                 card._sa_id = c.id
-                drag = Gtk.DragSource(actions=Gdk.DragAction.MOVE)
-                drag.connect("prepare", lambda _s, _x, _y, cid=c.id: Gdk.ContentProvider.new_for_value(str(cid)))
-                drag.connect("drag-begin", lambda s_, _d, t=thumb: s_.set_icon(Gtk.WidgetPaintable.new(t), 24, 24))
-                card.add_controller(drag)
                 col.append(card)
                 self.cards[c.id] = card
                 self.thumbs[c.id] = thumb
@@ -256,7 +260,39 @@ class Panel:
                 elif bottom > adj.get_value() + adj.get_page_size():
                     adj.set_value(bottom - adj.get_page_size())
 
+    def _pick(self, x: float, y: float, attr: str):
+        w = self.win.pick(x, y, Gtk.PickFlags.DEFAULT)
+        while w is not None and not hasattr(w, attr):
+            w = w.get_parent()
+        return w
+
+    def _drag_begin(self, _g, x: float, y: float) -> None:
+        card = self._pick(x, y, "_sa_id")
+        self._press = (card._sa_id, x, y) if card is not None else None
+
+    def _drag_update(self, _g, dx: float, dy: float) -> None:
+        if self._press is None:
+            return
+        cid, x, y = self._press
+        if self.app.dragging is None:
+            if dx * dx + dy * dy < DRAG_THRESHOLD * DRAG_THRESHOLD:
+                return
+            self.app.dragging = cid
+            if cid in self.cards:
+                self.cards[cid].add_css_class("dragging")
+        g = self.monitor.get_geometry()
+        self.app.drop_hover(g.x + x + dx, g.y + y + dy)
+
+    def _drag_end(self, _g, dx: float, dy: float) -> None:
+        press, self._press = self._press, None
+        if press is None or self.app.dragging is None:
+            return
+        g = self.monitor.get_geometry()
+        self.app.drop_at(press[0], g.x + press[1] + dx, g.y + press[2] + dy)
+
     def _on_click(self, gesture, _n, x, y) -> None:
+        if self.app.dragging is not None or self.app.drag_ended_at > time.monotonic() - 0.05:
+            return   # the release of a drag, not a click
         w = self.win.pick(x, y, Gtk.PickFlags.DEFAULT)
         while w is not None and not hasattr(w, "_sa_id"):
             w = w.get_parent()
@@ -291,6 +327,9 @@ class Overview:
         self._sync_id = 0
         self._sig: tuple = ()
         self._keyed: str | None = None
+        self.dragging: int | None = None   # con_id of the card being dragged (state, e2e)
+        self.drag_ended_at = 0.0
+        self._drop_col: Gtk.Widget | None = None
         fmts = {f.get_name() for f in GdkPixbuf.Pixbuf.get_formats()}
         self.cap_fmt = "ppm" if "pnm" in fmts else "png"
         self._textures: dict[int, tuple[int, Gdk.Texture]] = {}
@@ -586,6 +625,36 @@ class Overview:
         except ipc.IpcError as exc:
             _log.warning("focus %s failed: %s", con_id, exc)
 
+    def _column_at(self, gx: float, gy: float):
+        """The workspace column under a layout point, on whichever panel holds it."""
+        for p in self.panels.values():
+            g = p.monitor.get_geometry()
+            if g.x <= gx < g.x + g.width and g.y <= gy < g.y + g.height:
+                return p._pick(gx - g.x, gy - g.y, "_sa_ws")
+        return None
+
+    def drop_hover(self, gx: float, gy: float) -> None:
+        col = self._column_at(gx, gy)
+        if col is not self._drop_col:
+            if self._drop_col is not None:
+                self._drop_col.remove_css_class("drop")
+            if col is not None:
+                col.add_css_class("drop")
+            self._drop_col = col
+
+    def drop_at(self, cid: int, gx: float, gy: float) -> None:
+        col = self._column_at(gx, gy)
+        if self._drop_col is not None:
+            self._drop_col.remove_css_class("drop")
+        self._drop_col = None
+        for p in self.panels.values():
+            if cid in p.cards:
+                p.cards[cid].remove_css_class("dragging")
+        self.dragging = None
+        self.drag_ended_at = time.monotonic()
+        if col is not None:
+            self.move_to(str(cid), col._sa_ws)
+
     def move_to(self, value: str, workspace: str) -> bool:
         """Drop of a card on a workspace column."""
         try:
@@ -850,7 +919,7 @@ class Overview:
         lat = {k: round(1000 * (t[k] - t["t0"]), 1) for k in ("tree", "rendered", "present", "painted") if k in t and "t0" in t}
         thumbs = sorted(int(p.stem) for p in (self.root / self.session).glob("*.jpg") if p.stem.isdigit())
         return {
-            "ok": True, "open": self.is_open, "painted": self.painted, "selected": self.selected,
+            "ok": True, "open": self.is_open, "painted": self.painted, "selected": self.selected, "dragging": self.dragging,
             "outputs": {v.name: {"focused": v.focused, "columns": self.cols.get(v.name),
                                  "groups": [{"workspace": g.workspace, "visible": g.visible, "focused": g.focused,
                                              "cards": [{**c.to_dict(), "thumb": self.thumb_src.get(c.id, "icon")} for c in g.cards]}

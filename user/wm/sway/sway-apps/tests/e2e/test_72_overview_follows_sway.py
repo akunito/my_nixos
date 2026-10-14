@@ -122,11 +122,13 @@ def case_drag_card_onto_another_workspace_column():
             raise E2EFailure(f"cards on {ob}/{db}")
         x0, y0 = ax + aw // 2, ay + ah // 2
         x1, y1 = OUTS[0][0] + dx + dw // 2, dy + dh // 2
+        s.pointer_to(x0, y0)                      # a hand hovers before pressing
+        time.sleep(0.8)
         s.press(x0, y0)
-        for dx in (4, 8, 12, 16):                 # past GTK's drag threshold, then let the
-            s.pointer_to(x0 + dx, y0)             # Wayland drag start before travelling
-            time.sleep(0.02)
-        time.sleep(0.15)
+        for dx in (4, 8, 12, 16):                 # past GTK's drag threshold, then wait for the
+            s.pointer_to(x0 + dx, y0)             # drag to have begun before travelling (a loaded
+            time.sleep(0.02)                      # box failed 1 run in 3 on a fixed pause)
+        s.wait(lambda: o.state()["dragging"] == w["a"].con_id, "drag of e2e.a began", 3)
         for i in range(1, 21):                    # across the output edge
             s.pointer_to(x0 + (x1 - x0) * i // 20, y0 + (y1 - y0) * i // 20)
             time.sleep(0.02)
@@ -140,5 +142,6 @@ def case_drag_card_onto_another_workspace_column():
             st = o.state()
             raise E2EFailure(f"{exc}: open={st['open']} " + str({g['workspace']: [c['app_id'] for c in g['cards']]
                                                                  for out in st['outputs'].values() for g in out['groups']}))
+        s.wait(lambda: o.state()["dragging"] is None, "drag ended")
         if not o.state()["open"]:
             raise E2EFailure("the drop closed the overview (or activated the card)")

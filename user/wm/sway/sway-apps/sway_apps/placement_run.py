@@ -447,9 +447,9 @@ class Tracker:
             info.last = {k: rec[k] for k in ("workspace", "floating", "output", "rect") if k in rec}
         if ok and r.rect is not None:
             info.settling = True
-            self._verify(ctx, cid, r, 0)
+            self._verify(ctx, cid, r, 0, [False])
 
-    def _verify(self, ctx, cid: int, r, attempt: int) -> None:
+    def _verify(self, ctx, cid: int, r, attempt: int, seen_ws: list[bool]) -> None:
         # window:new comes after sway sent the TILED configure. When the client
         # commits at that size, sway sizes the floating con to the commit AND
         # configures the client to it again (view_update_size + set_size in
@@ -458,6 +458,9 @@ class Tracker:
         # of 420x260 six runs out of six, sometimes > 400 ms after the restore.
         # So look, and ask again, at every step of AkuWM's placement patience
         # (2 s), not only until it first looks right.
+        # Once seen on the wanted workspace, another workspace is a deliberate move
+        # (Hyper+Shift+N, the overview's drag): stop. Measured live on DESK 2026-10-14,
+        # a move within the 2 s was sent straight back.
         def check(ctx) -> None:
             info = self.cons.get(cid)
             w = World.from_tree(ctx.tree()).windows.get(cid)
@@ -465,11 +468,17 @@ class Tracker:
                 if info is not None:
                     info.settling = False
                 return
+            if seen_ws[0] and r.ws is not None and w.ws != r.ws:
+                info.settling = False
+                self._dirty(ctx)   # the person's move: record it
+                return
+            if r.ws is not None and w.ws == r.ws:
+                seen_ws[0] = True
             if not r.reached(w):
                 _log.debug("con %s at %s %s, want %s %s: asking again", cid, w.ws, w.rect, r.ws, r.rect)
                 Placer(ctx.command, "", self.cfg)._run(cid, r.again())
             if attempt + 1 < len(VERIFY_DELAYS):
-                self._verify(ctx, cid, r, attempt + 1)
+                self._verify(ctx, cid, r, attempt + 1, seen_ws)
                 return
             info.settling = False
             if not r.reached(w):
