@@ -94,6 +94,16 @@ let
   # ${stateDir}/preset.env (written by `ai`) overrides these Nix defaults; with
   # the file absent the server starts exactly as configured in Nix.
   presetEnvFile = "${stateDir}/preset.env";
+
+  # Router mode (llamaServerRouter): one llama-server without -m that loads the
+  # model each request NAMES (section names of the INI generated from
+  # aiPresets), --models-max 1 so a request for another model unloads the
+  # current one. MEASURED on NAS_PROD b11580, 2026-10-14: laya -> kev-9b ->
+  # reasoner each evicted the previous (no error), /models/unload freed the
+  # card. preset.env is not used in this mode.
+  router = cfg.llamaServerRouter or false;
+  routerIni = pkgs.writeText "llama-router.ini"
+    (import ./ai-presets/ini.nix { inherit lib; } (cfg.aiPresets or { }));
   presetDefaults = {
     LLAMA_MODEL_FILE = modelFile;
     LLAMA_HF = modelRef;
@@ -174,7 +184,17 @@ let
   # dir is mounted at its host path so llamaServerModelFile and LLAMA_CACHE are
   # the same strings for both backends. --rm + a fixed name: a stale container
   # from a crash is removed in ExecStartPre, never left to block the next start.
-  dockerStart = pkgs.writeShellScript "llama-docker-start" ''
+  dockerStart = if router then pkgs.writeShellScript "llama-docker-router" ''
+    # /nix/store read-only: the INI and the chat templates it names live there.
+    exec ${dockerBin} run --rm --name llama-server \
+      --device nvidia.com/gpu=all \
+      -v ${stateDir}:${stateDir} \
+      -v /nix/store:/nix/store:ro \
+      -e LLAMA_CACHE=${stateDir} -e HOME=${stateDir} \
+      -p 127.0.0.1:${toString internalPort}:${toString internalPort} \
+      ${dockerImage} --host 0.0.0.0 --port ${toString internalPort} \
+      --models-preset ${routerIni} --models-max 1
+  '' else pkgs.writeShellScript "llama-docker-start" ''
     ${buildArgs}
     exec ${dockerBin} run --rm --name llama-server \
       --device nvidia.com/gpu=all \
@@ -196,6 +216,8 @@ in
         message = "llamaServerBackend must be \"vulkan\" or \"docker-cuda\" (got \"${backend}\")"; }
       { assertion = !isDocker || (cfg.nvidiaContainerToolkitEnable or false);
         message = "llamaServerBackend = docker-cuda needs nvidiaContainerToolkitEnable (CDI --device nvidia.com/gpu=all)"; }
+      { assertion = !router || isDocker;
+        message = "llamaServerRouter is wired for the docker-cuda backend only"; }
       { assertion = !isDocker || apiKeySecret == "";
         message = "llamaServerApiKeySecret is not wired into the docker-cuda backend (the credential dir is outside the container)"; }
     ];

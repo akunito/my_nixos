@@ -23,13 +23,15 @@ jq -c '
   (.gpu // {}) as $g
   | (.presets // [] | map({(.id): .}) | add // {}) as $p
   | ($p[.preset // ""] // {}) as $cur
-  | (if .preset == null or .preset == "off" then "off"
+  | (if .preset == null and .state == "idle" then "idle"
+     elif .preset == null or .preset == "off" then "off"
      elif .state == "loading" then "loading"
      elif .state == "loaded" and (($g.util_pct // 0) > 50) then "busy"
      elif .state == "loaded" then "ok"
      else "idle" end) as $cls
   | {
       text: (if $cls == "off" then "󰒋 NAS off"
+             elif .preset == null then "󰒋 NAS idle"
              else "󰒋 \($cur.short // .preset) · \($g.vram_used_mb | gb) · \($g.temp_c // "?")°" end),
       tooltip: ("NAS 3090 — preset: \(.preset // "off") (\($cur.label // "-"))\n"
                 + "state: \(.state // "?")   model: \(.model_alias // "-")   ctx: \(.ctx // "-") × \(.slots // "-") slot(s), KV \(.kv // "-")\n"

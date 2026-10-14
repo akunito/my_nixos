@@ -54,6 +54,11 @@ in
     # Qwen3.6-35B-A3B: 10 of 40 layers are full attention, 2 KV heads x 256 ->
     # 20 KB/token f16 (computed from config.json, NOT measured yet).
     aiPresetsEnable = true;
+    # Router mode (2026-10-14, Diego: verified first, then migrate): the model
+    # is the request's `model` name (= aiPresets names); claude-nas / OpenCode /
+    # the Waybar widget all switch the 3090 by naming a preset. Measured
+    # eviction under --models-max 1 in llama-server.nix's comment.
+    llamaServerRouter = true;
     aiPresetsDefault = "reasoner-128k";
     aiPresets = let
       reasoner = {

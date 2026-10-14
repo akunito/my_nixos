@@ -40,6 +40,7 @@ let
   }) (cfg.aiPresets or { });
   presetsJson = pkgs.writeText "ai-presets.json" (builtins.toJSON {
     default = cfg.aiPresetsDefault or "off";
+    router = cfg.llamaServerRouter or false;
     inherit presets;
   });
 

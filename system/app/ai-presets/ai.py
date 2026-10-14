@@ -69,7 +69,42 @@ def env_text(p: dict) -> str:
     return "".join(f'{k}="{p["env"].get(k, "")}"\n' for k in keys)
 
 
+def _post(url: str, body: dict, timeout: float = 60) -> dict:
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read() or b"{}")
+
+
+def router_models(base: str = BACKEND) -> list[dict]:
+    got = _get_json(f"{base}/models", timeout=3) or {}
+    return [{"id": m.get("id"), "status": (m.get("status") or {}).get("value", "?")} for m in got.get("data") or []]
+
+
+def apply_router(cfg: dict, name: str) -> str:
+    # Router mode (llama-server.nix llamaServerRouter): unload whatever is
+    # resident, then load the named model. Through the PUBLIC port so the
+    # socket-activated backend starts if it is not running.
+    active = systemctl("is-active", "llama-server.service").stdout.strip() == "active"
+    loaded = [m["id"] for m in (router_models() if active else []) if m["status"] in ("loaded", "loading")]
+    for mid in loaded:
+        _post(f"{PUBLIC}/models/unload", {"model": mid})
+    if name == "off":
+        return "off: no model loaded" + (f" (unloaded {', '.join(loaded)})" if loaded else "")
+    if name not in cfg["presets"]:
+        raise SystemExit(f"unknown preset {name}")
+    p = cfg["presets"][name]
+    extra = p["env"]["LLAMA_EXTRA"].split()
+    needed = [p["env"]["LLAMA_MODEL_FILE"]] + [extra[i + 1] for i, a in enumerate(extra[:-1]) if a == "--mmproj"]
+    missing = [f for f in needed if not os.path.exists(f)]
+    if missing:
+        raise SystemExit(f"preset {name}: missing {', '.join(missing)} (still downloading?)")
+    res = _post(f"{PUBLIC}/models/load", {"model": name}, timeout=360)
+    return f"{name}: {p['label']} ({'loading' if res.get('success', True) else res})"
+
+
 def apply(cfg: dict, name: str, preload: bool) -> str:
+    if cfg.get("router"):
+        return apply_router(cfg, name) if preload else "router mode: nothing to sync"
     if name == "off":
         for u in UNITS_OFF:
             systemctl("stop", u)
@@ -147,6 +182,27 @@ def gpu() -> dict:
         return {}
 
 
+def status_router(cfg: dict, st: dict) -> dict:
+    active = systemctl("is-active", "llama-server.service").stdout.strip() == "active"
+    models = router_models() if active else []
+    hot = next((m for m in models if m["status"] in ("loaded", "loading")), None)
+    st["router"] = True
+    st["models"] = models
+    if not hot:
+        st["preset"], st["state"] = None, "idle"
+        return st
+    name = hot["id"]
+    st["preset"], st["state"] = name, ("loaded" if hot["status"] == "loaded" else "loading")
+    p = cfg["presets"].get(name)
+    if p:
+        st["model_alias"] = name
+        st["ctx"] = int(p["env"]["LLAMA_CTX"])
+        st["slots"] = int(p["env"]["LLAMA_SLOTS"] or 1)
+        st["kv"] = p["env"]["LLAMA_KV"] or "f16"
+        st["kind"] = p.get("kind", "chat")
+    return st
+
+
 def status(cfg: dict) -> dict:
     name = current(cfg)
     st: dict = {"preset": name, "default": cfg["default"],
@@ -154,6 +210,8 @@ def status(cfg: dict) -> dict:
                 + [{"id": k, "kind": v.get("kind", "chat"), **{f: v[f] for f in ("label", "short", "vram_est")}}
                    for k, v in cfg["presets"].items()],
                 "gpu": gpu()}
+    if cfg.get("router"):
+        return status_router(cfg, st)
     if name == "off":
         st["state"] = "off"
         return st

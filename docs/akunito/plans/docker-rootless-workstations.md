@@ -114,6 +114,19 @@ Se escriben **a mano en cuanto R1 esté desplegado y probado**, no antes; antes 
 4. Notas globales y memoria.
 5. Migrar leftyworkout (dev y dev2) como primer caso real, con su sesión o con Diego.
 
+**Estado R1 (2026-10-14):** desplegado en DESK (`64cc7aab`) y probado.
+- `docker info` muestra `rootless` con los runtimes `runc` y `krun`.
+- Los contenedores root de otras sesiones sobrevivieron al deploy.
+- Grupo `docker` vacío; se aplica en el próximo login.
+- `-p` sin IP escucha solo en `127.0.0.1`, cerrado desde el NAS por la LAN y por tailscale. Con la IP de tailscale explícita, abierto.
+- El loopback del host está bloqueado.
+- **krun:** kernel del guest 6.12.91, sin red, montaje `:ro` legible y no escribible, `memory.max`/`pids.max` aplicados, VMM como uid 100999 con ~87 MB.
+- Notas para otras sesiones escritas en `~/.claude/CLAUDE.md` y en la memoria `reference_docker_rootless_workstations.md`.
+
+Pendiente de R1:
+- Comprobar `sudo docker ps` y que `docker` sin sudo no llega al daemon root, tras el próximo login.
+- Migrar leftyworkout (dev y dev2) la próxima vez que se use.
+
 **R2: X13**, cuando esté encendido. Hoy no tiene `dockerFirewallEnable`, así que los puertos del daemon root van a la LAN, ni `virtualizationEnable` (sin qemu/kvm). Antes del deploy:
 - inventario de contenedores y volúmenes;
 - activar `dockerFirewallEnable` para el daemon root que queda;
