@@ -128,7 +128,7 @@ class Panel:
         for edge in (LS.Edge.TOP, LS.Edge.BOTTOM, LS.Edge.LEFT, LS.Edge.RIGHT):
             LS.set_anchor(win, edge, True)
         LS.set_exclusive_zone(win, -1)
-        LS.set_keyboard_mode(win, LS.KeyboardMode.ON_DEMAND)
+        LS.set_keyboard_mode(win, LS.KeyboardMode.NONE)
         win.add_css_class("sa-overview")
         self.scroller = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER,
                                            vscrollbar_policy=Gtk.PolicyType.AUTOMATIC)
@@ -464,8 +464,13 @@ class Overview:
             return False
         self.timing["present"] = time.monotonic()
         focused = next((v.name for v in self.views if v.focused), None)
-        for name, p in self.panels.items():
-            LS.set_keyboard_mode(p.win, LS.KeyboardMode.EXCLUSIVE if name == focused else LS.KeyboardMode.ON_DEMAND)
+        keyed = focused if focused in self.panels else next(iter(self.panels), None)
+        # Only the keyed panel takes the keyboard, and it maps LAST. Measured on sway 1.11
+        # (2026-10-14): an ON_DEMAND layer surface mapping after the EXCLUSIVE one on another
+        # output takes the focus, then arrange_layers drops it (no exclusive on that output),
+        # so the keyboard went to no panel at all and arrows/Enter/Esc never arrived.
+        for name, p in sorted(self.panels.items(), key=lambda kv: kv[0] == keyed):
+            LS.set_keyboard_mode(p.win, LS.KeyboardMode.EXCLUSIVE if name == keyed else LS.KeyboardMode.NONE)
             p.win.set_visible(True)
             clock = p.win.get_frame_clock()
             if clock is not None and name == focused or (clock is not None and focused is None):

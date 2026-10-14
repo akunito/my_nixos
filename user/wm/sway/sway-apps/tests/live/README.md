@@ -11,10 +11,11 @@ Diego wants Claude to run the "by hand" desktop checks itself, as if it were him
 Run with the e2e tool env (`sway-apps-e2e`'s python, or the env it exports) plus `SWAYSOCK=/run/user/1000/sway-ipc.1000.<oldest sway pid>.sock WAYLAND_DISPLAY=wayland-1`. `LIVE_OUT` = where screenshots go.
 
 - `peek_live.py` — temp workspace, red tile + blue float, hold left/right on the tile, sample the overlap pixel (2026-10-14: blue → red while held → blue, both buttons).
-- `overview_hand.py` — Hyper+Tab via the virtual keyboard, screenshot, arrows, Enter, Esc; restores focus to con 7 (edit the id).
-- `overview_keys.py` — overview opened by the CLI, Down + Escape from the virtual keyboard.
+- `overview_hand.py` — Hyper+Tab via the virtual keyboard, screenshot, Tab/Shift+Tab, an arrow pair, Enter (on the sink card), reopen + Escape; restores focus; exit 1 on any failed check.
+- `overview_keys.py` — older variant (CLI open, Down + Escape); prefer overview_hand.py.
+- Testing an unreleased overview without deploying: `systemctl --user stop sway-apps-overview`, run the checkout (`SWAY_APPS_GIT=0 LD_PRELOAD=$E2E_LAYER_SHELL setsid -f $E2E_PYTHON -m sway_apps overview run`, from `sway-apps/`), test, then kill THAT python pid (`pgrep -f "sway_apps overview run"`, not the setsid parent) and `systemctl --user restart sway-apps-overview`; check MainPID == `sway-apps --json overview state` pid.
 
 ## Findings 2026-10-14 (DESK)
 - Overview: opens on Hyper+Tab, painted 115-120 ms (tree ~1 ms, render ~12 ms, the rest = live-capture wait); one open took 251 ms; 6/9 windows had thumbnails; RSS ~86 MB. Looks right (screenshot checked).
-- **Open bug:** arrows / Enter / Escape from the virtual keyboard never reach the overview panel on the live session (selection does not move, Enter does not close), while the same keys pass in the nested e2e suite where the virtual keyboard is the ONLY keyboard. `../e2e/repro_overview_two_keyboards.py` (not collected by run.py) reproduces a two-keyboard setup: there even Hyper+Tab from the second keyboard does not open it. Check with Diego's real keyboard before fixing.
+- **Fixed (same day):** arrows/Enter/Escape never reached the panel. Not the second keyboard: the ON_DEMAND panel of the other output mapped after the EXCLUSIVE one, took the keyboard, and sway then dropped it (no exclusive layer on that output). Now only the focused output's panel has keyboard interactivity (others NONE) and it maps last. e2e `test_71_overview_keyboard_focus.py` fails on the old code, passes now; live run on DESK with the checkout: every check true. Keys typed between Hyper+Tab and the paint (~45-120 ms) still go to the old window.
 - To do after it works: optimise the overview for speed and RAM/VRAM (Diego, 2026-10-14).
