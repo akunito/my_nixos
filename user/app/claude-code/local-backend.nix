@@ -20,7 +20,8 @@
 #   CLAUDE_CODE_MAX_CONTEXT_TOKENS is what the 2.1.296 binary asks for.
 # - Router mode on the NAS (llama-server --models-preset, --models-max 1, 2026-10-14): model ids are
 #   the aiPresets names; an unknown id is HTTP 400; /props needs ?model=. Single-model servers ignore
-#   the name, so this wrapper works against both.
+#   the name, so this wrapper works against both. The /model picker aliases (Opus/Sonnet/Fable) name
+#   OTHER presets on purpose: picking one gets the gate's "switch by hand in the widget" message.
 # - MCP servers are OFF by default (CLAUDE_<NAME>_MCP=1 keeps them): with every
 #   MCP of ~/.claude.json the first turn was 45-48k tokens and a read+edit task
 #   took 3 min 07 s; without them 16.7k tokens and 27 s (same task, same model,
@@ -48,16 +49,38 @@ let
     fi
     unset ANTHROPIC_API_KEY
     export ANTHROPIC_BASE_URL="${url}" ANTHROPIC_AUTH_TOKEN=local
-    export ANTHROPIC_MODEL="${model}" ANTHROPIC_DEFAULT_MODEL="${model}"
+    # Diego's switching rule (2026-10-14): claude-nas must NEVER change the loaded model; he switches
+    # by hand in the Waybar NAS widget. The gate (system/app/llama-server/gate.py) rejects at once any
+    # request that carries this header and names another model, with a message saying so. Hence the
+    # main model is whatever is LOADED right now (gate/status, else GET /models, else the Nix default
+    # when nothing is loaded: the router then loads it, which the gate allows).
+    export ANTHROPIC_CUSTOM_HEADERS="X-Nas-No-Switch: 1"
+    loaded=$(${curl} -sf --max-time 3 "${url}/gate/status" 2>/dev/null | ${py} -c '
+import json,sys
+try:
+    d=json.load(sys.stdin); v=d.get("loaded")
+    print(v if isinstance(v,str) else (v or {}).get("id") or (v or {}).get("model") or "")
+except Exception: pass' 2>/dev/null)
+    if [ -z "$loaded" ]; then
+      loaded=$(${curl} -sf --max-time 3 "${url}/models" 2>/dev/null | ${py} -c '
+import json,sys
+try:
+    for m in json.load(sys.stdin).get("data",[]):
+        st=m.get("status"); st=st.get("value") if isinstance(st,dict) else st
+        if st=="loaded": print(m.get("id","")); break
+except Exception: pass' 2>/dev/null)
+    fi
+    main="''${loaded:-${model}}"
+    export ANTHROPIC_MODEL="$main" ANTHROPIC_DEFAULT_MODEL="$main"
     # Router mode (2026-10-14): each alias is a preset NAME, so /model really switches the loaded
     # model. Haiku stays = main: background work would otherwise evict the main model (--models-max 1).
     export ANTHROPIC_DEFAULT_OPUS_MODEL="${aliasOpus}" ANTHROPIC_DEFAULT_SONNET_MODEL="${aliasSonnet}"
-    export ANTHROPIC_DEFAULT_HAIKU_MODEL="${model}" ANTHROPIC_DEFAULT_FABLE_MODEL="${aliasFable}"
-    export CLAUDE_CODE_SUBAGENT_MODEL="${model}" CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1
+    export ANTHROPIC_DEFAULT_HAIKU_MODEL="$main" ANTHROPIC_DEFAULT_FABLE_MODEL="${aliasFable}"
+    export CLAUDE_CODE_SUBAGENT_MODEL="$main" CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1
     # The live window wins over the Nix value: presets (system/app/ai-presets.nix)
     # change the server's ctx without a DESK rebuild. /props answers only when
     # the model is loaded; otherwise (asleep, loading) the Nix default stands.
-    live_ctx=$(${curl} -sf --max-time 3 "${url}/props?model=${model}" 2>/dev/null | ${py} -c 'import json,sys; print(json.load(sys.stdin)["default_generation_settings"]["n_ctx"])' 2>/dev/null || true)
+    live_ctx=$(${curl} -sf --max-time 3 "${url}/props?model=$main" 2>/dev/null | ${py} -c 'import json,sys; print(json.load(sys.stdin)["default_generation_settings"]["n_ctx"])' 2>/dev/null || true)
     export CLAUDE_CODE_MAX_CONTEXT_TOKENS="''${live_ctx:-${ctx}}" CLAUDE_CODE_DISABLE_1M_CONTEXT=1
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
     export CLAUDE_CODE_ATTRIBUTION_HEADER=0 DISABLE_PROMPT_CACHING=1
