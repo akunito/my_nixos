@@ -153,11 +153,18 @@ in
     # Regenerate the include from the repo state on every activation. No
     # reload here: the session picks it up on the next reload/login, and the
     # tool reloads itself after every edit. No git: activation must never
-    # create commits.
-    home.activation.swayAppsGenerate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    # create commits. The apply also writes the Waybar config/CSS and the sway
+    # bar blocks (sway_apps/waybar.py), after linkGeneration so HM's old
+    # waybar/config symlink is gone; `waybar apply` then reloads Waybar (and
+    # sway, only when a bar id is new to it) if the generated config changed,
+    # as HM's own onChange did. Without a session it is left for the watch
+    # daemon at login.
+    home.activation.swayAppsGenerate = lib.hm.dag.entryBetween [ "reloadSystemd" ] [ "writeBoundary" "linkGeneration" ] ''
       if [ -d "${dotfiles}/user/wm/sway/apps" ]; then
         SWAY_APPS_GIT=0 ${sway-apps}/bin/sway-apps --json apply --no-reload --no-validate >/dev/null 2>&1 \
           || echo "sway-apps: include generation failed (run 'sway-apps doctor')" >&2
+        SWAY_APPS_GIT=0 ${sway-apps}/bin/sway-apps --json waybar apply >/dev/null 2>&1 \
+          || echo "sway-apps: waybar generation failed (run 'sway-apps waybar apply')" >&2
       fi
     '';
   };

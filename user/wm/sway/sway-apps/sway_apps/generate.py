@@ -119,6 +119,8 @@ def apply(state: State, reload: bool = True, do_validate: bool = True) -> dict:
                 raise RuntimeError(f"generated config failed validation:\n{out}")
         path = install(text)
         res["path"] = str(path)
+        from . import features  # noqa: WPS433
+        features.before_reload(state)
         if reload:
             if swayipc.available():
                 swayipc.reload()
@@ -126,6 +128,7 @@ def apply(state: State, reload: bool = True, do_validate: bool = True) -> dict:
             else:
                 _log.warning("sway socket not available; include written, reload skipped")
                 res["reloaded"] = False
+        features.after_apply(state, bool(res.get("reloaded")))
         tm = apply_tmux(state, reload=reload)
         res["tmux_binds"] = tm["binds"]
         return {"path": str(path), "rules": res["rules"], "reloaded": res.get("reloaded", False), "tmux": tm}

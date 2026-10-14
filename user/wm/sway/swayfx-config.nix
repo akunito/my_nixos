@@ -684,10 +684,12 @@ in
           # Show/hide Waybar. H for Hide: every bare hyper letter except "i" is
           # already bound, "+b"/"+B" are Bottles, and "+w" is workspace-nav-next
           # -- which is NOT a free "+W", see the case-folding assertion below.
-          # SIGUSR1 rather than a restart; the script says why a restart is the
-          # wrong tool and why sway's `bar ... mode` does not drive Waybar.
+          # Without sway-apps: SIGUSR1 (all bars of the process; the script says
+          # why). With it: the FOCUSED monitor's bar via `bar wb-<role> mode`,
+          # a nop binding the watch daemon handles (sway_apps/waybar.py).
           "${hyper}+Shift+h" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/waybar-toggle.sh";
+            if swayApps then "nop sway-apps waybar toggle"
+            else "exec ${config.home.homeDirectory}/.config/sway/scripts/waybar-toggle.sh";
           # Pavucontrol (Audio mixer) - hyper+Shift+a (A for Audio)
           "${hyper}+Shift+a" =
             "exec ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol pavucontrol";
@@ -1340,6 +1342,7 @@ in
       # Window border settings
       default_border pixel 2
 
+      ${lib.optionalString (!swayApps) ''
       # Disable SwayFX's default internal bar (swaybar) by default
       # Can be toggled manually via ${hyper}+Shift+Home keybinding or: swaymsg bar mode dock/invisible
       bar {
@@ -1347,6 +1350,7 @@ in
         hidden_state hide
         position bottom
       }
+      ''}
 
       # Prevent popups/dialogs from breaking fullscreen (e.g., during gaming)
       popup_during_fullscreen ignore
@@ -1432,12 +1436,17 @@ in
       assign [class="chromium-browser"] workspace number 22
       ''}
 
+      ${lib.optionalString (!swayApps) ''
       # Disable SwayFX's default internal bar (swaybar) by default
       # Can be toggled manually via swaybar-toggle.sh script or keybinding
       bar bar-0 {
         mode invisible
         hidden_state hide
       }
+      ''}
+      # sway-apps: one `bar wb-<role>` block per Waybar bar (sway holds only the
+      # mode; Waybar draws them with "ipc": true). Replaces both bar blocks above.
+      ${lib.optionalString swayApps "include ~/.config/sway/sway-apps-bars.conf"}
 
       ${lib.optionalString useFx ''
       # SwayFX visual settings matching Khanelinix aesthetic (blur, shadows, rounded corners)

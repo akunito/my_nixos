@@ -219,880 +219,693 @@ let
                    then systemSettings.swayPrimaryMonitor 
                    else null;
   hasPrimaryMonitor = primaryMonitor != null;
+
+  # sway-apps (swayAppsEnable) generates the bars itself, one per monitor role
+  # (user/wm/sway/sway-apps/sway_apps/waybar.py): Nix publishes the module
+  # catalog, the default layouts and the base CSS; HM stops writing
+  # ~/.config/waybar/{config,style.css}. Without sway-apps, today's bar.
+  swayApps = systemSettings.swayAppsEnable or false;
+  llmEnabled = systemSettings.ollamaServerEnable or false;
+
+  # Ordered so the eye walks it in one direction: machine state first
+  # (screen, power), then input/output, then the CPU triplet, then the
+  # GPU triplet, then what is USING the GPU. custom/llm sits last on
+  # purpose — it is the consumer of the three figures to its left, and
+  # reading "GPU 4% · 49° · VRAM 13.4G · qwen3.8 100%" left to right is
+  # the whole story of the card in one glance.
+  #
+  # battery and backlight are laptop-only in practice; waybar hides a
+  # module whose device is absent, so listing them here costs a desktop
+  # nothing.
+  modulesLeft = [
+    "backlight"
+    "battery"
+    "pulseaudio"
+    "custom/mic"
+    "custom/cpu"
+    "custom/cpu-temp"
+    "custom/ram"
+    "custom/gpu"
+    "custom/gpu-temp"
+    "custom/vram"
+  ]
+  # Only where a local model can actually run. On a host without one
+  # the module is absent from BOTH this list and the settings attrset,
+  # so nothing renders and nothing is clickable — verified against
+  # LAPTOP_X13's generated config.
+  ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
+  modulesCenter = [ "sway/workspaces" ];
+  modulesRight =
+    # Flat, no drawer (2026-09-02). The extras group hid the tray behind
+    # a reveal handle, which is how a missing Vesktop icon could go
+    # unnoticed. Everything that earns a slot is now always visible.
+    [ "idle_inhibitor" "custom/notifications" "tray" ]
+    ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
+    ++ [ "clock" "custom/power-menu" ];
+
+  barBase = {
+    layer = "top";
+    position = "top";
+    height = 30;
+    # Spacing affects inter-module gaps even if CSS margins are 0.
+    # Set to 0 so the left cluster can truly fuse into a single pill.
+    spacing = 0;
+  };
+
+  # Every module definition, host-filtered: a module whose host lacks the
+  # feature is absent from the layouts AND from here, so nothing renders.
+  moduleDefs = builtins.removeAttrs {
+    clock = sharedModules.clock;
+    pulseaudio = sharedModules.pulseaudio;
+    network = sharedModules.network;
+    battery = sharedModules.battery;
+    bluetooth = sharedModules.bluetooth;
+    tray = sharedModules.tray;
+    # "sway/window" removed
+
+    backlight = {
+      # “Contrast” == brightness/backlight %
+      format = "{percent}% ◐";
+      scroll-step = 5;
+      tooltip = false;
+    };
+
+    # Microphone widget (percent + mic icon)
+    "custom/mic" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
+      on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
+      tooltip = true;
+    };
+
+    # Split metrics (CPU/GPU/RAM/temps); click opens btop++
+    "custom/cpu" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu";
+      on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+      tooltip = true;
+    };
+    "custom/gpu" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
+      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
+      tooltip = true;
+    };
+    # VRAM used, between GPU load and GPU temp. Same script, same style,
+    # same on-click as the other GPU modules. Reads amdgpu's sysfs
+    # counters directly, so this and `llama-status` can never disagree
+    # about how much room is left on the card.
+    # Local LLM state. custom/vram above says the card is full; this says
+    # WHY, and specifically whether the resident model actually fits.
+    # `size_vram / size` from /api/ps is the number that decides speed:
+    # measured 2026-09-02 the same model ran 36 -> 21 -> 14 tok/s as that
+    # share fell 100% -> 95% -> 89%, purely because the desktop grew. It
+    # is invisible anywhere else, which is why this module exists.
+    #
+    # signal 6 lets the rofi menu refresh the bar the instant an action
+    # lands, instead of waiting out `interval`. The script pkill's
+    # -RTMIN+6, so the two numbers must stay in step.
+    "custom/llm" = {
+      return-type = "json";
+      interval = 5;
+      signal = 6;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
+      # OPENCODE_MODEL_CONFIG is passed explicitly rather than relying on the
+      # session environment: waybar is a systemd user unit, and
+      # home.sessionVariables reaches shells, not units. Without it the
+      # menu would still load models but silently stop setting OpenCode's
+      # default — the worst kind of half-working.
+      on-click = "${pkgs.sway}/bin/swaymsg exec \"env OPENCODE_MODEL_CONFIG=${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"} rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
+      tooltip = true;
+    };
+    "custom/vram" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh vram";
+      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
+      tooltip = true;
+    };
+    "custom/ram" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh ram";
+      on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+      tooltip = true;
+    };
+    "custom/cpu-temp" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu-temp";
+      on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
+      tooltip = true;
+    };
+    "custom/gpu-temp" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
+      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
+      tooltip = true;
+    };
+
+    # Notifications history (Sway Notification Center)
+    # Icon-only (no counter), and hidden when there are no notifications.
+    "custom/notifications" = {
+      return-type = "json";
+      interval = 2;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
+      on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
+      on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
+      tooltip = true;
+    };
+
+    # Google Calendar next-event widget (reads EDS-cached ICS via icalendar python lib)
+    # Click opens calendar.google.com in default browser.
+    "custom/gcal" = {
+      return-type = "json";
+      interval = systemSettings.goaCalendarWidgetInterval;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
+      on-click = "${pkgs.gnome-calendar}/bin/gnome-calendar";
+      tooltip = true;
+    };
+
+    # Coffee button: toggle idle inhibition (prevents swayidle screen blank/suspend logic that respects inhibit)
+    idle_inhibitor = {
+      format = "{icon}";
+      tooltip = true;
+      tooltip-format = "Anfetas {status}";
+      # For testing/transition: clicking the built-in module toggles the same swayidle.service
+      # as the custom idle toggle + keybinding.
+      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
+      format-icons = {
+        activated = "";
+        deactivated = "";
+      };
+    };
+
+    # Power menu (same as ${hyper}+Shift+BackSpace)
+    # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
+    # Explicitly specify modi to avoid loading calc/emoji plugins that may not be available
+    "custom/power-menu" = {
+      interval = 3600;
+      exec = "${pkgs.coreutils}/bin/printf '⏻'";
+      on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show power -modi power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh -show-icons\"";
+      tooltip = true;
+      tooltip-format = "Power menu";
+    };
+  } (lib.optional (!llmEnabled) "custom/llm" ++ lib.optional (!systemSettings.goaCalendarEnable) "custom/gcal");
+
+  # all-outputs is set per bar by sway-apps (CSS decides what each bar shows).
+  workspacesDef = builtins.removeAttrs primaryWorkspaces [ "all-outputs" ];
+
+  hmBar = workspaces: barBase // {
+    modules-left = modulesLeft;
+    modules-center = modulesCenter;
+    modules-right = modulesRight;
+    "sway/workspaces" = workspaces;
+  } // moduleDefs;
+
+  waybarCatalog = pkgs.writeText "waybar-modules.json" (builtins.toJSON {
+    version = 1;
+    modules = moduleDefs // { "sway/workspaces" = workspacesDef; };
+    layouts = let l = { left = modulesLeft; center = modulesCenter; right = modulesRight; }; in {
+      primary = l;
+      secondary = l;
+    };
+    bar = barBase;
+    # Base values the per-bar size % scales (font-size in the CSS below; tray
+    # icon-size is Waybar's default when unset).
+    sizes = { font = 13; tray_icon = 16; };
+    # Today's behaviour: with a primary monitor the bar lives there only;
+    # without one every monitor has its own.
+    default_visible = if hasPrimaryMonitor then "primary" else "all";
+  });
+
+  waybarStyle = if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
+    * {
+      border: none;
+      border-radius: 12px;
+      font-family: ${config.stylix.fonts.sansSerif.name}, Font Awesome, sans-serif;
+      font-size: 13px;
+      min-height: 0;
+    }
+
+    window#waybar {
+      /* Default: bar container is invisible (modules keep their own pill backgrounds) */
+      /* NOTE: A fully transparent GTK window can be flaky for :hover selectors.
+         Use an almost-transparent background to make hover detection reliable. */
+      background-color: rgba(0, 0, 0, 0.001);
+      border: 1px solid transparent;
+      border-radius: 16px;
+      margin: 8px 12px;
+      padding: 0;
+      color: #${config.lib.stylix.colors.base07};
+      /* backdrop-filter not supported by waybar CSS parser - removed */
+      box-shadow: none;
+      /* Keep the bar container always invisible; only widgets have backgrounds */
+    }
+
+    /* Dock bar CSS removed: Dock bar disabled due to wlr/taskbar protocol limitations in SwayFX */
+    /* Dock can be re-enabled when SwayFX foreign-toplevel-manager protocol support improves */
+
+    window#waybar.hidden {
+      opacity: 0.2;
+    }
+
+    #workspaces {
+      margin: 4px 8px;
+      padding: 0;
+      border-radius: 12px;
+      background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+    }
+
+    #workspaces button {
+      min-width: 20px;  /* CRITICAL: Prevent collapse to zero width */
+      padding: 0 5px;  /* Horizontal padding is critical for visibility */
+      margin: 2px;
+      border-radius: 10px;
+      background-color: transparent;
+      color: #${config.lib.stylix.colors.base05};
+      transition: all 0.2s ease;
+    }
+
+    /* Per-group workspace colors are applied via Pango markup in `format-icons`
+       because Waybar's CSS selector parser rejects attribute selectors. */
+
+    #workspaces button:hover {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+    }
+
+    #workspaces button.focused {
+      /* Keep the per-group foreground color; use same background as hover */
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+      box-shadow: 0 3px 12px ${hexToRgba config.lib.stylix.colors.base03 "80"}, 0 1px 4px ${hexToRgba config.lib.stylix.colors.base00 "60"};
+    }
+
+    #workspaces button.urgent {
+      background-color: ${hexToRgba config.lib.stylix.colors.base08 "80"};
+      color: #${config.lib.stylix.colors.base07};
+      animation: urgent-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes urgent-pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    #window {
+      margin: 4px 8px;
+      padding: 4px 12px;
+      border-radius: 10px;
+      background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+      color: #${config.lib.stylix.colors.base07};
+    }
+
+    #clock,
+    #battery,
+    #cpu,
+    #memory,
+    #disk,
+    #temperature,
+    #backlight,
+    #network,
+    #pulseaudio,
+    #custom-media,
+    #tray,
+    #mode,
+    #idle_inhibitor,
+    #mpd,
+    #bluetooth,
+    #custom-perf,
+    #custom-mic,
+    #custom-cpu,
+    #custom-gpu,
+    #custom-vram,
+    #custom-ram,
+    #custom-cpu-temp,
+    #custom-gpu-temp,
+    #custom-llm,
+    #custom-notifications,
+    #custom-power-menu {
+      margin: 4px 4px;
+      padding: 4px 12px;
+      border-radius: 10px;
+      background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+      color: #${config.lib.stylix.colors.base07};
+      transition: all 0.2s ease;
+    }
+
+    /* Local LLM: the colour IS the message, so each state gets its own.
+       `spill` is the one that earns the module — amber means the model is
+       resident but partly in system RAM, which costs 30-60% of decode speed
+       and is otherwise completely silent. */
+    #custom-llm.ok     { color: #${config.lib.stylix.colors.base0B}; }
+    #custom-llm.spill  { color: #${config.lib.stylix.colors.base0A};
+                         background-color: ${hexToRgba config.lib.stylix.colors.base0A "22"}; }
+    #custom-llm.locked { color: #${config.lib.stylix.colors.base0E}; }
+    #custom-llm.down   { color: #${config.lib.stylix.colors.base08}; }
+    #custom-llm.idle   { color: #${config.lib.stylix.colors.base04}; }
+
+    /* Stylix color groups (left cluster) */
+    #battery,
+    #backlight,
+    #custom-ram {
+      color: #${config.lib.stylix.colors.base08};
+    }
+
+    #clock {
+      color: #${config.lib.stylix.colors.base0C};
+    }
+
+    #pulseaudio,
+    #custom-mic {
+      color: #${config.lib.stylix.colors.base0C};
+    }
+
+    #custom-cpu,
+    #custom-cpu-temp,
+    #custom-notifications {
+      color: #${config.lib.stylix.colors.base08};
+    }
+
+    #custom-gpu,
+    #custom-vram,
+    #custom-gpu-temp {
+      color: #${config.lib.stylix.colors.base0C};
+    }
+
+    #custom-power-menu {
+      color: #${config.lib.stylix.colors.base08};
+    }
+
+    #clock:hover,
+    #battery:hover,
+    #network:hover,
+    #pulseaudio:hover,
+    #bluetooth:hover,
+    #custom-perf:hover,
+    #custom-mic:hover,
+    #custom-cpu:hover,
+    #custom-gpu:hover,
+    #custom-vram:hover,
+    #custom-ram:hover,
+    #custom-cpu-temp:hover,
+    #custom-gpu-temp:hover,
+    #custom-notifications:hover,
+    #custom-power-menu:hover {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
+    }
+
+    /* Collapse notifications module when it's hidden (no notifications) */
+    #custom-notifications.hidden {
+      margin: 0;
+      padding: 0;
+      background-color: transparent;
+      border-radius: 0;
+    }
+
+    /* Drawer removed 2026-09-02: tray and notifications sit directly in
+       modules-right, so .drawer-hidden and #custom-reveal went with it. */
+
+    /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
+
+    /* Idle inhibitor should stay visible even when deactivated. */
+
+    /* Anfetas (idle inhibitor): green when enabled, white when off */
+    #idle_inhibitor {
+      color: #${config.lib.stylix.colors.base0C};
+      transition: all 0.2s ease;
+    }
+
+    #idle_inhibitor:hover {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+      box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
+    }
+
+    #idle_inhibitor.activated {
+      color: #${config.lib.stylix.colors.base0B};
+      background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
+      box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0B "4D"};
+    }
+
+    /* Perf turns red if CPU or GPU temp >= 80C */
+    #custom-perf.hot {
+      color: #${config.lib.stylix.colors.base08};
+      background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
+    }
+
+    #clock {
+      font-weight: 600;
+    }
+
+    /* battery color is handled by the Stylix color-group rules above */
+
+    #battery.charging, #battery.plugged {
+      color: #${config.lib.stylix.colors.base0B};
+      background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
+    }
+
+    @keyframes blink {
+      to {
+        background-color: #${config.lib.stylix.colors.base08};
+        color: #${config.lib.stylix.colors.base07};
+      }
+    }
+
+    #battery.critical:not(.charging) {
+      background-color: ${hexToRgba config.lib.stylix.colors.base08 "99"};
+      color: #${config.lib.stylix.colors.base07};
+      animation-name: blink;
+      animation-duration: 0.5s;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+
+    label:focus {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
+    }
+
+    /* pulseaudio color is handled by the Stylix color-group rules above */
+
+    /* Left cluster: render as one shared segmented pill */
+    .modules-left {
+      margin: 4px 4px;
+      padding: 0;
+      border-radius: 10px;
+      background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+    }
+
+    #battery,
+    #backlight,
+    #pulseaudio,
+    #custom-mic,
+    #custom-cpu,
+    #custom-gpu,
+    #custom-vram,
+    #custom-ram,
+    #custom-cpu-temp,
+    #custom-gpu-temp {
+      margin: 0;
+      border-radius: 0;
+      background-color: transparent;
+    }
+
+    /* No separators: fully merged pill */
+
+    #pulseaudio.muted {
+      color: #${config.lib.stylix.colors.base04};
+      background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
+    }
+
+    #network {
+      color: #${config.lib.stylix.colors.base07};
+    }
+
+    #network.disconnected {
+      color: #${config.lib.stylix.colors.base08};
+      background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
+    }
+
+    #bluetooth {
+      color: #${config.lib.stylix.colors.base07};
+    }
+
+    #bluetooth.disabled {
+      color: #${config.lib.stylix.colors.base04};
+      background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
+    }
+
+    #tray {
+      margin: 4px 4px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
+      transition: all 0.2s ease;
+    }
+
+    /* Add hover effect to tray widget */
+    #tray:hover {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
+      box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
+    }
+
+    /* Increase spacing between tray icons */
+    #tray > * {
+      margin: 0 32px;  /* Increased from 24px to 32px */
+      padding: 0 6px;   /* Increased padding slightly */
+    }
+
+    /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
+    #tray button {
+      margin: 0 32px;   /* Match the increased spacing */
+      padding: 0 6px;
+      transition: all 0.2s ease;
+    }
+
+    /* Add hover effect to individual tray buttons */
+    #tray button:hover {
+      background-color: ${hexToRgba config.lib.stylix.colors.base02 "4D"};
+      border-radius: 6px;
+    }
+
+    #tray > *:first-child {
+      margin-left: 0;
+    }
+
+    #tray > *:last-child {
+      margin-right: 0;
+    }
+
+    #tray > .passive {
+      -gtk-icon-effect: dim;
+    }
+
+    #tray > .needs-attention {
+      -gtk-icon-effect: highlight;
+      background-color: ${hexToRgba config.lib.stylix.colors.base08 "66"};
+      border-radius: 8px;
+    }
+  '' else ''
+    * {
+      border: none;
+      border-radius: 0;
+      font-family: sans-serif;
+      font-size: 13px;
+      min-height: 0;
+    }
+
+    window#waybar {
+      background-color: rgba(0, 0, 0, 0.001);
+      border-bottom: 1px solid transparent;
+      color: #ffffff;
+      /* Keep the bar container always invisible; only widgets have backgrounds */
+    }
+
+    #workspaces button {
+      padding: 0 5px;
+      background-color: transparent;
+      color: #888888;
+    }
+
+    #workspaces button.focused {
+      color: #ffffff;
+    }
+
+    #clock,
+    #battery,
+    #backlight,
+    #network,
+    #pulseaudio,
+    #tray,
+    #bluetooth,
+    #custom-perf,
+    #custom-mic,
+    #custom-cpu,
+    #custom-gpu,
+    #custom-vram,
+    #custom-ram,
+    #custom-cpu-temp,
+    #custom-gpu-temp,
+    #custom-notifications {
+      padding: 0 10px;
+      color: #ffffff;
+    }
+
+    /* Noise reduction: hide by default, show on bar hover */
+    #custom-notifications,
+    #tray {
+      opacity: 0;
+      padding: 0;
+    }
+
+    window#waybar:hover #custom-notifications,
+    window#waybar:hover #tray {
+      opacity: 1;
+      padding: 0 10px;
+    }
+
+    /* Idle inhibitor should stay visible even when deactivated. */
+
+    /* Left cluster: render as one shared segmented pill */
+    .modules-left {
+      padding: 0;
+      border-radius: 10px;
+    }
+
+    #battery,
+    #backlight,
+    #pulseaudio,
+    #custom-mic,
+    #custom-cpu,
+    #custom-gpu,
+    #custom-vram,
+    #custom-ram,
+    #custom-cpu-temp,
+    #custom-gpu-temp {
+      padding-left: 10px;
+      padding-right: 10px;
+      margin: 0;
+    }
+
+    #backlight,
+    #pulseaudio,
+    #custom-mic,
+    #custom-cpu,
+    #custom-gpu,
+    #custom-vram,
+    #custom-ram,
+    #custom-cpu-temp,
+    #custom-gpu-temp {
+      border-left: 1px solid rgba(255,255,255,0.08);
+    }
+  '';
+  waybarBaseCss = pkgs.writeText "waybar-base.css" waybarStyle;
 in {
-  # Official NixOS Waybar Setup for SwayFX
-  # Reference: https://wiki.nixos.org/wiki/Waybar
-  # Official Waybar Documentation: https://github.com/Alexays/Waybar
-  # 
-  # Best Practices:
-  # 1. Use programs.waybar.enable = true (Home Manager module)
-  # 2. Disable systemd service when managing manually (systemd.enable = false)
-  # 3. Official way to start: exec waybar in Sway config
-  #    We use systemd --user services bound to sway-session.target for process management
-  # 4. Config files are auto-generated by Home Manager in ~/.config/waybar/
-  # 5. Waybar works with SwayFX the same as with Sway (no special configuration needed)
+  # Waybar lifecycle: systemd --user unit bound to sway-session.target
+  # (session-systemd.nix overrides the HM unit's wiring).
   programs.waybar = {
     enable = true;
-    # CRITICAL: Enable systemd service - waybar lifecycle is managed by systemd --user
-    # We bind waybar to Sway via sway-session.target (configured in user/wm/sway/default.nix)
-    # so it starts/stops cleanly with Sway and does not leak into Plasma 6 sessions.
-    #
-    # NOTE: Some Home Manager versions don't support programs.waybar.systemd.target,
-    # so we keep target-binding logic in default.nix via systemd.user.services.waybar.
     systemd.enable = true;
     # CRITICAL: settings must be a List of attribute sets when defining multiple bars
-    settings = 
+    settings = lib.mkIf (!swayApps) (
       if hasPrimaryMonitor then
         # Primary monitor setup: single bar on primary, all workspaces grouped
-        [
-          {
-            # Primary monitor top bar
-            output = primaryMonitor;  # Bind to primary monitor only
-            layer = "top";
-            position = "top";
-            height = 30;
-            # Spacing affects inter-module gaps even if CSS margins are 0.
-            # Set to 0 so the left cluster can truly fuse into a single pill.
-            spacing = 0;
-            
-            # Ordered so the eye walks it in one direction: machine state first
-            # (screen, power), then input/output, then the CPU triplet, then the
-            # GPU triplet, then what is USING the GPU. custom/llm sits last on
-            # purpose — it is the consumer of the three figures to its left, and
-            # reading "GPU 4% · 49° · VRAM 13.4G · qwen3.8 100%" left to right is
-            # the whole story of the card in one glance.
-            #
-            # battery and backlight are laptop-only in practice; waybar hides a
-            # module whose device is absent, so listing them here costs a desktop
-            # nothing.
-            modules-left = [
-              "backlight"
-              "battery"
-              "pulseaudio"
-              "custom/mic"
-              "custom/cpu"
-              "custom/cpu-temp"
-              "custom/ram"
-              "custom/gpu"
-              "custom/gpu-temp"
-              "custom/vram"
-            ]
-            # Only where a local model can actually run. On a host without one
-            # the module is absent from BOTH this list and the settings attrset,
-            # so nothing renders and nothing is clickable — verified against
-            # LAPTOP_X13's generated config.
-            ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
-            modules-center = [ "sway/workspaces" ];
-            modules-right =
-              # Flat, no drawer (2026-09-02). The extras group hid the tray behind
-              # a reveal handle, which is how a missing Vesktop icon could go
-              # unnoticed. Everything that earns a slot is now always visible.
-              [ "idle_inhibitor" "custom/notifications" "tray" ]
-              ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
-              ++ [ "clock" "custom/power-menu" ];
-            
-            "sway/workspaces" = primaryWorkspaces;
-            # Use shared modules
-            clock = sharedModules.clock;
-            pulseaudio = sharedModules.pulseaudio;
-            network = sharedModules.network;
-            battery = sharedModules.battery;
-            bluetooth = sharedModules.bluetooth;
-            tray = sharedModules.tray;
-            # "sway/window" removed
-
-            backlight = {
-              # “Contrast” == brightness/backlight %
-              format = "{percent}% ◐";
-              scroll-step = 5;
-              tooltip = false;
-            };
-
-            # Microphone widget (percent + mic icon)
-            "custom/mic" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
-              tooltip = true;
-            };
-
-            # Split metrics (CPU/GPU/RAM/temps); click opens btop++
-            "custom/cpu" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/gpu" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-            # VRAM used, between GPU load and GPU temp. Same script, same style,
-            # same on-click as the other GPU modules. Reads amdgpu's sysfs
-            # counters directly, so this and `llama-status` can never disagree
-            # about how much room is left on the card.
-            # Local LLM state. custom/vram above says the card is full; this says
-            # WHY, and specifically whether the resident model actually fits.
-            # `size_vram / size` from /api/ps is the number that decides speed:
-            # measured 2026-09-02 the same model ran 36 -> 21 -> 14 tok/s as that
-            # share fell 100% -> 95% -> 89%, purely because the desktop grew. It
-            # is invisible anywhere else, which is why this module exists.
-            #
-            # signal 6 lets the rofi menu refresh the bar the instant an action
-            # lands, instead of waiting out `interval`. The script pkill's
-            # -RTMIN+6, so the two numbers must stay in step.
-            "custom/llm" = lib.mkIf (systemSettings.ollamaServerEnable or false) {
-              return-type = "json";
-              interval = 5;
-              signal = 6;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
-              # OPENCODE_MODEL_CONFIG is passed explicitly rather than relying on the
-              # session environment: waybar is a systemd user unit, and
-              # home.sessionVariables reaches shells, not units. Without it the
-              # menu would still load models but silently stop setting OpenCode's
-              # default — the worst kind of half-working.
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"env OPENCODE_MODEL_CONFIG=${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"} rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
-              tooltip = true;
-            };
-            "custom/vram" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh vram";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-            "custom/ram" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh ram";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/cpu-temp" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu-temp";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/gpu-temp" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-
-            # Notifications history (Sway Notification Center)
-            # Icon-only (no counter), and hidden when there are no notifications.
-            "custom/notifications" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
-              on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
-              on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
-              tooltip = true;
-            };
-
-
-
-
-
-            # Google Calendar next-event widget (reads EDS-cached ICS via icalendar python lib)
-            # Click opens calendar.google.com in default browser.
-            "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
-              return-type = "json";
-              interval = systemSettings.goaCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
-              on-click = "${pkgs.gnome-calendar}/bin/gnome-calendar";
-              tooltip = true;
-            };
-
-            # Coffee button: toggle idle inhibition (prevents swayidle screen blank/suspend logic that respects inhibit)
-            idle_inhibitor = {
-              format = "{icon}";
-              tooltip = true;
-              tooltip-format = "Anfetas {status}";
-              # For testing/transition: clicking the built-in module toggles the same swayidle.service
-              # as the custom idle toggle + keybinding.
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
-              format-icons = {
-                activated = "";
-                deactivated = "";
-              };
-            };
-
-
-            # Power menu (same as ${hyper}+Shift+BackSpace)
-            # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
-            # Explicitly specify modi to avoid loading calc/emoji plugins that may not be available
-            "custom/power-menu" = {
-              interval = 3600;
-              exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show power -modi power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh -show-icons\"";
-              tooltip = true;
-              tooltip-format = "Power menu";
-            };
-          }
-          # Dock bar removed: wlr/taskbar requires foreign-toplevel-manager protocol
-          # which is often disabled or flaky in SwayFX. Rofi remains the primary
-          # application switcher. Dock can be re-enabled when SwayFX protocol support improves.
-          # {
-          #   # Primary monitor dock (hidden by default, hover to show)
-          #   name = "dock";
-          #   output = primaryMonitor;
-          #   layer = "top";
-          #   position = "bottom";
-          #   height = 44;
-          #   spacing = 4;
-          #   mode = "overlay";
-          #   modules-center = [ "wlr/taskbar" ];
-          #   "wlr/taskbar" = {
-          #     icon-size = 24;
-          #     format = "{icon}";
-          #     on-click = "activate";
-          #     tooltip-format = "{title}";
-          #     ignore-list = [ "nwg-dock" ];
-          #     all-outputs = true;
-          #   };
-          # }
-        ]
+        [ ((hmBar primaryWorkspaces) // { output = primaryMonitor; }) ]
       else
         # Multi-monitor setup: bar on each monitor with per-monitor workspaces
-        [
-          {
-            # Top bar (no output specified = shows on all monitors)
-            layer = "top";
-            position = "top";
-            height = 30;
-            spacing = 0;
-            
-            # Ordered so the eye walks it in one direction: machine state first
-            # (screen, power), then input/output, then the CPU triplet, then the
-            # GPU triplet, then what is USING the GPU. custom/llm sits last on
-            # purpose — it is the consumer of the three figures to its left, and
-            # reading "GPU 4% · 49° · VRAM 13.4G · qwen3.8 100%" left to right is
-            # the whole story of the card in one glance.
-            #
-            # battery and backlight are laptop-only in practice; waybar hides a
-            # module whose device is absent, so listing them here costs a desktop
-            # nothing.
-            modules-left = [
-              "backlight"
-              "battery"
-              "pulseaudio"
-              "custom/mic"
-              "custom/cpu"
-              "custom/cpu-temp"
-              "custom/ram"
-              "custom/gpu"
-              "custom/gpu-temp"
-              "custom/vram"
-            ]
-            # Only where a local model can actually run. On a host without one
-            # the module is absent from BOTH this list and the settings attrset,
-            # so nothing renders and nothing is clickable — verified against
-            # LAPTOP_X13's generated config.
-            ++ lib.optional (systemSettings.ollamaServerEnable or false) "custom/llm";
-            modules-center = [ "sway/workspaces" ];
-            modules-right =
-              # Flat, no drawer (2026-09-02). The extras group hid the tray behind
-              # a reveal handle, which is how a missing Vesktop icon could go
-              # unnoticed. Everything that earns a slot is now always visible.
-              [ "idle_inhibitor" "custom/notifications" "tray" ]
-              ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
-              ++ [ "clock" "custom/power-menu" ];
-            
-            "sway/workspaces" = secondaryWorkspaces;  # Per-monitor workspaces
-            # Use shared modules
-            clock = sharedModules.clock;
-            pulseaudio = sharedModules.pulseaudio;
-            network = sharedModules.network;
-            battery = sharedModules.battery;
-            bluetooth = sharedModules.bluetooth;
-            tray = sharedModules.tray;
-            # "sway/window" removed
-
-            backlight = {
-              format = "{percent}% ◐";
-              scroll-step = 5;
-              tooltip = false;
-            };
-
-            "custom/mic" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
-              tooltip = true;
-            };
-
-            "custom/cpu" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/gpu" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-            # VRAM used, between GPU load and GPU temp. Same script, same style,
-            # same on-click as the other GPU modules. Reads amdgpu's sysfs
-            # counters directly, so this and `llama-status` can never disagree
-            # about how much room is left on the card.
-            # Local LLM state. custom/vram above says the card is full; this says
-            # WHY, and specifically whether the resident model actually fits.
-            # `size_vram / size` from /api/ps is the number that decides speed:
-            # measured 2026-09-02 the same model ran 36 -> 21 -> 14 tok/s as that
-            # share fell 100% -> 95% -> 89%, purely because the desktop grew. It
-            # is invisible anywhere else, which is why this module exists.
-            #
-            # signal 6 lets the rofi menu refresh the bar the instant an action
-            # lands, instead of waiting out `interval`. The script pkill's
-            # -RTMIN+6, so the two numbers must stay in step.
-            "custom/llm" = lib.mkIf (systemSettings.ollamaServerEnable or false) {
-              return-type = "json";
-              interval = 5;
-              signal = 6;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-llm.sh";
-              # OPENCODE_MODEL_CONFIG is passed explicitly rather than relying on the
-              # session environment: waybar is a systemd user unit, and
-              # home.sessionVariables reaches shells, not units. Without it the
-              # menu would still load models but silently stop setting OpenCode's
-              # default — the worst kind of half-working.
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"env OPENCODE_MODEL_CONFIG=${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"} rofi -show llm -modi llm:${config.home.homeDirectory}/.config/sway/scripts/rofi-llm-menu.sh\"";
-              tooltip = true;
-            };
-            "custom/vram" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh vram";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-            "custom/ram" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh ram";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/cpu-temp" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh cpu-temp";
-              on-click = "${pkgs.kitty}/bin/kitty --title 'btop++ (System Monitor)' -e /run/current-system/sw/bin/btop";
-              tooltip = true;
-            };
-            "custom/gpu-temp" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-metrics.sh gpu-temp";
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gpu-tool.sh ${systemSettings.gpuType} ${pkgs.kitty}/bin/kitty /run/current-system/sw/bin/btop ${lactBin} ${nvidiaSettingsBin} ${intelGpuTopBin}";
-              tooltip = true;
-            };
-
-            "custom/notifications" = {
-              return-type = "json";
-              interval = 2;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-notifications.sh ${pkgs.swaynotificationcenter}/bin/swaync-client";
-              on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t";
-              on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -C";
-              tooltip = true;
-            };
-
-
-
-
-
-            "custom/gcal" = lib.mkIf systemSettings.goaCalendarEnable {
-              return-type = "json";
-              interval = systemSettings.goaCalendarWidgetInterval;
-              exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-gcal.sh ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3";
-              on-click = "${pkgs.gnome-calendar}/bin/gnome-calendar";
-              tooltip = true;
-            };
-
-            idle_inhibitor = {
-              format = "{icon}";
-              tooltip = true;
-              tooltip-format = "Anfetas {status}";
-              # For testing/transition: clicking the built-in module toggles the same swayidle.service
-              # as the custom idle toggle + keybinding.
-              on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
-              format-icons = {
-                activated = "";
-                deactivated = "";
-              };
-            };
-
-
-            # Power menu (same as ${hyper}+Shift+BackSpace)
-            # Use swaymsg exec to ensure rofi runs with proper environment (ROFI_PLUGIN_PATH, etc.)
-            # Explicitly specify modi to avoid loading calc/emoji plugins that may not be available
-            "custom/power-menu" = {
-              interval = 3600;
-              exec = "${pkgs.coreutils}/bin/printf '⏻'";
-              on-click = "${pkgs.sway}/bin/swaymsg exec \"rofi -show power -modi power:${config.home.homeDirectory}/.config/sway/scripts/rofi-power-mode.sh -show-icons\"";
-              tooltip = true;
-              tooltip-format = "Power menu";
-            };
-          }
-        ];
-    
-    # CRITICAL: Check if Stylix is actually available (not just enabled)
-    # Stylix is disabled for Plasma 6 even if stylixEnable is true
-    # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
-    # Use the same condition as the Stylix module to ensure consistency
-    style = if (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || systemSettings.enableSwayForDESK == true)) then ''
-      * {
-        border: none;
-        border-radius: 12px;
-        font-family: ${config.stylix.fonts.sansSerif.name}, Font Awesome, sans-serif;
-        font-size: 13px;
-        min-height: 0;
-      }
-      
-      window#waybar {
-        /* Default: bar container is invisible (modules keep their own pill backgrounds) */
-        /* NOTE: A fully transparent GTK window can be flaky for :hover selectors.
-           Use an almost-transparent background to make hover detection reliable. */
-        background-color: rgba(0, 0, 0, 0.001);
-        border: 1px solid transparent;
-        border-radius: 16px;
-        margin: 8px 12px;
-        padding: 0;
-        color: #${config.lib.stylix.colors.base07};
-        /* backdrop-filter not supported by waybar CSS parser - removed */
-        box-shadow: none;
-        /* Keep the bar container always invisible; only widgets have backgrounds */
-      }
-      
-      /* Dock bar CSS removed: Dock bar disabled due to wlr/taskbar protocol limitations in SwayFX */
-      /* Dock can be re-enabled when SwayFX foreign-toplevel-manager protocol support improves */
-      
-      window#waybar.hidden {
-        opacity: 0.2;
-      }
-      
-      #workspaces {
-        margin: 4px 8px;
-        padding: 0;
-        border-radius: 12px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-      }
-      
-      #workspaces button {
-        min-width: 20px;  /* CRITICAL: Prevent collapse to zero width */
-        padding: 0 5px;  /* Horizontal padding is critical for visibility */
-        margin: 2px;
-        border-radius: 10px;
-        background-color: transparent;
-        color: #${config.lib.stylix.colors.base05};
-        transition: all 0.2s ease;
-      }
-
-      /* Per-group workspace colors are applied via Pango markup in `format-icons`
-         because Waybar's CSS selector parser rejects attribute selectors. */
-      
-      #workspaces button:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
-      }
-      
-      #workspaces button.focused {
-        /* Keep the per-group foreground color; use same background as hover */
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
-        box-shadow: 0 3px 12px ${hexToRgba config.lib.stylix.colors.base03 "80"}, 0 1px 4px ${hexToRgba config.lib.stylix.colors.base00 "60"};
-      }
-      
-      #workspaces button.urgent {
-        background-color: ${hexToRgba config.lib.stylix.colors.base08 "80"};
-        color: #${config.lib.stylix.colors.base07};
-        animation: urgent-pulse 2s ease-in-out infinite;
-      }
-      
-      @keyframes urgent-pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.7; }
-        100% { opacity: 1; }
-      }
-      
-      #window {
-        margin: 4px 8px;
-        padding: 4px 12px;
-        border-radius: 10px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        color: #${config.lib.stylix.colors.base07};
-      }
-      
-      #clock,
-      #battery,
-      #cpu,
-      #memory,
-      #disk,
-      #temperature,
-      #backlight,
-      #network,
-      #pulseaudio,
-      #custom-media,
-      #tray,
-      #mode,
-      #idle_inhibitor,
-      #mpd,
-      #bluetooth,
-      #custom-perf,
-      #custom-mic,
-      #custom-cpu,
-      #custom-gpu,
-      #custom-vram,
-      #custom-ram,
-      #custom-cpu-temp,
-      #custom-gpu-temp,
-      #custom-llm,
-      #custom-notifications,
-      #custom-power-menu {
-        margin: 4px 4px;
-        padding: 4px 12px;
-        border-radius: 10px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        color: #${config.lib.stylix.colors.base07};
-        transition: all 0.2s ease;
-      }
-
-      /* Local LLM: the colour IS the message, so each state gets its own.
-         `spill` is the one that earns the module — amber means the model is
-         resident but partly in system RAM, which costs 30-60% of decode speed
-         and is otherwise completely silent. */
-      #custom-llm.ok     { color: #${config.lib.stylix.colors.base0B}; }
-      #custom-llm.spill  { color: #${config.lib.stylix.colors.base0A};
-                           background-color: ${hexToRgba config.lib.stylix.colors.base0A "22"}; }
-      #custom-llm.locked { color: #${config.lib.stylix.colors.base0E}; }
-      #custom-llm.down   { color: #${config.lib.stylix.colors.base08}; }
-      #custom-llm.idle   { color: #${config.lib.stylix.colors.base04}; }
-
-      /* Stylix color groups (left cluster) */
-      #battery,
-      #backlight,
-      #custom-ram {
-        color: #${config.lib.stylix.colors.base08};
-      }
-
-      #clock {
-        color: #${config.lib.stylix.colors.base0C};
-      }
-
-      #pulseaudio,
-      #custom-mic {
-        color: #${config.lib.stylix.colors.base0C};
-      }
-
-      #custom-cpu,
-      #custom-cpu-temp,
-      #custom-notifications {
-        color: #${config.lib.stylix.colors.base08};
-      }
-
-      #custom-gpu,
-      #custom-vram,
-      #custom-gpu-temp {
-        color: #${config.lib.stylix.colors.base0C};
-      }
-
-      #custom-power-menu {
-        color: #${config.lib.stylix.colors.base08};
-      }
-      
-      #clock:hover,
-      #battery:hover,
-      #network:hover,
-      #pulseaudio:hover,
-      #bluetooth:hover,
-      #custom-perf:hover,
-      #custom-mic:hover,
-      #custom-cpu:hover,
-      #custom-gpu:hover,
-      #custom-vram:hover,
-      #custom-ram:hover,
-      #custom-cpu-temp:hover,
-      #custom-gpu-temp:hover,
-      #custom-notifications:hover,
-      #custom-power-menu:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
-      }
-
-      /* Collapse notifications module when it's hidden (no notifications) */
-      #custom-notifications.hidden {
-        margin: 0;
-        padding: 0;
-        background-color: transparent;
-        border-radius: 0;
-      }
-
-      /* Drawer removed 2026-09-02: tray and notifications sit directly in
-         modules-right, so .drawer-hidden and #custom-reveal went with it. */
-
-      /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
-
-      /* Idle inhibitor should stay visible even when deactivated. */
-
-      /* Anfetas (idle inhibitor): green when enabled, white when off */
-      #idle_inhibitor {
-        color: #${config.lib.stylix.colors.base0C};
-        transition: all 0.2s ease;
-      }
-
-      #idle_inhibitor:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
-        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
-      }
-
-      #idle_inhibitor.activated {
-        color: #${config.lib.stylix.colors.base0B};
-        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
-        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0B "4D"};
-      }
-
-      /* Perf turns red if CPU or GPU temp >= 80C */
-      #custom-perf.hot {
-        color: #${config.lib.stylix.colors.base08};
-        background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
-      }
-      
-      #clock {
-        font-weight: 600;
-      }
-      
-      /* battery color is handled by the Stylix color-group rules above */
-      
-      #battery.charging, #battery.plugged {
-        color: #${config.lib.stylix.colors.base0B};
-        background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
-      }
-      
-      @keyframes blink {
-        to {
-          background-color: #${config.lib.stylix.colors.base08};
-          color: #${config.lib.stylix.colors.base07};
-        }
-      }
-      
-      #battery.critical:not(.charging) {
-        background-color: ${hexToRgba config.lib.stylix.colors.base08 "99"};
-        color: #${config.lib.stylix.colors.base07};
-        animation-name: blink;
-        animation-duration: 0.5s;
-        animation-timing-function: linear;
-        animation-iteration-count: infinite;
-        animation-direction: alternate;
-      }
-      
-      label:focus {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "80"};
-      }
-      
-      /* pulseaudio color is handled by the Stylix color-group rules above */
-
-      /* Left cluster: render as one shared segmented pill */
-      .modules-left {
-        margin: 4px 4px;
-        padding: 0;
-        border-radius: 10px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-      }
-
-      #battery,
-      #backlight,
-      #pulseaudio,
-      #custom-mic,
-      #custom-cpu,
-      #custom-gpu,
-      #custom-vram,
-      #custom-ram,
-      #custom-cpu-temp,
-      #custom-gpu-temp {
-        margin: 0;
-        border-radius: 0;
-        background-color: transparent;
-      }
-
-      /* No separators: fully merged pill */
-      
-      #pulseaudio.muted {
-        color: #${config.lib.stylix.colors.base04};
-        background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
-      }
-      
-      #network {
-        color: #${config.lib.stylix.colors.base07};
-      }
-      
-      #network.disconnected {
-        color: #${config.lib.stylix.colors.base08};
-        background-color: ${hexToRgba config.lib.stylix.colors.base08 "33"};
-      }
-      
-      #bluetooth {
-        color: #${config.lib.stylix.colors.base07};
-      }
-      
-      #bluetooth.disabled {
-        color: #${config.lib.stylix.colors.base04};
-        background-color: ${hexToRgba config.lib.stylix.colors.base04 "33"};
-      }
-      
-      #tray {
-        margin: 4px 4px;
-        padding: 4px 8px;
-        border-radius: 10px;
-        background-color: ${hexToRgba config.lib.stylix.colors.base01 "66"};
-        transition: all 0.2s ease;
-      }
-
-      /* Add hover effect to tray widget */
-      #tray:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
-        box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
-      }
-
-      /* Increase spacing between tray icons */
-      #tray > * {
-        margin: 0 32px;  /* Increased from 24px to 32px */
-        padding: 0 6px;   /* Increased padding slightly */
-      }
-
-      /* Some Waybar builds wrap tray items in buttons/widgets; cover common cases */
-      #tray button {
-        margin: 0 32px;   /* Match the increased spacing */
-        padding: 0 6px;
-        transition: all 0.2s ease;
-      }
-
-      /* Add hover effect to individual tray buttons */
-      #tray button:hover {
-        background-color: ${hexToRgba config.lib.stylix.colors.base02 "4D"};
-        border-radius: 6px;
-      }
-      
-      #tray > *:first-child {
-        margin-left: 0;
-      }
-      
-      #tray > *:last-child {
-        margin-right: 0;
-      }
-      
-      #tray > .passive {
-        -gtk-icon-effect: dim;
-      }
-      
-      #tray > .needs-attention {
-        -gtk-icon-effect: highlight;
-        background-color: ${hexToRgba config.lib.stylix.colors.base08 "66"};
-        border-radius: 8px;
-      }
-    '' else ''
-      * {
-        border: none;
-        border-radius: 0;
-        font-family: sans-serif;
-        font-size: 13px;
-        min-height: 0;
-      }
-      
-      window#waybar {
-        background-color: rgba(0, 0, 0, 0.001);
-        border-bottom: 1px solid transparent;
-        color: #ffffff;
-        /* Keep the bar container always invisible; only widgets have backgrounds */
-      }
-      
-      #workspaces button {
-        padding: 0 5px;
-        background-color: transparent;
-        color: #888888;
-      }
-      
-      #workspaces button.focused {
-        color: #ffffff;
-      }
-      
-      #clock,
-      #battery,
-      #backlight,
-      #network,
-      #pulseaudio,
-      #tray,
-      #bluetooth,
-      #custom-perf,
-      #custom-mic,
-      #custom-cpu,
-      #custom-gpu,
-      #custom-vram,
-      #custom-ram,
-      #custom-cpu-temp,
-      #custom-gpu-temp,
-      #custom-notifications {
-        padding: 0 10px;
-        color: #ffffff;
-      }
-
-      /* Noise reduction: hide by default, show on bar hover */
-      #custom-notifications,
-      #tray {
-        opacity: 0;
-        padding: 0;
-      }
-
-      window#waybar:hover #custom-notifications,
-      window#waybar:hover #tray {
-        opacity: 1;
-        padding: 0 10px;
-      }
-
-      /* Idle inhibitor should stay visible even when deactivated. */
-
-      /* Left cluster: render as one shared segmented pill */
-      .modules-left {
-        padding: 0;
-        border-radius: 10px;
-      }
-
-      #battery,
-      #backlight,
-      #pulseaudio,
-      #custom-mic,
-      #custom-cpu,
-      #custom-gpu,
-      #custom-vram,
-      #custom-ram,
-      #custom-cpu-temp,
-      #custom-gpu-temp {
-        padding-left: 10px;
-        padding-right: 10px;
-        margin: 0;
-      }
-
-      #backlight,
-      #pulseaudio,
-      #custom-mic,
-      #custom-cpu,
-      #custom-gpu,
-      #custom-vram,
-      #custom-ram,
-      #custom-cpu-temp,
-      #custom-gpu-temp {
-        border-left: 1px solid rgba(255,255,255,0.08);
-      }
-    '';
+        [ (hmBar secondaryWorkspaces) ]
+    );
+    style = lib.mkIf (!swayApps) waybarStyle;
   };
+
+  xdg.configFile = lib.mkIf swayApps {
+    "sway-apps/waybar-modules.json".source = waybarCatalog;
+    "sway-apps/waybar-base.css".source = waybarBaseCss;
+  };
+  # Activation (sway-apps/default.nix) regenerates the real config from these
+  # and reloads Waybar itself when the generated text changed.
 }
