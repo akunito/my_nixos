@@ -886,6 +886,8 @@ in
     swayXwaylandDpi = 144;
     # AION 2 meter card (Wayland, app_id aionmeter) above fullscreen gamescope.
     swayAboveFullscreen = true;
+    # Peek / pin / z-order (patches/sway-window-stacking.patch, SWAY-6/7).
+    swayWindowStacking = true;
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.

@@ -29,6 +29,8 @@ FLAG_CRITERIA = ("floating", "tiling")
 KNOWN_ACTIONS: list[tuple[str, str]] = [
     (r"^floating (enable|disable|toggle)$", "floating"),
     (r"^sticky (enable|disable|toggle)$", "sticky"),
+    (r"^pin (enable|disable|toggle)$", "pin"),
+    (r"^above_fullscreen (enable|disable|toggle)$", "above_fullscreen"),
     (r"^fullscreen (enable|disable|toggle)( global)?$", "fullscreen"),
     (r"^inhibit_idle (focus|fullscreen|open|none|visible)$", "inhibit_idle"),
     (r"^move (container )?to workspace (number )?\S+$", "workspace"),
@@ -49,6 +51,11 @@ KNOWN_ACTIONS: list[tuple[str, str]] = [
 
 SWAYFX_ACTIONS = {"blur", "shadows", "corner_radius", "dim_inactive"}
 
+# Commands only a locally patched sway accepts -> the paths.SWAY_FEATURES entry they need.
+# An unknown command is CMD_INVALID and aborts the rest of a for_window body, so they are
+# dropped from the rendered rule on a sway built without the patch (Rule.for_sway).
+PATCH_COMMANDS = {"pin": "stacking", "z": "stacking", "above_fullscreen": "above_fullscreen"}
+
 # `sway --validate` does not parse for_window bodies (they run when a window
 # maps), so the head word is checked here against sway's runtime command table.
 # From sway(5) plus the SwayFX per-window additions.
@@ -58,6 +65,8 @@ COMMAND_WORDS = {
     "opacity", "rename", "resize", "scratchpad", "shortcuts_inhibitor", "split",
     "splith", "splitv", "splitt", "sticky", "swap", "title_format", "unmark",
     "urgent", "workspace", "allow_tearing", "output", "focus_on_window_activation",
+    # local patches (PATCH_COMMANDS)
+    "pin", "z", "above_fullscreen",
     # SwayFX
     "blur", "blur_xray", "shadows", "corner_radius", "dim_inactive", "titlebar_separator",
 }
@@ -227,6 +236,15 @@ class Rule:
             if target.startswith("output"):
                 return ["move container to " + target]
         return []
+
+    def for_sway(self, features: frozenset[str]) -> "Rule | None":
+        """This rule without the patch-only actions `features` lacks; None when nothing is left."""
+        keep = [a for a in self.actions if PATCH_COMMANDS.get(a.split()[0] if a.strip() else "", "") in ("", *features)]
+        if len(keep) == len(self.actions):
+            return self
+        if not keep and self.kind != "no_focus":
+            return None
+        return Rule(**{**asdict(self), "actions": keep})
 
     def known_actions(self) -> dict[str, str]:
         return {classify_action(a) or "advanced": a for a in self.actions}

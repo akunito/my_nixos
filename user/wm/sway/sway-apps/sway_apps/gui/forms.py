@@ -11,6 +11,8 @@ from ..rules import classify_action
 class RuleForm:
     floating: str = ""        # "", enable, disable, toggle
     sticky: str = ""
+    pin: str = ""             # patched sway; "enable" implies floating enable
+    above_fullscreen: str = ""
     fullscreen: str = ""
     inhibit_idle: str = ""    # "", focus, fullscreen, open, visible, none
     workspace: str = ""       # move container to workspace number N
@@ -39,6 +41,10 @@ class RuleForm:
                 f.floating = w[1]
             elif kind == "sticky":
                 f.sticky = w[1]
+            elif kind == "pin":
+                f.pin = w[1]
+            elif kind == "above_fullscreen":
+                f.above_fullscreen = w[1]
             elif kind == "fullscreen":
                 f.fullscreen = w[1]
             elif kind == "inhibit_idle":
@@ -89,8 +95,14 @@ class RuleForm:
             out.append(f"move container to workspace number {ws}" if ws.isdigit() else f"move container to workspace {ws}")
         if self.floating:
             out.append(f"floating {self.floating}")
+        elif self.pin == "enable":
+            out.append("floating enable")
         if self.sticky:
             out.append(f"sticky {self.sticky}")
+        if self.pin:
+            out.append(f"pin {self.pin}")
+        if self.above_fullscreen:
+            out.append(f"above_fullscreen {self.above_fullscreen}")
         if self.fullscreen:
             out.append(f"fullscreen {self.fullscreen}")
         if self.inhibit_idle:

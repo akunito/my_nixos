@@ -60,6 +60,12 @@ All patches are stored in the `patches/` directory and applied via the flake con
 
 **Status**: Active (local, no upstream PR)
 
+### Sway window stacking (`patches/sway-window-stacking.patch`)
+
+**Purpose**: plan `docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md` §3 (SWAY-6/7). Peek (`lift_tiled_on_press enable|disable`: a held left/right press on a tile that a float overlaps draws the tile above the floats until release; new scene layer `root->layers.lifted`, re-applied after every arrange), a pin band (`pin enable|disable|toggle`, floating only, the tail of the workspace's floating list, kept by `container_raise_floating` and `workspace_add_floating`), `z raise|lower` (one step within the band, bound to Hyper+wheel), and `window:move` IPC events after floating drag/resize and the `resize` command. Gated by `swayWindowStacking` (on for DESK and LAPTOP_X13) through `swayWindowStackingOverlay`, appended after the zero-scaling and above-fullscreen overlays; applies with zero fuzz with or without them. sway-apps renders `lift_tiled_on_press` and drops `pin`/`above_fullscreen` rule actions on a sway without the patch (`paths.SWAY_FEATURES`). Design and measured results are in the patch header; driven tests: `user/wm/sway/sway-apps/tests/e2e/test_30_stacking.py`.
+
+**Status**: Active (local, no upstream PR)
+
 ### PCloud Fixes (`patches/pcloudfixes.nix`)
 
 **Purpose**: Fixes for pCloud application

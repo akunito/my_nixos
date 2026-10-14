@@ -1,6 +1,7 @@
 """Test window for the e2e suite: chosen app_id/title/size, logs pointer presses.
 
-python3 client.py --app-id e2e.a [--title T] [--size 400x300] [--log FILE] [--fullscreen]
+python3 client.py --app-id e2e.a [--title T] [--size 400x300] [--log FILE] [--fullscreen] [--color RRGGBB]
+--color: undecorated window painted one solid colour (pixel checks on grim crops).
 Each press/release appends "press|release <button> <x> <y>" (surface coords) to --log.
 Prints "mapped" on stdout once the window is shown.
 """
@@ -28,13 +29,21 @@ def main() -> int:
     ap.add_argument("--size", default="400x300")
     ap.add_argument("--log")
     ap.add_argument("--fullscreen", action="store_true")
+    ap.add_argument("--color")
     a = ap.parse_args()
     GLib.set_prgname(a.app_id)
     w, h = (int(v) for v in a.size.split("x"))
     loop = GLib.MainLoop()
     win = Gtk.Window(title=a.title or a.app_id)
     win.set_default_size(w, h)
-    win.set_child(Gtk.Label(label=a.title or a.app_id))
+    if a.color:
+        css = Gtk.CssProvider()
+        css.load_from_string(f"window {{ background: #{a.color}; }}")
+        Gtk.StyleContext.add_provider_for_display(win.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_USER)
+        win.set_decorated(False)
+        win.set_child(Gtk.Box())
+    else:
+        win.set_child(Gtk.Label(label=a.title or a.app_id))
     log = open(a.log, "a", buffering=1) if a.log else None
 
     if log:

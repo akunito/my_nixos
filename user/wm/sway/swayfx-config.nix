@@ -30,6 +30,8 @@ let
   # Local sway patch (lib/defaults.nix swayAboveFullscreen): the command only
   # exists in the patched build, so its rules are emitted only with the flag.
   aboveFullscreen = systemSettings.swayAboveFullscreen or false;
+  # Local sway patch (lib/defaults.nix swayWindowStacking): `z` only exists there.
+  windowStacking = systemSettings.swayWindowStacking or false;
   swayPkg = if useFx then pkgs.swayfx else pkgs.sway;
 
   # Only appended to a command list when the effects exist.
@@ -1409,6 +1411,15 @@ in
       # floating/border/sticky come from the sway-apps rules for the same app_id.
       ${lib.optionalString aboveFullscreen ''for_window [app_id="^aionmeter$"] above_fullscreen enable''}
       ${lib.optionalString aboveFullscreen ''no_focus [app_id="^aionmeter$"]''}
+
+      # ---- Window stacking (SWAY-6/7, patches/sway-window-stacking.patch) ----
+      # Hyper+wheel raises/lowers the floating window under the pointer one
+      # step within its band (pinned among pinned). Mouse bindings act on the
+      # container under the cursor; --whole-window so they fire over contents.
+      ${lib.optionalString windowStacking ''
+      bindsym --whole-window ${hyper}+button4 z raise
+      bindsym --whole-window ${hyper}+button5 z lower
+      ''}
 
       ${lib.optionalString (!swayApps) ''
       # DESK startup apps - assign to specific workspaces

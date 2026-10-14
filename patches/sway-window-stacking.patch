@@ -1,0 +1,662 @@
+sway: window stacking — `lift_tiled_on_press` (peek), `pin`, `z raise|lower`, window:move for floating drag/resize (SWAY-6, SWAY-7; plan docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md §3)
+
+Peek: `lift_tiled_on_press enable|disable` (config + runtime, default off). A left or right press on the visible part of a TILE that a floating container overlaps draws that tile above the floating layer until the press ends. Only the tile under the button, one at a time, no delay; floating_modifier presses, the middle button, titlebar presses (seatop_default, not seatop_down) and workspaces with a fullscreen view never peek.
+Design: new scene layer root->layers.lifted between floating and shell_top, plus root->lifted. Not a one-shot reparent: every transaction re-parents tiles into their workspace (arrange_children) and the lifting click itself commits one, so root_arrange_lifted() runs at the end of every arrange_root and moves the tile again, at the layout position arrange_children just gave it (wlr_scene_node_coords). When arrange did not lay it out as a visible tile (floated, fullscreen, workspace hidden, covered by a fullscreen view) the lift is dropped. Release is in seatop_down's .end, which seatop_end runs on every exit path (button release, surface destroy, unref, touch/tablet up, another seatop starting); it puts the node back into its parent's content tree (or the workspace tiling tree) at its relative position, and container_destroy clears a dangling root->lifted.
+
+Pin: `pin enable|disable|toggle` on the toplevel floating container; enabling it on a tiled container fails ("Can only pin floating containers"), disabling always works. The pinned band is the tail of ws->floating: workspace_insert_floating_band() puts a floater at the top of its band and is used by workspace_add_floating (sticky floaters are re-added on every workspace switch and would otherwise land above the pinned ones) and container_raise_floating (focus, clicks, move/resize seatops, scratchpad show), which also places the scene node below the next floater of the list instead of raising it to the top. arrange_workspace_floating restores the list order in the scene per layer at its end (floaters of every workspace share root->layers.floating and reparenting to an unchanged parent is a no-op, so scene and list order drift); it touches the scene only when a node is not already right below the next one. Pin does not imply above_fullscreen: a pinned + above_fullscreen floater keeps its pin order inside the fullscreen layer. get_tree exposes "pinned" (the raw flag, like "sticky").
+
+`z raise|lower`: swaps the toplevel floating container with its neighbour in ws->floating when both are in the same band; bottom stays bottom, the top of a band stays below the next band. Tiled -> error. With `bindsym --whole-window ... z raise` the target is the container under the cursor.
+
+window:move IPC events: seatop_move_floating (finalize), seatop_resize_floating (button release) and the floating paths of the `resize` command now emit ipc_event_window(con, "move"), so floating geometry changes are observable without polling.
+
+Applies with zero fuzz on sway 1.11 plus nixpkgs' patches, with or without sway-478-null-output-autoconfigure, sway-xwayland-zero-scaling and sway-above-fullscreen (all six combinations checked); in this repo it is applied after both local patches.
+
+Measured 2026-10-14, nested headless sway 1.11 (pixman, 1280x720, DESK's patch stack + this patch), tests/e2e/test_30_stacking.py, pixel checks with grim on solid-colour GTK clients, input from a zwp_virtual_pointer / zwp_virtual_keyboard client: 7/7 pass (13/13 with the harness cases, 7.2 s). Same 13/13 on LAPTOP_X13's stack (nixpkgs patches + 478 + this patch only), where the fullscreen case is a no-op for lack of above_fullscreen.
+- Peek: red tile + blue float at 100,100 400x300: pixel 300,250 blue; left press at 900,500 -> red while held, blue after release; same with the right button; held through a `gaps inner all set 4` transaction it stays red; `lift_tiled_on_press disable` -> stays blue. Middle button, and Alt (floating_modifier Mod1, tiling_drag disable so the press reaches seatop_down) -> stays blue for 0.3 s.
+- Fullscreen: red fullscreen view + blue above_fullscreen float: a press on the fullscreen view keeps the float drawn (no lift).
+- Pin: green pinned float stays above the blue normal float after clicking and focusing the blue one; floating_nodes order [normal, pinned]. A sticky normal float carried to a workspace whose pinned float is already there lands below it; still below after two more switches; sticky + pinned carried to workspace 3 stays on top; after `pin disable` a click raises the other float again. Without the band in workspace_add_floating the sticky case fails (blue on top): checked with a mutated build.
+- z: three floats stacked at 200,200: `z lower` acb, twice more cab (bottom stays bottom), `z raise` cba; Hyper+button5 over the top float lowers it (cab), Hyper+button4 over the top one changes nothing; with c pinned (abc) `z raise` on b and `z lower` on c change nothing.
+- Tiled: `pin enable`, `pin toggle`, `z raise` refused with "floating" in the error; `pin disable` accepted.
+- IPC: Alt-drag 100,100 -> window:move with rect 200,150; Alt+right drag -> window:move; `resize set 350 250` -> window:move with 350x250.
+
+---
+diff --git a/include/sway/commands.h b/include/sway/commands.h
+--- a/include/sway/commands.h
++++ b/include/sway/commands.h
+@@ -152,6 +152,7 @@
+ sway_cmd cmd_ipc;
+ sway_cmd cmd_kill;
+ sway_cmd cmd_layout;
++sway_cmd cmd_lift_tiled_on_press;
+ sway_cmd cmd_log_colors;
+ sway_cmd cmd_mark;
+ sway_cmd cmd_max_render_time;
+@@ -165,6 +166,7 @@
+ sway_cmd cmd_no_focus;
+ sway_cmd cmd_output;
+ sway_cmd cmd_permit;
++sway_cmd cmd_pin;
+ sway_cmd cmd_popup_during_fullscreen;
+ sway_cmd cmd_primary_selection;
+ sway_cmd cmd_reject;
+@@ -198,6 +200,7 @@
+ sway_cmd cmd_unbindsym;
+ sway_cmd cmd_unmark;
+ sway_cmd cmd_urgent;
++sway_cmd cmd_z;
+ sway_cmd cmd_workspace;
+ sway_cmd cmd_workspace_layout;
+ sway_cmd cmd_ws_auto_back_and_forth;
+diff --git a/include/sway/config.h b/include/sway/config.h
+--- a/include/sway/config.h
++++ b/include/sway/config.h
+@@ -548,6 +548,7 @@
+ 
+ 	bool tiling_drag;
+ 	int tiling_drag_threshold;
++	bool lift_tiled_on_press;
+ 
+ 	enum smart_gaps_mode smart_gaps;
+ 	int gaps_inner;
+diff --git a/include/sway/input/seat.h b/include/sway/input/seat.h
+--- a/include/sway/input/seat.h
++++ b/include/sway/input/seat.h
+@@ -265,6 +265,12 @@
+ void seatop_begin_down_on_surface(struct sway_seat *seat,
+ 		struct wlr_surface *surface, double sx, double sy);
+ 
++/**
++ * In a seatop_down on a tile that a floater overlaps: draw the tile above
++ * the floating layer until the seatop ends.
++ */
++void seatop_down_lift_tiled(struct sway_seat *seat);
++
+ void seatop_begin_touch_down(struct sway_seat *seat, struct wlr_surface *surface,
+ 		struct wlr_touch_down_event *event, double sx, double sy, double lx, double ly);
+ 
+diff --git a/include/sway/tree/container.h b/include/sway/tree/container.h
+--- a/include/sway/tree/container.h
++++ b/include/sway/tree/container.h
+@@ -108,6 +108,10 @@
+ 
+ 	enum sway_container_layout prev_split_layout;
+ 
++	// Floating only: kept in the pin band, the tail of its workspace's
++	// floating list (drawn above every unpinned floater).
++	bool pinned;
++
+ 	// Whether stickiness has been enabled on this container. Use
+ 	// `container_is_sticky_[or_child]` rather than accessing this field
+ 	// directly; it'll also check that the container is floating.
+diff --git a/include/sway/tree/root.h b/include/sway/tree/root.h
+--- a/include/sway/tree/root.h
++++ b/include/sway/tree/root.h
+@@ -42,6 +42,7 @@
+ 		struct wlr_scene_tree *shell_bottom;
+ 		struct wlr_scene_tree *tiling;
+ 		struct wlr_scene_tree *floating;
++		struct wlr_scene_tree *lifted;
+ 		struct wlr_scene_tree *shell_top;
+ 		struct wlr_scene_tree *fullscreen;
+ 		struct wlr_scene_tree *fullscreen_global;
+@@ -69,6 +70,10 @@
+ 
+ 	struct sway_container *fullscreen_global;
+ 
++	// Tile drawn in layers.lifted while a button is held on it
++	// (lift_tiled_on_press).
++	struct sway_container *lifted;
++
+ 	struct {
+ 		struct wl_signal new_node;
+ 	} events;
+@@ -119,4 +124,13 @@
+ 
+ void root_get_box(struct sway_root *root, struct wlr_box *box);
+ 
++void root_lift_tiled(struct sway_container *con);
++
++void root_drop_lifted(void);
++
++/**
++ * Re-lift root->lifted after an arrange put it back into its parent.
++ */
++void root_arrange_lifted(void);
++
+ #endif
+diff --git a/include/sway/tree/workspace.h b/include/sway/tree/workspace.h
+--- a/include/sway/tree/workspace.h
++++ b/include/sway/tree/workspace.h
+@@ -125,6 +125,14 @@
+ 		struct sway_container *con);
+ 
+ /**
++ * Insert a floater (not in the list) at the top of its band: pinned
++ * floaters at the tail, the others just below the first pinned one.
++ * Returns its index.
++ */
++int workspace_insert_floating_band(struct sway_workspace *workspace,
++		struct sway_container *con);
++
++/**
+  * Adds a tiling container to the workspace without considering
+  * the workspace_layout, so the con will not be split.
+  */
+diff --git a/sway/commands/lift_tiled_on_press.c b/sway/commands/lift_tiled_on_press.c
+new file mode 100644
+--- /dev/null
++++ b/sway/commands/lift_tiled_on_press.c
+@@ -0,0 +1,14 @@
++#include "sway/commands.h"
++#include "util.h"
++
++struct cmd_results *cmd_lift_tiled_on_press(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "lift_tiled_on_press", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++
++	config->lift_tiled_on_press =
++		parse_boolean(argv[0], config->lift_tiled_on_press);
++
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
+diff --git a/sway/commands/pin.c b/sway/commands/pin.c
+new file mode 100644
+--- /dev/null
++++ b/sway/commands/pin.c
+@@ -0,0 +1,27 @@
++#include "sway/commands.h"
++#include "sway/tree/container.h"
++#include "util.h"
++
++struct cmd_results *cmd_pin(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "pin", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++	struct sway_container *container = config->handler_context.container;
++	if (container == NULL) {
++		return cmd_results_new(CMD_FAILURE, "No current container");
++	}
++	container = container_toplevel_ancestor(container);
++
++	bool pinned = parse_boolean(argv[0], container->pinned);
++	if (pinned && !container_is_floating(container)) {
++		return cmd_results_new(CMD_FAILURE,
++				"Can only pin floating containers");
++	}
++	if (pinned != container->pinned) {
++		container->pinned = pinned;
++		// Top of the band it now belongs to.
++		container_raise_floating(container);
++	}
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
+diff --git a/sway/commands/resize.c b/sway/commands/resize.c
+--- a/sway/commands/resize.c
++++ b/sway/commands/resize.c
+@@ -7,6 +7,7 @@
+ #include <strings.h>
+ #include <wlr/util/edges.h>
+ #include "sway/commands.h"
++#include "sway/ipc-server.h"
+ #include "sway/tree/arrange.h"
+ #include "sway/tree/view.h"
+ #include "sway/tree/workspace.h"
+@@ -242,6 +243,7 @@
+ 	con->pending.content_height += grow_height;
+ 
+ 	arrange_container(con);
++	ipc_event_window(con, "move");
+ 
+ 	return cmd_results_new(CMD_SUCCESS, NULL);
+ }
+@@ -413,6 +415,7 @@
+ 	con->pending.content_height += grow_height;
+ 
+ 	arrange_container(con);
++	ipc_event_window(con, "move");
+ 
+ 	return cmd_results_new(CMD_SUCCESS, NULL);
+ }
+diff --git a/sway/commands/z.c b/sway/commands/z.c
+new file mode 100644
+--- /dev/null
++++ b/sway/commands/z.c
+@@ -0,0 +1,42 @@
++#include <strings.h>
++#include "sway/commands.h"
++#include "sway/tree/container.h"
++#include "sway/tree/workspace.h"
++#include "list.h"
++
++// One step up or down the workspace's floating list, never across the pin
++// band boundary; the list order is applied to the scene by the arrange.
++struct cmd_results *cmd_z(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "z", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++	bool raise = strcasecmp(argv[0], "raise") == 0;
++	if (!raise && strcasecmp(argv[0], "lower") != 0) {
++		return cmd_results_new(CMD_INVALID, "Expected 'z raise|lower'");
++	}
++	struct sway_container *container = config->handler_context.container;
++	if (container == NULL) {
++		return cmd_results_new(CMD_FAILURE, "No current container");
++	}
++	container = container_toplevel_ancestor(container);
++	struct sway_workspace *ws = container->pending.workspace;
++	if (!container_is_floating(container) || !ws) {
++		return cmd_results_new(CMD_FAILURE,
++				"Can only restack floating containers");
++	}
++
++	list_t *floating = ws->floating;
++	int i = list_find(floating, container);
++	int j = raise ? i + 1 : i - 1;
++	if (i < 0 || j < 0 || j >= floating->length) {
++		return cmd_results_new(CMD_SUCCESS, NULL);
++	}
++	struct sway_container *other = floating->items[j];
++	if (other->pinned != container->pinned) {
++		return cmd_results_new(CMD_SUCCESS, NULL);
++	}
++	list_swap(floating, i, j);
++	node_set_dirty(&ws->node);
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
+diff --git a/sway/commands.c b/sway/commands.c
+--- a/sway/commands.c
++++ b/sway/commands.c
+@@ -74,6 +74,7 @@
+ 	{ "gaps", cmd_gaps },
+ 	{ "hide_edge_borders", cmd_hide_edge_borders },
+ 	{ "input", cmd_input },
++	{ "lift_tiled_on_press", cmd_lift_tiled_on_press },
+ 	{ "mode", cmd_mode },
+ 	{ "mouse_warping", cmd_mouse_warping },
+ 	{ "new_float", cmd_new_float },
+@@ -129,6 +130,7 @@
+ 	{ "move", cmd_move },
+ 	{ "nop", cmd_nop },
+ 	{ "opacity", cmd_opacity },
++	{ "pin", cmd_pin },
+ 	{ "reload", cmd_reload },
+ 	{ "rename", cmd_rename },
+ 	{ "resize", cmd_resize },
+@@ -143,6 +145,7 @@
+ 	{ "title_format", cmd_title_format },
+ 	{ "unmark", cmd_unmark },
+ 	{ "urgent", cmd_urgent },
++	{ "z", cmd_z },
+ };
+ 
+ static int handler_compare(const void *_a, const void *_b) {
+diff --git a/sway/config.c b/sway/config.c
+--- a/sway/config.c
++++ b/sway/config.c
+@@ -284,6 +284,7 @@
+ 	config->title_align = ALIGN_LEFT;
+ 	config->tiling_drag = true;
+ 	config->tiling_drag_threshold = 9;
++	config->lift_tiled_on_press = false;
+ 	config->primary_selection = true;
+ 
+ 	config->smart_gaps = SMART_GAPS_OFF;
+diff --git a/sway/desktop/transaction.c b/sway/desktop/transaction.c
+--- a/sway/desktop/transaction.c
++++ b/sway/desktop/transaction.c
+@@ -542,6 +542,28 @@
+ 		arrange_container(floater, floater->current.width, floater->current.height,
+ 			true, ws->gaps_inner);
+ 	}
++
++	// Every workspace's floaters share root->layers.floating and reparenting
++	// to an unchanged parent is a no-op, so the scene order drifts from the
++	// list order (pin band, z, sticky floaters re-added on a workspace
++	// switch). Restore it per layer; no scene update when already in order.
++	struct wlr_scene_tree *layers[] = { root->layers.floating,
++		root->layers.fullscreen, root->layers.fullscreen_global };
++	for (size_t l = 0; l < sizeof(layers) / sizeof(layers[0]); l++) {
++		struct wlr_scene_node *above = NULL;
++		for (int i = ws->current.floating->length - 1; i >= 0; i--) {
++			struct sway_container *floater = ws->current.floating->items[i];
++			struct wlr_scene_node *node = &floater->scene_tree->node;
++			if (node->parent != layers[l] ||
++					floater->current.fullscreen_mode != FULLSCREEN_NONE) {
++				continue;
++			}
++			if (above && node->link.next != &above->link) {
++				wlr_scene_node_place_below(node, above);
++			}
++			above = node;
++		}
++	}
+ }
+ 
+ static void arrange_workspace_tiling(struct sway_workspace *ws,
+@@ -710,6 +732,7 @@
+ 		}
+ 	}
+ 
++	root_arrange_lifted();
+ 	arrange_popups(root->layers.popup);
+ }
+ 
+diff --git a/sway/input/seatop_default.c b/sway/input/seatop_default.c
+--- a/sway/input/seatop_default.c
++++ b/sway/input/seatop_default.c
+@@ -502,6 +502,10 @@
+ 	// Handle mousedown on a container surface
+ 	if (surface && cont && state == WL_POINTER_BUTTON_STATE_PRESSED) {
+ 		seatop_begin_down(seat, cont, sx, sy);
++		if (config->lift_tiled_on_press && !mod_pressed &&
++				(button == BTN_LEFT || button == BTN_RIGHT)) {
++			seatop_down_lift_tiled(seat);
++		}
+ 		seat_pointer_notify_button(seat, time_msec, button, WL_POINTER_BUTTON_STATE_PRESSED);
+ 		return;
+ 	}
+diff --git a/sway/input/seatop_down.c b/sway/input/seatop_down.c
+--- a/sway/input/seatop_down.c
++++ b/sway/input/seatop_down.c
+@@ -4,7 +4,10 @@
+ #include <wlr/types/wlr_touch.h>
+ #include "sway/input/cursor.h"
+ #include "sway/input/seat.h"
++#include "sway/output.h"
++#include "sway/tree/root.h"
+ #include "sway/tree/view.h"
++#include "sway/tree/workspace.h"
+ #include "sway/desktop/transaction.h"
+ #include "log.h"
+ 
+@@ -23,6 +26,7 @@
+ 	double ref_lx, ref_ly;         // cursor's x/y at start of op
+ 	double ref_con_lx, ref_con_ly; // container's x/y at start of op
+ 	struct wl_list point_events;   // seatop_touch_point_event::link
++	bool lifted;
+ };
+ 
+ static void handle_touch_motion(struct sway_seat *seat,
+@@ -205,6 +209,11 @@
+ static void handle_end(struct sway_seat *seat) {
+ 	struct seatop_down_event *e = seat->seatop_data;
+ 	wl_list_remove(&e->surface_destroy.link);
++	// seatop_end runs this on every exit: release, surface destroy, unref,
++	// touch/tablet up and another seatop starting.
++	if (e->lifted && root->lifted == e->con) {
++		root_drop_lifted();
++	}
+ }
+ 
+ static const struct sway_seatop_impl seatop_impl = {
+@@ -232,6 +241,43 @@
+ 	transaction_commit_dirty();
+ }
+ 
++static bool floater_overlaps(struct sway_container *con) {
++	for (int i = 0; i < root->outputs->length; i++) {
++		struct sway_output *output = root->outputs->items[i];
++		struct sway_workspace *ws = output_get_active_workspace(output);
++		if (!ws) {
++			continue;
++		}
++		for (int j = 0; j < ws->floating->length; j++) {
++			struct sway_container *f = ws->floating->items[j];
++			if (f->pending.x < con->pending.x + con->pending.width &&
++					con->pending.x < f->pending.x + f->pending.width &&
++					f->pending.y < con->pending.y + con->pending.height &&
++					con->pending.y < f->pending.y + f->pending.height) {
++				return true;
++			}
++		}
++	}
++	return false;
++}
++
++void seatop_down_lift_tiled(struct sway_seat *seat) {
++	if (seat->seatop_impl != &seatop_impl) {
++		return;
++	}
++	struct seatop_down_event *e = seat->seatop_data;
++	struct sway_container *con = e->con;
++	struct sway_workspace *ws = con ? con->pending.workspace : NULL;
++	if (!ws || ws->fullscreen || root->fullscreen_global ||
++			container_is_floating_or_child(con) ||
++			container_is_fullscreen_or_child(con) ||
++			!floater_overlaps(con)) {
++		return;
++	}
++	root_lift_tiled(con);
++	e->lifted = true;
++}
++
+ void seatop_begin_touch_down(struct sway_seat *seat,
+ 		struct wlr_surface *surface, struct wlr_touch_down_event *event,
+ 		double sx, double sy, double lx, double ly) {
+diff --git a/sway/input/seatop_move_floating.c b/sway/input/seatop_move_floating.c
+--- a/sway/input/seatop_move_floating.c
++++ b/sway/input/seatop_move_floating.c
+@@ -2,6 +2,7 @@
+ #include "sway/desktop/transaction.h"
+ #include "sway/input/cursor.h"
+ #include "sway/input/seat.h"
++#include "sway/ipc-server.h"
+ 
+ struct seatop_move_floating_event {
+ 	struct sway_container *con;
+@@ -15,6 +16,7 @@
+ 	// so it discovers its output again.
+ 	container_floating_move_to(e->con, e->con->pending.x, e->con->pending.y);
+ 	transaction_commit_dirty();
++	ipc_event_window(e->con, "move");
+ 
+ 	seatop_begin_default(seat);
+ }
+diff --git a/sway/input/seatop_resize_floating.c b/sway/input/seatop_resize_floating.c
+--- a/sway/input/seatop_resize_floating.c
++++ b/sway/input/seatop_resize_floating.c
+@@ -4,6 +4,7 @@
+ #include "sway/desktop/transaction.h"
+ #include "sway/input/cursor.h"
+ #include "sway/input/seat.h"
++#include "sway/ipc-server.h"
+ #include "sway/tree/arrange.h"
+ #include "sway/tree/view.h"
+ #include "sway/tree/workspace.h"
+@@ -28,6 +29,7 @@
+ 		container_set_resizing(con, false);
+ 		arrange_container(con); // Send configure w/o resizing hint
+ 		transaction_commit_dirty();
++		ipc_event_window(con, "move");
+ 		seatop_begin_default(seat);
+ 	}
+ }
+diff --git a/sway/ipc-json.c b/sway/ipc-json.c
+--- a/sway/ipc-json.c
++++ b/sway/ipc-json.c
+@@ -728,6 +728,8 @@
+ 	json_object_object_add(object, "fullscreen_mode",
+ 			json_object_new_int(c->pending.fullscreen_mode));
+ 
++	json_object_object_add(object, "pinned", json_object_new_boolean(c->pinned));
++
+ 	// sway doesn't track if window was resized in scratchpad, so we can't use "changed"
+ 	json_object_object_add(object, "scratchpad_state",
+ 			json_object_new_string(!c->scratchpad ? "none" : "fresh"));
+diff --git a/sway/meson.build b/sway/meson.build
+--- a/sway/meson.build
++++ b/sway/meson.build
+@@ -79,6 +79,7 @@
+ 	'commands/include.c',
+ 	'commands/input.c',
+ 	'commands/layout.c',
++	'commands/lift_tiled_on_press.c',
+ 	'commands/mode.c',
+ 	'commands/mouse_warping.c',
+ 	'commands/move.c',
+@@ -87,6 +88,7 @@
+ 	'commands/no_focus.c',
+ 	'commands/nop.c',
+ 	'commands/output.c',
++	'commands/pin.c',
+ 	'commands/popup_during_fullscreen.c',
+ 	'commands/primary_selection.c',
+ 	'commands/reload.c',
+@@ -122,6 +124,7 @@
+ 	'commands/unmark.c',
+ 	'commands/urgent.c',
+ 	'commands/workspace.c',
++	'commands/z.c',
+ 	'commands/workspace_layout.c',
+ 	'commands/ws_auto_back_and_forth.c',
+ 	'commands/xwayland.c',
+diff --git a/sway/tree/container.c b/sway/tree/container.c
+--- a/sway/tree/container.c
++++ b/sway/tree/container.c
+@@ -517,6 +517,10 @@
+ 
+ 	list_free_items_and_destroy(con->marks);
+ 
++	if (root->lifted == con) {
++		root->lifted = NULL;
++	}
++
+ 	if (con->view && con->view->container == con) {
+ 		con->view->container = NULL;
+ 		wlr_scene_node_destroy(&con->output_handler->node);
+@@ -1692,13 +1696,22 @@
+ 	// Bring container to front by putting it at the end of the floating list.
+ 	struct sway_container *floater = container_toplevel_ancestor(con);
+ 	if (container_is_floating(floater) && floater->pending.workspace) {
++		struct sway_workspace *ws = floater->pending.workspace;
++		list_del(ws->floating, list_find(ws->floating, floater));
++		int index = workspace_insert_floating_band(ws, floater);
++
+ 		// it's okay to just raise the scene directly instead of waiting
+ 		// for the transaction to go through. We won't be reconfiguring
+ 		// surfaces
+-		wlr_scene_node_raise_to_top(&floater->scene_tree->node);
+-
+-		list_move_to_end(floater->pending.workspace->floating, floater);
+-		node_set_dirty(&floater->pending.workspace->node);
++		struct wlr_scene_node *node = &floater->scene_tree->node;
++		struct sway_container *above = index + 1 < ws->floating->length ?
++			ws->floating->items[index + 1] : NULL;
++		if (above && above->scene_tree->node.parent == node->parent) {
++			wlr_scene_node_place_below(node, &above->scene_tree->node);
++		} else {
++			wlr_scene_node_raise_to_top(node);
++		}
++		node_set_dirty(&ws->node);
+ 	}
+ }
+ 
+diff --git a/sway/tree/root.c b/sway/tree/root.c
+--- a/sway/tree/root.c
++++ b/sway/tree/root.c
+@@ -44,6 +44,7 @@
+ 	root->layers.shell_bottom = alloc_scene_tree(root->layer_tree, &failed);
+ 	root->layers.tiling = alloc_scene_tree(root->layer_tree, &failed);
+ 	root->layers.floating = alloc_scene_tree(root->layer_tree, &failed);
++	root->layers.lifted = alloc_scene_tree(root->layer_tree, &failed);
+ 	root->layers.shell_top = alloc_scene_tree(root->layer_tree, &failed);
+ 	root->layers.fullscreen = alloc_scene_tree(root->layer_tree, &failed);
+ 	root->layers.fullscreen_global = alloc_scene_tree(root->layer_tree, &failed);
+@@ -322,6 +323,58 @@
+ 	return NULL;
+ }
+ 
++// Where arrange_children puts a tile's scene node.
++static struct wlr_scene_tree *lifted_home(struct sway_container *con) {
++	if (con->current.parent) {
++		return con->current.parent->content_tree;
++	}
++	return con->current.workspace ? con->current.workspace->layers.tiling : NULL;
++}
++
++void root_lift_tiled(struct sway_container *con) {
++	root_drop_lifted();
++	root->lifted = con;
++	root_arrange_lifted();
++}
++
++void root_drop_lifted(void) {
++	struct sway_container *con = root->lifted;
++	if (!con) {
++		return;
++	}
++	root->lifted = NULL;
++	struct wlr_scene_node *node = &con->scene_tree->node;
++	struct wlr_scene_tree *home = lifted_home(con);
++	if (node->parent != root->layers.lifted || !home) {
++		return;
++	}
++	int hx, hy;
++	wlr_scene_node_coords(&home->node, &hx, &hy);
++	wlr_scene_node_reparent(node, home);
++	wlr_scene_node_set_position(node, node->x - hx, node->y - hy);
++}
++
++// Every transaction re-parents tiles into their workspace (arrange_children),
++// including the one the lifting click commits, so a one-shot reparent would
++// not survive: this runs at the end of each arrange_root.
++void root_arrange_lifted(void) {
++	struct sway_container *con = root->lifted;
++	if (!con) {
++		return;
++	}
++	struct wlr_scene_node *node = &con->scene_tree->node;
++	int lx, ly;
++	if (node->parent != lifted_home(con) ||
++			!wlr_scene_node_coords(node, &lx, &ly)) {
++		// Not laid out as a visible tile any more: floated, fullscreen,
++		// workspace hidden or covered by a fullscreen view.
++		root_drop_lifted();
++		return;
++	}
++	wlr_scene_node_reparent(node, root->layers.lifted);
++	wlr_scene_node_set_position(node, lx, ly);
++}
++
+ void root_get_box(struct sway_root *root, struct wlr_box *box) {
+ 	box->x = root->x;
+ 	box->y = root->y;
+diff --git a/sway/tree/workspace.c b/sway/tree/workspace.c
+--- a/sway/tree/workspace.c
++++ b/sway/tree/workspace.c
+@@ -815,7 +815,9 @@
+ 	if (con->pending.workspace) {
+ 		container_detach(con);
+ 	}
+-	list_add(workspace->floating, con);
++	// Sticky floaters are re-added on every workspace switch: appending
++	// would put them above the pinned ones.
++	workspace_insert_floating_band(workspace, con);
+ 	con->pending.workspace = workspace;
+ 	container_for_each_child(con, set_workspace, NULL);
+ 	container_handle_fullscreen_reparent(con);
+@@ -823,6 +825,20 @@
+ 	node_set_dirty(&con->node);
+ }
+ 
++int workspace_insert_floating_band(struct sway_workspace *workspace,
++		struct sway_container *con) {
++	list_t *floating = workspace->floating;
++	int index = floating->length;
++	if (!con->pinned) {
++		while (index > 0 &&
++				((struct sway_container *)floating->items[index - 1])->pinned) {
++			index--;
++		}
++	}
++	list_insert(floating, index, con);
++	return index;
++}
++
+ void workspace_insert_tiling_direct(struct sway_workspace *workspace,
+ 		struct sway_container *con, int index) {
+ 	list_insert(workspace->tiling, index, con);

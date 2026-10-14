@@ -337,6 +337,18 @@ class RulesPanel(Panel):
                 g_fx.add(r)
             self.detail.append(g_fx)
 
+        f_pin = f_af = None
+        if paths.SWAY_FEATURES & {"stacking", "above_fullscreen"} or form.pin or form.above_fullscreen:
+            g_st = Adw.PreferencesGroup(title="Stacking", description="Patched sway. Dropped from the include on a sway without the patch.")
+            if "stacking" in paths.SWAY_FEATURES or form.pin:
+                f_pin = combo_row("Pin", ON_OFF, form.pin, "always above the other floating windows (enable also floats it)")
+                g_st.add(f_pin)
+            if "above_fullscreen" in paths.SWAY_FEATURES or form.above_fullscreen:
+                f_af = combo_row("Above fullscreen", ON_OFF, form.above_fullscreen,
+                                 "drawn over a fullscreen view while floating; costs frames over games (see Stacking)")
+                g_st.add(f_af)
+            self.detail.append(g_st)
+
         g_adv = Adw.PreferencesGroup(title="Advanced", description="One sway command per line; appended verbatim.")
         adv = Gtk.TextView(monospace=True, accepts_tab=False)
         adv.get_buffer().set_text("\n".join(form.advanced))
@@ -366,6 +378,7 @@ class RulesPanel(Panel):
                 mark=f_mark.get_text(), layout=combo_value(f_layout),
                 blur=combo_value(f_blur) if f_blur else "", shadows=combo_value(f_shadows) if f_shadows else "",
                 corner_radius=f_cr.get_text() if f_cr else "",
+                pin=combo_value(f_pin) if f_pin else "", above_fullscreen=combo_value(f_af) if f_af else "",
                 advanced=[l for l in adv.get_buffer().get_text(*adv.get_buffer().get_bounds(), False).splitlines() if l.strip()],
             )
             kind = combo_value(kind_row)
@@ -413,7 +426,7 @@ class RulesPanel(Panel):
         update_preview()
         for r in list(crit_rows.values()) + [f_ws, f_out, f_rw, f_rh, f_bpx, f_op, f_mark, name_row] + ([f_cr] if f_cr else []):
             r.connect("changed", update_preview)
-        for r in [f_floating, f_sticky, f_full, f_inh, f_border, f_layout, kind_row, scope_row, f_role] + ([f_blur, f_shadows] if f_blur else []):
+        for r in [f_floating, f_sticky, f_full, f_inh, f_border, f_layout, kind_row, scope_row, f_role] + ([f_blur, f_shadows] if f_blur else []) + [x for x in (f_pin, f_af) if x]:
             r.connect("notify::selected", update_preview)
         f_slot.connect("notify::value", update_preview)
         for r in (flag_floating, flag_tiling, f_center, enabled_row):
