@@ -10,9 +10,10 @@ Inputs, all on the GLib main loop, no polling:
                    after capture_delay_ms, close -> drop the thumbnail), workspace,
                    shutdown
 
-While open, the selected con_id is written to overview.selection_file(); the
-workspace bindings go through scripts/overview-selected.sh, which focuses that window
-first, so Hyper+Q/W/N switch workspace from it and Hyper+Shift+… move IT. Navigation
+While open, the selected con_id is written to overview.selection_file(); the move
+bindings (Hyper+Shift+Q/W/N) go through scripts/overview-selected.sh, which focuses
+that window first, so they move IT. Hyper+Q/W/N switch workspace as always and the
+panels follow. Navigation
 itself never moves sway's focus: measured 2026-10-14, a `focus` command while the
 panel holds the keyboard hands it to the view for a moment and fast keys were lost
 (test_71 failed 2-8 runs in 10). Every focus/workspace/window event re-syncs the

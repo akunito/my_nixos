@@ -1,7 +1,6 @@
 """Overview + sway bindings (2026-10-14, Diego): while open, the workspace bindings go
-through scripts/overview-selected.sh (as in swayfx-config.nix), so Hyper+Q/W/N switch
-workspace from the SELECTED window and Hyper+Shift+N move it; the panels re-sync to
-sway. Navigation never moves sway's focus. Cards drag onto workspace columns."""
+Hyper+Shift+N bindings go through scripts/overview-selected.sh (as in swayfx-config.nix)
+and move the SELECTED window; Hyper+Q/W/N switch as always and the panels re-sync. Navigation never moves sway's focus. Cards drag onto workspace columns."""
 from __future__ import annotations
 
 import time
@@ -14,9 +13,9 @@ from sway_apps import overview as ovm
 from test_70_overview import BIND, HYPER, OUTS, SHIFT, Keys, Overview, layout
 
 WRAP = str(Path(__file__).resolve().parents[3] / "scripts" / "overview-selected.sh")
-CFG = BIND + (f"\nbindsym Mod4+Control+Mod1+w exec {WRAP} swaymsg workspace next_on_output"
-              f"\nbindsym Mod4+Control+Mod1+2 exec {WRAP} swaymsg workspace 2"
-              f"\nbindsym Mod4+Control+Mod1+1 exec {WRAP} swaymsg workspace 5"
+CFG = BIND + ("\nbindsym Mod4+Control+Mod1+w workspace next_on_output"
+              "\nbindsym Mod4+Control+Mod1+2 workspace 2"
+              "\nbindsym Mod4+Control+Mod1+1 workspace 5"
               f"\nbindsym Mod4+Control+Mod1+Shift+2 exec {WRAP} swaymsg move container to workspace 2")
 # swaymsg for the wrapper and the bindings: next to the sway under test
 ENV = {"PATH": os.pathsep.join([os.path.dirname(os.environ.get("E2E_SWAY") or "/run/current-system/sw/bin/sway"),
@@ -70,7 +69,6 @@ def case_hyper_workspace_keys_resync_the_open_overview():
         keys = Keys(s)
         keys.hyper_tab()
         o.wait_open()
-        keys.key("Down")                          # select e2e.b: the switch starts from it
         chord(keys, "2")
         s.wait(lambda: focused_ws(o.state()) == ["2"] and o.state()["selected"] == w["c"].con_id,
                "Hyper+2: ws 2 focused and e2e.c selected in the overview")
@@ -125,9 +123,16 @@ def case_drag_card_onto_another_workspace_column():
         x0, y0 = ax + aw // 2, ay + ah // 2
         x1, y1 = OUTS[0][0] + dx + dw // 2, dy + dh // 2
         s.press(x0, y0)
-        for i in range(1, 21):                    # past the drag threshold, across the output edge
+        for dx in (4, 8, 12, 16):                 # past GTK's drag threshold, then let the
+            s.pointer_to(x0 + dx, y0)             # Wayland drag start before travelling
+            time.sleep(0.02)
+        time.sleep(0.15)
+        for i in range(1, 21):                    # across the output edge
             s.pointer_to(x0 + (x1 - x0) * i // 20, y0 + (y1 - y0) * i // 20)
             time.sleep(0.02)
+        for dy in (2, 0):                         # settle on the target (enter + motion) as a hand does
+            s.pointer_to(x1, y1 + dy)
+            time.sleep(0.1)
         s.release()
         try:
             s.wait(lambda: column(o.state(), "11") == ["e2e.d", "e2e.a"], "e2e.a dropped into ws 11 on the other output", 3)

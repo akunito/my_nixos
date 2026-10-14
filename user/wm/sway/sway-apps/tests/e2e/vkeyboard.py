@@ -4,7 +4,7 @@ The nested sway runs with WLR_LIBINPUT_NO_DEVICES, so it has no keyboard: this o
 becomes the seat keyboard, and sway reads floating_modifier and mouse-binding
 modifiers from it. Reads commands on stdin, answers "ok" after a display sync:
   mods MASK     depressed modifier mask (Shift 1, Control 4, Mod1 8, Mod4 64); 0 releases
-  key NAME      press + release one key of KEYS (Tab, Return, Escape, arrows, space, q, w, 1, 2)
+  key NAME      press + release one key of KEYS (Tab, Return, Escape, arrows, space, q, w, 1, 2, 9)
 """
 from __future__ import annotations
 
@@ -18,19 +18,19 @@ from vpointer import Wire, s_arg
 
 # evdev codes (xkb keycode - 8) of the non-modifier keys in KEYMAP.
 KEYS = {"Escape": 1, "Tab": 15, "Return": 28, "space": 57, "Up": 103, "Left": 105, "Right": 106, "Down": 108,
-        "q": 16, "w": 17, "1": 2, "2": 3}
+        "q": 16, "w": 17, "1": 2, "2": 3, "9": 10}
 
 KEYMAP = b"""xkb_keymap {
 xkb_keycodes "e2e" { minimum = 8; maximum = 255; <LFSH> = 50; <LCTL> = 37; <LALT> = 64; <LWIN> = 133;
   <ESC> = 9; <TAB> = 23; <RTRN> = 36; <SPCE> = 65; <UP> = 111; <LEFT> = 113; <RGHT> = 114; <DOWN> = 116;
-  <AD01> = 24; <AD02> = 25; <AE01> = 10; <AE02> = 11; };
+  <AD01> = 24; <AD02> = 25; <AE01> = 10; <AE02> = 11; <AE09> = 18; };
 xkb_types "e2e" { type "ONE_LEVEL" { modifiers = none; map[none] = Level1; level_name[Level1] = "Any"; }; };
 xkb_compatibility "e2e" { };
 xkb_symbols "e2e" {
   key <LFSH> { [ Shift_L ] }; key <LCTL> { [ Control_L ] }; key <LALT> { [ Alt_L ] }; key <LWIN> { [ Super_L ] };
   key <ESC> { [ Escape ] }; key <TAB> { [ Tab ] }; key <RTRN> { [ Return ] }; key <SPCE> { [ space ] };
   key <UP> { [ Up ] }; key <LEFT> { [ Left ] }; key <RGHT> { [ Right ] }; key <DOWN> { [ Down ] };
-  key <AD01> { [ q ] }; key <AD02> { [ w ] }; key <AE01> { [ 1 ] }; key <AE02> { [ 2 ] };
+  key <AD01> { [ q ] }; key <AD02> { [ w ] }; key <AE01> { [ 1 ] }; key <AE02> { [ 2 ] }; key <AE09> { [ 9 ] };
   modifier_map Shift { <LFSH> }; modifier_map Control { <LCTL> }; modifier_map Mod1 { <LALT> }; modifier_map Mod4 { <LWIN> };
 };
 };
