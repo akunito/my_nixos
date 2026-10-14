@@ -174,7 +174,17 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 - **Prueba:** un caso de nivel 1 → la VM arranca sola → `open_binary` + `search_strings` encuentran el secreto (96 s con el arranque) → la VM y su scope desaparecen al cerrar.
 - X13 tiene `/dev/kvm` y `/dev/vhost-vsock` accesibles.
 
-**Pendiente de F2:** `rea-triage` (DIE, YARA y firmas dentro de la VM) y una prueba de seguridad con un programa propio que intente salir de la VM.
+**F2 completado (2026-10-14):**
+- **`rea-triage <caso>`:** dentro de la VM, en unos 8 s, saca por fichero el tipo, los hashes, Detect It Easy (con sus bases de firmas pasadas a mano: sin ellas todo sale "Unknown"), la prueba de UPX, Authenticode (`osslsigncode`) y nuestras reglas YARA (`user/app/rea/triage.yar`, solo nombres: antitrampas/DRM → REJECT; protectores y UPX → nivel 2).
+  - **Comprobado:** binario limpio → nivel 1; empaquetado con UPX → nivel 2; fichero con "EasyAntiCheat" → REJECT.
+- **Prueba de escape**, con una VM de prueba que tiene consola root (`extraModules`, vacío en producción). Como el usuario `rea`, lo que obtendría un exploit en Ghidra:
+  - solo `lo` y 0 rutas;
+  - LAN, internet, el VPS por tailscale y la pasarela slirp, bloqueados;
+  - `target/` en solo lectura;
+  - 0 rutas del store del host;
+  - sin `sudo`;
+  - vsock hacia el host rechazado;
+  - tras reiniciar no persiste nada en `/tmp` ni en `/root`.
 
 **F2: microVM (niveles 1 y 2, estático); DESK.**
 - Flake input `microvm.nix`, guest con `rea-env`, QEMU, relé vsock, virtiofs con la misma ruta y overlay que se tira al apagar.

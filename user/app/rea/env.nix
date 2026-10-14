@@ -22,7 +22,7 @@ rec {
     bashInteractive coreutils findutils gnugrep gnused gawk procps util-linux file
     ghidra jdk rea-agents nodejs_24
     binutils rizin wireshark-cli wabt mitmproxy apktool ilspycmd binwalk unblob
-    detect-it-easy upx yara py
+    detect-it-easy upx yara osslsigncode py
   ];
   env = {
     PATH = pkgs.lib.makeBinPath tools;

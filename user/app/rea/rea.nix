@@ -128,7 +128,7 @@ let
     name = "rea-vm-mcp";
     runtimeInputs = [ socat pkgs.coreutils pkgs.util-linux pkgs.systemd ];
     text = ''
-      d=$1
+      d=$1; mode=''${2:-mcp}
       die() { echo "rea-vm: $*" >&2; exit 1; }
       [ "$(id -u)" = ${toString vmUid} ] || die "the microVM is built for uid ${toString vmUid}"
       [ -d "$d/target" ] || die "no such case $d"
@@ -155,7 +155,11 @@ let
       for _ in $(seq 1 120); do
         kill -0 "$vm" 2>/dev/null || die "microVM exited during boot (see $d/log/vm-console.log)"
         if socat -u OPEN:/dev/null VSOCK-CONNECT:4242:5000 2>/dev/null; then
-          socat STDIO VSOCK-CONNECT:4242:5000
+          if [ "$mode" = triage ]; then
+            socat -u VSOCK-CONNECT:4242:5001 STDOUT | tee "$d/log/triage.txt"
+          else
+            socat STDIO VSOCK-CONNECT:4242:5000
+          fi
           exit 0
         fi
         sleep 1
@@ -287,6 +291,21 @@ let
     '';
   };
 
+  # rea-triage <case>: before choosing a tier, inspect every target inside the microVM
+  # (type, hashes, Detect It Easy, UPX, Authenticode, our YARA rules incl. anti-cheat/DRM
+  # names) and propose a tier or REJECT. The target is never executed. Report in
+  # <case>/log/triage.txt.
+  rea-triage = pkgs.writeShellApplication {
+    name = "rea-triage";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = common + ''
+      d=$(case_dir "''${1:-}")
+      [ -d "$d/target" ] || die "no such case"
+      [ -n "$(ls -A "$d/target")" ] || die "nothing in $d/target (rea-case add)"
+      exec ${rea-vm-mcp}/bin/rea-vm-mcp "$d" triage
+    '';
+  };
+
   # rea-claude-token: store the `claude setup-token` token without echoing it.
   rea-claude-token = pkgs.writeShellApplication {
     name = "rea-claude-token";
@@ -315,5 +334,5 @@ let
   };
 in
 lib.mkIf enabled {
-  home.packages = [ rea-case rea-run rea-cli rea-claude rea-claude-token rea-hook claude-raw ];
+  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw ];
 }
