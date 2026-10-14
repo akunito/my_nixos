@@ -164,7 +164,7 @@ def chord(mods: set[str] | list[str], key: str) -> str:
 _SHORT = {"leftshift": "Shift", "rightshift": "R Shift", "leftcontrol": "Ctrl", "rightcontrol": "R Ctrl",
           "leftalt": "Alt", "rightalt": "AltGr", "leftmeta": "Super", "rightmeta": "R Super", "capslock": "Caps",
           "space": "Space", "enter": "Enter", "esc": "Esc", "tab": "Tab", "backspace": "Bksp", "delete": "Del",
-          "pageup": "PgUp", "pagedown": "PgDn", "noop": "—"}
+          "pageup": "PgUp", "pagedown": "PgDn", "noop": "—", "up": "↑", "down": "↓", "left": "←", "right": "→"}
 _MOD_NAMES = {"C": "Ctrl", "S": "Shift", "A": "Alt", "M": "Super", "G": "AltGr"}
 
 

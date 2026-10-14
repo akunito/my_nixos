@@ -138,3 +138,16 @@ class FeaturePanelsListed(unittest.TestCase):
         from sway_apps import features
         for key, *_ in features.gui_panels():
             self.assertIn(key, launch.SECTIONS, key)
+
+    def test_every_feature_gui_panel_has_on_show(self):
+        # the window calls panel.on_show() on every nav pick and --section; Keypad lacked it
+        import ast
+        from sway_apps import features
+        gui = Path(__file__).resolve().parents[1] / "sway_apps" / "gui"
+        for key, _t, _s, _i, ref in features.gui_panels():
+            mod, cls = ref.split(":")
+            tree = ast.parse((gui / f"{mod}.py").read_text())
+            c = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == cls)
+            own = [f.name for f in c.body if isinstance(f, ast.FunctionDef)]
+            inherited = any(isinstance(b, ast.Name) and b.id == "Panel" for b in c.bases)   # panels.Panel has it
+            self.assertTrue("on_show" in own or inherited, key)

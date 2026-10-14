@@ -52,6 +52,7 @@ def drive(app: Adw.Application) -> None:
     win.set_content(panel)
     win.present()
     pump(40)
+    panel.on_show()
     check("device loaded", panel.model is not None and panel.dev_name == "razer_tartarus", str(panel.dev_name))
     # a click on key 20 of the drawing selects it
     f, ox, oy = panel.canvas._view
@@ -84,7 +85,7 @@ def drive(app: Adw.Application) -> None:
     panel.action_row.set_text("6")
     check("edit lands in the new profile only", panel.profile["main"]["q"] == "6"
           and panel.device["profiles"]["aion2"]["main"]["q"] == "C-a")
-    check("strip lists both", [c.get_label().split("  ")[0] for c in _children(panel.prof_box)] == ["Aion 2", "Lineage 2"],
+    check("strip lists both", [c.get_label().split("  ")[0] for c in _children(panel.prof_box)] == ["Aion 2", "Native (no remap)", "Lineage 2"],
           str([c.get_label() for c in _children(panel.prof_box)]))
     check("Use now off while unsaved/undeployed", not panel.use_btn.get_sensitive())
     panel.rename_profile("L2 Reborn")
@@ -115,7 +116,7 @@ def drive(app: Adw.Application) -> None:
     pump()
     panel.delete_profile()
     pump()
-    check("delete drops it and falls back to the default", list(panel.device["profiles"]) == ["lineage_2"] and panel.pid == "lineage_2")
+    check("delete drops it and falls back to the default", list(panel.device["profiles"]) == ["native", "lineage_2"] and panel.pid == "lineage_2")
     panel._discard()
     check("discard brings it back", "aion2" in panel.device["profiles"])
     check("no error toasts", not any(e for _t, e in fake.toasts), str(fake.toasts))

@@ -235,6 +235,18 @@ class KeypadPanel(Gtk.Box):
         self._fill_profiles(ps, live)
         self.canvas.queue_draw()
 
+    def on_show(self) -> None:
+        """Re-read the file and the live profile (the CLI or another machine's sync may have
+        changed them), unless there are unsaved edits here."""
+        if not self.dirty():
+            self.data = kp.load()
+            self.saved = copy.deepcopy(self.data)
+            if self.device is not None and self.pid not in kp.profiles(self.device):
+                self.pid = kp.live_profile(self.dev_name) or kp.default_profile(self.device)
+            if self.sel_key:
+                self.select_key(self.sel_key)
+        self.refresh()
+
     def _fill_profiles(self, ps: dict, live: str | None) -> None:
         while (c := self.prof_box.get_first_child()) is not None:
             self.prof_box.remove(c)
