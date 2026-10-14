@@ -478,10 +478,9 @@ in
       # However, if SwayFX is enabled via enableSwayForDESK, Stylix should be enabled for SwayFX
       ${lib.optionalString (systemSettings.stylixEnable == true && (userSettings.wm != "plasma6" || (systemSettings.enableSwayForDESK or false) == true)) ''
         set -g status-style "bg=#${config.lib.stylix.colors.base00},fg=#${config.lib.stylix.colors.base07}"
-        set -g status-left-length 40
-        set -g status-right-length 80
-        set -g status-left "#[fg=#${config.lib.stylix.colors.base0D}]#S "
-        set -g status-right "#[fg=#${config.lib.stylix.colors.base05}]%H:%M %d-%b-%y"
+        # No session name (fixed per launcher: alacritty/kitty) and no clock — only the tab pills.
+        set -g status-left ""
+        set -g status-right ""
         # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps); the active one in the accent colour.
         setw -g window-status-separator " "
         setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#I:#W#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
