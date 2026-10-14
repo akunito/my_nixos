@@ -36,6 +36,7 @@ in
     # values. Port 8090 on tailscale0 only; the backend stops after 15 min idle
     # and before S3. Plan: docs/akunito/plans/nas-3090-ai-presets.md
     llamaServerEnable = true;
+    llamaServerIdleTimeout = "infinity";  # never unload on idle (Diego, 2026-10-14): measured 7.5 W unloaded vs 7.6 W loaded at P8 (30 s avg), 0.04 % CPU, 414 MB RAM — unloading buys nothing while nothing else wants the card. Still stops before S3 (Conflicts=sleep.target); the preset manager (F1) will unload on a preset change
     llamaServerBackend = "docker-cuda";   # MEASURED 2026-10-13: Vulkan/NVIDIA ICD 48 pp / 36 tg tok/s; CUDA image 1326 pp / 40 tg, load 10 s
     llamaServerModelFile = "/var/lib/llama-server/models/Huihui-Qwen3.8-27B-abliterated-UD-Q4_K_XL.gguf";
     llamaServerCtxSize = 65536;           # 18.7 GB VRAM measured at 32768 (CUDA); Claude Code's first turn alone is ~17k tokens (20 tools + system, measured 2026-10-14), so 32k left no room for a session

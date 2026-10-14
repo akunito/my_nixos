@@ -223,7 +223,7 @@
     llamaServerHost = "0.0.0.0";                           # firewall restricts exposure to tailscale0
     llamaServerPort = 8090;                                # public (socket) port
     llamaServerInternalPort = 8091;                        # backend port (localhost only)
-    llamaServerIdleTimeout = "15min";                      # stop backend + free VRAM after this idle
+    llamaServerIdleTimeout = "15min";                      # stop backend + free VRAM after this idle; "infinity" = keep loaded until sleep/stop (a loaded idle 3090 draws the same 7.5 W as an empty one, measured 2026-10-14)
     llamaServerModelHfRepo = "ggml-org/gpt-oss-20b-GGUF";  # auto-downloaded via -hf on first start
     llamaServerModelHfFile = "";                           # optional QUANT TAG for -hf repo:TAG, e.g. "Q4_K_M" — NOT a filename: passing "Model-Q4_K_M.gguf" makes llama.cpp report "no GGUF files found in repository". "" = repo default
     llamaServerModelFile = "";                             # absolute GGUF path under /var/lib/llama-server; replaces -hf when set (pre-downloaded models, e.g. gated/abliterated repos)
