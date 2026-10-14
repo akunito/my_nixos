@@ -2,7 +2,8 @@
 # 2026-10-14). Installs two commands, nothing in settings.json:
 #
 #   claude-<name> [claude args]   whole Claude Code session on the local model,
-#                                 same ~/.claude (memory, skills, hooks, sync).
+#                                 same ~/.claude (memory, skills, hooks, sync),
+#                                 no MCP servers unless CLAUDE_<NAME>_MCP=1.
 #   <name>-ask [-t] [-s SYS] PROMPT…   one answer from the local model, stdin =
 #                                 context. For Opus/Fable to delegate from Bash:
 #                                 `git diff | nas-ask "review this"`.
@@ -17,6 +18,10 @@
 #   would outrank these exports — keep ANTHROPIC_* out of it.
 # - An unknown model name is treated as a 200k-window current model;
 #   CLAUDE_CODE_MAX_CONTEXT_TOKENS is what the 2.1.296 binary asks for.
+# - MCP servers are OFF by default (CLAUDE_<NAME>_MCP=1 keeps them): with every
+#   MCP of ~/.claude.json the first turn was 45-48k tokens and a read+edit task
+#   took 3 min 07 s; without them 16.7k tokens and 27 s (same task, same model,
+#   measured 2026-10-14). A 27B model with 20 tools beats one with 120.
 # - Subagents cannot target another base URL: they inherit the process env.
 #   So "a subagent on the NAS" from a normal session is `claude-<name> -p …`
 #   or `<name>-ask` run through Bash, never an agents/*.md entry.
@@ -44,7 +49,10 @@ let
     export CLAUDE_CODE_MAX_CONTEXT_TOKENS=${ctx} CLAUDE_CODE_DISABLE_1M_CONTEXT=1
     export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1
     export CLAUDE_CODE_ATTRIBUTION_HEADER=0 DISABLE_PROMPT_CACHING=1
-    exec claude "$@"
+    if [ "''${CLAUDE_${lib.toUpper name}_MCP:-0}" = "1" ]; then
+      exec claude "$@"
+    fi
+    exec claude --strict-mcp-config --mcp-config '{"mcpServers":{}}' "$@"
   '';
 
   ask = pkgs.writeShellScriptBin "${name}-ask" ''

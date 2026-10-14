@@ -47,7 +47,7 @@ pedidos en Botland el 2026-10-01. Contexto previo: memorias `project_local_ai_bo
 | `off` (defecto) | nada | 0 |
 | `aion-coach` | Qwen3-VL-8B (o Gemma 4 12B) + Whisper large-v3-turbo + TTS + embeddings + NVENC grabación | ~15-18 GB |
 | `aion-pico` | `aion-coach` + controlador Pico (CPU) | igual |
-| `reasoner` | **LIVE 2026-10-13**: Qwen3.8-27B abliterated (huihui-ai UD-Q4_K_XL 17,4 GB), `llama-server.nix` backend `docker-cuda`, `http://100.64.0.1:8090` | **18,7 GB medidos** (ctx 32k) |
+| `reasoner` | **LIVE 2026-10-13**: Qwen3.8-27B abliterated (huihui-ai UD-Q4_K_XL 17,4 GB), `llama-server.nix` backend `docker-cuda`, `http://100.64.0.1:8090`, alias `qwen3.8-27b-abliterated` | **20,8 GB medidos** (ctx 64k × 4 slots, 2026-10-14; 18,7 GB a 32k) |
 | `hermes` | `reasoner` + Hermes (aplazado) | igual |
 | `coder` | modelo de código para OpenCode | ~15-20 GB |
 | `whisper` | solo Whisper (reuniones, `meeting-transcribe` M3) | ~4-5 GB |
@@ -59,6 +59,7 @@ se paran todos los servicios de IA (NVIDIA + VRAM cargada + suspend = frágil).
 ## Fases
 
 - **Hecho 2026-10-13 — preset `reasoner` a mano** (sin gestor aún): medido CUDA 1 326 pp / 40 tg tok/s; Vulkan sobre el ICD de NVIDIA 48 pp → descartado. Desplegado y medido durante el `zfs send` de la migración sin efecto en su presión de IO (~55 % antes y después).
+- **Hecho 2026-10-14 — harness desde DESK** (commit f038ad2e): OpenCode proveedor `nas` (`opencode --model nas/qwen3.8-27b-abliterated`, tarea leer+editar en 23 s), `claude-nas` (Claude Code entero sobre el NAS vía su API Anthropic `/v1/messages`, mismo `~/.claude`; sin MCP por defecto: con los MCP el primer turno son 45-48k tokens y la tarea tarda 3 min 07 s, sin ellos 16,7k y 27 s) y `nas-ask` (una respuesta, stdin = contexto, para que Opus/Fable deleguen desde Bash; skill `nas-reasoner`). Hizo falta una plantilla de chat propia (`system/app/llama-server/templates/qwen3.8-system-anywhere.jinja`): Claude Code 2.1.296 manda su bloque "# Environment" como `role=system` tras el primer turno y la plantilla del GGUF lo rechazaba (HTTP 500 en todo). Ctx 32k → 64k. Energía: el proxy para el backend 15 min tras la última petición (medido 17:20:59 → 17:36:19); la 3090 consume 7,6 W cargada en reposo (P8) y 11 W descargada, así que descargar libera VRAM y permite el S3, no ahorra vatios.
 
 - **F0 — base (al llegar la Elgato):** AINF-404 kernel ≥6.19 en el NAS; Elgato por USB 3
   al NAS (comprobar Gen 1 vs Gen 2 con `lsusb -t`), 1080p60 por UVC; Samsung pasa a HDMI
