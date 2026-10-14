@@ -125,7 +125,10 @@ class Gate:
         model = request_model(method, target, headers, body)
         explicit = path in EXPLICIT_PATHS
         if model and not explicit:
-            verdict = await self._admit(model, path, headers)
+            verdict = await self._admit(model, path, headers, reader)
+            if verdict == "gone":
+                writer.close()
+                return
             if verdict is not None:
                 await self._respond(writer, *verdict)
                 return
@@ -145,7 +148,8 @@ class Gate:
                 await reader.readline()
         return b""
 
-    async def _admit(self, model: str, path: str, headers: dict[str, str]) -> tuple[int, bytes] | None:
+    async def _admit(self, model: str, path: str, headers: dict[str, str],
+                     reader: asyncio.StreamReader | None = None) -> tuple[int, bytes] | str | None:
         await self.refresh_loaded()
         no_switch = headers.get(NO_SWITCH_HEADER, "") not in ("", "0", "false")
         v = decide(model, self.loaded, self.inflight, self.last_used, time.monotonic(), GRACE, no_switch)
@@ -160,6 +164,10 @@ class Gate:
             async with self.changed:
                 while True:
                     now = time.monotonic()
+                    if reader is not None and reader.at_eof():
+                        # The client gave up (timeout, Ctrl-C): forwarding it later
+                        # would switch the card for nobody.
+                        return "gone"
                     if decide(model, self.loaded, self.inflight, self.last_used, now, GRACE, False) == "forward" \
                             and self.queue and self.queue[0] is entry:
                         return None
@@ -169,7 +177,7 @@ class Gate:
                     # wake on any change, or when the grace of the loaded model runs out
                     left = GRACE - (now - self.last_used.get(self.loaded or "", float("-inf")))
                     try:
-                        await asyncio.wait_for(self.changed.wait(), max(0.5, min(left + 0.1, 30)))
+                        await asyncio.wait_for(self.changed.wait(), max(0.5, min(left + 0.1, 2)))
                     except asyncio.TimeoutError:
                         await self.refresh_loaded(force=True)
         finally:
