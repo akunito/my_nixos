@@ -56,11 +56,36 @@ class Decide(unittest.TestCase):
         self.assertEqual((code, json.loads(body)["error"]["type"]), (409, "model_busy"))
 
 
+class LegacyAlias(unittest.TestCase):
+    def test_old_reasoner_alias_is_served_by_the_loaded_reasoner(self):
+        async def run():
+            fake = FakeRouter(models=("reasoner-256k", "coder"), loaded="reasoner-256k")
+            bsrv = await asyncio.start_server(fake.handle, "127.0.0.1", 0)
+            g = load_gate({"GATE_BACKEND_PORT": str(bsrv.sockets[0].getsockname()[1]), "GATE_GRACE_SECONDS": "60"})
+            gate = g.Gate()
+            gsrv = await asyncio.start_server(gate.handle, "127.0.0.1", 0)
+            port = gsrv.sockets[0].getsockname()[1]
+            st, body = await http(port, "POST", "/v1/messages", {"model": "qwen3.8-27b-abliterated"}, {"X-Nas-No-Switch": "1"})
+            self.assertEqual((st, body["model"]), (200, "reasoner-256k"))
+            self.assertEqual(fake.loaded, "reasoner-256k")
+            fake.loaded = "coder"
+            gate.loaded_at = 0
+            st, body = await http(port, "POST", "/v1/messages", {"model": "qwen3.8-27b-abliterated"})
+            self.assertEqual(st, 400)   # another preset loaded: unknown, never a switch
+            fake.loaded = None
+            gate.loaded_at = 0
+            st, body = await http(port, "POST", "/v1/messages", {"model": "qwen3.8-27b-abliterated"})
+            self.assertEqual((st, body["model"]), (200, "reasoner-256k"))   # nothing loaded: its default
+            gsrv.close(); bsrv.close()
+        asyncio.run(run())
+
+
 class FakeRouter:
     """Loads the model a request names after IN-FLIGHT requests finish (as measured on b11580)."""
 
-    def __init__(self):
-        self.loaded = "a"
+    def __init__(self, models=("a", "b"), loaded="a"):
+        self.models = models
+        self.loaded = loaded
         self.log: list[str] = []
 
     async def handle(self, r, w):
@@ -71,7 +96,7 @@ class FakeRouter:
         body = await r.readexactly(int(hdr.get("content-length", "0")))
         if target == "/models":
             out = json.dumps({"data": [{"id": m, "status": {"value": "loaded" if m == self.loaded else "unloaded"}}
-                                       for m in ("a", "b")]}).encode()
+                                       for m in self.models]}).encode()
         else:
             m = json.loads(body or b"{}").get("model")
             if target == "/models/load":
@@ -152,6 +177,12 @@ class EndToEnd(unittest.TestCase):
             self.assertEqual(fake.loaded, "a")
             st, s = await http(gport, "GET", "/gate/status")
             self.assertEqual(s["queue"], [])
+            # unknown name: rejected at once, never queued
+            t3 = time.monotonic()
+            st, body = await http(gport, "POST", "/v1/chat/completions", {"model": "nope"})
+            self.assertEqual(st, 400)
+            self.assertLess(time.monotonic() - t3, 0.5)
+            self.assertIn("Known: a, b", body["error"]["message"])
             gsrv.close()
             bsrv.close()
         asyncio.run(run())

@@ -36,6 +36,11 @@ GRACE = float(os.environ.get("GATE_GRACE_SECONDS", "300"))
 MAX_WAIT = float(os.environ.get("GATE_MAX_WAIT_SECONDS", "1800"))
 NO_SWITCH_HEADER = "x-nas-no-switch"
 EXPLICIT_PATHS = ("/models/load", "/models/unload")
+# Names clients used before router mode. A claude-nas session started before the
+# switch kept sending this one and sat in the queue as "another model" (2026-10-14);
+# it is served by whichever preset with that prefix is loaded, never switched.
+# (prefix of the presets that may serve it, preset to load when nothing is loaded)
+LEGACY_ALIASES = {"qwen3.8-27b-abliterated": ("reasoner-", "reasoner-256k")}
 
 
 def decide(model: str | None, loaded: str | None, inflight: dict[str, int], last_used: dict[str, float],
@@ -70,10 +75,18 @@ def reject_body(path: str, loaded: str, model: str) -> tuple[int, bytes]:
     return 409, json.dumps({"error": {"code": 409, "type": "model_busy", "message": msg}}).encode()
 
 
+def unknown_body(path: str, model: str, known: list[str]) -> tuple[int, bytes]:
+    msg = f"'{model}' is not a NAS preset. Known: {', '.join(known)}. (An old session? Restart it.)"
+    if path.startswith("/v1/messages"):
+        return 400, json.dumps({"type": "error", "error": {"type": "invalid_request_error", "message": msg}}).encode()
+    return 400, json.dumps({"error": {"code": 400, "type": "unknown_model", "message": msg}}).encode()
+
+
 class Gate:
     def __init__(self) -> None:
         self.loaded: str | None = None
         self.loaded_at = 0.0          # when `loaded` was last confirmed from GET /models
+        self.known: set[str] = set()  # preset ids the router serves
         self.inflight: dict[str, int] = {}
         self.last_used: dict[str, float] = {}
         self.queue: list[tuple[str, float]] = []
@@ -90,6 +103,7 @@ class Gate:
             raw = await asyncio.wait_for(r.read(), 5)
             w.close()
             data = json.loads(raw.split(b"\r\n\r\n", 1)[1] or b"{}")
+            self.known = {m["id"] for m in data.get("data") or [] if m.get("id")}
             hot = [m["id"] for m in data.get("data") or [] if (m.get("status") or {}).get("value") in ("loaded", "loading")]
             self.loaded = hot[0] if hot else None
             self.loaded_at = time.monotonic()
@@ -125,6 +139,20 @@ class Gate:
         model = request_model(method, target, headers, body)
         explicit = path in EXPLICIT_PATHS
         if model and not explicit:
+            await self.refresh_loaded(force=not self.known)
+            if self.known and model not in self.known:
+                alias = LEGACY_ALIASES.get(model)
+                target = None
+                if alias and self.loaded and self.loaded.startswith(alias[0]):
+                    target = self.loaded
+                elif alias and self.loaded is None and alias[1] in self.known:
+                    target = alias[1]
+                if target:
+                    body = body.replace(json.dumps(model).encode(), json.dumps(target).encode(), 1)
+                    model = target
+                else:
+                    await self._respond(writer, *unknown_body(path, model, sorted(self.known)))
+                    return
             verdict = await self._admit(model, path, headers, reader)
             if verdict == "gone":
                 writer.close()
