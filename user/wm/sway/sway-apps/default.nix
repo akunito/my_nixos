@@ -67,6 +67,7 @@ let
         --set-default SWAY_APPS_SWAY_BIN "${swayPkg}/bin/sway"
         --set-default SWAY_APPS_SWAYMSG_BIN "${swayPkg}/bin/swaymsg"
         --set-default SWAY_APPS_SWAY_FEATURES "${swayFeatures}"
+        --set-default SWAY_APPS_GAPS_INNER "${toString (config.wayland.windowManager.sway.config.gaps.inner or 8)}"
         --set-default SWAY_APPS_XWAYLAND_DPI "${toString (systemSettings.swayXwaylandDpi or 96)}"
         --prefix PATH : "${lib.makeBinPath [ pkgs.git pkgs.libnotify pkgs.coreutils ]}"
       )

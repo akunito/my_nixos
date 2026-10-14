@@ -199,6 +199,7 @@ class Model:
         self.local = local if local is not None else load_local()
         self.feat = state.feature(SETTINGS_KEY)
         self.modules: dict[str, Any] = self.catalog.get("modules") or {}
+        self.margins = bar_margins(self.feat)
         self.bars = self._build()
         self.by_key = {b.key: b for b in self.bars}
         self.by_criteria = {b.criteria: b for b in self.bars if b.criteria}
@@ -434,8 +435,27 @@ COLLAPSE_CSS = ("window#waybar.mode-dock #workspaces button:not(.current_output)
                 "box-shadow: none; }\n")
 
 
+# window#waybar margin in the base CSS (user/wm/sway/waybar.nix): the space
+# around each bar. The bottom one adds to sway's top edge gap, which is why
+# the bar-to-tiles space measured 16 px with both at 8 (DESK, 2026-10-14).
+MARGIN_DEFAULTS = {"top": 8, "sides": 12, "bottom": 8}
+MARGIN_MAX = 40
+
+
+def bar_margins(feat: dict[str, Any]) -> dict[str, int]:
+    m = dict(MARGIN_DEFAULTS)
+    for k, v in (feat.get("margins") or {}).items():
+        if k in m and isinstance(v, (int, float)):
+            m[k] = max(0, min(MARGIN_MAX, int(v)))
+    return m
+
+
 def render_css(model: Model) -> str:
     out = [CSS_HEADER, COLLAPSE_CSS]
+    m = model.margins
+    if m != MARGIN_DEFAULTS:
+        sels = ",\n".join(f"window#waybar.{b.bar_id}" for b in model.bars)
+        out.append(f"{sels} {{ margin: {m['top']}px {m['sides']}px {m['bottom']}px {m['sides']}px; }}\n")
     for b in model.bars:
         if b.size != 100:
             out.append(_size_css(f"window#waybar.{b.bar_id}", b.size, model.catalog["sizes"]))

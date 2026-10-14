@@ -8,7 +8,7 @@ from dataclasses import dataclass
 SECTIONS = ("startup", "rules", "shortcuts", "tools", "monitors", "workspaces", "apps", "windows",
             "nodes", "docker", "nfs", "monitoring", "profiles", "log",
             # feature panels (features.gui_panels); listed here so this module stays GTK- and import-free
-            "waybar", "stacking", "placement")
+            "waybar", "stacking", "placement", "spacing")
 MONITORING_TABS = ("nodes", "storage", "backups", "network", "targets")
 DEFAULT_SECTION = "rules"
 
