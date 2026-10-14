@@ -9,7 +9,7 @@ status: draft
 
 # sway-apps input: fluid keyboard + pointer control on Sway
 
-**Status 2026-10-14: plan v2.1, not started; re-audit verdict GO WITH CHANGES, changes applied.** Diego: input control on Sway "no funciona demasiado bien… en W11 era mucho más fluido"; asked for options (given 2026-10-14) and then for this plan, audited by an independent reviewer (Fable) before implementation. v1 (9cf59bde) was rated REWORK: its pointer backend and ack could not work; v2 below applies every finding (audit summary in §10).
+**Status 2026-10-14: phases 0-4 DONE on DESK** (5ba5fdfa, 8b982926, 5b3f8026, 017352f8). Phase 0 gates all met live: ack p95 0.08 ms, create->first ack p95 56 ms (sway lists a new uinput device ~56 ms after UI_DEV_CREATE; keys before that are lost, so ready() waits for it and the ack has NO retry: one press, one event), 0/50 lost acks with Shift held by a second device, 0 keymap resends, AltGr text intact, drag 260 px, keyd leaves the device alone. Nested e2e test_80 (5 cases) + unit tests; the live overview scripts run on the broker and pass. Test windows (`handtest.*`) are never journalled (placement_core.TEST_APP_PREFIX). Pending: X13 deploy + live check (offline today). Plan v2.1 audited (re-audit GO WITH CHANGES, applied). Diego: input control on Sway "no funciona demasiado bien… en W11 era mucho más fluido"; asked for options (given 2026-10-14) and then for this plan, audited by an independent reviewer (Fable) before implementation. v1 (9cf59bde) was rated REWORK: its pointer backend and ack could not work; v2 below applies every finding (audit summary in §10).
 
 ## 1. Problem (measured today, 2026-10-14, while testing SWAY-15)
 
