@@ -12,6 +12,8 @@ Run with the e2e tool env (`sway-apps-e2e`'s python, or the env it exports) plus
 
 - `peek_live.py` — temp workspace, red tile + blue float, hold left/right on the tile, sample the overlap pixel (2026-10-14: blue → red while held → blue, both buttons).
 - `overview_hand.py` — Hyper+Tab via the virtual keyboard, screenshot, Tab/Shift+Tab, an arrow pair, Enter (on the sink card), reopen + Escape; restores focus; exit 1 on any failed check.
+- `overview_follow.py` — the overview with the REAL bindings: Hyper+Shift+9 moves the selected test window (swaysome follows it), Hyper+9 goes back (auto_back_and_forth), a drag brings it home. Needs workspace <group>9 free; restores focus and visible workspaces.
+- Test windows are remembered by the placement journal (it restores them next time and once undid a test move): forget them after a run, `sway-apps placement journal forget handtest.<name>` (overview_follow.py does).
 - `overview_keys.py` — older variant (CLI open, Down + Escape); prefer overview_hand.py.
 - Testing an unreleased overview without deploying: `systemctl --user stop sway-apps-overview`, run the checkout (`SWAY_APPS_GIT=0 LD_PRELOAD=$E2E_LAYER_SHELL setsid -f $E2E_PYTHON -m sway_apps overview run`, from `sway-apps/`), test, then kill THAT python pid (`pgrep -f "sway_apps overview run"`, not the setsid parent) and `systemctl --user restart sway-apps-overview`; check MainPID == `sway-apps --json overview state` pid.
 
