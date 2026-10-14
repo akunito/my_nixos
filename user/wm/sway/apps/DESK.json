@@ -28,6 +28,33 @@
       "name": "AION 2 meter overlay sticky",
       "enabled": true,
       "notes": "Separate rule on purpose: measured 2026-10-13 on Sway 1.11, 'sticky enable' inside the floating rule left sticky=false."
+    },
+    {
+      "id": "r-a2m50f01",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "^aionmeter$"
+      },
+      "actions": [
+        "floating enable",
+        "border none"
+      ],
+      "name": "AION 2 meter card (Wayland)",
+      "enabled": true,
+      "notes": "A2M-50: the card as a native Wayland toplevel. 'above_fullscreen enable' (patched sway, draws it over fullscreen gamescope) is emitted from swayfx-config.nix under systemSettings.swayAboveFullscreen, not here: sway-apps rejects unknown command words and an unpatched sway would too."
+    },
+    {
+      "id": "r-a2m50f02",
+      "kind": "for_window",
+      "criteria": {
+        "app_id": "^aionmeter$"
+      },
+      "actions": [
+        "sticky enable"
+      ],
+      "name": "AION 2 meter card (Wayland) sticky",
+      "enabled": true,
+      "notes": "Separate rule on purpose: measured 2026-10-13 on Sway 1.11, 'sticky enable' inside the floating rule left sticky=false."
     }
   ],
   "startup": [

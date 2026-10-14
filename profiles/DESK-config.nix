@@ -868,6 +868,8 @@ in
     # its 1.5 scale; at 1.6 use 154.
     swayXwaylandZeroScaling = true;
     swayXwaylandDpi = 144;
+    # AION 2 meter card (Wayland, app_id aionmeter) above fullscreen gamescope.
+    swayAboveFullscreen = true;
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.

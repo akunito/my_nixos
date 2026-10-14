@@ -54,6 +54,12 @@ All patches are stored in the `patches/` directory and applied via the flake con
 
 **Status**: Active
 
+### Sway above_fullscreen (`patches/sway-above-fullscreen.patch`)
+
+**Purpose**: new sway command `above_fullscreen enable|disable|toggle` so a floating window (the AION 2 meter card, Wayland app_id `aionmeter`, ticket A2M-50) is drawn, clickable and focusable above a fullscreen view (the game in gamescope), the way sway already treats a transient of the fullscreen view. Gated by `swayAboveFullscreen` (lib/defaults.nix, on for DESK) through `swayAboveFullscreenOverlay` in `lib/flake-base.nix`, which appends to the sway-unwrapped patch list after the xwayland zero-scaling overlay; the `for_window [app_id="^aionmeter$"] above_fullscreen enable` rule is emitted by `user/wm/sway/swayfx-config.nix` only under the flag (sway-apps rejects unknown command words, and an unpatched sway would too), while floating/border/sticky for the same app_id live in `user/wm/sway/apps/DESK.json`. Measured 2026-10-14 in a nested headless sway 1.11 (foot fullscreen, wev floating with the rule, clicks via `wlrctl pointer click left`): the float is drawn over the fullscreen view and gets press+release, `disable` hides it and the click goes to the fullscreen view, `toggle`, `sticky toggle` and `floating toggle` round trips keep it working (tiled it is hidden, by design), and it also stays above `fullscreen enable global`. Testing trick: a wlrctl virtual pointer lives for one call only and the client binds wl_pointer after the press, so hold one device open with `strace -e inject=exit_group:delay_enter=100000000 wlrctl pointer move 0 0 &` before clicking. Rebuild cost: sway only (seconds; wlroots is already the zero-scaling build).
+
+**Status**: Active (local, no upstream PR)
+
 ### PCloud Fixes (`patches/pcloudfixes.nix`)
 
 **Purpose**: Fixes for pCloud application

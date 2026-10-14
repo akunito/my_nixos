@@ -303,8 +303,18 @@ let
       patches = (old.patches or [ ]) ++ [ ../patches/sway-xwayland-zero-scaling.patch ];
     });
   };
+  # `above_fullscreen` command — see swayAboveFullscreen in lib/defaults.nix.
+  # Appends to whatever patches the overlays before it left on sway-unwrapped
+  # (zero scaling), so both apply; the patch applies on either base.
+  swayAboveFullscreenOverlay = final: prev: {
+    sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/sway-above-fullscreen.patch ];
+    });
+  };
   zeroScalingOverlays = lib.optional (systemSettingsWithFonts.swayXwaylandZeroScaling or false)
-    swayXwaylandZeroScalingOverlay;
+    swayXwaylandZeroScalingOverlay
+    ++ lib.optional (systemSettingsWithFonts.swayAboveFullscreen or false)
+    swayAboveFullscreenOverlay;
 
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {

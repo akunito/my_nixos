@@ -1,0 +1,187 @@
+sway: `above_fullscreen enable|disable|toggle` — a floating container is drawn, hit-tested and focusable above a fullscreen view as if it were transient for it (A2M-50: AION 2 meter card, a normal Wayland toplevel, over the game fullscreen in gamescope; full sway control of the float: Alt+drag/resize, partly off-screen, sticky).
+
+Gates: transaction.c arrange_workspace_floating (reparent into root->layers.fullscreen / fullscreen_global; pointer hit-testing follows the scene graph), container_obstructing_fullscreen_container (seat focus and `focus`), view_is_visible. Only while floating (container_is_above_fullscreen): tiled it stays hidden under the fullscreen view. Plain field like is_sticky, no pending/current copy. Disabling it while focused hands focus back to the fullscreen view. Like a transient, a newly mapped float still does not take focus from the fullscreen view (should_focus is untouched). get_tree exposes "above_fullscreen".
+
+Measured 2026-10-14, nested headless sway 1.11 (pixman, 1280x720) with this patch on top of the xwayland zero-scaling patch: foot fullscreen + wev floating 500x300 at 200,150 with `for_window [app_id="wev"] above_fullscreen enable`; clicks with `wlrctl pointer click left` at 450,300. Mapped: visible=true, above_fullscreen=true, drawn over foot, click delivered press+release (button 272) to wev and focused it with fullscreen_mode still 1. `above_fullscreen disable`: visible=false, not drawn, focus back on foot, click reached foot (0 new wev events). `toggle`: drawn again, click reaches wev. `sticky toggle` (sticky=true) and back: still drawn and clickable. `floating toggle`: tiled -> visible=false under the fullscreen view; toggled floating again -> drawn and clickable, flag kept. `fullscreen enable global` on foot: still drawn and clickable. Applies on pristine 1.11 and after sway-xwayland-zero-scaling.patch.
+
+---
+diff --git a/include/sway/commands.h b/include/sway/commands.h
+index 5210d3b..824f593 100644
+--- a/include/sway/commands.h
++++ b/include/sway/commands.h
+@@ -104,6 +104,7 @@ struct sway_container *container_find_resize_parent(struct sway_container *con,
+ sway_cmd cmd_exec_validate;
+ sway_cmd cmd_exec_process;
+ 
++sway_cmd cmd_above_fullscreen;
+ sway_cmd cmd_allow_tearing;
+ sway_cmd cmd_assign;
+ sway_cmd cmd_bar;
+diff --git a/include/sway/tree/container.h b/include/sway/tree/container.h
+index 4fb2d72..4ee58e5 100644
+--- a/include/sway/tree/container.h
++++ b/include/sway/tree/container.h
+@@ -113,6 +113,10 @@ struct sway_container {
+ 	// directly; it'll also check that the container is floating.
+ 	bool is_sticky;
+ 
++	// Drawn and focusable above a fullscreen view as if transient for it,
++	// while floating. Use `container_is_above_fullscreen`.
++	bool above_fullscreen;
++
+ 	// For C_ROOT, this has no meaning
+ 	// For other types, this is the position in layout coordinates
+ 	// Includes borders
+@@ -347,6 +351,8 @@ bool container_is_sticky(struct sway_container *con);
+ 
+ bool container_is_sticky_or_child(struct sway_container *con);
+ 
++bool container_is_above_fullscreen(struct sway_container *con);
++
+ /**
+  * This will destroy pairs of redundant H/V splits
+  * e.g. H[V[H[app app]] app] -> H[app app app]
+diff --git a/sway/commands.c b/sway/commands.c
+index c2c12ee..354cd02 100644
+--- a/sway/commands.c
++++ b/sway/commands.c
+@@ -112,6 +112,7 @@ static const struct cmd_handler config_handlers[] = {
+ 
+ /* Runtime-only commands. Keep alphabetized */
+ static const struct cmd_handler command_handlers[] = {
++	{ "above_fullscreen", cmd_above_fullscreen },
+ 	{ "allow_tearing", cmd_allow_tearing },
+ 	{ "border", cmd_border },
+ 	{ "create_output", cmd_create_output },
+diff --git a/sway/commands/above_fullscreen.c b/sway/commands/above_fullscreen.c
+new file mode 100644
+index 0000000..333d276
+--- /dev/null
++++ b/sway/commands/above_fullscreen.c
+@@ -0,0 +1,35 @@
++#include "sway/commands.h"
++#include "sway/input/seat.h"
++#include "sway/tree/arrange.h"
++#include "sway/tree/container.h"
++#include "util.h"
++
++struct cmd_results *cmd_above_fullscreen(int argc, char **argv) {
++	struct cmd_results *error = NULL;
++	if ((error = checkarg(argc, "above_fullscreen", EXPECTED_EQUAL_TO, 1))) {
++		return error;
++	}
++	struct sway_container *container = config->handler_context.container;
++	if (container == NULL) {
++		return cmd_results_new(CMD_FAILURE, "No current container");
++	}
++
++	container->above_fullscreen =
++		parse_boolean(argv[0], container->above_fullscreen);
++
++	// Disabled while focused: hand focus back to the fullscreen view instead
++	// of leaving keyboard input on a container that is no longer drawn.
++	struct sway_container *fs =
++		container_obstructing_fullscreen_container(container);
++	struct sway_seat *seat = config->handler_context.seat;
++	struct sway_container *focus = seat_get_focused_container(seat);
++	if (fs && focus && (focus == container ||
++			container_has_ancestor(focus, container))) {
++		seat_set_focus_container(seat, fs);
++	}
++
++	if (container->pending.workspace) {
++		arrange_workspace(container->pending.workspace);
++	}
++	return cmd_results_new(CMD_SUCCESS, NULL);
++}
+diff --git a/sway/desktop/transaction.c b/sway/desktop/transaction.c
+index 325a302..51cbb16 100644
+--- a/sway/desktop/transaction.c
++++ b/sway/desktop/transaction.c
+@@ -515,9 +515,12 @@ static void arrange_workspace_floating(struct sway_workspace *ws) {
+ 		}
+ 
+ 		if (root->fullscreen_global) {
+-			if (container_is_transient_for(floater, root->fullscreen_global)) {
++			if (floater->above_fullscreen ||
++					container_is_transient_for(floater, root->fullscreen_global)) {
+ 				layer = root->layers.fullscreen_global;
+ 			}
++		} else if (floater->above_fullscreen && ws->current.fullscreen) {
++			layer = root->layers.fullscreen;
+ 		} else {
+ 			for (int i = 0; i < root->outputs->length; i++) {
+ 				struct sway_output *output = root->outputs->items[i];
+diff --git a/sway/ipc-json.c b/sway/ipc-json.c
+index d3adedd..4278592 100644
+--- a/sway/ipc-json.c
++++ b/sway/ipc-json.c
+@@ -718,6 +718,8 @@ static void ipc_json_describe_container(struct sway_container *c, json_object *o
+ 		view_is_urgent(c->view) : container_has_urgent_child(c);
+ 	json_object_object_add(object, "urgent", json_object_new_boolean(urgent));
+ 	json_object_object_add(object, "sticky", json_object_new_boolean(c->is_sticky));
++	json_object_object_add(object, "above_fullscreen",
++			json_object_new_boolean(c->above_fullscreen));
+ 
+ 	// sway doesn't track the floating reason, so we can't use "auto_on" or "user_off"
+ 	json_object_object_add(object, "floating",
+diff --git a/sway/meson.build b/sway/meson.build
+index 8042c89..e544268 100644
+--- a/sway/meson.build
++++ b/sway/meson.build
+@@ -42,6 +42,7 @@ sway_sources = files(
+ 	'config/seat.c',
+ 	'config/input.c',
+ 
++	'commands/above_fullscreen.c',
+ 	'commands/allow_tearing.c',
+ 	'commands/assign.c',
+ 	'commands/bar.c',
+diff --git a/sway/tree/container.c b/sway/tree/container.c
+index 0385d7c..ed5ef47 100644
+--- a/sway/tree/container.c
++++ b/sway/tree/container.c
+@@ -636,7 +636,8 @@ struct sway_container *container_obstructing_fullscreen_container(struct sway_co
+ 	struct sway_workspace *workspace = container->pending.workspace;
+ 
+ 	if (workspace && workspace->fullscreen && !container_is_fullscreen_or_child(container)) {
+-		if (container_is_transient_for(container, workspace->fullscreen)) {
++		if (container_is_above_fullscreen(container) ||
++				container_is_transient_for(container, workspace->fullscreen)) {
+ 			return NULL;
+ 		}
+ 		return workspace->fullscreen;
+@@ -644,7 +645,8 @@ struct sway_container *container_obstructing_fullscreen_container(struct sway_co
+ 
+ 	struct sway_container *fullscreen_global = root->fullscreen_global;
+ 	if (fullscreen_global && container != fullscreen_global && !container_has_ancestor(container, fullscreen_global)) {
+-		if (container_is_transient_for(container, fullscreen_global)) {
++		if (container_is_above_fullscreen(container) ||
++				container_is_transient_for(container, fullscreen_global)) {
+ 			return NULL;
+ 		}
+ 		return fullscreen_global;
+@@ -1717,6 +1719,11 @@ bool container_is_sticky_or_child(struct sway_container *con) {
+ 	return container_is_sticky(container_toplevel_ancestor(con));
+ }
+ 
++bool container_is_above_fullscreen(struct sway_container *con) {
++	struct sway_container *toplevel = container_toplevel_ancestor(con);
++	return toplevel->above_fullscreen && container_is_floating(toplevel);
++}
++
+ static bool is_parallel(enum sway_container_layout first,
+ 		enum sway_container_layout second) {
+ 	switch (first) {
+diff --git a/sway/tree/view.c b/sway/tree/view.c
+index 9a5cf06..d5a189a 100644
+--- a/sway/tree/view.c
++++ b/sway/tree/view.c
+@@ -1133,6 +1133,7 @@ bool view_is_visible(struct sway_view *view) {
+ 	struct sway_container *fs = root->fullscreen_global ?
+ 		root->fullscreen_global : workspace->fullscreen;
+ 	if (fs && !container_is_fullscreen_or_child(view->container) &&
++			!container_is_above_fullscreen(view->container) &&
+ 			!container_is_transient_for(view->container, fs)) {
+ 		return false;
+ 	}

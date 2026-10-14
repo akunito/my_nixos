@@ -1144,6 +1144,14 @@
     # on every Xwayland start, because lazy Xwayland exits 10 s after its
     # last client and an xrdb at login is gone by the time Steam starts.
     swayXwaylandDpi = 96;
+    # Local sway patch patches/sway-above-fullscreen.patch: command
+    # `above_fullscreen enable|disable|toggle` makes a floating container
+    # behave like a transient of the fullscreen view (drawn above it, gets
+    # pointer input, focusable). For the AION 2 meter card as a Wayland
+    # toplevel over the fullscreen gamescope window (A2M-50). Rebuilds sway
+    # only; the for_window rule using it is emitted only with this flag, since
+    # an unpatched sway rejects the unknown command.
+    swayAboveFullscreen = false;
 
     # Monitor management (imperative GUI approach)
     nwgDisplaysEnable = false;           # Install nwg-displays for visual monitor config
