@@ -4,6 +4,14 @@
 # store paths: REA's defaults (/usr/bin/prlimit…) do not exist on NixOS.
 let
   ghidra = pkgs.ghidra;          # 12.1.4 — REA requires 12.1.x
+  # Extensions (mejoras.md M0, audited 2026-10-14). NOT via GHIDRA_INSTALL_DIR:
+  # withExtensions is a symlinkJoin holding only Extensions/ + wrappers, and REA
+  # requires support/analyzeHeadless, application.properties and the native
+  # decompiler under the install dir. nixpkgs' Ghidra patch reads NIX_GHIDRAHOME as
+  # an extra root, and REA forwards the whole environment to the JVM it launches.
+  # wasm is broken for 12.1.4 in nixpkgs; kaiju changes every disassembly and waits
+  # for the M1 benchmark.
+  ghidraExt = pkgs.ghidra.withExtensions (e: [ e.ghidra-golanganalyzerextension e.findcrypt ]);
   jdk = pkgs.jdk21;
   py = pkgs.python3.withPackages (ps: [ ps.pwntools ]);
   tools = with pkgs; [
@@ -30,6 +38,7 @@ pkgs.dockerTools.buildLayeredImage {
       "GHIDRA_INSTALL_DIR=${ghidra}/lib/ghidra"
       "JAVA_HOME=${jdk}"
       "GHIDRA_HEADLESS_MAXMEM=4G"
+      "NIX_GHIDRAHOME=${ghidraExt}/lib/ghidra/Ghidra"
       "REA_TSHARK_COMMAND=${bin pkgs.wireshark-cli}/tshark"
       "REA_CAPINFOS_COMMAND=${bin pkgs.wireshark-cli}/capinfos"
       "REA_TSHARK_PRLIMIT_COMMAND=${bin pkgs.util-linux}/prlimit"

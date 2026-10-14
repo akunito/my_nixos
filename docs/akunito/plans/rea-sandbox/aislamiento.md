@@ -50,6 +50,17 @@ REA usa rutas absolutas y algunas por defecto que no existen en NixOS (`/usr/bin
 - Sin red por defecto. Variante "red falsa": sumidero DNS más `mitmproxy` dentro del guest.
 - Android dinámico: emulador dentro de la VM. KVM anidado activo en DESK (`kvm_amd nested=1`); será lento y sin GPU.
 
+**Prototipo F2 validado (2026-10-14, flake en el scratchpad, microvm.nix `f13928fe`):**
+- **Arranque:** la VM QEMU arranca **como el usuario**, sin root, en unos segundos.
+- **QEMU:** `-sandbox on` y **ningún** `-netdev` ni `-nic`. `storeOnDisk = true`: el guest tiene su propio store y el `/nix/store` del host no se comparte, porque contiene configuraciones generadas con datos de secretos.
+- **Carpetas:** el caso se comparte por 9p (`security_model=none`; `target` y `ctl` en solo lectura) desde rutas de sesión fijas (`$XDG_RUNTIME_DIR/rea-vm/{target,out,work,ctl}`), que el lanzador enlaza al caso antes de arrancar. Dentro, un servicio lee la ruta del caso de `ctl/case` y lo monta en **su misma ruta absoluta**. Con 9p y `security_model=none`, lo que escribe el guest queda a nombre del usuario que ejecuta QEMU.
+- **MCP por vsock (CID fijo, puerto 5000):** dentro, `socat VSOCK-LISTEN:5000,fork EXEC:<script>,su=rea` (uid 1000). Desde el host, `socat STDIO VSOCK-CONNECT:<cid>:5000`. Con `open_binary` + `search_strings`, Ghidra encontró la cadena del secreto de la caja fuerte.
+- **Gotchas medidos:**
+  1. El escritorio exporta un `LD_LIBRARY_PATH` global (alsa-lib, sane, pipewire-jack) que rompe cualquier binario de otra versión de nixpkgs (`GLIBC_2.43 not found`). El lanzador debe arrancar QEMU con `env -u LD_LIBRARY_PATH`.
+  2. `rea mcp` termina al recibir EOF en stdin, antes de responder. Un cliente de prueba debe mantener stdin abierto; Claude Code ya lo hace.
+  3. `pkill -f <patrón>` también mata al propio shell si el patrón aparece en su línea de comandos. Hay que parar la VM por PID exacto o con `microvm.socket`.
+- **Para el módulo real:** usar el `pkgs-unstable` de la dotfiles (el prototipo usó otro nodo y cargó Ghidra 12.1.2), compartir la lista de herramientas con la imagen, un CID por sesión con un lock (o una sola VM a la vez) y parada limpia.
+
 ## Carril web (F3)
 
 Va **en la microVM**, no en un contenedor rootless:

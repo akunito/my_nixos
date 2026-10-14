@@ -26,7 +26,7 @@ Parte del plan [REA en un sandbox](README.md). Investigación del 2026-10-14 (tr
   - **extensiones** (la imagen usa el Ghidra pelado);
   - **firmas** de libc, musl, libstdc++, OpenSSL, zlib y Rust std;
   - **ninguna forma de medir** si un cambio mejora o empeora la salida.
-- **Ghidra 12.2 ya salió** (octubre de 2026) y **exige JDK 25**. REA 6.4.0 verifica 12.1.x. **Mantener 12.1.x fijado** hasta que nixpkgs y REA la soporten. `rea-update` lo comprueba.
+- **Ghidra 12.2 está anunciada para octubre de 2026 y exigirá JDK 25.** El último tag publicado es `Ghidra_12.1.4_build`, y `master` ya es 12.3-DEV. REA 6.4.0 verifica 12.1.x. **Mantener 12.1.x fijado** hasta que nixpkgs y REA soporten la 12.2. `rea-update` lo comprueba.
 
 ## Candidatos (verificados el 2026-10-14)
 
@@ -47,7 +47,8 @@ Parte del plan [REA en un sandbox](README.md). Investigación del 2026-10-14 (tr
 | `ghidra-extensions.ghidra-golanganalyzerextension` 1.4.0 | MIT (nixpkgs) | Sí, en nixpkgs | Go 1.6–1.27: nombres, tipos, strings |
 | `ghidra-extensions.kaiju` 260910 | BSD (SEI) | Sí, en nixpkgs | Fn2Hash/Fn2YARA, mejoras de desensamblado, importador de OOAnalyzer (C++) |
 | `ghidra-extensions.findcrypt` 3.1.10 | GPL-3 | Sí, en nixpkgs | Constantes criptográficas |
-| `ghidra-extensions.wasm` 2.4.0, `ghidra-firmware-utils` | — | Sí, en nixpkgs | Loader de WASM, formatos de firmware |
+| `ghidra-extensions.wasm` 2.4.0 | GPL-3 | **No: broken para 12.1.4 en nixpkgs** | Loader de WASM |
+| `ghidra-firmware-utils`, `machinelearning` (detector de inicios de función), `ghidra-delinker-extension` | — | Sí, en nixpkgs | Firmware; funciones en binarios stripped; delinker |
 | **rizin sigdb** (rizinorg) | LGPL-3 | Datos | Firmas FLIRT generadas con `rz-sign` (abierto): musl, libc6, libstdc++ 5–12, libc++, OpenSSL, zlib, libsodium, VS2008–2022 |
 | **capa sigs** (mandiant) | Apache-2.0 | Datos | Firmas de CRT MSVC, ATL/MFC |
 | SigAnalyzer (blend-tea) | MIT | Recompilar (build para 12.0.4) | Aplica `.sig` FLIRT como analizador, también en headless. 7★, inmaduro |
@@ -76,27 +77,45 @@ Parte del plan [REA en un sandbox](README.md). Investigación del 2026-10-14 (tr
 
 ## Plan de mejoras (M)
 
-**M0 — ya, si la auditoría independiente lo aprueba (cambio pequeño): extensiones de nixpkgs en la imagen.**
-- `ghidra.withExtensions (e: [ e.ghidra-golanganalyzerextension e.kaiju e.findcrypt e.wasm ])` en `user/app/rea/image.nix`.
-- **Prueba:** `rea doctor` en verde con la misma versión 12.1.4; un binario Go propio con nombres recuperados frente a sin extensión; la vault de F1 sigue saliendo igual.
-- **Riesgo:** las extensiones corren dentro de Ghidra con el binario hostil, así que son más superficie de ataque. Van dentro de `krun` y la microVM, igual que Ghidra.
+**M0 — aplicado tras la auditoría independiente (2026-10-14). Veredicto: aplicar con cambios.**
+- **Cambios que impuso la auditoría:**
+  - `wasm` está marcado `broken` para 12.1.4 en nixpkgs.
+  - **`GHIDRA_INSTALL_DIR` no se toca.** `withExtensions` es un `symlinkJoin` que solo contiene `Extensions/` y wrappers, y REA necesita `support/analyzeHeadless`, `application.properties` y el decompilador nativo dentro del directorio de instalación. Las extensiones se cargan con `NIX_GHIDRAHOME=${ghidraExt}/lib/ghidra/Ghidra`: el parche de nixpkgs añade esa raíz, y REA pasa todo el entorno a la JVM que lanza.
+  - **`kaiju` queda fuera** hasta M2/M3. Sus analizadores van activos por defecto y cambian el desensamblado de todos los binarios, con un arranque limitado a 330 s.
+- **Aplicado:** `ghidra-golanganalyzerextension` + `findcrypt` (`user/app/rea/image.nix`).
+- **Medido contra la imagen de F1 sin extensiones:** `doctor` en verde (12.1.4, headless, decompilador nativo); tiempo igual (~43 s).
 
-**M1 — banco de medida (tras F2).**
+  | Binario de prueba | Sin extensiones (F1) | Con M0 |
+  |---|---|---|
+  | Go sin símbolos (`-s -w`) | no encuentra `checkLicense` ni `main.main` | `main.checkLicense`, `main.main` |
+  | C con la S-box de AES | `DAT_00102020[…]` | `CRYPT_AES_Encryption_SBox[…]` |
+- **Gotcha:** `NIX_GHIDRAHOME=` vacío **no** desactiva las extensiones. El control tiene que ser otra imagen.
+- **Seguridad, revisado por la auditoría:** ni la extensión de Go ni findcrypt tienen red, `Runtime.exec` ni auto-actualización. findcrypt es GPL-3, sin obligaciones mientras la imagen no se distribuya.
+- **Pendiente:** medir los analizadores de Go nativos y los de la extensión juntos. Si se pisan, decidir cuál queda.
+
+**M1 — banco de medida.** Un **M1 mínimo puede adelantarse ya:** contar funciones con nombre, errores del decompilador y tiempo sobre los binarios de prueba propios. El M1 completo va tras F2.
+- **Legal (auditoría):** la EULA de Hex-Rays prohíbe a **sus licenciatarios** publicar benchmarks sin invitar a Hex-Rays. Las salidas de IDA y Binja del dataset de DecBench son **solo referencia de métrica**: nunca entran en M2 (firmas), en M4 (prompts o entrenamiento) ni en sesiones de REA, y los resultados van a `workbench/`, no a docs públicas.
+- **Cadena de suministro:** DecBench necesita pip (angr, lief…), Joern (JVM, no está en nixpkgs) y el dataset de Hugging Face. Se empaqueta como derivación Nix (nixpkgs tiene `angr`, `lief` y `retdec`) y el dataset va por `fetchurl` con hash. Así corre dentro del sandbox sin red.
 - Fork de DecBench a `akunito/decbench`, ejecutado **dentro del sandbox** (contenedor `krun`, sin red) con angr + Ghidra, más su dataset con salidas publicadas de IDA/Binja como referencia.
 - Añadir las métricas de gotos de sailr-eval.
 - Corpus propio: C, C++, Rust y Go compilados con varios compiladores y niveles `-O`, construido con derivaciones Nix y con DWARF guardado aparte como ground truth.
 - **Salida:** la tabla "dónde pierde Ghidra", por métrica.
 
-**M2 — firmas abiertas.**
+**M2 — firmas abiertas.** **Ojo (auditoría):** SigAnalyzer lee las firmas de `<UserSettingsDir>/signatures/<Processor>/*.sig`, y REA crea un `XDG_CONFIG_HOME` vacío en cada sesión. Hay que parchearlo (o escribir un analizador propio) para que lea las firmas del directorio de la extensión, y recompilarlo para 12.1.4.
+- Cobertura real de rizin sigdb: solo ELF x86-64; libc++ 7–15, libgcc 7–12, VS2005–2022; nada de Rust; estancado desde 2023-08.
+- capa sigs: generadas por Mandiant con FLAIR (herramienta de Hex-Rays) a partir de datos propios, no derivadas de las firmas de IDA. Usarlas o no lo decide Diego.
+- FIDB de ATR: 171 ficheros de junio de 2024 (~Ghidra 11.1); el esquema FID `VERSION = 6` no ha cambiado de 10.0 a 12.1.4, así que deberían cargar (por esquema, sin probar).
+- Para glibc, musl y Rust std, Ghidra trae `CreateMultipleLibraries.java`, que genera FID desde los `.a` de nixpkgs.
 - rizin sigdb + capa sigs con SigAnalyzer recompilado para 12.1.4 (`buildGhidraExtension`).
 - FIDB de ATR.
 - FID/BSim propios de glibc, musl y Rust std generados desde nixpkgs.
 - **Medido con M1:** porcentaje de funciones identificadas antes y después.
 
-**M3 — motores alternativos.** Kuna como decompilador alternativo en headless, comparado con el nativo en M1. Nunca lo sustituye. Opcional: RetDec y Reko desde los runners de dogbolt.
+**M3 — motores alternativos.** Kuna va en una **imagen aparte** con un `GHIDRA_INSTALL_DIR` alternativo (un `symlinkJoin` que sustituye `Decompiler/os/linux_x86_64/decompile`), con commit fijado y compilado con Nix. Nunca es el motor por defecto. Kuna como decompilador alternativo en headless, comparado con el nativo en M1. Nunca lo sustituye. Opcional: RetDec y Reko desde los runners de dogbolt.
 
 **M4 — IA local como anotación.**
-- LLM4Decompile-Ref 9B-v2 en el router de `llama-server` del NAS, y DAILA/VarBERT para nombres.
+- LLM4Decompile-Ref 9B-v2 (pesos MIT, base Yi-Coder-9B, referencia Ghidra 11.0.3: con 12.1.4 hay que medir) en el router de `llama-server` del NAS.
+- VarBERT **solo con su modelo entrenado con Ghidra**: sus modelos usaron salida de IDA 7.6 y de Ghidra 10.4, y el de IDA se excluye por la misma razón que ReSym/DIRTY. DAILA ya no usa LiteLLM (v3.20 usa pydantic-ai) y `libbs` es ahora `declib` ≥ 4.5, en modo PyGhidra.
 - Integración: una herramienta (fuera de REA, en `rea-cli` o en un MCP propio) que manda el pseudocódigo de una función y guarda la propuesta **como comentario**.
 - **Medido con M1** y a mano en 20–30 funciones de binarios conocidos.
 - **VRAM:** el 9B Q4 (~6 GB) y el Qwen 27B (~17 GB) apenas caben juntos en 24 GB. El router carga un preset u otro.
