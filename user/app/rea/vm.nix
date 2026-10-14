@@ -38,12 +38,23 @@ let
     HTTPS_PROXY = "http://127.0.0.1:3128";
     HTTP_PROXY = "http://127.0.0.1:3128";
     NODE_USE_ENV_PROXY = "1"; # Node >= 24: fetch (WebSourceMapFetcher) honours the proxy
+  } // pkgs.lib.optionalAttrs (!web) {
+    HOPPER_LAUNCHER_PATH = "/opt/hopper/bin/Hopper";
   } // pkgs.lib.optionalAttrs dynamic {
     # Executed targets inherit REA's environment: give them an ordinary userland too
     # (curl was "command not found" with the REA-only PATH, measured).
     PATH = reaEnv.env.PATH + ":/run/current-system/sw/bin";
   };
   run = "/run/user/${toString uid}/rea-vm";
+  hopper = import ./hopper.nix { inherit pkgs; };
+  # REA's Linux Hopper demo path hardcodes /usr/bin/python3 (BridgeLauncher.ts) and the
+  # helper loads libX11/libXtst by soname through ctypes; nixpkgs' glibc has no system
+  # search path, so the wrapper supplies them. `exec -a` keeps argv[0] = /usr/bin/python3,
+  # which REA's ownership check compares against the command line.
+  hopperPython = pkgs.writeShellScript "rea-usr-bin-python3" ''
+    export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [ pkgs.libx11 pkgs.libxtst ]}
+    exec -a /usr/bin/python3 ${pkgs.python3}/bin/python3 "$@"
+  '';
   # Dynamic lane: every HTTP(S) request gets an empty 200 from mitmproxy itself (the flow
   # is still recorded); nothing tries to reach an upstream that does not exist.
   fakeResponder = pkgs.writeText "rea-fake-responder.py" ''
@@ -293,6 +304,20 @@ let
             journalctl -k -f -o short-iso | grep --line-buffered -E 'REA-(UDP|ICMP|OTHER)' >> /mnt/net/packets.log
           '';
         };
+        # Hopper demo (F6): the vendor binary runs unpatched through nix-ld (REA pins its
+        # sha256), with the paths REA hardcodes for a Linux install.
+        programs.nix-ld = lib.mkIf (!web) {
+          enable = true;
+          libraries = with pkgs; [ qt6.qtbase libx11 libxrender libbsd libglvnd stdenv.cc.cc.lib zlib gmp ];
+        };
+        systemd.tmpfiles.rules = lib.optionals (!web) [
+          "L+ /opt/hopper - - - - ${hopper}/opt/hopper"
+          "L+ /usr/bin/python3 - - - - ${hopperPython}"
+          "L+ /usr/bin/Xvfb - - - - ${pkgs.xvfb}/bin/Xvfb"
+          "L+ /usr/bin/xauth - - - - ${pkgs.xauth}/bin/xauth"
+          "L+ /usr/bin/unshare - - - - ${pkgs.util-linux}/bin/unshare"
+        ];
+        fonts.enableDefaultPackages = !web;
         environment.systemPackages = reaEnv.tools ++ lib.optional web pkgs.chromium
           ++ lib.optionals dynamic [ pkgs.dnsmasq pkgs.iproute2 pkgs.iptables pkgs.curl pkgs.wget pkgs.python3 pkgs.dnsutils pkgs.netcat-openbsd pkgs.strace pkgs.ltrace ];
       })

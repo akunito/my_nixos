@@ -72,6 +72,17 @@ Ningún programa educativo aplica: IDA Classroom es solo para instituciones.
 
 Los motores comerciales son software propietario que se ejecuta dentro del sandbox. Su telemetría (la EULA de IDA recoge datos de uso, §4.2(g)) solo sale si el carril tiene red.
 
+**Estado F6 (2026-10-14): demo de Hopper 6.4.2 en la microVM (niveles 1 y 2, no en la web), probada con `rea-claude --ask` sobre `vault`.** REA lanzó Hopper en su Xvfb privado, pulsó "demo" y devolvió el pseudocódigo del validador.
+- **Paquete oficial `.pkg.tar.xz`, fijado por el SHA-1 que REA pone en `LinuxHopper.ts`:**
+  - el servidor contesta 403 si la petición no lleva las cabeceras de REA (`accept: application/json`, `user-agent: rea-installer`); medido;
+  - **sin patchelf ni strip** (`dontFixup`), porque REA compara el sha256 del lanzador (`0294ced1…`, coincide);
+  - corre con **`nix-ld`** dentro del invitado, que aporta Qt6, X11/Xrender, libbsd, glvnd, libstdc++, zlib y gmp.
+- **Rutas fijas que exige REA**, creadas con tmpfiles:
+  - `/opt/hopper` y `/usr/bin/{Xvfb,xauth,unshare}`;
+  - `/usr/bin/python3` es un envoltorio que da a `ctypes` las rutas de libX11 y libXtst (el glibc de nixpkgs no tiene ruta de sistema) y conserva `argv[0]` con `exec -a`, porque REA compara la línea de comando del proceso que lanza.
+- **Fuera del nivel 0**: la imagen no lo lleva; para nuestros binarios basta Ghidra.
+- **Pendiente de Diego:** JEB CE (crear la cuenta y ver si incluye MCP) e IDA Free (solo nivel 0, con su nube). Hopper Personal (99 €) solo si la demo se queda corta.
+
 ## Cadena de suministro y actualizaciones
 
 - Imagen desde **nuestro fork en un tag fijado**. Dependencias por `package-lock.json` (`npmDepsHash`); descargas con sha256.
