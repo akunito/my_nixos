@@ -55,7 +55,8 @@ let
     build-system = [ pkgs.python3Packages.setuptools ];
     dependencies = [ pkgs.python3Packages.pygobject3 ];
     nativeBuildInputs = [ pkgs.wrapGAppsHook4 pkgs.gobject-introspection ];
-    buildInputs = [ pkgs.gtk4 pkgs.libadwaita ];
+    # gtk4-layer-shell: its typelib reaches GI_TYPELIB_PATH through gappsWrapperArgs.
+    buildInputs = [ pkgs.gtk4 pkgs.libadwaita pkgs.gtk4-layer-shell ];
     # The GTK4 wrapper hook must not double-wrap the python entry point.
     dontWrapGApps = true;
     preFixup = ''
@@ -69,8 +70,18 @@ let
         --set-default SWAY_APPS_SWAY_FEATURES "${swayFeatures}"
         --set-default SWAY_APPS_GAPS_INNER "${toString (config.wayland.windowManager.sway.config.gaps.inner or 8)}"
         --set-default SWAY_APPS_XWAYLAND_DPI "${toString (systemSettings.swayXwaylandDpi or 96)}"
+        --set-default SWAY_APPS_GRIM_BIN "${pkgs.grim}/bin/grim"
         --prefix PATH : "${lib.makeBinPath [ pkgs.git pkgs.libnotify pkgs.coreutils ]}"
       )
+    '';
+    # The overview (sway_apps/overview_app.py) needs libgtk4-layer-shell loaded before
+    # libwayland-client, i.e. LD_PRELOAD; only in its own entry point, never in
+    # `sway-apps` itself (every git/swaymsg child would load GTK). The process
+    # drops it from its environment once started.
+    postFixup = ''
+      makeWrapper $out/bin/sway-apps $out/bin/sway-apps-overview \
+        --set LD_PRELOAD "${pkgs.gtk4-layer-shell}/lib/libgtk4-layer-shell.so" \
+        --add-flags "overview run"
     '';
     doCheck = false;
     meta.description = "Window rules and startup apps manager for Sway";
@@ -90,7 +101,8 @@ let
       export E2E_WAYBAR="''${E2E_WAYBAR:-${config.programs.waybar.package}/bin/waybar}"
       export E2E_GRIM="${pkgs.grim}/bin/grim"
       export E2E_PYTHON="${e2ePython}/bin/python3"
-      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 libadwaita glib gdk-pixbuf pango harfbuzz graphene gobject-introspection ])}"
+      export GI_TYPELIB_PATH="${lib.makeSearchPathOutput "lib" "lib/girepository-1.0" (with pkgs; [ gtk4 libadwaita glib gdk-pixbuf pango harfbuzz graphene gobject-introspection gtk4-layer-shell ])}"
+      export E2E_LAYER_SHELL="${pkgs.gtk4-layer-shell}/lib/libgtk4-layer-shell.so"
       export E2E_TMP="''${E2E_TMP:-''${XDG_RUNTIME_DIR:-/tmp}/sway-apps-e2e}"
       export E2E_RUNTIME_ROOT="''${E2E_RUNTIME_ROOT:-''${XDG_RUNTIME_DIR:-/tmp}}"
       mkdir -p "$E2E_TMP"
@@ -142,6 +154,26 @@ in
         Type = "dbus";
         BusName = "org.kde.StatusNotifierWatcher";
         ExecStart = "${sway-apps}/bin/sway-apps tray-watcher";
+        Restart = "always";
+        RestartSec = "1";
+      };
+      Install = {
+        WantedBy = [ "sway-session.target" ];
+      };
+    };
+
+    # Hyper+Tab overview (sway_apps/overview.py): resident so a key press costs no
+    # process start; panels are pre-created hidden layer surfaces.
+    systemd.user.services.sway-apps-overview = {
+      Unit = {
+        Description = "sway-apps: Hyper+Tab window overview";
+        PartOf = [ "sway-session.target" ];
+        After = [ "sway-session.target" ];
+      };
+      Service = {
+        Type = "simple";
+        EnvironmentFile = "-%t/sway-session.env";
+        ExecStart = "${sway-apps}/bin/sway-apps-overview";
         Restart = "always";
         RestartSec = "1";
       };

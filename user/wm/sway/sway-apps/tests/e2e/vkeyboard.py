@@ -4,6 +4,7 @@ The nested sway runs with WLR_LIBINPUT_NO_DEVICES, so it has no keyboard: this o
 becomes the seat keyboard, and sway reads floating_modifier and mouse-binding
 modifiers from it. Reads commands on stdin, answers "ok" after a display sync:
   mods MASK     depressed modifier mask (Shift 1, Control 4, Mod1 8, Mod4 64); 0 releases
+  key NAME      press + release one key of KEYS (Tab, Return, Escape, Left, Right, Up, Down, space)
 """
 from __future__ import annotations
 
@@ -11,15 +12,22 @@ import os
 import socket
 import struct
 import sys
+import time
 
 from vpointer import Wire, s_arg
 
+# evdev codes (xkb keycode - 8) of the non-modifier keys in KEYMAP.
+KEYS = {"Escape": 1, "Tab": 15, "Return": 28, "space": 57, "Up": 103, "Left": 105, "Right": 106, "Down": 108}
+
 KEYMAP = b"""xkb_keymap {
-xkb_keycodes "e2e" { minimum = 8; maximum = 255; <LFSH> = 50; <LCTL> = 37; <LALT> = 64; <LWIN> = 133; };
+xkb_keycodes "e2e" { minimum = 8; maximum = 255; <LFSH> = 50; <LCTL> = 37; <LALT> = 64; <LWIN> = 133;
+  <ESC> = 9; <TAB> = 23; <RTRN> = 36; <SPCE> = 65; <UP> = 111; <LEFT> = 113; <RGHT> = 114; <DOWN> = 116; };
 xkb_types "e2e" { type "ONE_LEVEL" { modifiers = none; map[none] = Level1; level_name[Level1] = "Any"; }; };
 xkb_compatibility "e2e" { };
 xkb_symbols "e2e" {
   key <LFSH> { [ Shift_L ] }; key <LCTL> { [ Control_L ] }; key <LALT> { [ Alt_L ] }; key <LWIN> { [ Super_L ] };
+  key <ESC> { [ Escape ] }; key <TAB> { [ Tab ] }; key <RTRN> { [ Return ] }; key <SPCE> { [ space ] };
+  key <UP> { [ Up ] }; key <LEFT> { [ Left ] }; key <RGHT> { [ Right ] }; key <DOWN> { [ Down ] };
   modifier_map Shift { <LFSH> }; modifier_map Control { <LCTL> }; modifier_map Mod1 { <LALT> }; modifier_map Mod4 { <LWIN> };
 };
 };
@@ -66,6 +74,11 @@ def main() -> int:
             continue
         if parts[0] == "mods":
             w.send(kbd, 2, struct.pack("=IIII", int(parts[1]), 0, 0, 0))  # modifiers
+        elif parts[0] == "key":
+            code = KEYS[parts[1]]
+            t = int(time.monotonic() * 1000) & 0xFFFFFFFF
+            w.send(kbd, 1, struct.pack("=III", t, code, 1))                  # key(time, key, pressed)
+            w.send(kbd, 1, struct.pack("=III", t + 1, code, 0))
         w.sync()
         print("ok", flush=True)
     return 0
