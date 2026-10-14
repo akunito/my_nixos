@@ -311,10 +311,20 @@ let
       patches = (old.patches or [ ]) ++ [ ../patches/sway-above-fullscreen.patch ];
     });
   };
+  # Peek, pin, z and floating window:move events — see swayWindowStacking in
+  # lib/defaults.nix. Last in the list: it appends after the zero-scaling and
+  # above-fullscreen patches and applies with zero fuzz with or without them.
+  swayWindowStackingOverlay = final: prev: {
+    sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/sway-window-stacking.patch ];
+    });
+  };
   zeroScalingOverlays = lib.optional (systemSettingsWithFonts.swayXwaylandZeroScaling or false)
     swayXwaylandZeroScalingOverlay
     ++ lib.optional (systemSettingsWithFonts.swayAboveFullscreen or false)
-    swayAboveFullscreenOverlay;
+    swayAboveFullscreenOverlay
+    ++ lib.optional (systemSettingsWithFonts.swayWindowStacking or false)
+    swayWindowStackingOverlay;
 
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {

@@ -1155,7 +1155,11 @@
     # Local sway patch patches/sway-window-stacking.patch (plan
     # docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md §3): peek
     # (`lift_tiled_on_press`), `pin`, `z raise|lower`, and window:move IPC
-    # events for floating drag/resize. Rebuilds sway only; relogin.
+    # events for floating drag/resize. Applied after the zero-scaling and
+    # above-fullscreen patches when those flags are on; applies with or
+    # without them. Rebuilds sway only (a from-source sway build on a profile
+    # that had none); relogin. Also emits the Hyper+wheel `z` bindings and
+    # lets sway-apps render `lift_tiled_on_press` and pin rule actions.
     swayWindowStacking = false;
     # sway-apps owns the output layout (mode/pos/scale/transform/enable by
     # hardware id, xwayland_dpi): kanshi and the nwg-displays outputs include
