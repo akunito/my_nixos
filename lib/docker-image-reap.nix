@@ -18,6 +18,9 @@
 #                                 build (CLAUDE.md, VPS disk)
 #   rea-sandbox:*                 REA manages these itself (ensure_image); Nix-built, so
 #                                 Created is 1970 and every one would look ancient
+#   itzg/minecraft-server:*       NAS AkuCraft stacks sit down with no container between the
+#                                 bot's /start (compose up); a missing :latest would be
+#                                 re-pulled newer, changing the Java under a modded server
 #
 # Removal is `docker image rm REF` without -f: dockerd refuses an image a container still
 # uses, a second net under the in-use check (containers can appear between the two).
@@ -93,7 +96,7 @@ pkgs.writeShellApplication {
       for ref in ''${refs[$id]}; do
         case $ref in
           plane-aku/*) plane+=("''${ref%:*} ''${created[$id]} $ref") ;;
-          mcr.microsoft.com/dotnet/sdk:*|rea-sandbox:*) keep[$ref]=pinned ;;
+          mcr.microsoft.com/dotnet/sdk:*|rea-sandbox:*|itzg/minecraft-server:*) keep[$ref]=pinned ;;
         esac
       done
     done
