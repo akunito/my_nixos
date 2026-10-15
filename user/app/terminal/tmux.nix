@@ -330,6 +330,16 @@ in
       # CRITICAL: Mouse support
       set -g mouse on
 
+      # Wheel x3 over tmux's defaults: copy mode (shell scrollback) 15 lines per notch instead of 5; mouse-aware
+      # apps (Claude Code, nvim, less) get each wheel event forwarded three times. The terminal's own scroll
+      # multiplier never applies here — with mouse on, every notch reaches tmux as a single event.
+      bind -T copy-mode-vi WheelUpPane select-pane \; send -X -N 15 scroll-up
+      bind -T copy-mode-vi WheelDownPane select-pane \; send -X -N 15 scroll-down
+      bind -T copy-mode WheelUpPane select-pane \; send -X -N 15 scroll-up
+      bind -T copy-mode WheelDownPane select-pane \; send -X -N 15 scroll-down
+      bind -n WheelUpPane if -F "#{||:#{alternate_on},#{pane_in_mode},#{mouse_any_flag}}" { send -M ; send -M ; send -M } { copy-mode -e }
+      bind -n WheelDownPane if -F "#{||:#{alternate_on},#{pane_in_mode},#{mouse_any_flag}}" { send -M ; send -M ; send -M }
+
       # CRITICAL: Enable extended keys (tmux 3.2+) for proper Shift+Enter handling
       # This allows tmux to understand and forward CSI u encoded sequences
       set -s extended-keys on
