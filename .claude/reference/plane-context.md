@@ -24,6 +24,7 @@ This file is loaded on-demand when agents need detailed Plane integration info.
 | N8N | n8n Workflows | `447e76be-1d4a-4156-889e-69fb3389cf60` | Komi |
 | ISG | Inventory Simulator | `5427fcbc-3c8d-4450-946a-8d80c7d13b17` | Komi |
 | A2M | AION 2 Meter | `345a1a8f-0086-477a-a7a9-8db75727152d` | Diego |
+| EXAM | Exam Simulator | `9efbadcf-0a9e-4281-bc52-a0077a59a875` | Diego |
 
 Members (2026-09-11): Diego `794b4ebf-4f96-4532-85e1-24f1b6683fef`, Aga `9ee5907f-308d-4074-927e-57a75f375e6d`, Komi `b24d5e9a-f2f6-4d69-9326-d51c1b7929dd`.
 Telegram bot for tickets: `docs/akunito/infrastructure/services/plane-telegram-bot.md` (AINF-380).
