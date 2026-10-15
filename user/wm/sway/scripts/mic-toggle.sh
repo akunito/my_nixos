@@ -25,9 +25,8 @@ if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" && -S "${XDG_RUNTIME_DIR:-/nonexistent}
 fi
 
 SRC="@DEFAULT_AUDIO_SOURCE@"
-verb="${1:-toggle}"; shift || true
-quiet=0
-for a in "$@"; do case "$a" in -q|--quiet) quiet=1 ;; esac; done
+verb=toggle; quiet=0
+for a in "$@"; do case "$a" in -q|--quiet) quiet=1 ;; *) verb="$a" ;; esac; done
 
 notify() {   # $1 summary, $2 body, $3 icon
   (( quiet )) || [[ ! -x "$NOTIFY" ]] || "$NOTIFY" -a mic-toggle -t 1500 -i "$3" \
