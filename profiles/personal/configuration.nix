@@ -28,6 +28,7 @@
   ++ lib.optional (systemSettings.webcamControlsEnable or false) ../../system/hardware/webcam-controls.nix # Persist v4l2 webcam controls across reboot/hotplug
     ++ lib.optional (systemSettings.networkBondingEnable or false) ../../system/hardware/network-bonding.nix # Network bonding (LACP)
     ++ lib.optional (systemSettings.prometheusWorkstationExporterEnable or false) ../../system/app/prometheus-workstation-exporter.nix # Lightweight metrics exporter for workstations
+    ++ lib.optional (systemSettings.captureHubEnable or false) ../../system/app/capture-hub.nix # HDMI/screen capture -> frames + OCR + VLM notes per profile (capture-hub)
     ++ lib.optional (systemSettings.infraNotifyEnable or false) ../../system/app/infra-notify.nix # deploy announcements to Infra Alerts (AINF-368)
     ++ lib.optional (systemSettings.wifiAuditEnable or false) ../../system/security/wifi-audit.nix # WiFi security audit toolkit (aircrack-ng + hashcat + wireshark)
     ++ lib.optional ((systemSettings.rgbOffOpenrgbArgs or [ ]) != [ ]) ../../system/hardware/rgb-off.nix # one-shot OpenRGB at boot/resume/hotplug (RGB off, Tartarus colour)

@@ -821,6 +821,16 @@ in
     wireguardEnable = true; # Enable WireGuard VPN
     appImageEnable = true; # Enable AppImage support
     aion2MeterDaemonEnable = true; # AION 2 DPS meter Linux daemon (A2M-48); publish lives in ~/.local/opt/aionmeter-daemon
+    # capture-hub (user unit under Sway): Elgato on DESK captures the HDMI of ANOTHER machine; `screen` grabs this desktop.
+    captureHubEnable = true;
+    captureHubUserService = true;
+    captureHubListen = "127.0.0.1:8095";
+    captureHubSources = [
+      { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
+      { name = "screen"; kind = "screen"; output = "DP-1"; }   # 4K Odyssey at full res (profiles downscale via max_side; OCR needs the full 4K)
+      { name = "webcam"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }   # same UVC path as the card: test source
+      { name = "inbox"; kind = "inbox"; }
+    ];
     gamemodeEnable = true; # Enable GameMode for performance optimization
     xboxControllerEnable = true; # Enable Xbox controller support (xpadneo)
     bluetoothDisableUsbAutosuspend = true; # MT7922 BT: stop USB runtime-suspend killing the HFP mic

@@ -54,6 +54,10 @@ in
     # Qwen3.6-35B-A3B: 10 of 40 layers are full attention, 2 KV heads x 256 ->
     # 20 KB/token f16 (computed from config.json, NOT measured yet).
     aiPresetsEnable = true;
+    # capture-hub (system unit): Elgato 4K X on the NAS (UVC needs kernel >= 6.19, AINF-404; waits for the device until then).
+    # API on the tailnet so DESK / VPS (Hermes) can pull frames and ask the VLM.
+    captureHubEnable = true;
+    captureHubListen = "100.64.0.1:8095";
     # Router mode (2026-10-14, Diego: verified first, then migrate): the model
     # is the request's `model` name (= aiPresets names); claude-nas / OpenCode /
     # the Waybar widget all switch the 3090 by naming a preset. Measured

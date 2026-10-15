@@ -58,6 +58,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/alertmanager.nix**: Alertmanager — the piece that was missing between Prometheus and Telegram *Enabled when:* `168h`
 - **system/app/appimage.nix**: System module: appimage.nix
 - **system/app/archived/prometheus-graphite.nix**: Graphite Exporter for TrueNAS Metrics *Enabled when:* `systemSettings.prometheusGraphiteEnable or false`
+- **system/app/capture-hub.nix**: capture-hub: screen/HDMI capture pipeline (plan docs/akunito/plans/capture-hub.md). *Enabled when:*
+   - `!userService`
+   - `no Sway session yet`
 - **system/app/claude-sync-hub.nix**: claude-sync hub — the always-on side of Claude Code state sync (VPS_PROD). *Enabled when:* `k: "restrict,command=\"${shell}/bin/claude-sync-shell\" ${k}"`
 - **system/app/cloudflared.nix**: Cloudflare Tunnel Service (Remotely Managed) *Enabled when:* `systemSettings.cloudflaredEnable or false`
 - **system/app/database-backup.nix**: Database Backup Module *Enabled when:*
@@ -133,6 +136,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
    - `cfg.ollamaServerEvictVram or false`
    - `not Requires=`
    - `evictEnable && evictTimerSec > 0`
+   - `Waybar "Stop" row`
 - **system/app/online-accounts.nix**: System module: online-accounts.nix
 - **system/app/openclaw-matrix-bridge.nix**: OpenClaw Matrix Bridge + Fallback Monitor
 - **system/app/openclaw.nix**: OpenClaw Services
@@ -370,7 +374,10 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/wm/fonts.nix**: Fonts are nice to have
 - **system/wm/gnome-keyring.nix**: The gcr package ships its own systemd *user* units (gcr-ssh-agent.socket
 - **system/wm/hyprland.nix**: Import wayland config
-- **system/wm/keyd.nix**: Enable keyd service for keyboard remapping *Enabled when:* `userSettings.wm == "sway" || systemSettings.enableSwayForDESK == true || userSettings.wm == "plasma6" || userSettings.wm == "hyprland" || (systemSettings ? wmEnableHyprland && systemSettings.wmEnableHyprland == true)`
+- **system/wm/keyd.nix**: Keypad profiles (SWAY-18): every profile is an immutable /etc/keypad/<device>/<profile> *Enabled when:*
+   - `SWAY-17`
+   - `its content may have changed with this deploy`
+   - `lib.mapAttrsToList (n: d: '' mkdir -p /var/lib/keypad sel=$(cat /var/lib/keypad/${n}.profile 2>/dev/null || true) if [ -z "$sel" ] || [ ! -f /etc/keypad/${n}/"$sel" ]; then sel=${defaultOf d}; fi ${pkgs.coreutils}/bin/install -D -m 0644 /etc/keypad/${n}/"$sel" /etc/keyd/${n}-active echo "$sel" > /var/lib/keypad/${n}.profile '') keypads`
 - **system/wm/pipewire.nix**: ALSA card name -> friendly name. See systemSettings.audioDeviceRenames.
 - **system/wm/plasma6.nix**: CRITICAL: imports must be at top level, NOT inside lib.mkMerge or lib.mkIf *Enabled when:*
    - `KWallet PAM`
@@ -453,17 +460,33 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
 - **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK.
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
+- **user/app/rea/bench/bench.nix**: M1/M2 (AINF-408): the benchmark as a Nix build — same Ghidra and extension wiring as
+- **user/app/rea/bench/corpus.nix**: M1 corpus (AINF-408): our own programs built with several toolchains / -O levels /
+- **user/app/rea/bench/fid/distro.nix**: M2 extension (AINF-408): FID sets from the static libraries real third-party Linux
+- **user/app/rea/bench/fid/fid.nix**: M2 (AINF-408): open function-ID signatures for Ghidra, generated from nixpkgs' own
+- **user/app/rea/bench/fid/rust.nix**: M2 (AINF-408): Rust std FID sets from the OFFICIAL rust-std tarballs (static.rust-lang.org,
+- **user/app/rea/bench/foreign-corpus.nix**: M2: binaries built with Debian/Ubuntu/Alpine toolchains (workbench/rea-bench/foreign-corpus,
+- **user/app/rea/bench/kuna.nix**: M3 (AINF-408): Kuna, the Rust port of Ghidra's decompiler (Noelo-Lab/kuna, Apache-2.0),
+- **user/app/rea/bench/m4/m4.nix**: M4 benchmark (AINF-408), HumanEval-Decompile style on our own functions:
 - **user/app/rea/env.nix**: One tool list + environment for both REA sandboxes (AINF-408): the OCI image
+- **user/app/rea/hopper.nix**: Hopper 6.4.2 Linux demo, unmodified (AINF-408 F6). REA accepts only this build: it checks
 - **user/app/rea/image.nix**: REA sandbox image for tier 0 (AINF-408 F1): rootless Docker + krun. Tools and
+- **user/app/rea/jeb.nix**: JEB Community Edition 5.48 (PNF Software; free, per-user; licence key inside the zip, valid
 - **user/app/rea/rea-agents.nix**: rea-agents built from our fork (akunito/rea) at the upstream release commit.
-- **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/).
-- **user/app/rea/vm.nix**: dynamic = true: the F3b lane — the target is executed (REA capture_process_scenario) *Enabled when:*
+- **user/app/rea/rea.nix**: REA sandbox launchers (AINF-408, plan docs/akunito/plans/rea-sandbox/). *Enabled when:* `gc-rooted in ~/.cache/rea-vm/gcroots`
+- **user/app/rea/varbert/varbert.nix**: VarBERT (binsync/varbert_api 2.3.1, BSD-2; models from the authors' Dropbox, Ghidra-trained
+- **user/app/rea/vm.nix**: dynamic = true: the F3b lane - the target is executed (REA capture_process_scenario) *Enabled when:*
    - `cat /mnt/ctl/proxy-port`
    - `audit 2026-10-14`
    - `Permission denied, measured`
    - `asyncio sets IPV6_V6ONLY`
    - `seq 1 60`
    - `UDP|ICMP|OTHER`
+   - `measured`
+   - `configparser`
+   - `seq 1 300`
+   - `!web`
+- **user/app/rea/waydroid-images.nix**: Waydroid images (LineageOS 20 = Android 13, x86_64, no Google apps) for the --android lane
 - **user/app/ssh-hosts.nix**: Shared SSH host definitions for workstations
 - **user/app/swaybgplus/swaybgplus.nix**: ============================================================================ *Enabled when:* `systemSettings.swaybgPlusEnable or false`
 - **user/app/swww/swww.nix**: awww doesn't exist on nixos-25.11 — pin to unstable so swww works on *Enabled when:*
@@ -690,12 +713,14 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/akucraft-staging-error-audit.md**: Error audit of mc-mca-staging (2026-08-20) — ranked list of real issues vs benign noise, for fixing later
 - **docs/akunito/plans/akucraft-unified-storage.md**: One searchable inventory across every chest in a base, in vanilla style, plus what it does and does not do to Flan claim protection
 - **docs/akunito/plans/akucraft-worlds-and-maps.md**: Research into what extra worlds, community map downloads and dimension mods can be added to AkuCraft, given that Multiworld and ShadowBorders are already in production
+- **docs/akunito/plans/capture-hub.md**: capture-hub — pipeline genérico de captura de pantalla (Elgato 4K X por HDMI desde OTRO equipo, pantalla local por grim, o frames empujados) → frames filtrados por cambio + texto por OCR + notas de un VLM del NAS, guardados por PERFIL (un directorio por proyecto: aion2, l2, study, trading, hermes) y servidos por una API HTTP para la IA que los consuma (Claude, Hermes, game-assist); desplegado en DESK (unidad de usuario) y NAS (unidad de sistema); la tarjeta aún no está conectada y el NAS necesita kernel ≥ 6.19 (AINF-404)
 - **docs/akunito/plans/desk-w11-meeting-captions.md**: Status 2026-09-30: **M1 and M2 built and deployed on DESK_W11**; direction changed the same
 - **docs/akunito/plans/desk-wol.md**: DESK has 2x Intel 82599ES 10GbE SFP+ cards (bonded as `bond0`) which do NOT support WOL. However, the onboard **Realtek RTL8125B 2.5GbE** NIC (`eno1`) supports WOL magic packets (`Supports Wake-on:...
 - **docs/akunito/plans/docker-rootless-workstations.md**: Docker rootless por defecto en DESK y LAPTOP_X13 (modelo híbrido como NAS_PROD) — el daemon root queda solo para lo que no puede ir rootless y exige sudo; migración perezosa proyecto a proyecto con notas para que cualquier sesión adapte su stack
 - **docs/akunito/plans/immich-compression-cutover-audit.md**: Documento para revisar ANTES de tocar producción. Aquí está exactamente qué se
 - **docs/akunito/plans/immich-compression-cutover-runbook.md**: Runbook definitivo (script v2.1) del cutover de la biblioteca comprimida de Immich en VPS_PROD — riesgos de las dos auditorías eliminados, con puertas de verificación y reversión quirúrgica
 - **docs/akunito/plans/immich-compression-pipeline.md**: Re-encode/compress the existing Immich library (all **38,867** assets: 36,721 IMAGE + 2,146 VIDEO) to reduce storage with minimal visible quality loss, **preserving albums, named faces, favorites, ...
+- **docs/akunito/plans/l2-proton-linux-compat.md**: Plan to improve Wine/Proton Linux compatibility via per-function truthful upstream fixes, using L2 Lu4/Reborn as probes. Investigate/understand freely; the one hard stop is shipping a working anti-cheat circumvention. Cycle-based, tested, Fable-audited 2026-10-15.
 - **docs/akunito/plans/l2-rpa-testbed.md**: Plan (sin implementar) para usar Lineage 2 Interlude como banco de pruebas del asistente RPA antes de L2 Reborn Legacy (nov 2026) — servidor propio L2J Mobius Interlude (protocolo 746) donde el estado es exacto y gratis, núcleo compartido game-assist con adaptadores aion2/l2 (reaprovecha el bus/evdev/uinput/reglas/voz/entrenamiento del plan de Aion), dos fuentes de estado (plugin de servidor = verdad + lector de paquetes del cliente = percepción portable), asesor por reglas+LLM con el datapack como base, copiloto que tira pociones respetando tu input, generador de escenarios por comandos GM, entrenamiento de Kev/Laya, bot autónomo solo en nuestro server; fases L-study→L7 con criterios medibles; en L2 Reborn solo asesor + lectura pasiva de tráfico propio e inyección solo si el servidor lo permite oficialmente
 - **docs/akunito/plans/nas-3090-ai-presets.md**: Qué hacemos con la RTX 3090 del NAS — presets de IA bajo demanda (nada cargado por defecto), coach de Aion 2 por captura HDMI + voz + panel AkuWM, Pico 2 H como HID para capturar datos del juego, razonador/Hermes local aplazado
 - **docs/akunito/plans/nas-3090-storage-rework.md**: Liberar el PCIEX16 del NAS para la RTX 3090 — sistema del 840 EVO (SATA) a un Samsung 980 500GB en M2B_SB por clonado dd, ssdpool del HBA LSI a los 4 SATA de la placa (TRIM por fin), HBA fuera, KIOXIA fuera

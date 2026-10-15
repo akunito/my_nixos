@@ -305,6 +305,36 @@
     aion2MeterDaemonForward = null;                        # "ip:port" -> --forward (A2M-27): pcap stream of the game traffic for a Windows meter (VM 192.168.122.1:47013 / Wine 127.0.0.1:47013); null = off
     aion2MeterOverlayInstallDir = null;                    # null = ~user/.local/opt/aionmeter-overlay (AionMeter.Overlay publish; `aionmeter-overlay`)
     aion2MeterOverlayMonitor = "DP-1";                     # sway connector of `aionmeter-overlay --layer` (window mode ignores it)
+    # --- capture-hub (system/app/capture-hub.nix, plan docs/akunito/plans/capture-hub.md) ---
+    # HDMI capture card / screen -> change-filtered frames + OCR text + VLM notes per profile, HTTP API.
+    captureHubEnable = false;
+    captureHubUserService = false;                         # true = user unit under Sway (screen source needs WAYLAND_DISPLAY); false = system unit as captureHubUser (NAS)
+    captureHubUser = null;                                 # null = userSettings.username
+    captureHubDataDir = null;                              # null = /var/lib/capture-hub (system) or ~/.local/share/capture-hub (user)
+    captureHubListen = "127.0.0.1:8095";                   # HTTP API; a tailscale IP opens the port on tailscale0 only (system variant)
+    captureHubVlmUrl = "http://100.64.0.1:8090";           # NAS llama-server (router mode loads captureHubVlmModel on first use)
+    captureHubVlmModel = "reasoner-9b-512k";               # Qwen3.5-9B + mmproj: the one vision CHAT preset; clef/decider are decision models (no text)
+    captureHubOcrLanguages = [ "eng" "spa" "pol" ];
+    captureHubDefaultProfile = "generic";
+    # sources: { name; kind = "v4l2" | "screen" | "inbox"; device (glob, v4l2); input_format/framerate/size (v4l2); output/scale (screen) }
+    captureHubSources = [
+      { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
+      { name = "inbox"; kind = "inbox"; }
+    ];
+    # profiles: one per project; keys = capture_hub.py PROFILE_DEFAULTS (source, sink, fps, max_side, hash_threshold,
+    # keyframe_s, ocr = sparse|document|off, vlm = off|change|demand, vlm_min_interval_s, vlm_prompt, vlm_max_tokens, keep_days)
+    captureHubProfiles = {
+      generic = { ocr = "sparse"; vlm = "demand"; };
+      aion2 = { fps = 2; hash_threshold = 10; ocr = "sparse"; vlm = "demand"; keep_days = 3;
+                vlm_prompt = "This is a frame of the MMORPG Aion 2. Describe the situation: zone, what the player is fighting or doing, open dialogs/quest text, visible HP/MP state and anything that needs attention. Answer in Spanish, briefly."; };
+      l2 = { fps = 2; hash_threshold = 10; ocr = "sparse"; vlm = "demand"; keep_days = 3;
+             vlm_prompt = "This is a frame of Lineage 2. Describe the situation: target, HP/MP/CP bars, buffs, chat and system messages, open windows. Answer in Spanish, briefly."; };
+      study = { fps = 0.5; hash_threshold = 4; max_side = 0; ocr = "document"; vlm = "change"; vlm_min_interval_s = 20; keep_days = 30;   # max_side 0 = full resolution: tesseract on a 1920-wide copy of a 4K desktop is garbage, full 4K reads clean (measured 2026-10-15)
+                vlm_prompt = "Transcribe the question and its answer options exactly as shown. If an option is marked or a result is shown, say which option is correct, whether the chosen one is right, and explain why in two sentences. Answer in Spanish."; };
+      trading = { fps = 0.5; hash_threshold = 4; max_side = 0; ocr = "document"; vlm = "demand"; keep_days = 30;
+                  vlm_prompt = "This is a trading/investing screen. Read the instrument, timeframe, prices, indicators and open positions you can see. Answer in Spanish, numbers exactly as shown."; };
+      hermes = { fps = 1; ocr = "sparse"; vlm = "off"; keep_days = 7; };
+    };
     # --- VRAM peak sampler ---
     # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY
     # desktop, which is the most favourable reading available rather than a
