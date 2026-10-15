@@ -117,7 +117,7 @@ in
       llm4decompile = {
         label = "LLM4Decompile-Ref 9B v2 Q8_0 · pseudo-code → C (REA)";
         short = "🔧 l4d"; vramEst = "10.6 GB"; ctx = 16384; slots = 1; kv = "";   # MEASURED 2026-10-14: 10640 MB, 1.5 s/function
-        model = "llm4decompile-9b-v2.Q8_0.gguf";   # mradermacher, sha256 04d6d729…760d
+        model = "llm4decompile-9b-v2.Q8_0.gguf";   # mradermacher; sha256 04d6d7297c220bbfae03a0cade4f1394696f797739df848b43e1c524d188760d (= HF LFS oid, checked 2026-10-15)
         alias = "llm4decompile-9b";
         template = null;
         extra = [ "--temp" "0" "-fa" "on" ];

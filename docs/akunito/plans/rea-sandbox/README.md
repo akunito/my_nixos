@@ -177,7 +177,7 @@ Recursos:
 
 Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llevar a Claude a proponer REA por su cuenta.
 
-**Estado F2 (2026-10-14):** implementado (`6abdceb0`) y probado desde el build en DESK; falta desplegar.
+**Estado F2 (2026-10-14):** implementado (`6abdceb0`), desplegado y probado en DESK y X13.
 - `microvm.nix` como input fijado y `vm.nix` (QEMU sin NIC, store propio, 9p, vsock).
 - `env.nix` compartido con la imagen.
 - `rea-vm-mcp`: una VM a la vez, scope con límites, sin `LD_LIBRARY_PATH`, y la VM se destruye al cerrar.
@@ -209,7 +209,7 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 - Red falsa (sumidero DNS + `mitmproxy`), Frida y captura de procesos.
 - Prueba: un programa propio que intenta conectar, escribir fuera de `out/`, dejar symlinks y persistir. Nada sale, nada queda y la VM se destruye.
 
-**F4: resto de herramientas.** Wakaru, pwndbg con crashes grabados, sigrok 0.7.2 y el emulador Android en la VM (KVM anidado; lento, sin GPU).
+**F4: resto de herramientas.** Wakaru, pwndbg con crashes grabados, sigrok 0.7.2 y Android: hecho el 2026-10-15 con Waydroid (contenedor dentro de la VM, sin KVM anidado; ver herramientas.md). El emulador de Google queda como vía complementaria.
 
 **F5: X13.** Tras R2 y con `virtualizationEnable`: medir y ajustar. Runbook en `docs/akunito/infrastructure/`, `docs/profile-feature-flags.md` y memoria.
 
@@ -221,8 +221,8 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 - Daemon rootless: lo define el plan rootless; REA añade el runtime `krun` (`pkgs.crun`) tras `reaSandboxEnable`. `~/rea/cases` como montaje `noexec,nosuid,nodev` en `fileSystems`, tras `reaSandboxEnable`.
 - `user/app/rea/env.nix`: `rea-env` (lista única), `rea-agents` (fork por `rev` + `hash`), overrides de WABT y sigrok, JAR de JADX.
 - `user/app/rea/image.nix`: imagen OCI con `rea-env` y las variables.
-- `user/app/rea/rea.nix`: `rea-case`, `rea-triage`, `rea-cli`, `rea-claude`, `rea-update`, `rea-settings.json`, plantillas `CLAUDE.md`/`CASE.md` y hook.
-- `user/app/rea/microvm.nix` (F2): guest con `rea-env`, relé vsock y filtro nftables de la tap para el carril web (F3).
+- `user/app/rea/rea.nix`: `rea-case`, `rea-triage`, `rea-cli`, `rea-run`, `rea-claude`, `rea-hook`, `rea-vendor-export`, `rea-vm-prewarm`; el `settings.json` de la sesión aislada se genera en cada arranque. `rea-update` no se llegó a crear.
+- `user/app/rea/vm.nix`: guest con `rea-env`, relé vsock, carril web (Chromium y squid por vsock, sin NIC), carril dinámico (red falsa), Android (Waydroid) y JEB.
 - `claude-sync-pkg.nix`: exponer `claude-raw` y abortar `wrap`/hooks con un `CLAUDE_CONFIG_DIR` ajeno.
 - `~/.claude/skills/reverse-engineering/SKILL.md`: skill global (claude-sync).
 
@@ -247,13 +247,27 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 
 **Reinstalar en otra máquina:**
 1. Activar `reaSandboxEnable`, `dockerRootlessEnable` y `dockerRootlessKrunEnable` en su perfil.
-2. Si alguna fuente externa ya no existe, restaurar antes la caché desde la copia del NAS:
+2. **Siempre**, antes de desplegar, restaurar la caché desde la copia del NAS. El zip de JEB no se puede descargar (`requireFile`), y sin él falla la compilación de Home Manager. Las imágenes de Waydroid y los modelos de VarBERT pueden haber desaparecido de su origen. La alternativa para JEB es descargarlo a mano y ejecutar `nix-store --add-fixed sha256 <zip>`.
 
    ```
    restic -r /mnt/NFS_Backups/nixosaku/home.restic restore latest --include /home/akunito/rea/vendor-cache --target /
    sudo nix copy --from file:///home/akunito/rea/vendor-cache --no-check-sigs $(cat /home/akunito/rea/vendor-cache/MANIFEST)
    ```
-3. Desplegar con `install.sh`. Nix encuentra esas rutas ya válidas y no intenta descargarlas ni recompilarlas.
+3. Desplegar con `install.sh`. Nix encuentra esas rutas ya válidas y no intenta descargarlas ni recompilarlas. Si `flake.lock` ha cambiado desde la copia, solo las fuentes de salida fija (zips, `.deb`, modelos) siguen sirviendo tal cual. Lo que se compila (FID, rea-agents, Hopper, VarBERT convertido) sale con rutas nuevas y se recompila a partir de esas fuentes.
 4. `rea-claude-token` y `ollama-pull`.
 5. Las bases FID **no se compilan nunca a la vez**: si hay que rehacerlas, con `--max-jobs 1-2`.
+
+## Estado 2026-10-15 (resumen operativo)
+
+- **Opciones de un caso:** `rea-case new X [--tier 0|1|2] [--web | --dynamic [--android]] [--jeb] --brief …`.
+- **Metadatos sellados:** el nivel y los carriles se leen de `~/.config/rea/cases/<caso>/CASE.md` (444, fuera del alcance de la sesión aislada). `CLAUDE.md` del caso se restaura desde ahí en cada `rea-claude`. Si se edita `CASE.md` a mano, hay que ejecutar `rea-case seal <caso>`.
+- **Imágenes de la VM bajo demanda:**
+  - Home Manager solo lleva el `.drv`. `rea-vm-prewarm` (unidad de usuario lanzada al activar) y `rea-claude` las construyen o descargan con una raíz GC por tipo en `~/.cache/rea-vm/gcroots/{plain,dyn,web}`.
+  - Tras una actualización, la primera sesión avisa ("preparing the … microVM image") y espera antes de abrir Claude.
+- **Límites:**
+  - VM de 10 GiB y `MemoryMax` del host de 12G (Ghidra + JEB + Android);
+  - `MCP_TIMEOUT` de 180 s;
+  - tope de 2 GiB en `out-stage` (tmpfs del host) en todos los carriles;
+  - las imágenes viejas del nivel 0 (`rea-sandbox:*`) se borran al cargar una nueva.
+- **Copia de lo irreemplazable:** `rea-vendor-export` (semanal), incluidos el zip de JEB y las imágenes de Waydroid; ver "Backup y reinstalación".
 

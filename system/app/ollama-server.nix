@@ -429,6 +429,7 @@ let
         "$ollama" create ${m.name} -f ${mkModelfile m} || { echo "!! create ${m.name} FAILED" >&2; rc=1; }
       else
         echo "!! ${m.from} is now sha256 ''${got:-?}, pinned ${m.sha256}: ${m.name} NOT updated (review the new upload, then bump sha256)" >&2; rc=1
+        "$ollama" rm ${m.from} >/dev/null 2>&1 || true   # the unreviewed blob must not stay callable
       fi
     '') customModels}
     echo

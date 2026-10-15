@@ -8,8 +8,9 @@ pkgs.stdenvNoCC.mkDerivation {
   version = "6.4.2";
   src = pkgs.fetchurl {
     url = "https://www.hopperapp.com:443/downloader/public/Hopper-6.4.2-Linux-demo.pkg.tar.xz";
-    # SHA-1 and length pinned by REA (LinuxHopper.ts SUPPORTED_RELEASES.arch).
-    sha1 = "92d780b61cab38eda95dc4112dee4fbeb0920f46";
+    # REA pins SHA-1 92d780b61cab38eda95dc4112dee4fbeb0920f46 (LinuxHopper.ts SUPPORTED_RELEASES.arch);
+    # this sha256 is of the archive that matched it (measured 2026-10-15).
+    sha256 = "e703c1e20bae08f25c847ee07d33210b05c78308f815d31c72276684f2224310";
     # The vendor answers 403 without REA's headers (measured).
     curlOptsList = [ "-H" "accept: application/json" "-A" "rea-installer" ];
   };

@@ -1,14 +1,14 @@
 { inputs, pkgs, rea-agents, uid, cacheDir, web ? false, dynamic ? false, ghidraExtensions ? [ ], extraModules ? [ ] }:
-# dynamic = true: the F3b lane — the target is executed (REA capture_process_scenario)
+# dynamic = true: the F3b lane - the target is executed (REA capture_process_scenario)
 # with a fake network inside the guest: every name resolves to 10.99.0.1 / fd99::1,
 # all TCP is redirected to a transparent mitmproxy that records it, other UDP/ICMP is
 # logged; nothing can leave (still no NIC). Records land in <case>/out/net/.
 # extraModules: tests only (e.g. a root console for the escape test); empty in production.
-# web = true: the F3a web lane — no target/, Chromium, and an HTTP proxy that exists only
+# web = true: the F3a web lane - no target/, Chromium, and an HTTP proxy that exists only
 # as a vsock relay to the per-session host squid (no NIC; libslirp 4.9.1 has
-# CVE-2026-9539 and microvm.nix cannot express restrict=on — audit 2026-10-14).
+# CVE-2026-9539 and microvm.nix cannot express restrict=on - audit 2026-10-14).
 # REA microVM for tiers 1-2 (AINF-408 F2). A user-run QEMU guest (microvm.nix):
-# no NIC at all, its own store (storeOnDisk: the host /nix/store is NOT shared — it
+# no NIC at all, its own store (storeOnDisk: the host /nix/store is NOT shared - it
 # holds generated configs with secret-derived values), RAM-only root, QEMU -sandbox on.
 # The case is shared over 9p from fixed per-user session paths that the launcher
 # points at the case before boot; the guest mounts it at its own absolute path (REA
@@ -101,7 +101,7 @@ let
     done
     echo
     if [ -n "$reject" ]; then
-      echo "PROPOSAL: REJECT —$reject matches anti-cheat/DRM rules. Diego decides: overridable when he explicitly asks (2026-10-14); a match on a name can be a false positive."
+      echo "PROPOSAL: REJECT -$reject matches anti-cheat/DRM rules. Diego decides: overridable when he explicitly asks (2026-10-14); a match on a name can be a false positive."
     else
       echo "PROPOSAL: tier $worst (tier 0 only for builds of our own repos; Diego confirms)"
     fi
@@ -118,7 +118,7 @@ let
         microvm = {
           hypervisor = "qemu";
           vcpu = 4;
-          mem = 8192; # Ghidra (4 GiB heap) + an optional JEB (2 GiB, --jeb cases)
+          mem = 10240; # Ghidra (4 GiB heap) + JEB (2 GiB, --jeb) + Android (~2 GiB, --android); RAM-only root
           interfaces = [ ];
           storeOnDisk = true;
           vsock.cid = 4242;
@@ -165,7 +165,7 @@ let
         systemd.services.rea-mcp = {
           wantedBy = [ "multi-user.target" ];
           # Dynamic lane: no REA (so no execution) unless the fake network and its
-          # recorders are up — a failed rea-fakenet once ran the target with no records.
+          # recorders are up - a failed rea-fakenet once ran the target with no records.
           after = [ "rea-case-mounts.service" ] ++ lib.optionals dynamic [ "rea-fakenet.service" "rea-dnsmasq.service" "rea-mitm.service" ];
           requires = [ "rea-case-mounts.service" ] ++ lib.optionals dynamic [ "rea-fakenet.service" "rea-dnsmasq.service" "rea-mitm.service" ];
           path = [ pkgs.socat pkgs.coreutils ];
@@ -267,6 +267,11 @@ let
               iptables -t nat -A PREROUTING -i waydroid0 -p tcp ! -d 192.168.240.1 -j REDIRECT --to-ports 8888
               iptables -A FORWARD -i waydroid0 -j rea-rec
               iptables -A FORWARD -i waydroid0 -j DROP
+              # Every name resolves to 10.99.0.1, a LOCAL address: Android's UDP/ICMP to it is
+              # INPUT, never FORWARD, and went unrecorded; a hard-coded resolver (8.8.8.8:53) was
+              # dropped with no answer (audit 2026-10-15).
+              iptables -t nat -A PREROUTING -i waydroid0 -p udp --dport 53 ! -d 192.168.240.1 -j REDIRECT --to-ports 53
+              iptables -I INPUT -i waydroid0 ! -p tcp ! -d 192.168.240.1 -j rea-rec
             fi
             # Everything needed is loaded by now (dummy, xt_owner, xt_LOG, nat, 9p, vsock):
             # no module autoload from socket() for the target (classic LPE surface).
@@ -325,7 +330,7 @@ let
           '';
         };
         # --android (dynamic cases only, ctl/android): Waydroid = LineageOS 20 x86_64 as an lxc
-        # container INSIDE the microVM — no nested virtualisation, so it runs at native
+        # container INSIDE the microVM - no nested virtualisation, so it runs at native
         # speed; the VM stays the isolation boundary. Software rendering (no GPU), headless
         # weston. REA reaches it as the adb device 192.168.240.112:5555.
         virtualisation.waydroid.enable = dynamic;
@@ -342,11 +347,25 @@ let
           wantedBy = lib.mkForce [ ];
           unitConfig.ConditionPathExists = "/mnt/ctl/android";
         };
+        # adb key for rea, authorised in Android by rea-android-adbkey: adbd answers
+        # "unauthorized" to an unknown key and there is nobody to tap "Allow" (measured). It
+        # must exist before REA (ADB_VENDOR_KEYS) - the slow Android start must not gate REA:
+        # the host gives the guest 120 s to come up (audit 2026-10-15).
+        systemd.services.rea-android-key = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          before = [ "rea-mcp.service" ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/android";
+          serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
+          path = [ pkgs.coreutils pkgs.util-linux pkgs.android-tools ];
+          script = ''
+            install -d -o rea -g users -m 700 /tmp/.android
+            [ -s /tmp/.android/adbkey ] || runuser -u rea -- env HOME=/tmp adb keygen /tmp/.android/adbkey >/dev/null
+          '';
+        };
         systemd.services.rea-android = lib.mkIf dynamic {
           wantedBy = [ "multi-user.target" ];
           after = [ "rea-fakenet.service" "rea-ca-bundle.service" "dbus.service" ];
           requires = [ "rea-fakenet.service" ];
-          before = [ "rea-mcp.service" ];
           unitConfig.ConditionPathExists = "/mnt/ctl/android";
           serviceConfig = { Type = "oneshot"; RemainAfterExit = true; TimeoutStartSec = 600; };
           path = [ config.virtualisation.waydroid.package pkgs.coreutils pkgs.util-linux pkgs.openssl pkgs.systemd pkgs.gnugrep pkgs.android-tools ];
@@ -370,10 +389,6 @@ let
               cp /run/mitm/mitmproxy-ca-cert.pem /var/lib/waydroid/overlay/system/etc/security/cacerts/$h.0
               chmod 644 /var/lib/waydroid/overlay/system/etc/security/cacerts/$h.0
             fi
-            # adb key for rea, authorised in Android below (rea-android-adbkey): adbd answers
-            # "unauthorized" to an unknown key and there is nobody to tap "Allow" (measured).
-            install -d -o rea -g users -m 700 /tmp/.android
-            [ -s /tmp/.android/adbkey ] || runuser -u rea -- env HOME=/tmp adb keygen /tmp/.android/adbkey >/dev/null
             systemctl start waydroid-container.service
           '';
         };

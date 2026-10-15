@@ -120,3 +120,10 @@ Los motores comerciales son software propietario que se ejecuta dentro del sandb
   - lo que sale de nixpkgs (Ghidra, Claude Code, Waydroid, QEMU…) y los inputs del flake (microvm, pwndbg) se mueven solo con `flake.lock`, es decir, con `install.sh -u`, que nunca se usa por defecto;
   - el GGUF de LLM4Decompile del NAS se verificó por sha256 al bajarlo;
   - el de DESK (`ollama-pull`) se fija desde hoy por sha256: si el autor sube otro fichero, el modelo viejo se queda y el script avisa.
+  - **Qué mueve `install.sh -u`** (`update.sh` hace `nix flake update`, es decir, todos los inputs): nixpkgs (Ghidra, QEMU, waydroid-nftables, Chromium, claude-code, torch y transformers de VarBERT), `nixpkgs-stable` (referencia indirecta) y los inputs anidados sin `rev` (uv2nix, pyproject-nix y pyproject-build-systems de pwndbg; spectrum de microvm). microvm y pwndbg están fijados por `rev`.
+  - Antes de aceptar un `-u`:
+    - Ghidra debe seguir en 12.1.x; `env.nix` lo comprueba con un `assert`.
+    - Todas las bases FID se recompilan, y eso lleva horas: hay que hacerlo con `--max-jobs 1-2`.
+    - Los overrides de unicorn y pyelftools dependen de la forma de las recetas de nixpkgs.
+    - Conviene actualizar input a input (`nix flake lock --update-input X`) y revisar el diff.
+  - Hashes medidos aquí sin publicación oficial con la que contrastarlos (2026-10-14/15): modelos de VarBERT en Dropbox, zip de JEB, sha256 de Hopper (cuadra con el SHA-1 que fija REA) e imágenes de Waydroid (el de su OTA). El GGUF del NAS coincide con el `oid` LFS de Hugging Face.

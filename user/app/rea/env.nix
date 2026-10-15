@@ -3,6 +3,8 @@
 # (tier 0, rootless + krun) and the microVM guest (tiers 1-2). pkgs = nixpkgs-unstable
 # (Ghidra 12.1.4 — REA requires 12.1.x; the stable channel is older).
 # Every REA_* path is absolute: REA's defaults (/usr/bin/prlimit…) do not exist on NixOS.
+assert pkgs.lib.assertMsg (pkgs.lib.hasPrefix "12.1." pkgs.ghidra.version)
+  "REA 6.5.0 requires Ghidra 12.1.x; nixpkgs now has ${pkgs.ghidra.version} - review before updating flake.lock";
 let
   ghidra = pkgs.ghidra;
   # Extensions (mejoras.md M0, audited 2026-10-14). NOT via GHIDRA_INSTALL_DIR:

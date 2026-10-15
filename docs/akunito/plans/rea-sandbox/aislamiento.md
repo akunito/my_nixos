@@ -250,3 +250,26 @@ claude-raw --setting-sources "" --settings rea-settings.json \
 - `rea-case new <caso> [--brief "<qué queremos saber>"]` escribe `CASE.md`, que es como pasa el contexto de la sesión normal a `rea-claude`. Después: `rea-case add`, `rea-case close` (barrido + resumen en `log/`) y `rea-case purge` (borrado; retención por defecto de 30 días, avisando antes).
 - Traza de auditoría: hooks `PreToolUse`/`PostToolUse` que escriben cada llamada y su resultado en `<caso>/log/`. `--include-hook-events` no sirve: solo funciona con `--output-format stream-json`.
 
+## Estado 2026-10-15 (manda sobre lo anterior)
+
+Auditoría Fable del 2026-10-15. Lo que ha cambiado respecto a las secciones de arriba:
+- **Transporte:** el caso entra por **9p**, no virtiofs. `target/`, `ctl/` y las imágenes de Waydroid van de solo lectura, impuesto por el host (`readonly=true` en el fsdev). `out/` va a un `out-stage` en el tmpfs del host y se barre al apagar: sin enlaces, sin ficheros especiales y sin bits x/s/t. `work/` es un disco ext4 desechable que crea el host.
+- **Nivel 0:** los parámetros reales están en `rea.nix` (`rea-run`): krun 6144 MiB, `--memory 8g`, sin `--cpus`.
+- **Proxy web:** `private_dst` no incluye la IP pública del VPS. No hay retención automática de 30 días: los casos se purgan a mano.
+- **Sesión aislada:**
+  - el sandbox de Bash tampoco ve `/run/user`, `/run/dbus`, `/var/run` ni `/run/docker.sock`; antes alcanzaba el bus de systemd del usuario y el socket de Docker rootless (comprobado: ahora `Operation not permitted`);
+  - las reglas `Write(...)` no existen en Claude Code: `Edit(...)` cubre ambas;
+  - `NotebookEdit` está denegado;
+  - el nivel y los carriles salen de metadatos sellados fuera del caso (antes la sesión podía editar `CASE.md` y elegir el sandbox de la siguiente; probado con un `CASE.md` manipulado).
+- **Triaje:** su salida llega a la sesión normal saneada: solo ASCII imprimible y líneas de 200 caracteres como máximo.
+- **El hook** solo lee ficheros de `tool-results` dentro del directorio de su propio caso.
+- **Lock:** el fd del lock de sesión ya no lo heredan QEMU, squid, socat ni el espejo (`9>&-`). Una VM huérfana bloqueaba todas las sesiones siguientes. El `trap` de limpieza se instala antes de lanzar nada.
+- **Android (carril dinámico):**
+  - Waydroid corre dentro de la VM con sus propios privilegios de root en el invitado (contenedor LXC privilegiado): una app con un exploit de núcleo llega a root del invitado y podría falsear los registros de red. La frontera con el host no cambia.
+  - Los módulos que se cargan antes de `modules_disabled` (af_packet, bridge, veth, br_netfilter, overlay, loop, erofs, nf_nat) amplían la superficie del núcleo, solo dentro de la VM.
+  - Tráfico: TCP al registrador. UDP e ICMP hacia direcciones locales pasan por `rea-rec` (INPUT) y el DNS con resolvedor fijo se redirige a dnsmasq. Sin IPv6 global.
+- **Riesgos aceptados que siguen abiertos:**
+  - QEMU corre como el usuario sin espacio de nombres de montaje (`-sandbox on` limita llamadas al sistema, no ficheros);
+  - la sesión aislada puede leer otros casos de `~/rea/cases`;
+  - los logs de cada caso (`tools.log`, `vm-console.log`) crecen sin rotación.
+
