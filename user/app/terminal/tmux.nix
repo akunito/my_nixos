@@ -55,7 +55,7 @@ let
   ssh-smart-tmux = pkgs.writeShellScriptBin "ssh-smart-tmux" ''
     #!/usr/bin/env bash
     # Wrapper to run ssh-smart in a new tmux pane for interactive selection
-    ${pkgs.tmux}/bin/tmux new-window -n "ssh-smart" "${ssh-smart}/bin/ssh-smart"
+    ${pkgs.tmux}/bin/tmux new-window -a -n "ssh-smart" "${ssh-smart}/bin/ssh-smart"
   '';
 
   # Prevent duplicate resurrect saves in the same second (avoids broken 'last' symlink)
@@ -248,7 +248,7 @@ let
         if (( x > 0 && x + pw > w + 1 && row < 4 )); then row=$((row + 1)); x=0; fi
         x=$((x + pw))
         ids+=("$i") rows+=("$row") curs+=("$cur")
-      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{window_index}:#{=/15/…:window_name}} #{@row}')
+      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,xx}}#{window_index}:#{=/15/…:window_name}} #{@row}')
       gap=0; (( row <= 2 )) && gap=1
       for k in "''${!ids[@]}"; do
         line=''${rows[k]}; (( gap )) && line=$((line * 2 - 1))
@@ -330,6 +330,10 @@ in
       # CRITICAL: Mouse support
       set -g mouse on
 
+      # No gaps in tab numbers after closing one; new tabs (-a on every new-window binding, here and in
+      # user/wm/sway/apps/common.json) open right after the current tab instead of in the first free index.
+      set -g renumber-windows on
+
       # Wheel x3 over tmux's defaults: copy mode (shell scrollback) 15 lines per notch instead of 5; mouse-aware
       # apps (Claude Code, nvim, less) get each wheel event forwarded three times. The terminal's own scroll
       # multiplier never applies here — with mouse on, every notch reaches tmux as a single event.
@@ -370,7 +374,7 @@ in
         bind h display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Keybindings" \
           "Split Vertical" "e" "split-window -h -c '#{pane_current_path}'" \
           "Split Horizontal" "r" "split-window -v -c '#{pane_current_path}'" \
-          "New Window" "t" "new-window -c '#{pane_current_path}'" \
+          "New Window" "t" "new-window -a -c '#{pane_current_path}'" \
           "Next Window" "w" "next-window" \
           "Previous Window" "q" "previous-window" \
           "Rename Window" "2" "command-prompt -I '#W' 'rename-window %%'" \
@@ -383,7 +387,7 @@ in
         bind h display-menu -T "#[align=centre fg=blue]Keybindings" \
           "Split Vertical" "e" "split-window -h -c '#{pane_current_path}'" \
           "Split Horizontal" "r" "split-window -v -c '#{pane_current_path}'" \
-          "New Window" "t" "new-window -c '#{pane_current_path}'" \
+          "New Window" "t" "new-window -a -c '#{pane_current_path}'" \
           "Next Window" "w" "next-window" \
           "Previous Window" "q" "previous-window" \
           "Rename Window" "2" "command-prompt -I '#W' 'rename-window %%'" \
@@ -402,7 +406,7 @@ in
       # Window and pane management
       bind e split-window -h -c "#{pane_current_path}"
       bind r split-window -v -c "#{pane_current_path}"
-      bind t new-window -c "#{pane_current_path}"
+      bind t new-window -a -c "#{pane_current_path}"
       bind w next-window
       bind q previous-window
       bind 2 command-prompt -I "#W" "rename-window '%%'"
@@ -426,7 +430,7 @@ in
       # Window and pane management
       bind -n C-M-e split-window -h -c "#{pane_current_path}"
       bind -n C-M-r split-window -v -c "#{pane_current_path}"
-      bind -n C-M-t new-window -c "#{pane_current_path}"
+      bind -n C-M-t new-window -a -c "#{pane_current_path}"
       bind -n C-M-w next-window
       bind -n C-M-q previous-window
       bind -n C-M-y command-prompt -I "#W" "rename-window '%%'"
@@ -457,7 +461,7 @@ in
         bind -n C-M-H display-menu -T "#[align=centre fg=#${config.lib.stylix.colors.base0D}]Fast Navigation" \
           "Split Vertical" "C-M-e" "split-window -h" \
           "Split Horizontal" "C-M-r" "split-window -v" \
-          "New Window" "C-M-t" "new-window" \
+          "New Window" "C-M-t" "new-window -a -c '#{pane_current_path}'" \
           "Next Window" "C-M-w" "next-window" \
           "Previous Window" "C-M-q" "previous-window" \
           "Rename Window" "C-M-y" "command-prompt -I '#W' 'rename-window %%'" \
@@ -474,7 +478,7 @@ in
         bind -n C-M-H display-menu -T "#[align=centre fg=blue]Fast Navigation" \
           "Split Vertical" "C-M-e" "split-window -h" \
           "Split Horizontal" "C-M-r" "split-window -v" \
-          "New Window" "C-M-t" "new-window" \
+          "New Window" "C-M-t" "new-window -a -c '#{pane_current_path}'" \
           "Next Window" "C-M-w" "next-window" \
           "Previous Window" "C-M-q" "previous-window" \
           "Rename Window" "C-M-y" "command-prompt -I '#W' 'rename-window %%'" \
@@ -518,9 +522,12 @@ in
         set -g status-left ""
         set -g status-right ""
         # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps), name cut at 15 chars; the active one in the accent colour.
+        # State icon of the active pane: Claude via @claude from .claude/hooks/tmux-claude-state.sh (hourglass busy, bell
+        # needs you, check done; ignored once claude has exited), any other non-shell command = hourglass. tmux-status-rows
+        # measures the same branches. Hourglass is a fixed yellow: this palette's base0A is yellow-green (#aec795).
         setw -g window-status-separator " "
-        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
-        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }},#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base05}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }},#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base00}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
         # Line 0 is a blank margin between the app and the pills; rows 1-4 hold the windows whose @row matches,
         # assigned by tmux-status-rows. status = rows + 1 is set per session by the same script.
         set -g status 2
@@ -559,6 +566,8 @@ in
       # Restore on first client attach (server may start without a client)
       set-hook -g client-attached "run-shell '${tmux-resurrect-restore-wrapper}/bin/tmux-resurrect-restore-wrapper'"
       # Pill rows: relayout on anything that changes the tab set, a name or the width. Indices [9] so they never replace other hooks.
+      # Visiting a tab marks Claude's done/needs-you icon as read.
+      set-hook -g 'session-window-changed[9]' 'if -F "#{m/r:^(done|wait)$,#{@claude}}" "set -pu @claude"'
       set-hook -g 'window-linked[9]' "run-shell -b '${tmux-status-rows}'"
       set-hook -g 'window-unlinked[9]' "run-shell -b '${tmux-status-rows}'"
       set-hook -g 'window-renamed[9]' "run-shell -b '${tmux-status-rows}'"

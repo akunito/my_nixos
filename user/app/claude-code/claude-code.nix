@@ -302,6 +302,8 @@ let
       ];
 
       PostToolUse = [
+        # tmux tab icon (tmux-claude-state.sh): busy again after a tool ran, e.g. once a permission prompt is answered
+        { matcher = ""; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh busy"; timeout = 3; } ]; }
         {
           matcher = "WebFetch";
           hooks = [
@@ -332,9 +334,12 @@ let
               type = "command";
               command = notificationCommand;
             }
+            { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh wait"; timeout = 3; }
           ];
         }
       ];
+
+      UserPromptSubmit = [ { matcher = ""; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh busy"; timeout = 3; } ]; } ];
 
       # Order matters: claude-sync pulls the hub first so the lint sees current memory.
       # memory-lint prints MEMORY-LINT WARN lines (index caps, orphans, dead links, project
@@ -348,18 +353,19 @@ let
                  { type = "command"; command = "${dotfilesPath}/.claude/hooks/scope-phrasing-lint.sh"; timeout = 10; } ];
         }
       ];
-    } // lib.optionalAttrs cs.enable {
       # claude-sync: push after every turn; flag unpushed code on exit (hook-start is in SessionStart above)
       Stop = [
         {
           matcher = "";
-          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-stop"; timeout = 10; } ];
+          hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh done"; timeout = 3; } ]
+            ++ lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-stop"; timeout = 10; } ];
         }
       ];
       SessionEnd = [
         {
           matcher = "";
-          hooks = [ { type = "command"; command = "${claudeSyncBin} hook-end"; timeout = 1; } ];
+          hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh clear"; timeout = 3; } ]
+            ++ lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-end"; timeout = 1; } ];
         }
       ];
     };
