@@ -49,6 +49,7 @@ let
   run = "/run/user/${toString uid}/rea-vm";
   hopper = import ./hopper.nix { inherit pkgs; };
   jeb = import ./jeb.nix { inherit pkgs; };
+  waydroidImages = import ./waydroid-images.nix { inherit pkgs; };
   # REA's Linux Hopper demo path hardcodes /usr/bin/python3 (BridgeLauncher.ts) and the
   # helper loads libX11/libXtst by soname through ctypes; nixpkgs' glibc has no system
   # search path, so the wrapper supplies them. `exec -a` keeps argv[0] = /usr/bin/python3,
@@ -109,7 +110,7 @@ let
     system = "x86_64-linux";
     modules = [
       inputs.microvm.nixosModules.microvm
-      ({ lib, ... }: {
+      ({ lib, config, ... }: {
         system.stateVersion = "26.05";
         networking.hostName = "rea-vm";
         networking.useDHCP = false;
@@ -132,7 +133,8 @@ let
             # owner/mode kept in xattrs): out/ uses securityModel none, where every file looks
             # owned by uid 1000 = the user the target runs as, so a target could rewrite its
             # own records. Here only guest root writes.
-            ++ pkgs.lib.optional dynamic { proto = "9p"; tag = "net"; source = "${run}/net-stage"; mountPoint = "/mnt/net"; readOnly = false; securityModel = "mapped"; };
+            ++ pkgs.lib.optional dynamic { proto = "9p"; tag = "net"; source = "${run}/net-stage"; mountPoint = "/mnt/net"; readOnly = false; securityModel = "mapped"; }
+            ++ pkgs.lib.optional dynamic { proto = "9p"; tag = "waydroid"; source = "${waydroidImages}"; mountPoint = "/etc/waydroid-extra/images"; readOnly = true; };
           # work/ (Ghidra temp, REA HOME) is a throwaway disk, not a host directory: nothing
           # from it ever reaches the host fs, and it cannot fill /home. rea-vm-mcp deletes
           # the image before every boot, so the runner mkfs'es a fresh one.
@@ -174,6 +176,10 @@ let
               ${lib.concatStrings (lib.mapAttrsToList (k: v: ''echo 'export ${k}="${v}"'
               '') envAll)}
               echo "export TMPDIR=$d/work HOME=$d/work"
+              # Whichever process starts the adb server (REA with HOME=work/, or the session)
+              # must offer the key rea-android-adbkey authorised; REA's own fresh key stayed
+              # "unauthorized" (measured).
+              [ ! -e /mnt/ctl/android ] || echo "export ADB_VENDOR_KEYS=/tmp/.android/adbkey"
               echo "exec ${rea-agents}/bin/rea mcp 2>>$d/out/rea-mcp.err"
             } > /run/rea-mcp.sh
             chmod 755 /run/rea-mcp.sh
@@ -214,7 +220,7 @@ let
           requires = [ "rea-case-mounts.service" ];
           before = [ "rea-mcp.service" "rea-dnsmasq.service" "rea-mitm.service" ];
           serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
-          path = [ pkgs.iproute2 pkgs.iptables pkgs.coreutils pkgs.util-linux ];
+          path = [ pkgs.iproute2 pkgs.iptables pkgs.coreutils pkgs.util-linux pkgs.kmod pkgs.gnugrep ];
           script = ''
             chown root:root /mnt/net && chmod 755 /mnt/net
             # Pre-created for the unprivileged recorders: creating files on 9p is what failed
@@ -250,6 +256,18 @@ let
               # Redirected TCP already has dst 127.0.0.1/::1 here and never gets this far.
               $1 -A rea-rec -j LOG --log-prefix "REA-OTHER "
             done
+            if [ -e /mnt/ctl/android ]; then
+              # Waydroid (lxc veth + bridge, loop-mounted erofs/ext4 images, its own NAT) needs
+              # these before modules_disabled below. af_packet: Android's DhcpClient opens a
+              # packet socket; without it "EAFNOSUPPORT", no IP, adb offline (measured).
+              modprobe -a af_packet bridge veth loop erofs ext4 overlay nf_nat nft_masq nft_ct nft_chain_nat nft_compat xt_MASQUERADE xt_comment xt_conntrack xt_tcpudp xt_addrtype br_netfilter 2>&1 | grep -v "not found" || true
+              # Android's traffic is FORWARDED from waydroid0, not OUTPUT of uid rea: every TCP
+              # connection goes to the recorder, everything else is logged and dropped by rea0.
+              # Its DNS goes through Waydroid's dnsmasq (192.168.240.1) to ours.
+              iptables -t nat -A PREROUTING -i waydroid0 -p tcp ! -d 192.168.240.1 -j REDIRECT --to-ports 8888
+              iptables -A FORWARD -i waydroid0 -j rea-rec
+              iptables -A FORWARD -i waydroid0 -j DROP
+            fi
             # Everything needed is loaded by now (dummy, xt_owner, xt_LOG, nat, 9p, vsock):
             # no module autoload from socket() for the target (classic LPE surface).
             echo 1 > /proc/sys/kernel/modules_disabled
@@ -305,6 +323,107 @@ let
           script = ''
             journalctl -k -f -o short-iso | grep --line-buffered -E 'REA-(UDP|ICMP|OTHER)' >> /mnt/net/packets.log
           '';
+        };
+        # --android (dynamic cases only, ctl/android): Waydroid = LineageOS 20 x86_64 as an lxc
+        # container INSIDE the microVM — no nested virtualisation, so it runs at native
+        # speed; the VM stays the isolation boundary. Software rendering (no GPU), headless
+        # weston. REA reaches it as the adb device 192.168.240.112:5555.
+        virtualisation.waydroid.enable = dynamic;
+        # The guest's iptables is the nft backend; the default package's waydroid-net.sh uses
+        # iptables-legacy and failed: "Module ip_tables not found" (measured).
+        virtualisation.waydroid.package = pkgs.waydroid-nftables;
+        # Only the "preinstalled" path skips the OTA lookup: `init -i DIR` still fetches the
+        # channel JSON and fails offline (measured: "Failed to get system OTA channel").
+        # The images (2.5 GB) come in as a read-only 9p share of the host store path, NOT in
+        # the guest closure: in the erofs store disk they made every dynamic runner 5.1 GB,
+        # kept once per Home Manager generation (filled DESK's / on 2026-10-15).
+        virtualisation.lxc.lxcfs.enable = false;
+        systemd.services.waydroid-container = lib.mkIf dynamic {
+          wantedBy = lib.mkForce [ ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/android";
+        };
+        systemd.services.rea-android = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-fakenet.service" "rea-ca-bundle.service" "dbus.service" ];
+          requires = [ "rea-fakenet.service" ];
+          before = [ "rea-mcp.service" ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/android";
+          serviceConfig = { Type = "oneshot"; RemainAfterExit = true; TimeoutStartSec = 600; };
+          path = [ config.virtualisation.waydroid.package pkgs.coreutils pkgs.util-linux pkgs.openssl pkgs.systemd pkgs.gnugrep pkgs.android-tools ];
+          script = ''
+            # State on the throwaway work disk, not in guest RAM.
+            mkdir -p /mnt/work/waydroid/var /mnt/work/waydroid/data /var/lib/waydroid /tmp/.local/share/waydroid
+            mount --bind /mnt/work/waydroid/var /var/lib/waydroid
+            chown rea:users /mnt/work/waydroid/data
+            mount --bind /mnt/work/waydroid/data /tmp/.local/share/waydroid
+            chown -R rea:users /tmp/.local
+            waydroid init -f
+            # No GPU in the VM: gralloc + SwiftShader. init writes exactly one [properties]
+            # section; a second one makes every later waydroid command fail (configparser).
+            sed -i '/^\[properties\]$/a ro.hardware.gralloc = default\nro.hardware.egl = swiftshader\npersist.waydroid.suspend = false' /var/lib/waydroid/waydroid.cfg
+            waydroid upgrade -o
+            # The recorder's CA as a SYSTEM CA (apps ignore user CAs), through Waydroid's
+            # overlay on /system: Android 13 still reads /system/etc/security/cacerts.
+            if [ -s /run/mitm/mitmproxy-ca-cert.pem ]; then
+              h=$(openssl x509 -subject_hash_old -noout -in /run/mitm/mitmproxy-ca-cert.pem)
+              mkdir -p /var/lib/waydroid/overlay/system/etc/security/cacerts
+              cp /run/mitm/mitmproxy-ca-cert.pem /var/lib/waydroid/overlay/system/etc/security/cacerts/$h.0
+              chmod 644 /var/lib/waydroid/overlay/system/etc/security/cacerts/$h.0
+            fi
+            # adb key for rea, authorised in Android below (rea-android-adbkey): adbd answers
+            # "unauthorized" to an unknown key and there is nobody to tap "Allow" (measured).
+            install -d -o rea -g users -m 700 /tmp/.android
+            [ -s /tmp/.android/adbkey ] || runuser -u rea -- env HOME=/tmp adb keygen /tmp/.android/adbkey >/dev/null
+            systemctl start waydroid-container.service
+          '';
+        };
+        systemd.services.rea-android-adbkey = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-android-session.service" ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/android";
+          serviceConfig = { Type = "oneshot"; RemainAfterExit = true; TimeoutStartSec = 600; };
+          path = [ config.virtualisation.waydroid.package pkgs.coreutils ];
+          script = ''
+            for _ in $(seq 1 300); do
+              [ "$(waydroid shell -- getprop sys.boot_completed 2>/dev/null)" = 1 ] && break
+              sleep 2
+            done
+            waydroid shell -- sh -c 'cat > /data/misc/adb/adb_keys && chown system:shell /data/misc/adb/adb_keys && chmod 640 /data/misc/adb/adb_keys' < /tmp/.android/adbkey.pub
+          '';
+        };
+        systemd.services.rea-android-session = lib.mkIf dynamic {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-android.service" ];
+          requires = [ "rea-android.service" ];
+          before = [ "rea-mcp.service" ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/android";
+          serviceConfig = { User = "rea"; Group = "users"; RuntimeDirectory = "rea-wl"; RuntimeDirectoryMode = "0700"; };
+          environment = { XDG_RUNTIME_DIR = "/run/rea-wl"; WAYLAND_DISPLAY = "wayland-0"; HOME = "/tmp"; ADB_VENDOR_KEYS = "/tmp/.android/adbkey"; };
+          path = [ config.virtualisation.waydroid.package pkgs.weston pkgs.android-tools pkgs.coreutils pkgs.gnugrep pkgs.dbus ];
+          # `waydroid session` needs a session bus: "Unable to autolaunch a dbus-daemon
+          # without a $DISPLAY" (measured).
+          script = "exec dbus-run-session --dbus-daemon=${pkgs.dbus}/bin/dbus-daemon -- ${pkgs.writeShellScript "rea-android-session" ''
+            # lxc bind-mounts $XDG_RUNTIME_DIR/pulse/native into Android and the container
+            # fails to start if it is missing (measured); there is no audio here.
+            mkdir -p "$XDG_RUNTIME_DIR/pulse" && : > "$XDG_RUNTIME_DIR/pulse/native"
+            weston --backend=headless --socket=wayland-0 --width=1080 --height=1920 --idle-time=0 &
+            for _ in $(seq 1 50); do [ -S /run/rea-wl/wayland-0 ] && break; sleep 0.2; done
+            waydroid session start &
+            s=$!
+            for _ in $(seq 1 300); do
+              if waydroid status 2>/dev/null | grep -q "Session:.*RUNNING"; then
+                # With no window shown Waydroid FREEZES the container (adb "offline", measured).
+                waydroid prop set persist.waydroid.suspend false 2>/dev/null
+                [ "$(adb -s 192.168.240.112:5555 get-state 2>/dev/null)" = device ] && break
+                # A connection opened before rea-android-adbkey authorised the key stays
+                # "unauthorized" until it is re-opened (measured).
+                adb disconnect 192.168.240.112:5555 >/dev/null 2>&1
+                adb connect 192.168.240.112:5555 >/dev/null 2>&1
+              fi
+              sleep 1
+            done
+            wait $s
+          ''}";
         };
         # Hopper demo (F6): the vendor binary runs unpatched through nix-ld (REA pins its
         # sha256), with the paths REA hardcodes for a Linux install.

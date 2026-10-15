@@ -527,6 +527,7 @@ in
       # peak; mradermacher's quant (tensorblock/DevQuasar only publish <= Q3 or mirror).
       { name = "llm4decompile-9b";
         from = "hf.co/mradermacher/llm4decompile-9b-v2-GGUF:Q6_K";
+        sha256 = "db4877c02e4424e6d6c079011f96927ee009cc76f63c600256e1df0e55980976"; # HF commit 2c1aa9cb, = installed blob
         parameters = {
           num_ctx = 8192;
           temperature = 0.0; # the paper decodes greedily

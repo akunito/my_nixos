@@ -105,7 +105,7 @@ let
           fi
           if [ "$android" = yes ]; then
             # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
-            printf '\n## Android case\n- Android 13 (Waydroid, LineageOS 20, x86_64, no Google apps) runs inside the VM; it boots with the session (1-3 min). REA reaches it with its adb tools as device `192.168.240.112:5555` (install_adb_package, start_adb_app, read_adb_logcat, capture_adb_screen...).\n- x86/x86_64 code only: an APK with ARM-only native libraries will not install.\n- Its network is the fake one: every TCP connection lands in the recorder (out/net/), whose CA is installed as an Android SYSTEM CA, so TLS payloads are visible unless the app pins certificates.\n' >> "$d/CLAUDE.md"
+            printf '\n## Android case\n- Android 13 (Waydroid, LineageOS 20, x86_64, no Google apps) runs inside the VM; it boots with the session (1-3 min). REA reaches it with its adb tools as device `192.168.240.112:5555` (install_adb_package, start_adb_app, read_adb_logcat, capture_adb_screen...).\n- x86/x86_64 code only: an APK with ARM-only native libraries will not install.\n- Its network is the fake one: every TCP connection lands in the recorder (out/net/), whose CA is installed as an Android SYSTEM CA, so TLS payloads are visible unless the app pins certificates.\n- Files REA writes under out/ (screenshots, pulled packages) reach this case directory only when the session ends: do not try to Read them now; report what the REA tool returned.\n' >> "$d/CLAUDE.md"
           fi
           if [ "$jeb" = yes ]; then
             # shellcheck disable=SC2016 # backticks are Markdown, not command substitution

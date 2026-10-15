@@ -414,9 +414,22 @@ let
       echo "==> pull ${m}"
       "$ollama" pull ${m} || { echo "!! pull ${m} FAILED" >&2; rc=1; }
     '') allPulls}
-    ${lib.concatMapStringsSep "\n" (m: ''
+    ${lib.concatMapStringsSep "\n" (m: if (m.sha256 or null) == null then ''
       echo "==> create ${m.name} (FROM ${m.from})"
       "$ollama" create ${m.name} -f ${mkModelfile m} || { echo "!! create ${m.name} FAILED" >&2; rc=1; }
+    '' else ''
+      # Pinned weights: an hf.co tag follows the repo's newest upload, so pull it under its
+      # own name first and (re)create ${m.name} only if the blob is the reviewed one; on a
+      # mismatch the existing ${m.name} keeps its old blob.
+      echo "==> pull ${m.from} (pinned sha256 ${m.sha256})"
+      "$ollama" pull ${m.from} || { echo "!! pull ${m.from} FAILED" >&2; rc=1; }
+      got=$("$ollama" show --modelfile ${m.from} 2>/dev/null | sed -n 's|^FROM .*/blobs/sha256-\([0-9a-f]*\)$|\1|p' | head -1)
+      if [ "$got" = "${m.sha256}" ]; then
+        echo "==> create ${m.name} (FROM ${m.from})"
+        "$ollama" create ${m.name} -f ${mkModelfile m} || { echo "!! create ${m.name} FAILED" >&2; rc=1; }
+      else
+        echo "!! ${m.from} is now sha256 ''${got:-?}, pinned ${m.sha256}: ${m.name} NOT updated (review the new upload, then bump sha256)" >&2; rc=1
+      fi
     '') customModels}
     echo
     "$ollama" list

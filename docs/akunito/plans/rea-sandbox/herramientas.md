@@ -102,3 +102,21 @@ Los motores comerciales son software propietario que se ejecuta dentro del sandb
   Lo mismo al actualizar Claude Code, porque también cambia la semántica de sus flags (`--strict-mcp-config` cambió en 2.1.246). Nada se actualiza solo.
 - Nunca `rea setup`, `rea update`, `npx rea-agents` ni Hopper.
 
+
+## Decisiones del 2026-10-15
+
+- **JEB CE:** activado en DESK y X13 (`~/.config/rea/jeb-eula-accepted`); casos `rea-case new … --jeb`.
+- **IDA Free:** reserva. Licencia Free Plan creada (nominal, hasta el 2027-10-15). Se integra solo si algún día hace falta, con la GUI y el plugin `ida-free-mcp`.
+- **Hopper Personal:** no por ahora.
+- **Upstream (M5):** aparcado. Diego no quiere enviar nada por ahora; los borradores siguen en `workbench/rea-bench/upstream-drafts/`.
+- **Android, dos vías complementarias:**
+  - **Waydroid (por defecto, `--dynamic --android`):** LineageOS 20 (Android 13, x86_64, sin Google) como contenedor lxc *dentro* de la microVM. Sin virtualización anidada, así que corre a velocidad nativa, y la VM sigue siendo la frontera. Imágenes fijadas por el sha256 de la OTA de Waydroid (`waydroid-images.nix`) y servidas por 9p de solo lectura. Renderizado por software (SwiftShader) y Weston sin pantalla. REA lo usa como dispositivo adb `192.168.240.112:5555`. Su tráfico va a la red falsa, y la CA del registrador se instala como CA del sistema de Android.
+  - **Emulador del SDK de Google:** cuando haga falta lo que Waydroid no da, como apps solo ARM, Google Play Services o un dispositivo "de verdad" para apps que detectan contenedores. Dentro de la microVM necesita virtualización anidada (KVM en KVM), así que irá más lento. Usa la licencia del SDK de Google; Diego la conoce.
+  - **Anotados por si hacen falta:**
+    - **Cuttlefish** (AOSP, Apache-2.0): dispositivo virtual pensado para CI y automatización, sin interfaz, con imágenes AOSP de ci.android.com. Útil para probar una versión de Android concreta o AOSP puro. Es otra VM: dentro de la nuestra, anidada y lenta; mejor como VM hermana en el host.
+    - **Redroid** (Android en Docker): muy ligero, pero comparte el núcleo del host y necesita binder en él y un contenedor privilegiado. Solo dentro de una microVM, nunca en el host.
+- **Versiones fijadas:**
+  - todo lo que construye REA va por hash o commit: fork de REA en `3b79af28`, Frida, JADX, Wakaru, WABT, sigrok, unicorn, pyelftools, Hopper, JEB, VarBERT, fuentes de las firmas FID, Rust std e imágenes de Waydroid;
+  - lo que sale de nixpkgs (Ghidra, Claude Code, Waydroid, QEMU…) y los inputs del flake (microvm, pwndbg) se mueven solo con `flake.lock`, es decir, con `install.sh -u`, que nunca se usa por defecto;
+  - el GGUF de LLM4Decompile del NAS se verificó por sha256 al bajarlo;
+  - el de DESK (`ollama-pull`) se fija desde hoy por sha256: si el autor sube otro fichero, el modelo viejo se queda y el script avisa.
