@@ -224,7 +224,16 @@ Detalles:
   - `crc8` con una tabla inventada.
 
   Ghidra, cuando falla, casi siempre falla de forma visible. Conclusión: solo como anotación, que es como está montado; las respuestas se guardan en `workbench/rea-bench/m4-llm/`.
-- **Pendiente:** VarBERT (el modelo entrenado con Ghidra) para nombres de variables.
+- **VarBERT (2026-10-15): activo.**
+  - **Qué es:** `binsync/varbert_api` 2.3.1 (BSD-2) con sus dos modelos entrenados con Ghidra (`-O0` y `-O2`; los de IDA quedan excluidos). Lo usa `rea-llm-mcp` como herramienta `suggest_variable_names`, en la CPU local.
+  - **Seguridad:** los modelos vienen de Dropbox sin hash publicado; los fijamos por hash y se convierten a safetensors dentro del sandbox de Nix (`torch.load(weights_only=True)`), así que ningún pickle llega al host.
+  - **Dependencias:** `libbs` y `dailalib` se sustituyen por *stubs* mínimos, para no arrastrar la pila LLM de DAILA.
+  - **Auditoría independiente (Fable): adoptar con cambios, aplicados.**
+    - Las locales nunca se renombraban: Ghidra separa las declaraciones con una línea de dos espacios y VarBERT busca `\n\n`. Ahora se normaliza.
+    - Su log a fichero va a un directorio temporal privado.
+    - Topes de 32 KB y 256 líneas por función, tiempo máximo con reinicio y `MemoryMax=4G`.
+  - **Medido en las 42 funciones de M4:** renombra el 70 % de los parámetros, pero **solo el 12 % coincide exactamente**. En `-O0` casi todo tiene sentido (`array/size/key`, `v/min/max`, `crc/i/j`); en `-O2` hay nombres engañosos (`index/v/id`). Tras el arreglo también propone 20 locales.
+  - **Prueba de punta a punta:** en `vault` propuso `argc/argv` para `main`.
 
 **M5 — aportar upstream.** Lo que mejore en M2/M3 va como PR a Ghidra (Apache) o a REA (MIT) desde el fork. DecBench no acepta PRs autónomos de IA: ahí solo issues escritos por Diego.
 

@@ -1,0 +1,2 @@
+GHIDRA_DECOMPILER = "ghidra"
+IDA_DECOMPILER = "ida"

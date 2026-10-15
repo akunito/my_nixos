@@ -192,7 +192,9 @@ let
     '';
   };
   # M4: local LLM4Decompile annotations for the isolated session (DESK Ollama / NAS preset).
-  rea-llm-mcp = pkgs.writeScriptBin "rea-llm-mcp" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./llm-mcp.py);
+  # + VarBERT name suggestions (varbert/, Fable-audited 2026-10-15: adopt with changes, applied).
+  rea-varbert = import ./varbert/varbert.nix { pkgs = pkgs-unstable; };
+  rea-llm-mcp = pkgs.writeScriptBin "rea-llm-mcp" ("#!${pkgs.python3}/bin/python3 -I\nVARBERT = \"${rea-varbert}/bin/rea-varbert\"\n" + builtins.readFile ./llm-mcp.py);
   rea-net-mirror = pkgs.writeScriptBin "rea-net-mirror" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./net-mirror.py);
 
   # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
@@ -439,7 +441,8 @@ let
       jq -n --arg cmd "${rea-run}/bin/rea-run" --arg llm "${rea-llm-mcp}/bin/rea-llm-mcp" --arg c "$name" --arg home "$HOME" --arg rt "/run/user/$uid" \
         '{mcpServers: {rea: {type: "stdio", command: $cmd, args: [$c, "mcp"],
           env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}},
-          "rea-llm": {type: "stdio", command: $llm, args: []}}}' > "$s/mcp.json"
+          "rea-llm": {type: "stdio", command: $llm, args: [],
+            env: {HOME: $home, XDG_RUNTIME_DIR: $rt, DBUS_SESSION_BUS_ADDRESS: ("unix:path=" + $rt + "/bus")}}}}' > "$s/mcp.json"
       # Claude Code persists MCP results above its inline limit under the case's project dir
       # (tool-results/); the Bash sandbox must be able to read them or the agent cannot use
       # them (measured: jq "No such file" on a 79k-char inspect_android_class result).
