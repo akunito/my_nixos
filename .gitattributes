@@ -44,6 +44,12 @@ docs/akunito/infrastructure/truenas-migration-complete.md filter=git-crypt diff=
 # Media stack documentation (service details, provider accounts, API structure)
 docs/akunito/infrastructure/services/media-stack.md filter=git-crypt diff=git-crypt
 
+# L2 / anti-cheat analysis (RE of game clients + anti-cheats, account activity vs
+# named operators who ban for it; repo is public). git-crypt hides contents, NOT names.
+docs/akunito/gaming/l2reborn-linux.md filter=git-crypt diff=git-crypt
+docs/akunito/gaming/l2reborn-linux-investigation.md filter=git-crypt diff=git-crypt
+docs/akunito/plans/l2-proton-linux-compat.md filter=git-crypt diff=git-crypt
+
 # OpenClaw finance skill (contains financial schema, category details, personal names, salary)
 templates/openclaw/workspace/skills/finance/SKILL.md filter=git-crypt diff=git-crypt
 templates/openclaw/workspace/skills/finance/PROCEDURES.md filter=git-crypt diff=git-crypt
