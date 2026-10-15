@@ -1,0 +1,33 @@
+sway: floating windows drift a few pixels every time the usable area changes and changes back (a bar hidden then shown, waybar restarted by every deploy).
+
+arrange_workspace() rescales each floater from the previous workspace box to the new one (floating_fix_coordinates keeps the centre's relative position). The previous box was read with workspace_get_box() AFTER the last arrange had inset it by the gaps, while the new box is the bare usable area; the two transforms of a hide+show are not inverse, so every round trip leaves a residue. Fix: rebuild the previous box without the gaps (x/y minus left/top, width/height plus both sides), exactly what workspace_add_gaps() took away; the change detection (prev_x/prev_y) already did that.
+
+Measured 2026-10-15. DESK (sway 1.11, gaps inner 8 + outer, 4K@1.5 + QHD@1.25 portrait, waybar top): one `systemctl --user restart waybar` moved a floater -4,-4 on DP-1 and +2/-2 on DP-2, cumulative per deploy; formula reproduced the measured 1673/1696 exactly. Nested headless sway (tests/e2e/test_35_floating_drift.py: gaps inner 8 outer 4, swaybar mode invisible/dock x5, 1920x1080@1 + 2560x1440@1.5): unpatched (700,600)->(692,643) and (2300,650)->(2266,740); patched: unchanged. The rescale itself (floaters follow the area while the bar is away) is unchanged.
+
+---
+diff --git a/sway/tree/arrange.c b/sway/tree/arrange.c
+index faf54d0..4fe4290 100644
+--- a/sway/tree/arrange.c
++++ b/sway/tree/arrange.c
+@@ -275,11 +275,18 @@ void arrange_workspace(struct sway_workspace *workspace) {
+ 			area->width, area->height, area->x, area->y);
+ 
+ 	bool first_arrange = workspace->width == 0 && workspace->height == 0;
+-	struct wlr_box prev_box;
+-	workspace_get_box(workspace, &prev_box);
+-
+ 	double prev_x = workspace->x - workspace->current_gaps.left;
+ 	double prev_y = workspace->y - workspace->current_gaps.top;
++	// The previous arrange left x/y/width/height inset by the gaps, while the new
++	// box below is the bare usable area: compare like with like, or a usable-area
++	// change and its undo (bar hidden then shown) is not an identity and every
++	// floater drifts a few pixels per round trip.
++	struct wlr_box prev_box = {
++		.x = prev_x,
++		.y = prev_y,
++		.width = workspace->width + workspace->current_gaps.left + workspace->current_gaps.right,
++		.height = workspace->height + workspace->current_gaps.top + workspace->current_gaps.bottom,
++	};
+ 	workspace->width = area->width;
+ 	workspace->height = area->height;
+ 	workspace->x = output->lx + area->x;

@@ -1197,6 +1197,11 @@
     # that had none); relogin. Also emits the Hyper+wheel `z` bindings and
     # lets sway-apps render `lift_tiled_on_press` and pin rule actions.
     swayWindowStacking = false;
+    # Local sway patch patches/sway-floating-gaps-drift.patch: floating windows no
+    # longer drift a few px down each time the usable area changes and changes back
+    # (every deploy restarts waybar; measured -4 px per restart on DESK 2026-10-15).
+    # Rebuilds sway only; relogin to run it.
+    swayFloatingDriftFix = false;
     # sway-apps owns the output layout (mode/pos/scale/transform/enable by
     # hardware id, xwayland_dpi) from settings.displays in the profile JSON
     # (GUI Monitors canvas, `sway-apps displays`): kanshi and the nwg-displays

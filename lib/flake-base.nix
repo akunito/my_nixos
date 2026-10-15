@@ -319,12 +319,22 @@ let
       patches = (old.patches or [ ]) ++ [ ../patches/sway-window-stacking.patch ];
     });
   };
+  # Floaters drifting a few px per bar hide/show (every deploy restarts waybar) — see
+  # swayFloatingDriftFix in lib/defaults.nix. Touches only sway/tree/arrange.c, which no
+  # other patch here does, so it applies in any order.
+  swayFloatingDriftFixOverlay = final: prev: {
+    sway-unwrapped = prev.sway-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [ ../patches/sway-floating-gaps-drift.patch ];
+    });
+  };
   zeroScalingOverlays = lib.optional (systemSettingsWithFonts.swayXwaylandZeroScaling or false)
     swayXwaylandZeroScalingOverlay
     ++ lib.optional (systemSettingsWithFonts.swayAboveFullscreen or false)
     swayAboveFullscreenOverlay
     ++ lib.optional (systemSettingsWithFonts.swayWindowStacking or false)
-    swayWindowStackingOverlay;
+    swayWindowStackingOverlay
+    ++ lib.optional (systemSettingsWithFonts.swayFloatingDriftFix or false)
+    swayFloatingDriftFixOverlay;
 
   # Configure pkgs-stable
   pkgs-stable = import inputs.nixpkgs-stable {

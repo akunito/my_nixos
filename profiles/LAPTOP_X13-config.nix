@@ -305,6 +305,8 @@ in
     # Peek / pin / z-order (patches/sway-window-stacking.patch, SWAY-6/7).
     # First from-source sway build on this machine (~2 min).
     swayWindowStacking = true;
+    # Floaters stay put across waybar restarts/deploys (patches/sway-floating-gaps-drift.patch).
+    swayFloatingDriftFix = true;
     # Workspaces are pinned to monitors by hardware id from sway-apps' monitors
     # table (LAPTOP_X13.json: built-in panel = group 1, dock monitor = group 2),
     # the same model as DESK. That rules out swaysome's position-based

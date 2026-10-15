@@ -919,6 +919,8 @@ in
     swayAboveFullscreen = true;
     # Peek / pin / z-order (patches/sway-window-stacking.patch, SWAY-6/7).
     swayWindowStacking = true;
+    # Floaters stay put across waybar restarts/deploys (patches/sway-floating-gaps-drift.patch).
+    swayFloatingDriftFix = true;
 
     # === Monitor Configuration (Sway/SwayFX) ===
     # Primary monitor for SwayFX: use hardware-ID string to avoid connector drift.
