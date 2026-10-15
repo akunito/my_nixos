@@ -1,6 +1,6 @@
 // REA triage rules (AINF-408). Our own rules, matching product names and well-known
 // section/magic markers only. meta.action:
-//   reject — out of scope (anti-cheat, DRM): REA must not be used on it at all
+//   reject — hold for Diego (anti-cheat, DRM): propose REJECT so he explicitly confirms before analysing; overridable, only a proposal
 //   tier2  — packed/protected: treat as suspicious
 // False positives are expected (a name in a string table is not proof); triage only
 // proposes a tier, Diego decides.
@@ -9,7 +9,7 @@ rule rea_anticheat
 {
   meta:
     action = "reject"
-    why = "anti-cheat component or client protected by one (ToS + legal scope)"
+    why = "anti-cheat component, or a client protected by one — analyse only with Diego's explicit go-ahead"
   strings:
     $eac1 = "EasyAntiCheat" nocase ascii wide
     $be1  = "BattlEye" nocase ascii wide
@@ -33,7 +33,7 @@ rule rea_drm
 {
   meta:
     action = "reject"
-    why = "DRM / licence protection: REA must not be used to study or bypass it"
+    why = "DRM / licence protection — analyse to understand it only with Diego's explicit go-ahead; do not build a circumvention"
   strings:
     $d1 = "Denuvo" nocase ascii wide
     $d2 = "SecuROM" nocase ascii wide

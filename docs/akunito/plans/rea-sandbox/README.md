@@ -110,6 +110,7 @@ No es asesoramiento jurídico; panorama general, foco UE (Polonia) y EE.UU. (202
 - **Análisis de software para ver cómo funciona: legal.** Observar, medir y entender un binario (sobre todo propio o de la empresa) es lícito.
 - **Dónde deja de serlo:** eludir DRM para distribuir (DMCA §1201 / InfoSoc art. 6), redistribuir o reusar código/assets ajenos, clonar. Saltarse un antitrampas online suele ser violación de ToS (contractual), a veces DMCA.
 - **Nuestro encuadre:** análisis general sí; interoperar sí. El **análisis de DRM, licencias o antitrampas** —para entender cómo funcionan, con fines de estudio e investigación— está **aprobado explícitamente por Diego** (ver línea 44).
+- **Fuente única:** esta sección (+ `SKILL.md` del skill `reverse-engineering`) es la línea de alcance de referencia. `case-CLAUDE.md` y `triage.yar` la siguen y no inventan una versión más estricta; si divergen, manda esto. El hook `scope-phrasing-lint.sh` lo vigila.
 
 ## Cómo lo descubre Claude Code
 
