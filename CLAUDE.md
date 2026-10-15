@@ -180,6 +180,10 @@ Plan: `docs/akunito/plans/plane-test-suite/`.
 
 External projects (Portfolio, LiftCraft, Plane, etc.) have their own CLAUDE.md. When working in those repos, the project's CLAUDE.md takes precedence. This CLAUDE.md governs NixOS infrastructure and profile configuration.
 
+## Private git: Gitea (since 2026-10-15)
+
+`https://gitea.local.akunito.com` on VPS_PROD, Tailscale only, SSH `git@gitea.local.akunito.com:2222`. When creating or moving a repo that is private by nature (personal/sensitive data, RE cases, game bots, prototypes, private mirrors of GitHub repos), suggest Gitea; keep GitHub for public repos, outside collaborators, Actions/Pages, Plane's GitHub integration and upstream forks. Rules + usage: `docs/akunito/infrastructure/services/gitea.md`.
+
 ## Infrastructure & Service Reference
 
 Compact registry (nodes, services, projects, skills): `.claude/reference/infrastructure-registry.md`

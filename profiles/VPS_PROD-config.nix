@@ -192,7 +192,7 @@ in
     # PostgreSQL 17 Server
     postgresqlServerEnable = true;
     postgresqlServerPort = 5432;
-    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" "n8n" "linkwarden" ];
+    postgresqlServerDatabases = [ "plane" "rails_database_prod" "matrix" "miniflux" "vaultwarden" "n8n" "linkwarden" "gitea" ];
     postgresqlServerUsers = [
       {
         name = "plane";
@@ -314,6 +314,16 @@ in
     # vault@vault.<publicDomain>.
     vaultwardenSmtpFrom = "vault@${secrets.publicDomain}";
     vaultwardenPort = 8222;
+
+    # === Gitea (private git — NixOS native, Tailscale-only, AINF 2026-10-15) ===
+    # Web via nginx-local (gitea.local), SSH on :2222. "gitea" is also in
+    # postgresqlServerDatabases above so the dumps include it. Usage rules:
+    # docs/akunito/infrastructure/services/gitea.md.
+    giteaEnable = true;
+    giteaDomain = "gitea.${secrets.wildcardLocal}";
+    giteaPort = 3012;
+    giteaSshPort = 2222;
+    giteaMailFrom = "git@${secrets.publicDomain}";
 
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===
     cloudflaredEnable = true;
@@ -462,6 +472,8 @@ in
       home       = { rootPath = "/var/www/home/current"; };
       openclaw   = { port = 18789; };
       finance    = { port = 8190; maxBodySize = "50M"; };
+      # Gitea web UI; maxBodySize for LFS / large pushes over HTTPS.
+      gitea      = { port = 3012; maxBodySize = "1G"; };
       # akucraft-map (BlueMap behind akucraft-web) archived 2026-09-30 with the
       # survival world: NAS gameservers/akucraft-archive (AINF-401).
     };

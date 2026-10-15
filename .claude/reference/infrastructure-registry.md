@@ -96,7 +96,7 @@ Template paths relative to `templates/`.
 
 | Service | Port | Nix Module | Notes |
 |---------|------|------------|-------|
-| PostgreSQL 17 | 5432 | `postgresql.nix` | 6 DBs (plane, rails, matrix, miniflux, vaultwarden, n8n) |
+| PostgreSQL 17 | 5432 | `postgresql.nix` | DBs: plane, rails, matrix, miniflux, vaultwarden, n8n, linkwarden, gitea |
 | MariaDB 11 | 3306 | `mariadb.nix` | DB: nextcloud |
 | Redis 7 | 6379 | `redis-server.nix` | 5 DB allocations |
 | PgBouncer | 6432 | `pgbouncer.nix` | Connection pooler |
@@ -104,6 +104,7 @@ Template paths relative to `templates/`.
 | Prometheus | 9090 | (embedded) | + 10 exporters |
 | Headscale | 8080 | `headscale.nix` | VPN coordination |
 | Vaultwarden | 8222 | `vaultwarden.nix` | vault.akunito.com |
+| Gitea | 3012 (HTTP), 2222 (SSH) | `gitea.nix` | gitea.local.akunito.com — Tailscale only, private repos; see `services/gitea.md` |
 | Postfix | 25 | `postfix-relay.nix` | SMTP2GO relay |
 | Cloudflared | — | `cloudflared.nix` | Outbound tunnel |
 | WireGuard | 51820 | `wireguard-server.nix` | Backup tunnel to pfSense |

@@ -773,6 +773,13 @@
     nginxLocalListenAddress = "127.0.0.1"; # IP to bind local nginx vhosts (set to Tailscale IP on VPS)
     nginxLocalServices = {}; # Attrset of services: { grafana = { port = 3002; }; status = { port = 3009; }; }
 
+    # === Gitea (private git, Tailscale-only) ===
+    giteaEnable = false; # Enable Gitea NixOS native service (system/app/gitea.nix)
+    giteaDomain = ""; # e.g. "gitea.local.akunito.com" (served by nginx-local)
+    giteaPort = 3012; # HTTP, 127.0.0.1 only
+    giteaSshPort = 2222; # built-in SSH server; never in the public firewall
+    giteaMailFrom = ""; # "" = mailer off
+
     # === Vaultwarden (password manager) ===
     vaultwardenEnable = false; # Enable Vaultwarden NixOS native service
     vaultwardenDomain = ""; # Public domain (e.g., "vault.akunito.com")

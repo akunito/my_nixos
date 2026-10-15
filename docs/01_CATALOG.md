@@ -91,6 +91,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/gamemode.nix**: Feral GameMode *Enabled when:*
    - `systemSettings.gamemodeEnable == true`
    - `systemSettings.gpuType == "amd"`
+- **system/app/gitea.nix**: Gitea — self-hosted git for PRIVATE projects (AINF, 2026-10-15) *Enabled when:* `systemSettings.giteaEnable or false`
 - **system/app/grafana.nix**: Grafana & Prometheus Monitoring Stack *Enabled when:*
    - `uses local postfix relay`
    - `fixed UID for dashboard references`
@@ -660,6 +661,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/infrastructure/services/claude-sync.md**: Claude Code state (memory, skills, session transcripts) synced across DESK, LAPTOP_X13 and DESK_W11 through a hub on VPS_PROD — design, edge cases, bootstrap, operation
 - **docs/akunito/infrastructure/services/database-redis.md**: Database services: PostgreSQL, MariaDB, Redis on VPS
 - **docs/akunito/infrastructure/services/docs-sites.md**: baby./home.local.akunito.com — the private babydocs and homedocs repos built and published on VPS_PROD by a timer, so nobody needs an account on the host to publish a page
+- **docs/akunito/infrastructure/services/gitea.md**: Private Gitea on VPS_PROD (Tailscale only) — what it is, how to use it, and when to suggest it instead of GitHub
 - **docs/akunito/infrastructure/services/homelab-stack.md**: Homelab services: split between VPS and TrueNAS
 - **docs/akunito/infrastructure/services/infra-alerts-telegram.md**: Group **Infra Alerts** (forum supergroup, bot `@infra_alerts_aku_bot`). Topics:
 - **docs/akunito/infrastructure/services/kuma.md**: Uptime Kuma: consolidated monitoring on VPS

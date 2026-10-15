@@ -66,6 +66,7 @@
   ++ lib.optional (systemSettings.akucraftStatusBotEnable or false) ../../system/app/akucraft-status-bot.nix
   ++ lib.optional (systemSettings.nginxLocalEnable or false) ../../system/app/nginx-local.nix
   ++ lib.optional (systemSettings.vaultwardenEnable or false) ../../system/app/vaultwarden.nix
+  ++ lib.optional (systemSettings.giteaEnable or false) ../../system/app/gitea.nix # private git, Tailscale-only
   ++ lib.optional (systemSettings.wireguardServerEnable or false) ../../system/security/wireguard-server.nix
   ++ lib.optional (systemSettings.egressAuditEnable or false) ../../system/security/egress-audit.nix
   ++ lib.optional (systemSettings.postfixRelayEnable or false) ../../system/app/postfix-relay.nix

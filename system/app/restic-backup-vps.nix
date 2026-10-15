@@ -171,6 +171,7 @@ let
       "/home/${username}/.local/share/docker/volumes/plane_plane_uploads/_data"
       "/var/lib/headscale"
       "/var/lib/vaultwarden"
+      "/var/lib/gitea"
       "/etc/secrets"
     ];
     excludes = [
