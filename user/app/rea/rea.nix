@@ -39,10 +39,23 @@ let
     realise_runner() { # <kind> <drv>: prints the runner's store path
       root="$HOME/.cache/rea-vm/gcroots/$1"
       mkdir -p "''${root%/*}"
+      old=$(readlink -f "$root" 2>/dev/null || true)
       if ! nix-store --realise "$2" --add-root "$root" >/dev/null 2>"$root.log"; then
         echo "rea: building the $1 microVM failed, see $root.log" >&2; return 1
       fi
-      readlink -f "$root"
+      new=$(readlink -f "$root")
+      # Free the superseded image NOW (3-5 GB each) instead of at the next GC: only these
+      # paths, never anything else. nix-store --delete refuses live paths, so a VM still
+      # running on it (runtime root) or an old generation that references it keeps it.
+      if [ -n "$old" ] && [ "$old" != "$new" ] && [ -e "$old" ]; then
+        # Only the VM's own paths (runner, microvm-run, store disk...), one at a time and
+        # referrers first: the disk is also referenced by microvm-run, and one live path in a
+        # batch makes --delete abort the whole batch (both measured). Shared ones stay.
+        nix-store -qR "$old" 2>/dev/null | grep -E -- '-microvm-' | tac | while read -r p; do
+          nix-store --delete "$p" >/dev/null 2>&1 || true
+        done
+      fi
+      printf '%s\n' "$new"
     }
   '';
   rea-vm-prewarm = pkgs.writeShellScriptBin "rea-vm-prewarm" ''
