@@ -66,7 +66,11 @@ Ningún programa educativo aplica: IDA Classroom es solo para instituciones.
 
 **Decisión propuesta (F6):**
 1. **Hopper demo primero.** Gratis, offline y REA ya la automatiza. Va en la imagen o la VM como segundo motor nativo. Hay que comprobar que el build Linux funciona en NixOS: con `buildFHSEnv`, o con `requireFile` si la descarga exige aceptar algo a mano. Si se usa a menudo, **Hopper Personal (99 €)** es la única compra que vale la pena.
-2. **JEB CE: probarla.** Diego crea la cuenta y la instala; después se mira si ofrece el servidor MCP. Si sí, es el mejor decompilador x86 gratis con API. Por su EULA, solo con modelo local (`claude-nas`) o con binarios nuestros.
+2. **JEB CE: integrada (2026-10-15).**
+   - **Paquete:** el zip 5.48 (no pide registro) está en el store por hash (`jeb.nix`, `requireFile`). Trae el servidor MCP (`jeb.jar -c --mcp`, `--interface`, `--port`, `--config=FICHERO`).
+   - **Activación:** solo en casos `rea-case new … --jeb` (niveles 1 y 2, sin `--web`). Corre sin interfaz dentro de la microVM (servicio `rea-jeb`, JVM de 2 GiB; la VM pasa a 8 GiB) y REA lo usa con `REA_JEB_MCP_URL=http://127.0.0.1:8425/mcp`.
+   - **EULA:** JEB sin interfaz pide aceptarla por la entrada estándar y se cierra si no recibe "yes"; la acepta `.EulaAccepted = true` en su `--config`. Esa aceptación es de Diego: `--jeb` se niega hasta que existe `~/.config/rea/jeb-eula-accepted`, que crea él después de leer `pnfsoftware.com/jeb/LICENSE.TXT`.
+   - **Restricción legal (EULA rev. 2026-02-04):** no se puede *"disclose, or make available to third parties any output generated"* por JEB. Pasar su salida a un modelo en la nube es, como poco, una zona gris. Usarla con binarios nuestros, o con el modelo local.
 3. **IDA Free: solo nivel 0**, con red hacia Hex-Rays y GUI. Su decompilador sube el código a su nube, así que no se usa con binarios de terceros ni en un sandbox sin red. IDA Home solo si algún día hace falta headless y se acepta la nube.
 4. **Sin red, solo Ghidra y Hopper descompilan.** Para los niveles 1 y 2, Ghidra sigue siendo el motor principal.
 
@@ -81,7 +85,7 @@ Los motores comerciales son software propietario que se ejecuta dentro del sandb
   - `/opt/hopper` y `/usr/bin/{Xvfb,xauth,unshare}`;
   - `/usr/bin/python3` es un envoltorio que da a `ctypes` las rutas de libX11 y libXtst (el glibc de nixpkgs no tiene ruta de sistema) y conserva `argv[0]` con `exec -a`, porque REA compara la línea de comando del proceso que lanza.
 - **Fuera del nivel 0**: la imagen no lo lleva; para nuestros binarios basta Ghidra.
-- **Pendiente de Diego:** JEB CE (crear la cuenta y ver si incluye MCP) e IDA Free (solo nivel 0, con su nube). Hopper Personal (99 €) solo si la demo se queda corta.
+- **Pendiente de Diego:** aceptar el EULA de JEB (`touch ~/.config/rea/jeb-eula-accepted`) e IDA Free (licencia creada el 2026-10-15; ver más abajo). Hopper Personal (99 €) solo si la demo se queda corta.
 
 ## Cadena de suministro y actualizaciones
 

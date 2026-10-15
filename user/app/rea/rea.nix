@@ -49,6 +49,7 @@ let
     case_tier() { sed -n 's/^tier: *\([0-9]\).*/\1/p' "$1/CASE.md" 2>/dev/null | head -1; }
     case_web() { grep -q '^web: yes' "$1/CASE.md" 2>/dev/null; }
     case_dynamic() { grep -q '^dynamic: yes' "$1/CASE.md" 2>/dev/null; }
+    case_jeb() { grep -q '^jeb: yes' "$1/CASE.md" 2>/dev/null; }
     ensure_image() {
       docker image inspect "$IMAGE" >/dev/null 2>&1 || docker load -q -i ${image} >/dev/null
     }
@@ -73,12 +74,13 @@ let
       case "$cmd" in
         new)
           d=$(case_dir "''${1:-}"); name=$1; shift
-          tier=1; brief=""; web=no; dynamic=no
+          tier=1; brief=""; web=no; dynamic=no; jeb=no
           while [ $# -gt 0 ]; do
             case "$1" in
               --tier) tier=$2; shift 2 ;;
               --web) web=yes; shift ;;
               --dynamic) dynamic=yes; shift ;;
+              --jeb) jeb=yes; shift ;;
               --brief) brief=$2; shift 2 ;;
               *) die "unknown option $1" ;;
             esac
@@ -90,12 +92,17 @@ let
           [ "$web" = no ] || [ "$tier" != 0 ] || die "web cases are tier 1 or 2 (a website is never ours in the tier-0 sense)"
           [ "$dynamic" = no ] || [ "$tier" != 0 ] || die "dynamic cases are tier 1 or 2: executing anything runs only in the microVM"
           [ "$web" = no ] || [ "$dynamic" = no ] || die "a case is either --web or --dynamic"
-          printf 'tier: %s\nweb: %s\ndynamic: %s\ncreated: %s\nbrief: %s\n' "$tier" "$web" "$dynamic" "$(date -Iseconds)" "$brief" > "$d/CASE.md"
+          [ "$jeb" = no ] || { [ "$tier" != 0 ] && [ "$web" = no ]; } || die "--jeb is for tier 1-2, non-web cases (JEB runs in the microVM)"
+          [ "$jeb" = no ] || [ -e "$HOME/.config/rea/jeb-eula-accepted" ] || die "--jeb: read https://pnfsoftware.com/jeb/LICENSE.TXT, then accept it yourself: touch ~/.config/rea/jeb-eula-accepted"
+          printf 'tier: %s\nweb: %s\ndynamic: %s\njeb: %s\ncreated: %s\nbrief: %s\n' "$tier" "$web" "$dynamic" "$jeb" "$(date -Iseconds)" "$brief" > "$d/CASE.md"
           cp ${./case-CLAUDE.md} "$d/CLAUDE.md"; chmod 644 "$d/CLAUDE.md"
           if [ "$web" = yes ]; then
             # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
             printf '\n## Web case\n- The only browser is inside the sandbox: pass `%s` as `executable_path` (launch mode) to `capture_browser_scenario`. Do not search the host for a browser.\n- All traffic goes through a filtering proxy: LAN, tailnet, the host, private/reserved IPs, numeric hosts and internal domains are refused by design (HTTP 403). Report such refusals, do not try to get around them.\n- `log/proxy.log` lists every request (query strings stripped).\n' \
               "${vmRunnerWeb.chromiumWrapper}" >> "$d/CLAUDE.md"
+          fi
+          if [ "$jeb" = yes ]; then
+            printf '\n## JEB case\n- JEB CE 5.48 runs headless in the VM and REA reaches it as its JEB provider (inspect_jeb_client, decompile_jeb_item…). Its EULA forbids making JEB output available to third parties: use it only as Diego decided for this case (our own binaries, or a local model).\n' >> "$d/CLAUDE.md"
           fi
           if [ "$dynamic" = yes ]; then
             # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
@@ -205,7 +212,8 @@ let
     ghidraExtensions
     ++ rea-varbert.vendor
     ++ (import ./env.nix { pkgs = pkgs-unstable; inherit rea-agents; }).vendor
-    ++ [ rea-agents (import ./hopper.nix { pkgs = pkgs-unstable; }) (import ./hopper.nix { pkgs = pkgs-unstable; }).src ]
+    ++ [ rea-agents (import ./hopper.nix { pkgs = pkgs-unstable; }) (import ./hopper.nix { pkgs = pkgs-unstable; }).src
+         (import ./jeb.nix { pkgs = pkgs-unstable; }).zip ]   # JEB CE 5.48: newer builds replace it upstream
   )) + "\n");
   rea-vendor-export = pkgs.writeShellApplication {
     name = "rea-vendor-export";
@@ -249,6 +257,10 @@ let
       rm -rf "$V/out-stage"; mkdir -m 700 "$V/out-stage"
       ln -sfn "$d/target" "$V/target"
       printf '%s' "$d" > "$V/ctl/case"
+      rm -f "$V/ctl/jeb"
+      if grep -q '^jeb: yes' "$d/CASE.md" 2>/dev/null; then
+        [ -e "$HOME/.config/rea/jeb-eula-accepted" ] && : > "$V/ctl/jeb" || echo "rea-claude: JEB EULA not accepted (~/.config/rea/jeb-eula-accepted) - this session runs without JEB" >&2
+      fi
       unit="rea-vm-$$"
       sq=""; mir=""
       runner=${vmRunner}
@@ -323,7 +335,7 @@ let
         systemctl --user stop "$unit.scope" "rea-proxy-$$.scope" "rea-relay-$$.scope" >/dev/null 2>&1
         [ -z "$sq" ] || kill "$sq" 2>/dev/null
         [ -z "$mir" ] || kill "$mir" 2>/dev/null
-        rm -f "$V/target" "$V/ctl/case" "$V/ctl/proxy-port" "$V/squid.conf" "$C/work.img"
+        rm -f "$V/target" "$V/ctl/case" "$V/ctl/jeb" "$V/ctl/proxy-port" "$V/squid.conf" "$C/work.img"
         dest="$d/out/vm-$(date +%Y%m%dT%H%M%S)"
         # net-stage first: guest-root-only records, the part worth most.
         for st in "$V/net-stage:$dest/net" "$V/out-stage:$dest"; do
@@ -347,7 +359,7 @@ let
       # The desktop exports a global LD_LIBRARY_PATH (alsa, sane, pipewire-jack) that
       # breaks binaries from another nixpkgs revision: GLIBC_2.43 not found (measured).
       env -u LD_LIBRARY_PATH systemd-run --user --scope --quiet --collect --unit="$unit" \
-        -p MemoryMax=8G -p TasksMax=2048 \
+        -p MemoryMax=10G -p TasksMax=2048 \
         "$runner/bin/microvm-run" </dev/null >>"$d/log/vm-console.log" 2>&1 &
       vm=$!
       for _ in $(seq 1 120); do

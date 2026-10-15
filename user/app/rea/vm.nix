@@ -40,6 +40,7 @@ let
     NODE_USE_ENV_PROXY = "1"; # Node >= 24: fetch (WebSourceMapFetcher) honours the proxy
   } // pkgs.lib.optionalAttrs (!web) {
     HOPPER_LAUNCHER_PATH = "/opt/hopper/bin/Hopper";
+    REA_JEB_MCP_URL = "http://127.0.0.1:8425/mcp"; # served only in --jeb cases (rea-jeb)
   } // pkgs.lib.optionalAttrs dynamic {
     # Executed targets inherit REA's environment: give them an ordinary userland too
     # (curl was "command not found" with the REA-only PATH, measured).
@@ -47,6 +48,7 @@ let
   };
   run = "/run/user/${toString uid}/rea-vm";
   hopper = import ./hopper.nix { inherit pkgs; };
+  jeb = import ./jeb.nix { inherit pkgs; };
   # REA's Linux Hopper demo path hardcodes /usr/bin/python3 (BridgeLauncher.ts) and the
   # helper loads libX11/libXtst by soname through ctypes; nixpkgs' glibc has no system
   # search path, so the wrapper supplies them. `exec -a` keeps argv[0] = /usr/bin/python3,
@@ -115,7 +117,7 @@ let
         microvm = {
           hypervisor = "qemu";
           vcpu = 4;
-          mem = 6144;
+          mem = 8192; # Ghidra (4 GiB heap) + an optional JEB (2 GiB, --jeb cases)
           interfaces = [ ];
           storeOnDisk = true;
           vsock.cid = 4242;
@@ -318,6 +320,24 @@ let
           "L+ /usr/bin/unshare - - - - ${pkgs.util-linux}/bin/unshare"
         ];
         fonts.enableDefaultPackages = !web;
+        # JEB CE headless with its MCP server, only when the case asked for it (ctl/jeb):
+        # the EULA forbids making its output available to third parties (jeb.nix), and it
+        # costs another 2 GiB of JVM. No NIC, so no update checks or telemetry either.
+        systemd.services.rea-jeb = lib.mkIf (!web) {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "rea-case-mounts.service" ];
+          requires = [ "rea-case-mounts.service" ];
+          before = [ "rea-mcp.service" ];
+          unitConfig.ConditionPathExists = "/mnt/ctl/jeb";
+          serviceConfig = { User = "rea"; Group = "users"; RuntimeDirectory = "rea-jeb"; Environment = "HOME=/run/rea-jeb"; };
+          # ctl/jeb exists only once Diego accepted the EULA himself (rea.nix); --config is a
+          # FILE, and headless JEB asks on stdin and quits without `.EulaAccepted = true`.
+          script = ''
+            printf '.EulaAccepted = true\n' > /run/rea-jeb/jeb-client.cfg
+            exec ${pkgs.jdk21}/bin/java -Xmx2g -Djeb.sharedProgram -jar ${jeb}/opt/jeb/bin/app/jeb.jar \
+              -c --mcp --interface=127.0.0.1 --port=8425 --config=/run/rea-jeb/jeb-client.cfg < /dev/null
+          '';
+        };
         environment.systemPackages = reaEnv.tools ++ lib.optional web pkgs.chromium
           ++ lib.optionals dynamic [ pkgs.dnsmasq pkgs.iproute2 pkgs.iptables pkgs.curl pkgs.wget pkgs.python3 pkgs.dnsutils pkgs.netcat-openbsd pkgs.strace pkgs.ltrace ];
       })
