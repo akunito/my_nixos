@@ -28,6 +28,12 @@ let
     (get "http://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13/libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb" "sha256-7lYz6GPhnDOB7ZeELONe0y7elqPRrk6UwFHTA2/iE0c=")
     (get "http://archive.ubuntu.com/ubuntu/pool/main/g/gcc-13/libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb" "sha256-zWidsmke2qEPNzKTByknlrtZnnIuBQXHnhTKqh/pqTo=")
   ];
+  # Ubuntu 22.04: still the build host of much CI output (glibc 2.35, gcc 11).
+  ubuntu2204 = unpack "ubuntu2204" [
+    (get "http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6-dev_2.35-0ubuntu3.15_amd64.deb" "sha256-zlGuIzqfgAoEDeLQzVmD74b1WMYjs0LICUIwHX9FP0g=")
+    (get "http://archive.ubuntu.com/ubuntu/pool/main/g/gcc-11/libstdc++-11-dev_11.4.0-1ubuntu1~22.04.3_amd64.deb" "sha256-WODNLR91jnVCbqpHpecijRyGGAUA7WjRYry/ewocXdA=")
+    (get "http://archive.ubuntu.com/ubuntu/pool/main/g/gcc-11/libgcc-11-dev_11.4.0-1ubuntu1~22.04.3_amd64.deb" "sha256-Ne1oYi2veWrAEPY8c6vYr/hR/G2GIDhGGwU7Vdvsk6Y=")
+  ];
   alpine320 = unpack "alpine320" [
     (get "https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86_64/musl-dev-1.2.5-r3.apk" "sha256-NqvPihmYJggLmypF+GeCr65K5ci4MxkJ5RE5EeK9ytE=")
     (get "https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86_64/libstdc++-dev-13.2.1_git20240309-r1.apk" "sha256-Q92rEb104R8St0Hlx33Coa2JfVllM5jd8Z4D/JAY12I=")
@@ -60,10 +66,12 @@ let
     (mkLinkedFid { name = "alpine320-libstdcxx-13.2.1-linked"; family = "libstdc++-alpine320"; version = "13.2.1"; syms = [ "${l}/libstdc++.a" ]; link = [ "${l}/libstdc++.a" ] ++ base; inherit crtPre crtPost; })
   ];
   linked = if mkLinkedFid == null then [ ] else
-    gnuLinked "debian12" debian12 "12" "2.36" ++ gnuLinked "ubuntu2404" ubuntu2404 "13" "2.39" ++ muslLinked;
+    gnuLinked "debian12" debian12 "12" "2.36" ++ gnuLinked "ubuntu2404" ubuntu2404 "13" "2.39"
+    ++ gnuLinked "ubuntu2204" ubuntu2204 "11" "2.35" ++ muslLinked;
 in
 gnu "debian12" debian12 "12" "2.36"
 ++ gnu "ubuntu2404" ubuntu2404 "13" "2.39"
+++ gnu "ubuntu2204" ubuntu2204 "11" "2.35"
 ++ [
   (mkFid { name = "alpine320-musl-1.2.5"; family = "musl-alpine320"; version = "1.2.5-r3"; archives = [ "${alpine320}/usr/lib/libc.a" ]; })
   (mkFid { name = "alpine320-libstdcxx-13.2.1"; family = "libstdc++-alpine320"; version = "13.2.1"; variant = "x86_64-linux-musl"; archives = [ "${alpine320}/usr/lib/libstdc++.a" ]; })

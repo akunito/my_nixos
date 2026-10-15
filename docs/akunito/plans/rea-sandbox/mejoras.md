@@ -152,7 +152,7 @@ Detalles:
   - libgcc y libm añadidos;
   - aviso al agente de que un nombre con `source: analysis` es una suposición de FID.
 - **Medido:** construir las bases a la vez agotó la memoria de DESK (un Ghidra de hasta 6 GB por librería). Siempre con `--max-jobs` 1 o 2.
-- **Ampliado el 2026-10-15 con Debian 12, Ubuntu 24.04 y Alpine 3.20** (`bench/fid/distro.nix`).
+- **Ampliado el 2026-10-15 con Debian 12, Ubuntu 24.04, Ubuntu 22.04 y Alpine 3.20** (`bench/fid/distro.nix`; Ubuntu 22.04 con firmas enlazadas: C 80,3 %, C++ 60,1 %).
   - **Bases:** desde los paquetes oficiales (`libc6-dev`, `libstdc++-dev`, `libgcc-dev`, `musl-dev`, `gcc`), fijados por hash.
   - **Corpus "ajeno":** los mismos programas, compilados con la cadena de cada distribución en Docker rootless (`workbench/rea-bench/foreign-corpus`).
   - **Medido en ese corpus:**
