@@ -344,7 +344,8 @@ let
           matcher = "startup|resume|clear|fork";
           hooks =
             lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ]
-            ++ [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/memory-lint.sh"; timeout = 10; } ];
+            ++ [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/memory-lint.sh"; timeout = 10; }
+                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/scope-phrasing-lint.sh"; timeout = 10; } ];
         }
       ];
     } // lib.optionalAttrs cs.enable {
