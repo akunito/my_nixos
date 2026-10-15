@@ -1,6 +1,10 @@
 { pkgs, pkgs-unstable, lib, userSettings, storageDriver ? null, userlandProxy ? true
 , buildCacheMax ? "20GB", buildCacheReserved ? "5GB", ... }:
 
+let
+  reap = import ../../lib/docker-image-reap.nix { inherit pkgs; docker = pkgs-unstable.docker; };
+in
+
 assert lib.asserts.assertOneOf "storageDriver" storageDriver [
   null
   "aufs"
@@ -60,14 +64,13 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
         userland-proxy = false;
       };
   };
-  # Dangling-image reaper for the root daemon — the autoPrune replacement.
-  # Same Monday 00:00 slot autoPrune used, so nothing about the timing changes.
-  # Dangling images only: tagged images (rollback targets, compose-built dev
-  # images), volumes, networks and stopped containers are all left alone, and
-  # dockerd refuses to delete an image any container still references.
-  # The build cache is bounded by builder.gc above, not by this.
+  # Image reaper for the root daemon — the autoPrune replacement, same Monday 00:00 slot.
+  # Dangling images, tagged images unused for 30 days (protect list in
+  # lib/docker-image-reap.nix), build cache unused for 7 days. Volumes, networks and stopped
+  # containers are left alone, and dockerd refuses to delete an image any container still
+  # references. builder.gc above still caps the cache size between runs.
   systemd.timers.docker-image-prune = lib.mkIf (userSettings.dockerEnable == true) {
-    description = "Weekly Docker dangling-image prune";
+    description = "Weekly Docker image reaper";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "Mon *-*-* 00:00:00";
@@ -76,12 +79,12 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     };
   };
   systemd.services.docker-image-prune = lib.mkIf (userSettings.dockerEnable == true) {
-    description = "Prune dangling (untagged) Docker images";
+    description = "Remove dangling and old unused Docker images and build cache";
     after = [ "docker.service" ];
     requires = [ "docker.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${pkgs-unstable.docker}/bin/docker image prune -f";
+      ExecStart = "${reap}/bin/docker-image-reap";
     };
   };
 
@@ -93,5 +96,6 @@ assert lib.asserts.assertOneOf "storageDriver" storageDriver [
     pkgs-unstable.docker
     pkgs-unstable.docker-compose
     pkgs.lazydocker
+    reap # `sudo docker-image-reap --dry-run` lists what the next run would remove
   ];
 }

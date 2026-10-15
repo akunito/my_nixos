@@ -24,12 +24,14 @@
 #    The rootlesskit child is uid 0 inside its user namespace and /etc is its
 #    own tmpfs, so no privilege is involved and the real /etc is untouched.
 #
-# 2. docker-prune — weekly reaper for dangling images. virtualisation.docker.
-#    autoPrune only wires the ROOT daemon, so the rootless side would otherwise
+# 2. docker-prune — weekly image reaper (lib/docker-image-reap.nix). virtualisation.
+#    docker.autoPrune only wires the ROOT daemon, so the rootless side would otherwise
 #    keep every image a moved tag orphans (VPS_PROD: 203 of them, ~74 GB, by
-#    2026-08-18). `image prune`, NOT `system prune`: tagged rollback images,
-#    volumes, networks and stopped containers are left alone, and dockerd will
-#    not delete an image a container still references.
+#    2026-08-18) and every old tag (76 images / 48 GB, 30.6 GB unused, 2026-10-15).
+#    Dangling images, tagged images unused for 30 days minus the protect list
+#    (Plane rollback, rbuild SDK, REA), build cache unused for 7 days. Never
+#    `system prune`: volumes, networks and stopped containers are left alone, and
+#    dockerd will not delete an image a container still references.
 #
 # 3. Reload the lingering user's systemd manager at activation. nixos-rebuild
 #    only reloads the SYSTEM manager; a lingering `systemd --user` survives every
@@ -44,6 +46,7 @@ let
   coreutils = "${pkgs.coreutils}/bin";
   systemctl = "${pkgs.systemd}/bin/systemctl";
   runuser = "${pkgs.util-linux}/bin/runuser";
+  reap = import ../../lib/docker-image-reap.nix { inherit pkgs docker; };
 
   # Runs INSIDE the rootlesskit child. Every guard exits 0: this must never be
   # the reason dockerd fails to start.
@@ -104,7 +107,7 @@ lib.mkIf enabled {
   };
 
   systemd.user.timers.docker-prune = {
-    description = "Weekly rootless Docker dangling-image prune";
+    description = "Weekly rootless Docker image reaper";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "Sun *-*-* 03:00:00";
@@ -113,15 +116,17 @@ lib.mkIf enabled {
     };
   };
   systemd.user.services.docker-prune = {
-    description = "Prune dangling (untagged) rootless Docker images";
+    description = "Remove dangling and old unused rootless Docker images and build cache";
     serviceConfig = {
       Type = "oneshot";
       # User units don't inherit the shell's DOCKER_HOST from setSocketVariable;
       # %t is XDG_RUNTIME_DIR, where the rootless daemon puts its socket.
       Environment = "DOCKER_HOST=unix://%t/docker.sock";
-      ExecStart = "${docker}/bin/docker image prune -f";
+      ExecStart = "${reap}/bin/docker-image-reap";
     };
   };
+  # `docker-image-reap --dry-run` lists what the next run would remove (shell DOCKER_HOST).
+  environment.systemPackages = [ reap ];
 
   # (3) above. Runs after `etc` (new unit symlinks in place) and `users`. Skips
   # cleanly at boot, when no user manager is up yet. daemon-reload does NOT
