@@ -180,7 +180,16 @@ Detalles:
   - casi ningún comentario `WARNING`, porque no los emite;
   - un fallo en glibc, ninguno en Rust ni Go;
   - **tres veces más lento** en el binario grande (188 s frente a 59 s).
-- **Sin tests semánticos, lo más compacto no demuestra que sea más correcto.** Queda como segunda opinión para el banco, nunca como motor de REA. Lo siguiente: tests de recompilación y ejecución (como HumanEval-Decompile) antes de compararlos en serio.
+- **Prueba semántica (2026-10-15, el arnés de M4):**
+
+| | Pasan | Fallos silenciosos | No compilan |
+|---|---|---|---|
+| Kuna | 21/42 | 1 | 20 |
+| Ghidra | 23/42 | 1 | 18 |
+
+  - Kuna va mejor con gcc `-O0` (11 frente a 8) y peor con clang `-O2` (4 frente a 9).
+  - Se complementan: **Ghidra o Kuna, 30/42**; con LLM4Decompile, cualquiera de los tres llega a **39/42**. Pero saber cuál es el bueno exige una prueba que en un binario ajeno no tenemos.
+  - Queda como segunda opinión medible, no como motor de REA.
 
 **M3 — motores alternativos.** Kuna va en una **imagen aparte** con un `GHIDRA_INSTALL_DIR` alternativo (un `symlinkJoin` que sustituye `Decompiler/os/linux_x86_64/decompile`), con commit fijado y compilado con Nix. Nunca es el motor por defecto. Kuna como decompilador alternativo en headless, comparado con el nativo en M1. Nunca lo sustituye. Opcional: RetDec y Reko desde los runners de dogbolt.
 

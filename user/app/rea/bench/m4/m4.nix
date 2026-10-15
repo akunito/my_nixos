@@ -23,6 +23,18 @@ let
 in
 {
   inherit corpus fns;
+  # dumpWith: same dump from another Ghidra install tree (M3: Kuna as `decompile`, kuna.nix).
+  dumpWith = ghidraHome: pkgs.runCommand "rea-m4-c-alt" { nativeBuildInputs = [ pkgs.binutils-unwrapped pkgs.gawk ]; } ''
+    export HOME=$TMPDIR GHIDRA_HEADLESS_MAXMEM=4G NIX_GHIDRAHOME=${ghidraExt}/lib/ghidra/Ghidra
+    for b in ${lib.concatStringsSep " " (lib.attrNames builds)}; do
+      mkdir -p $out/$b $TMPDIR/p
+      args=$(readelf -sW ${corpus}/$b | awk '$4=="FUNC" && $7!="UND" {print $8"=0x"$2}' \
+        | grep -E '^(${lib.concatStringsSep "|" fns})=' | tr '\n' ' ')
+      ${ghidraHome}/support/analyzeHeadless $TMPDIR/p p -import ${corpus}/$b.stripped \
+        -scriptPath ${scripts} -postScript DumpC.java $out/$b $args -deleteProject > $TMPDIR/$b.log 2>&1 \
+        || { tail -30 $TMPDIR/$b.log; exit 1; }
+    done
+  '';
   dump = pkgs.runCommand "rea-m4-ghidra-c" { nativeBuildInputs = [ pkgs.binutils-unwrapped pkgs.gawk ]; } ''
     export HOME=$TMPDIR GHIDRA_HEADLESS_MAXMEM=4G NIX_GHIDRAHOME=${ghidraExt}/lib/ghidra/Ghidra
     for b in ${lib.concatStringsSep " " (lib.attrNames builds)}; do
