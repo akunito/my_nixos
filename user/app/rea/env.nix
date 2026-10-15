@@ -82,6 +82,8 @@ let
   };
 in
 rec {
+  # Third-party downloads that could vanish upstream: kept in rea-vendor-export's cache.
+  vendor = [ jadxMcpJar wakaru wakaru.src ];
   tools = with pkgs; [
     bashInteractive coreutils findutils gnugrep gnused gawk procps util-linux file
     ghidra jdk rea-agents nodejs_24

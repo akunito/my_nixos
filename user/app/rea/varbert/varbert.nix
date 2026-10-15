@@ -13,9 +13,8 @@ let
   pkgSrc = pkgs.runCommand "varbert-2.3.1-src" { } ''
     mkdir -p $out && tar -xzf ${src} -C $out --strip-components=1
   '';
-  model = opt: url: hash: let
-    tgz = pkgs.fetchurl { inherit url hash; name = "varbert-ghidra-${opt}-function.tar.gz"; };
-  in pkgs.runCommand "varbert-ghidra-${opt}" { nativeBuildInputs = [ py ]; } ''
+  tgz = opt: url: hash: pkgs.fetchurl { inherit url hash; name = "varbert-ghidra-${opt}-function.tar.gz"; };
+  model = opt: tgz: pkgs.runCommand "varbert-ghidra-${opt}" { nativeBuildInputs = [ py ]; } ''
     mkdir -p $TMPDIR/m $out/models/ghidra
     tar -xzf ${tgz} -C $TMPDIR/m
     d=$TMPDIR/m/Ghidra-${opt}-Function
@@ -30,12 +29,15 @@ let
       cp $d/$f $out/models/ghidra/
     done
   '';
-  o0 = model "O0" "https://www.dropbox.com/scl/fi/8xsmmlzypd45icn8csk6y/Ghidra-O0-Function.tar.gz?rlkey=1b92b9ejktoyewjztvo3ns8q1&dl=1" "sha256-ePWp5UTu/1l7hCq22JC8EMZkW/gOxFgVa9zynG65YW8=";
-  o2 = model "O2" "https://www.dropbox.com/scl/fi/x5ci28s0aw3i852kg9w1j/Ghidra-O2-Function.tar.gz?rlkey=wpe08afvxelcblgcqndrxmvtm&dl=1" "sha256-EqAk7ZNhk/T6rPm6b6ShnUFXstgh2U3/neJstzyfjUQ=";
+  tgzO0 = tgz "O0" "https://www.dropbox.com/scl/fi/8xsmmlzypd45icn8csk6y/Ghidra-O0-Function.tar.gz?rlkey=1b92b9ejktoyewjztvo3ns8q1&dl=1" "sha256-ePWp5UTu/1l7hCq22JC8EMZkW/gOxFgVa9zynG65YW8=";
+  tgzO2 = tgz "O2" "https://www.dropbox.com/scl/fi/x5ci28s0aw3i852kg9w1j/Ghidra-O2-Function.tar.gz?rlkey=wpe08afvxelcblgcqndrxmvtm&dl=1" "sha256-EqAk7ZNhk/T6rPm6b6ShnUFXstgh2U3/neJstzyfjUQ=";
+  o0 = model "O0" tgzO0;
+  o2 = model "O2" tgzO2;
 in
-pkgs.writeShellScriptBin "rea-varbert" ''
+# vendor: the Dropbox originals (no upstream hash, could vanish) + sdist + converted models.
+(pkgs.writeShellScriptBin "rea-varbert" ''
   export VARBERT_O0=${o0} VARBERT_O2=${o2}
   export PYTHONPATH=${./stubs}:${pkgSrc}
   export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
   exec ${py}/bin/python3 -I -c 'import sys; sys.path[:0] = sys.argv[1].split(":"); exec(open(sys.argv[2]).read())' "$PYTHONPATH" ${./runner.py}
-''
+'') // { vendor = [ src tgzO0 tgzO2 o0 o2 ]; }

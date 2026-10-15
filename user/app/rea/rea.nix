@@ -195,6 +195,34 @@ let
   # + VarBERT name suggestions (varbert/, Fable-audited 2026-10-15: adopt with changes, applied).
   rea-varbert = import ./varbert/varbert.nix { pkgs = pkgs-unstable; };
   rea-llm-mcp = pkgs.writeScriptBin "rea-llm-mcp" ("#!${pkgs.python3}/bin/python3 -I\nVARBERT = \"${rea-varbert}/bin/rea-varbert\"\n" + builtins.readFile ./llm-mcp.py);
+  # Backup of what lives only in /nix/store and is slow or impossible to get again: third-party
+  # downloads that can vanish upstream (VarBERT Dropbox models, Hopper demo build, JADX JAR,
+  # Wakaru, REA's npm closure + Frida binding) and outputs that take hours to rebuild (the FID
+  # extension: 48 databases). Referencing them here also keeps them alive across GC.
+  # Restore on a new machine (docs/akunito/plans/rea-sandbox/README.md, "Backup"):
+  #   sudo nix copy --from file://$HOME/rea/vendor-cache --no-check-sigs $(cat ~/rea/vendor-cache/MANIFEST)
+  reaVendor = pkgs.writeText "rea-vendor-manifest" (lib.concatStringsSep "\n" (map toString (
+    ghidraExtensions
+    ++ rea-varbert.vendor
+    ++ (import ./env.nix { pkgs = pkgs-unstable; inherit rea-agents; }).vendor
+    ++ [ rea-agents (import ./hopper.nix { pkgs = pkgs-unstable; }) (import ./hopper.nix { pkgs = pkgs-unstable; }).src ]
+  )) + "\n");
+  rea-vendor-export = pkgs.writeShellApplication {
+    name = "rea-vendor-export";
+    runtimeInputs = [ pkgs.nix pkgs.coreutils ];
+    text = ''
+      dest="$HOME/rea/vendor-cache"   # under $HOME: the restic home backup takes it to the NAS
+      mkdir -p "$dest"
+      # With their closure: a file:// binary cache refuses a path whose references it does
+      # not hold ("reference … glibc … is not valid", measured with --no-recursive).
+      # Incremental: paths already in the cache are skipped.
+      # shellcheck disable=SC2046
+      nix copy --to "file://$dest?compression=zstd" $(cat ${reaVendor})
+      cp -f ${reaVendor} "$dest/MANIFEST"
+      date -Iseconds > "$dest/LAST_EXPORT"
+      du -sh "$dest" | cut -f1
+    '';
+  };
   rea-net-mirror = pkgs.writeScriptBin "rea-net-mirror" ("#!${pkgs.python3}/bin/python3 -I\n" + builtins.readFile ./net-mirror.py);
 
   # rea-vm-mcp <case dir>: boot the tier 1-2 microVM for this case, relay REA's MCP
@@ -529,5 +557,14 @@ let
   };
 in
 lib.mkIf enabled {
-  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw rea-bench ];
+  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw rea-bench rea-vendor-export ];
+  systemd.user.services.rea-vendor-export = {
+    Unit.Description = "Copy REA's irreplaceable store paths to ~/rea/vendor-cache (backed up to the NAS)";
+    Service = { Type = "oneshot"; ExecStart = "${rea-vendor-export}/bin/rea-vendor-export"; Nice = 19; };
+  };
+  systemd.user.timers.rea-vendor-export = {
+    Unit.Description = "Weekly REA vendor export";
+    Timer = { OnCalendar = "weekly"; Persistent = true; RandomizedDelaySec = "1h"; };
+    Install.WantedBy = [ "timers.target" ];
+  };
 }

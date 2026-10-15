@@ -223,3 +223,35 @@ Descubrimiento: en un proyecto cualquiera, "¿cómo hace PowerToys X?" debe llev
 - `user/app/rea/microvm.nix` (F2): guest con `rea-env`, relé vsock y filtro nftables de la tap para el carril web (F3).
 - `claude-sync-pkg.nix`: exponer `claude-raw` y abortar `wrap`/hooks con un `CLAUDE_CONFIG_DIR` ajeno.
 - `~/.claude/skills/reverse-engineering/SKILL.md`: skill global (claude-sync).
+
+## Backup y reinstalación (2026-10-15)
+
+**Qué está dónde:**
+- **Código y recetas** (Nix, banco, firmas, *stubs*): en este repo, en GitHub.
+  - Los resultados del banco, el corpus ajeno y los borradores para upstream están en `workbench/rea-bench/` (cifrado con git-crypt).
+  - El fork de REA es `akunito/rea`, con la etiqueta `rea-agents-6.5.0`.
+- **`$HOME` de DESK:** restic lo copia al NAS dos veces al día (`backup-manager.sh`), salvo las cachés. Eso incluye `~/rea`, `~/Projects` y `~/Documents`.
+- **Lo que solo vive en `/nix/store`** y podría no volver a conseguirse:
+  - los modelos de VarBERT de Dropbox (sin hash publicado), originales y convertidos;
+  - la demo de Hopper 6.4.2;
+  - el JAR de JADX y Wakaru;
+  - REA compilado con su `node_modules` y el binding de Frida;
+  - la extensión FID (48 bases; horas de compilación y fuentes de Debian/Ubuntu que salen del *pool*).
+
+  `rea-vendor-export`, con un temporizador semanal del usuario, copia esas rutas y su clausura a `~/rea/vendor-cache`, una caché binaria de Nix incremental (2,0 GB). Al estar en `$HOME`, va al NAS. El manifiesto (`MANIFEST`) además las mantiene vivas frente a la recogida de basura.
+- **No cubierto, y se puede volver a bajar:**
+  - el GGUF de LLM4Decompile: en DESK lo baja `ollama-pull` desde Hugging Face; el NAS guarda el Q8_0 en `/var/lib/llama-server/models/`;
+  - el token de la sesión aislada (`~/.config/rea/claude-oauth-token`) va en el backup de `$HOME`; si no, `claude setup-token` y `rea-claude-token`.
+
+**Reinstalar en otra máquina:**
+1. Activar `reaSandboxEnable`, `dockerRootlessEnable` y `dockerRootlessKrunEnable` en su perfil.
+2. Si alguna fuente externa ya no existe, restaurar antes la caché desde la copia del NAS:
+
+   ```
+   restic -r /mnt/NFS_Backups/nixosaku/home.restic restore latest --include /home/akunito/rea/vendor-cache --target /
+   sudo nix copy --from file:///home/akunito/rea/vendor-cache --no-check-sigs $(cat /home/akunito/rea/vendor-cache/MANIFEST)
+   ```
+3. Desplegar con `install.sh`. Nix encuentra esas rutas ya válidas y no intenta descargarlas ni recompilarlas.
+4. `rea-claude-token` y `ollama-pull`.
+5. Las bases FID **no se compilan nunca a la vez**: si hay que rehacerlas, con `--max-jobs 1-2`.
+
