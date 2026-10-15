@@ -11,6 +11,7 @@
           DESK = ./profiles/DESK-config.nix;
           DESK_A = ./profiles/DESK_A-config.nix;
           DESK_VMDESK = ./profiles/DESK_VMDESK-config.nix;
+          DESK_A_DEV = ./profiles/DESK_A_DEV-config.nix; # unattended winsub dev/test box on the DESK_A hardware (own drive, secrets-free)
           LAPTOP_X13 = ./profiles/LAPTOP_X13-config.nix;
           LAPTOP_A = ./profiles/LAPTOP_A-config.nix;
           LAPTOP_YOGA = ./profiles/LAPTOP_YOGA-config.nix;

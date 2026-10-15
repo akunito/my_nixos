@@ -1116,6 +1116,12 @@
     swayIdleMonitorOffTimeoutBat = 210;     # Battery: 3.5 min monitors off
     swayIdleSuspendTimeoutBat = 480;        # Battery: 8 min suspend
 
+    # Unattended dev/test box (system/hardware/devbox.nix): greetd autologin into Sway,
+    # lingering user manager, hardware watchdog + panic sysctls, firmware BootOrder re-assert.
+    devBoxEnable = false;
+    devBoxAutoLoginUser = null;      # user greetd logs straight into Sway (no password)
+    devBoxEspPartUuid = null;        # PARTUUID of this install's ESP; its firmware entry is kept first
+
     # Hibernation (suspend-then-hibernate for laptops with LUKS-encrypted swap)
     hibernateEnable = false;            # Enable hibernate/suspend-then-hibernate
     hibernateSwapLuksUUID = null;       # LUKS UUID of encrypted swap partition
