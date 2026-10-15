@@ -409,7 +409,7 @@ let
       return-type = "json";
       interval = "once";
       signal = 8;
-      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh status --json";
+      exec = "${pkgs.coreutils}/bin/env IDLE_ICON_FONT='${config.stylix.fonts.sansSerif.name} Propo' ${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh status --json";
       on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh toggle";
       tooltip = true;
     };

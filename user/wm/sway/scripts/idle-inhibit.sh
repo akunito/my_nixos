@@ -24,6 +24,10 @@ if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" && -S "${XDG_RUNTIME_DIR:-/nonexistent}
 fi
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
 ICON=$'\xef\x83\xb4'   # U+F0F4 (nf coffee), both states; CSS colours the class
+# In the Mono Nerd Font this glyph has an 8 px advance and 15 px of ink at 13 px (Pango,
+# 2026-10-15): it overflows right and sits off-centre in its pill. The Propo variant gives it
+# its real width (ink == advance). waybar.nix passes the family; plain glyph without it.
+[[ -n "${IDLE_ICON_FONT:-}" ]] && ICON="<span font_family='${IDLE_ICON_FONT}'>${ICON}</span>"
 
 # The marker is what makes the choice survive a deploy: Home Manager's
 # activation starts every unit wanted by an active target that is not running
