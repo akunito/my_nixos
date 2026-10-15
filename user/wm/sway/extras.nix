@@ -246,6 +246,11 @@ in
     executable = true;
   };
 
+  home.file.".config/sway/scripts/mic-toggle.sh" = {
+    source = ./scripts/mic-toggle.sh;
+    executable = true;
+  };
+
   home.file.".config/sway/scripts/swaysome-groups-setup.sh" = {
     source = ./scripts/swaysome-groups-setup.sh;
     executable = true;
@@ -299,6 +304,8 @@ in
     swayidle
     # Caffeine CLI for agents and scripts: idle-inhibit on|off|toggle|status [--json] [-q]
     (writeShellScriptBin "idle-inhibit" ''exec ${bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh "$@"'')
+    # Default-source mute with a "Micro ON/MUTED" notification: mic-toggle [toggle|on|off|status]
+    (writeShellScriptBin "mic-toggle" ''exec ${bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/mic-toggle.sh "$@"'')
     swaynotificationcenter
     waybar # Waybar status bar (also configured via programs.waybar)
     swaysome # Workspace namespace per monitor

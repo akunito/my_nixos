@@ -298,6 +298,7 @@ let
     "custom/mic" = {
       return-type = "json";
       interval = 2;
+      signal = 9;      # mic-toggle.sh repaints it at once
       exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/waybar-mic.sh ${pkgs.pulseaudio}/bin/pactl";
       on-click = "${pkgs.sway}/bin/swaymsg exec \"${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/app-toggle.sh org.pulseaudio.pavucontrol ${pkgs.pavucontrol}/bin/pavucontrol\"";
       tooltip = true;

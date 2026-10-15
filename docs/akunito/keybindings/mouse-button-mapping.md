@@ -24,6 +24,10 @@ The mouse button mapping is configured in `system/wm/keyd.nix`:
 - **Syntax**: `overload(combo_C_A, noop)`
 - **Why `noop`?**: Prevents unwanted key events on button release (unlike `esc` which would send Escape)
 
+### Side button = microphone mute (2026-10-15)
+
+The DeathAdder V3's firmware sends **Hyper+M** from a side button (the same on W11, where AkuWM's `k-mic` toggles the microphone). On Sway Hyper+M is Mission Center, so the `razer_mouse` keyd config has a composite `[control+alt+meta]` layer with `m = C-A-M-S-f12`: only this device's Hyper+M becomes **Hyper+Shift+F12**, the sway-apps shortcut that runs `mic-toggle` (`user/wm/sway/scripts/mic-toggle.sh`: mutes the default PipeWire source, notifies "Micro ON" / "Micro MUTED", repaints waybar's mic widget). The keyboard's Hyper+M is untouched.
+
 ## Adding Your Mouse
 
 ### Step 1: Find Your Mouse Device ID

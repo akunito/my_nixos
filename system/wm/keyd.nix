@@ -95,6 +95,13 @@ in
           # Dummy entry to prevent Nix from optimizing away the empty set
           noop = "noop";
         };
+        # The side button's firmware sends Hyper+M (shared with W11, where it is AkuWM's
+        # mic toggle). Here Hyper+M is Mission Center, so only this device's Hyper+M becomes
+        # Hyper+Shift+F12 (sway-apps: mic-toggle). A composite layer drops the held C-A-M and
+        # emits exactly the sequence bound here.
+        "control+alt+meta" = {
+          m = "C-A-M-S-f12";
+        };
       };
     };
     };

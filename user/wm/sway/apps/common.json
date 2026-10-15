@@ -1931,6 +1931,22 @@
       "category": "Windows",
       "table": "prefix",
       "updated_at": 1791963155
+    },
+    {
+      "id": "k-7661615f",
+      "keys": "Hyper+Shift+F12",
+      "kind": "exec",
+      "app_id": "",
+      "command": "mic-toggle",
+      "name": "Microphone mute (toggle)",
+      "enabled": true,
+      "release": false,
+      "locked": true,
+      "override": false,
+      "notes": "Default capture source mute + \"Micro ON/MUTED\" notification (scripts/mic-toggle.sh). The DeathAdder V3 side button sends Hyper+M from its firmware (W11: AkuWM k-mic); keyd turns only that device's Hyper+M into this key (system/wm/keyd.nix), the keyboard's Hyper+M stays Mission Center.",
+      "category": "System",
+      "table": "prefix",
+      "updated_at": 1792064986
     }
   ],
   "tools": [
