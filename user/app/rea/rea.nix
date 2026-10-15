@@ -19,7 +19,9 @@ let
   # Linked variants (ld's TLS/GOT relaxations, fid.nix mkLinkedFid) raise that to 64-83 % (C)
   # and 51-65 % (C++), wrong <= 1.1 % (2026-10-15).
   ghidraExtensions = [ (fid.extension (fid.libSet pkgs-unstable "u" ++ fid.libSet pkgs-stable-x86 "s"
-    ++ import ./bench/fid/distro.nix { pkgs = pkgs-unstable; inherit (fid) mkFid mkLinkedFid; })) ];
+    ++ import ./bench/fid/distro.nix { pkgs = pkgs-unstable; inherit (fid) mkFid mkLinkedFid; }
+    # Official rust-std 1.92-1.99: third-party Rust 10-17 % -> 42-44 % named, wrong 0.3-0.5 %.
+    ++ import ./bench/fid/rust.nix { pkgs = pkgs-unstable; inherit (fid) mkFid; })) ];
   image = import ./image.nix { pkgs = pkgs-unstable; inherit rea-agents ghidraExtensions; pwndbg = inputs.pwndbg.packages.x86_64-linux.pwndbg.meta.pwndbgVenv; };
   imageRef = "${image.imageName}:${image.imageTag}";
   docker = pkgs-unstable.docker;

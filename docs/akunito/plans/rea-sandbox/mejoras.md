@@ -168,6 +168,7 @@ Detalles:
   - **Solución:** enlazar un ejecutable estático no-PIE que fuerza todas las funciones globales de la librería (`EXTERN`, con los `crt*.o` de la propia distribución) y firmar sus funciones tal como quedan.
   - **Resultado:** C de 54–60 % a **64–83 %**; C++ de 27–36 % a **51–65 %**; equivocados 1,1 % o menos.
   - Las firmas de `.o` se quedan para los binarios *static-pie*, que se relajan de otra forma.
+- **Rust oficial (2026-10-15, `bench/fid/rust.nix`):** `std` de static.rust-lang.org para la 1.92 a la 1.99, fijada por hash. Medido con binarios compilados con las imágenes oficiales `rust:1.92/1.95/1.99`: del **10–17 % al 42–44 %** de nombres, y los equivocados **bajan** del 1,1–1,6 % al 0,3–0,5 %. Las firmas de otras versiones acertaban a medias; la `std` cambia en cada versión de rustc, que figura en el `.comment` del binario.
 - **Pendiente:**
   - una lista de símbolos comunes como la que usa Ghidra para MSVC;
   - exponer en REA el comentario PLATE con los candidatos de `FID_conflict`.

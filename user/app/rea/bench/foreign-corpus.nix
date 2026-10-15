@@ -4,7 +4,7 @@
 # <id>.stripped, stripped here so only one copy lives in git.
 pkgs.runCommand "rea-bench-foreign-corpus" { nativeBuildInputs = [ pkgs.binutils ]; } ''
   mkdir -p $out
-  for f in ${../../../../workbench/rea-bench/foreign-corpus}/c-* ${../../../../workbench/rea-bench/foreign-corpus}/cpp-*; do
+  for f in ${../../../../workbench/rea-bench/foreign-corpus}/c-* ${../../../../workbench/rea-bench/foreign-corpus}/cpp-* ${../../../../workbench/rea-bench/foreign-corpus}/rust-[0-9][0-9][0-9]; do
     b=$(basename $f)
     cp $f $out/$b
     cp $f $out/$b.stripped
