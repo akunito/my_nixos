@@ -316,13 +316,13 @@ in
     vaultwardenPort = 8222;
 
     # === Gitea (private git — NixOS native, Tailscale-only, AINF 2026-10-15) ===
-    # Web via nginx-local (gitea.local), SSH on :2222. "gitea" is also in
+    # Web via nginx-local (gitea.local), SSH on :2223. "gitea" is also in
     # postgresqlServerDatabases above so the dumps include it. Usage rules:
     # docs/akunito/infrastructure/services/gitea.md.
     giteaEnable = true;
     giteaDomain = "gitea.${secrets.wildcardLocal}";
     giteaPort = 3012;
-    giteaSshPort = 2222;
+    giteaSshPort = 2223;
     giteaMailFrom = "git@${secrets.publicDomain}";
 
     # === Cloudflare Tunnel (Phase 2b — ENABLED) ===

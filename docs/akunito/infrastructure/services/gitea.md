@@ -14,7 +14,7 @@ Self-hosted git forge on VPS_PROD for private projects. NixOS native service, no
 | | |
 |---|---|
 | Web | `https://gitea.local.akunito.com` (Tailscale only, via nginx-local) |
-| SSH | `ssh://git@gitea.local.akunito.com:2222/<owner>/<repo>.git` (built-in Gitea SSH server) |
+| SSH | `ssh://git@gitea.local.akunito.com:2223/<owner>/<repo>.git` (built-in Gitea SSH server) |
 | HTTP port | `127.0.0.1:3012` |
 | Version | nixpkgs 25.11 `gitea` (1.25.x at install) |
 | Database | host PostgreSQL 17, db/role `gitea`, unix socket + peer auth (no password) |
@@ -32,7 +32,7 @@ No public hostname and no Cloudflare tunnel, on purpose: it holds private code. 
 | Service, settings | `system/app/gitea.nix` (flag `giteaEnable`) |
 | Flags, nginx vhost `gitea`, db in dump list | `profiles/VPS_PROD-config.nix` |
 | `/var/lib/gitea` in restic | `system/app/restic-backup-vps.nix` |
-| Client SSH block (`git@…:2222`) | `user/app/ssh-hosts.nix` (workstations) |
+| Client SSH block (`git@…:2223`) | `user/app/ssh-hosts.nix` (workstations) |
 
 ## Using it
 

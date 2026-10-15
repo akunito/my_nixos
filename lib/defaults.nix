@@ -777,7 +777,7 @@
     giteaEnable = false; # Enable Gitea NixOS native service (system/app/gitea.nix)
     giteaDomain = ""; # e.g. "gitea.local.akunito.com" (served by nginx-local)
     giteaPort = 3012; # HTTP, 127.0.0.1 only
-    giteaSshPort = 2222; # built-in SSH server; never in the public firewall
+    giteaSshPort = 2223; # built-in SSH server; never in the public firewall (2222 = public initrd SSH!)
     giteaMailFrom = ""; # "" = mailer off
 
     # === Vaultwarden (password manager) ===

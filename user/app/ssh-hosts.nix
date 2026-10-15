@@ -49,10 +49,10 @@
         identityFile = "~/.ssh/id_ed25519";
         extraOptions.AddKeysToAgent = "yes";
       };
-      # Private Gitea on VPS_PROD (Tailscale only); built-in SSH server on 2222.
+      # Private Gitea on VPS_PROD (Tailscale only); built-in SSH server on 2223.
       "gitea.local.akunito.com" = {
         user = "git";
-        port = 2222;
+        port = 2223;
         identityFile = "~/.ssh/id_ed25519";
         extraOptions.AddKeysToAgent = "yes";
       };

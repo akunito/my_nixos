@@ -2,7 +2,7 @@
 #
 # NixOS native service, Tailscale-only: web UI through nginx-local
 # (https://gitea.local.akunito.com), git over Gitea's built-in SSH server on
-# port 2222. Never published through Cloudflare. When to use it vs GitHub:
+# port 2223. Never published through Cloudflare. When to use it vs GitHub:
 # docs/akunito/infrastructure/services/gitea.md.
 #
 # Database: PostgreSQL over the unix socket with peer auth (OS user gitea ->
@@ -12,14 +12,14 @@
 # Repos + LFS + avatars live in /var/lib/gitea (in the restic "services" set).
 #
 # SSH binds 0.0.0.0 on purpose: binding the Tailscale IP fails at boot when
-# gitea starts before tailscaled has the address. Port 2222 is NOT in the
+# gitea starts before tailscaled has the address. Port 2223 is NOT in the
 # public firewall; only the trusted interfaces (tailscale0, wg0) reach it.
 #
 # Configuration:
 #   systemSettings.giteaEnable = true;
 #   systemSettings.giteaDomain = "gitea.local.akunito.com";
 #   systemSettings.giteaPort = 3012;      # HTTP, 127.0.0.1 only
-#   systemSettings.giteaSshPort = 2222;
+#   systemSettings.giteaSshPort = 2223;  # NOT 2222: that is the PUBLIC initrd LUKS SSH port
 #   systemSettings.giteaMailFrom = "git@akunito.com";  # "" = no mail
 
 { config, lib, pkgs, systemSettings, ... }:
@@ -27,7 +27,7 @@
 let
   domain = systemSettings.giteaDomain or "";
   port = systemSettings.giteaPort or 3012;
-  sshPort = systemSettings.giteaSshPort or 2222;
+  sshPort = systemSettings.giteaSshPort or 2223;
   mailFrom = systemSettings.giteaMailFrom or "";
 in
 lib.mkIf (systemSettings.giteaEnable or false) {
