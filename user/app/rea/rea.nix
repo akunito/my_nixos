@@ -30,6 +30,28 @@ let
   vmRunner = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; };
   vmRunnerWeb = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; web = true; };
   vmRunnerDyn = import ./vm.nix { inherit inputs rea-agents ghidraExtensions; pkgs = pkgs-unstable; uid = vmUid; cacheDir = vmCache; dynamic = true; };
+  # The runners are NOT in the Home Manager closure, only their .drv: each runner is a 3-5 GB
+  # erofs store disk, and every HM/profile generation kept all three alive - 100 disks, 143 GB
+  # on DESK on 2026-10-15 (profile generations live 20 days). They are realised on demand
+  # (and prewarmed after each switch) under ONE gc root per kind, so old ones become garbage.
+  runnerDrv = r: builtins.unsafeDiscardOutputDependency r.drvPath;
+  realiseRunner = ''
+    realise_runner() { # <kind> <drv>: prints the runner's store path
+      root="$HOME/.cache/rea-vm/gcroots/$1"
+      mkdir -p "''${root%/*}"
+      if ! nix-store --realise "$2" --add-root "$root" >/dev/null 2>"$root.log"; then
+        echo "rea: building the $1 microVM failed, see $root.log" >&2; return 1
+      fi
+      readlink -f "$root"
+    }
+  '';
+  rea-vm-prewarm = pkgs.writeShellScriptBin "rea-vm-prewarm" ''
+    ${realiseRunner}
+    for k in "plain ${runnerDrv vmRunner}" "dyn ${runnerDrv vmRunnerDyn}" "web ${runnerDrv vmRunnerWeb}"; do
+      set -- $k
+      realise_runner "$1" "$2" >/dev/null || exit 1
+    done
+  '';
   squid = pkgs-unstable.squid;
   socat = pkgs-unstable.socat;
   # The real binary, bypassing the claude-sync wrapper: with a foreign
@@ -271,15 +293,21 @@ let
       fi
       unit="rea-vm-$$"
       sq=""; mir=""
-      runner=${vmRunner}
+      ${realiseRunner}
+      kind=plain
+      [ "$mode" = dynamic ] && kind=dyn
+      [ "$mode" = web ] && kind=web
+      case $kind in
+        plain) drv=${runnerDrv vmRunner} ;; dyn) drv=${runnerDrv vmRunnerDyn} ;; web) drv=${runnerDrv vmRunnerWeb} ;;
+      esac
+      [ -e "$HOME/.cache/rea-vm/gcroots/$kind" ] && [ "$(readlink -f "$HOME/.cache/rea-vm/gcroots/$kind")" != / ] || echo "rea: preparing the $kind microVM image (first use after an update, a few minutes)" >&2
+      runner=$(realise_runner "$kind" "$drv") || exit 1
       if [ "$mode" = dynamic ]; then
-        runner=${vmRunnerDyn}
         rm -rf "$V/net-stage"; mkdir -m 700 "$V/net-stage"
         ${rea-net-mirror}/bin/rea-net-mirror "$V/net-stage" "$d/out/net-live" "$V/out-stage" "$unit" 2>>"$d/log/vm-console.log" &
         mir=$!
       fi
       if [ "$mode" = web ]; then
-        runner=${vmRunnerWeb}
         free() { ! ss -Hltn "( sport = :$1 )" | grep -q .; }
         sp=$(shuf -i 40000-59999 -n 1); while ! free "$sp"; do sp=$(shuf -i 40000-59999 -n 1); done
         vp=$(shuf -i 20000-39999 -n 1)
@@ -581,7 +609,14 @@ let
   };
 in
 lib.mkIf enabled {
-  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw rea-bench rea-vendor-export ];
+  home.packages = [ rea-case rea-run rea-cli rea-triage rea-claude rea-claude-token rea-hook claude-raw rea-bench rea-vendor-export rea-vm-prewarm ];
+  systemd.user.services.rea-vm-prewarm = {
+    Unit.Description = "Build/fetch the REA microVM images for this generation (gc-rooted in ~/.cache/rea-vm/gcroots)";
+    Service = { Type = "oneshot"; ExecStart = "${rea-vm-prewarm}/bin/rea-vm-prewarm"; Nice = 19; };
+  };
+  home.activation.reaVmPrewarm = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+    run ${pkgs.systemd}/bin/systemctl --user start --no-block rea-vm-prewarm.service || true
+  '';
   systemd.user.services.rea-vendor-export = {
     Unit.Description = "Copy REA's irreplaceable store paths to ~/rea/vendor-cache (backed up to the NAS)";
     Service = { Type = "oneshot"; ExecStart = "${rea-vendor-export}/bin/rea-vendor-export"; Nice = 19; };
