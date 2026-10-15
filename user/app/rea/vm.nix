@@ -118,7 +118,7 @@ let
         microvm = {
           hypervisor = "qemu";
           vcpu = 4;
-          mem = 10240; # Ghidra (4 GiB heap) + JEB (2 GiB, --jeb) + Android (~2 GiB, --android); RAM-only root
+          mem = 12288; # Ghidra (8 GiB heap, env.nix) + headroom for its native decompiler + JEB/Android; RAM-only root. 10240 still OOM'd on a 7.5 MB Rust PE (2026-10-15).
           interfaces = [ ];
           storeOnDisk = true;
           vsock.cid = 4242;

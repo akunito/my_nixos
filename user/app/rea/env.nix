@@ -96,7 +96,10 @@ rec {
     PATH = pkgs.lib.makeBinPath tools;
     GHIDRA_INSTALL_DIR = "${ghidra}/lib/ghidra";
     JAVA_HOME = "${jdk}";
-    GHIDRA_HEADLESS_MAXMEM = "4G";
+    # 4G OOM-killed the guest on full auto-analysis of a 7.5 MB statically-linked Rust
+    # PE (L2 EGlobalLauncher, measured 2026-10-15: even a single-function decompile forces
+    # a whole-program pass). 8G heap in a 12 GiB guest (vm.nix mem) lets that pass complete.
+    GHIDRA_HEADLESS_MAXMEM = "8G";
     NIX_GHIDRAHOME = "${ghidraExt}/lib/ghidra/Ghidra";
     REA_TSHARK_COMMAND = "${bin pkgs.wireshark-cli}/tshark";
     REA_CAPINFOS_COMMAND = "${bin pkgs.wireshark-cli}/capinfos";
