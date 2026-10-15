@@ -27,6 +27,20 @@
       "name": "AION 2 meter card (Wayland) sticky",
       "enabled": true,
       "notes": "Separate rule on purpose: measured 2026-10-13 on Sway 1.11, 'sticky enable' inside the floating rule left sticky=false."
+    },
+    {
+      "id": "r-125d3a18",
+      "kind": "assign",
+      "criteria": {
+        "app_id": "virt-viewer"
+      },
+      "actions": [
+        "workspace number 13"
+      ],
+      "name": "virt-viewer → WS 13 (Samsung)",
+      "enabled": true,
+      "notes": "Diego 2026-10-15: la W11 VM siempre en el WS 13 del Samsung",
+      "updated_at": 1792081229
     }
   ],
   "startup": [
