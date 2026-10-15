@@ -516,6 +516,10 @@ let
       cd "$d"
       set -- --setting-sources "" --settings "$s/settings.json" \
         --strict-mcp-config --mcp-config "$s/mcp.json" --no-chrome "$@"
+      # The rea server is the whole microVM boot; the first --ask after a deploy (cold page
+      # cache, 8 GiB guest) missed Claude Code's 30 s MCP startup default and ran without
+      # REA tools (measured 2026-10-15).
+      export MCP_TIMEOUT=180000
       if [ -n "$ask" ]; then
         exec env CLAUDE_CONFIG_DIR="$HOME/.claude-rea" ENABLE_CLAUDEAI_MCP_SERVERS=false \
           claude-raw -p "$ask" --output-format text \
