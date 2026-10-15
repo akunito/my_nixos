@@ -75,7 +75,7 @@ FALLBACK_CATALOG: dict[str, Any] = {
 
 # Mirrors the paddings/margins of the stylix CSS in user/wm/sway/waybar.nix;
 # scaled per bar when its size is not 100 %. Keep the two in step.
-_MODULE_IDS = ("#clock", "#battery", "#backlight", "#network", "#pulseaudio", "#bluetooth", "#idle_inhibitor",
+_MODULE_IDS = ("#clock", "#battery", "#backlight", "#network", "#pulseaudio", "#bluetooth", "#custom-idle",
                "#custom-mic", "#custom-cpu", "#custom-gpu", "#custom-vram", "#custom-ram", "#custom-cpu-temp",
                "#custom-gpu-temp", "#custom-llm", "#custom-nas-llm", "#custom-notifications", "#custom-power-menu")
 _CLUSTER_IDS = frozenset(("#battery", "#backlight", "#pulseaudio", "#custom-mic", "#custom-cpu", "#custom-gpu",
@@ -152,6 +152,11 @@ def clamp_size(v: Any) -> int:
         return 100
 
 
+# Renamed modules: saved layouts (git JSON, local state of other machines) keep the old name.
+# idle_inhibitor -> custom/idle (2026-10-15): the built-in kept its own flag, see idle-inhibit.sh.
+RENAMED = {"idle_inhibitor": "custom/idle"}
+
+
 def clean_layout(raw: Any, modules: dict[str, Any]) -> dict[str, list[str]]:
     """Known modules only (a template copied from another machine may name a
     module this host's catalog filtered out), each at most once per bar."""
@@ -161,6 +166,7 @@ def clean_layout(raw: Any, modules: dict[str, Any]) -> dict[str, list[str]]:
     for sec in SECTIONS:
         lst = []
         for name in raw.get(sec) or ():
+            name = RENAMED.get(name, name) if isinstance(name, str) else name
             if isinstance(name, str) and name in modules and name not in seen:
                 seen.add(name)
                 lst.append(name)

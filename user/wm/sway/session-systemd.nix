@@ -2,6 +2,8 @@
 
 let
   swayApps = systemSettings.swayAppsEnable or false;
+  waybarIdleRefresh = pkgs.writeShellScript "waybar-idle-refresh"
+    "exec ${pkgs.procps}/bin/pkill -RTMIN+8 -x '(\\.waybar-wrapped|waybar)'";
 in
 {
     # Volume/brightness OSD (matches Hyprland behavior)
@@ -81,26 +83,6 @@ in
       };
       Install = {
         WantedBy = lib.mkForce [ "sway-session.target" ];
-      };
-    };
-
-    # Custom idle inhibit lock (for a reliable toggle from keybindings + Waybar custom module).
-    # This is separate from Waybar's built-in idle_inhibitor module so we can test safely.
-    systemd.user.services."idle-inhibit" = {
-      Unit = {
-        Description = "Idle inhibit lock (custom toggle)";
-        PartOf = [ "sway-session.target" ];
-        After = [ "sway-session.target" ];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --who=IdleToggle --why=Idle_inhibited ${pkgs.coreutils}/bin/sleep infinity";
-        Restart = "no";
-        EnvironmentFile = [ "-%t/sway-session.env" ];
-      };
-      Install = {
-        # Do not autostart; toggled by script/keybinding.
-        WantedBy = [];
       };
     };
 
@@ -211,6 +193,11 @@ in
       };
       Service = {
         EnvironmentFile = [ "-%t/sway-session.env" ];
+        # Repaint waybar's custom/idle (signal 8) on every start/stop, whoever caused it.
+        # -x on the comm: a plain `pkill waybar` also hits waybar-*.sh helpers (comm = script
+        # name), and an unhandled RT signal kills them.
+        ExecStartPost = [ "-${waybarIdleRefresh}" ];
+        ExecStopPost = [ "-${waybarIdleRefresh}" ];
       };
       Install = {
         WantedBy = lib.mkForce [ "sway-session.target" ];

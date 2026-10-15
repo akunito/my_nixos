@@ -119,7 +119,7 @@
             "sway/workspaces"
           ],
           "right": [
-            "idle_inhibitor",
+            "custom/idle",
             "custom/notifications",
             "tray",
             "clock",

@@ -638,7 +638,7 @@ in
           "XF86AudioMicMute" = "exec ${pkgs.swayosd}/bin/swayosd-client --input-volume mute-toggle";
           # Keyd virtual keyboard emits a quick mute down/up; bind the combo to avoid clobbering real mute.
           "${hyper}+XF86AudioMute" =
-            "exec ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
+            "exec ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh toggle";
 
           # Media keys (brightness)
           "XF86MonBrightnessDown" = "exec ${pkgs.swayosd}/bin/swayosd-client --brightness lower";

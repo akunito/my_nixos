@@ -122,6 +122,11 @@ class Catalog(Base):
                                   CATALOG["modules"])
         self.assertEqual(lay, {"left": ["clock"], "center": [], "right": ["tray"]})
 
+    def test_clean_layout_maps_renamed_modules(self):
+        mods = {**CATALOG["modules"], "custom/idle": {}}
+        lay = waybar.clean_layout({"right": ["idle_inhibitor", "tray", "custom/idle"]}, mods)
+        self.assertEqual(lay["right"], ["custom/idle", "tray"])        # old name kept its slot, no duplicate
+
     def test_template_from_other_host_is_filtered(self):
         cat = json.loads(json.dumps(CATALOG))
         del cat["modules"]["custom/llm"]  # X13: no local LLM

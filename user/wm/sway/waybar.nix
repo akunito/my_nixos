@@ -263,7 +263,7 @@ let
     # Flat, no drawer (2026-09-02). The extras group hid the tray behind
     # a reveal handle, which is how a missing Vesktop icon could go
     # unnoticed. Everything that earns a slot is now always visible.
-    [ "idle_inhibitor" "custom/notifications" "tray" ]
+    [ "custom/idle" "custom/notifications" "tray" ]
     ++ lib.optional systemSettings.goaCalendarEnable "custom/gcal"
     ++ [ "clock" "custom/power-menu" ];
 
@@ -403,18 +403,15 @@ let
       tooltip = true;
     };
 
-    # Coffee button: toggle idle inhibition (prevents swayidle screen blank/suspend logic that respects inhibit)
-    idle_inhibitor = {
-      format = "{icon}";
+    # Coffee button = swayidle.service state (scripts/idle-inhibit.sh). Repainted by signal 8
+    # from the unit's own ExecStartPost/ExecStopPost, so CLI/agent/gamemode changes show too.
+    "custom/idle" = {
+      return-type = "json";
+      interval = "once";
+      signal = 8;
+      exec = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh status --json";
+      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh toggle";
       tooltip = true;
-      tooltip-format = "Anfetas {status}";
-      # For testing/transition: clicking the built-in module toggles the same swayidle.service
-      # as the custom idle toggle + keybinding.
-      on-click = "${pkgs.bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit-toggle.sh";
-      format-icons = {
-        activated = "";
-        deactivated = "";
-      };
     };
 
     # Power menu (same as ${hyper}+Shift+BackSpace)
@@ -549,7 +546,7 @@ let
     #custom-media,
     #tray,
     #mode,
-    #idle_inhibitor,
+    #custom-idle,
     #mpd,
     #bluetooth,
     #custom-perf,
@@ -653,22 +650,18 @@ let
     /* Drawer removed 2026-09-02: tray and notifications sit directly in
        modules-right, so .drawer-hidden and #custom-reveal went with it. */
 
-    /* (custom idle toggle removed; keeping built-in idle_inhibitor only) */
-
-    /* Idle inhibitor should stay visible even when deactivated. */
-
-    /* Anfetas (idle inhibitor): green when enabled, white when off */
-    #idle_inhibitor {
+    /* Anfetas (custom/idle = swayidle stopped): green when enabled, white when off */
+    #custom-idle {
       color: #${config.lib.stylix.colors.base0C};
       transition: all 0.2s ease;
     }
 
-    #idle_inhibitor:hover {
+    #custom-idle:hover {
       background-color: ${hexToRgba config.lib.stylix.colors.base02 "66"};
       box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base03 "4D"};
     }
 
-    #idle_inhibitor.activated {
+    #custom-idle.activated {
       color: #${config.lib.stylix.colors.base0B};
       background-color: ${hexToRgba config.lib.stylix.colors.base0B "33"};
       box-shadow: 0 2px 8px ${hexToRgba config.lib.stylix.colors.base0B "4D"};
@@ -870,8 +863,6 @@ let
       opacity: 1;
       padding: 0 10px;
     }
-
-    /* Idle inhibitor should stay visible even when deactivated. */
 
     /* Left cluster: render as one shared segmented pill */
     .modules-left {

@@ -241,13 +241,8 @@ in
     executable = true;
   };
 
-  home.file.".config/sway/scripts/idle-inhibit-status.sh" = {
-    source = ./scripts/idle-inhibit-status.sh;
-    executable = true;
-  };
-
-  home.file.".config/sway/scripts/idle-inhibit-toggle.sh" = {
-    source = ./scripts/idle-inhibit-toggle.sh;
+  home.file.".config/sway/scripts/idle-inhibit.sh" = {
+    source = ./scripts/idle-inhibit.sh;
     executable = true;
   };
 
@@ -302,6 +297,8 @@ in
     swayPkg
     swaylock-effects
     swayidle
+    # Caffeine CLI for agents and scripts: idle-inhibit on|off|toggle|status [--json] [-q]
+    (writeShellScriptBin "idle-inhibit" ''exec ${bash}/bin/bash ${config.home.homeDirectory}/.config/sway/scripts/idle-inhibit.sh "$@"'')
     swaynotificationcenter
     waybar # Waybar status bar (also configured via programs.waybar)
     swaysome # Workspace namespace per monitor
