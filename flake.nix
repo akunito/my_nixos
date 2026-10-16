@@ -138,7 +138,7 @@
     # Pinned to a rev; the flake pins its own nixpkgs revs in its URLs. NEVER add `inputs.wine-pins.
     # inputs.*.follows` here: that would swap the frozen Wine for ours. Bump by editing the rev, then
     #   nix flake update wine-pins
-    wine-pins.url = "github:akunito/wine-pins/aba123293b3c699d05dac87367ea40db2e756b59";
+    wine-pins.url = "github:akunito/wine-pins/c644f4dcf23854a3114829a11f0efcee06a0ed9c";
 
     # Voice dictation (Whisper-based, local)
     # Pinned: newer revs (e.g. ddc93de) fail to build — missing xorg.libX11 in Rust build inputs.

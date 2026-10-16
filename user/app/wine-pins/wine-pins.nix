@@ -14,7 +14,7 @@
 }:
 let
   # Bump after pushing akunito/wine-pin1 (its README: "Moving the pin").
-  winePin1Rev = "5c0ff878ffa32cf6badc10c961ecde15678a7d02";
+  winePin1Rev = "014b70ce0cb8bf17087aae766293b1b57b7d8936";
   winePin1Ref = "git+ssh://git@github.com/akunito/wine-pin1?rev=${winePin1Rev}#default";
 
   pin1Cmd =

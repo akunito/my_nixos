@@ -1524,17 +1524,17 @@
         "nixpkgs-unstable": "nixpkgs-unstable"
       },
       "locked": {
-        "lastModified": 1792167046,
-        "narHash": "sha256-nDzFx54KXO8XANN2KeQhrQtaRsrpYebYSeQb1/aG9eg=",
+        "lastModified": 1792168132,
+        "narHash": "sha256-e8eK3UZehIL4FHPq2j2gKFJkQUk3TKNycuugt9oa5LU=",
         "owner": "akunito",
         "repo": "wine-pins",
-        "rev": "aba123293b3c699d05dac87367ea40db2e756b59",
+        "rev": "c644f4dcf23854a3114829a11f0efcee06a0ed9c",
         "type": "github"
       },
       "original": {
         "owner": "akunito",
         "repo": "wine-pins",
-        "rev": "aba123293b3c699d05dac87367ea40db2e756b59",
+        "rev": "c644f4dcf23854a3114829a11f0efcee06a0ed9c",
         "type": "github"
       }
     },
