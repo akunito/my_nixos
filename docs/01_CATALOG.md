@@ -464,7 +464,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/lmstudio/lmstudio.nix**: LM Studio Module
 - **user/app/meeting-transcribe/meeting-transcribe.nix**: Local meeting recording + transcription *Enabled when:* `e.g. DESK already ships ffmpeg-full -> duplicate bin/ffmpeg`
 - **user/app/nixvim/nixvim.nix**: AI "Composer" Agent: Avante with OpenRouter
-- **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK.
+- **user/app/opencode/opencode.nix**: OpenCode — terminal coding agent, pointed at the local GPU on DESK. *Enabled when:* `loaded for every project`
 - **user/app/ranger/ranger.nix**: Cross-platform clipboard script for ranger
 - **user/app/rea/bench/bench.nix**: M1/M2 (AINF-408): the benchmark as a Nix build — same Ghidra and extension wiring as
 - **user/app/rea/bench/corpus.nix**: M1 corpus (AINF-408): our own programs built with several toolchains / -O levels /
