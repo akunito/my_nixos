@@ -56,6 +56,34 @@ class Decide(unittest.TestCase):
         self.assertEqual((code, json.loads(body)["error"]["type"]), (409, "model_busy"))
 
 
+class SameModel(unittest.TestCase):
+    def test_no_switch_request_for_same_gguf_is_served_by_the_loaded_preset(self):
+        async def run():
+            fake = FakeRouter(models=("reasoner-256k", "reasoner-256k-cache-mtp", "reasoner-128k-cache-mtp", "coder"),
+                              loaded="reasoner-256k-cache-mtp")
+            bsrv = await asyncio.start_server(fake.handle, "127.0.0.1", 0)
+            same = {"reasoner-256k": {"file": "q38.gguf", "ctx": 262144},
+                    "reasoner-256k-cache-mtp": {"file": "q38.gguf", "ctx": 262144},
+                    "reasoner-128k-cache-mtp": {"file": "q38.gguf", "ctx": 131072},
+                    "coder": {"file": "q36.gguf", "ctx": 262144}}
+            g = load_gate({"GATE_BACKEND_PORT": str(bsrv.sockets[0].getsockname()[1]), "GATE_GRACE_SECONDS": "60",
+                           "GATE_SAME_MODEL": json.dumps(same)})
+            gate = g.Gate()
+            gsrv = await asyncio.start_server(gate.handle, "127.0.0.1", 0)
+            port = gsrv.sockets[0].getsockname()[1]
+            h = {"X-Nas-No-Switch": "1"}
+            st, body = await http(port, "POST", "/v1/messages", {"model": "reasoner-256k"}, h)
+            self.assertEqual((st, body["model"]), (200, "reasoner-256k-cache-mtp"))
+            st, _ = await http(port, "POST", "/v1/messages", {"model": "coder"}, h)
+            self.assertEqual(st, 400)                     # other GGUF: still a manual switch
+            fake.loaded = "reasoner-128k-cache-mtp"; gate.loaded_at = 0
+            st, _ = await http(port, "POST", "/v1/messages", {"model": "reasoner-256k"}, h)
+            self.assertEqual(st, 400)                     # loaded one has less context than the session expects
+            self.assertEqual(fake.loaded, "reasoner-128k-cache-mtp")
+            gsrv.close(); bsrv.close()
+        asyncio.run(run())
+
+
 class LegacyAlias(unittest.TestCase):
     def test_old_reasoner_alias_is_served_by_the_loaded_reasoner(self):
         async def run():

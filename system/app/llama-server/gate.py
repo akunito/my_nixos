@@ -52,6 +52,16 @@ EXPLICIT_PATHS = ("/models/load", "/models/unload")
 # it is served by whichever preset with that prefix is loaded, never switched.
 # (prefix of the presets that may serve it, preset to load when nothing is loaded)
 LEGACY_ALIASES = {"qwen3.8-27b-abliterated": ("reasoner-", "reasoner-256k")}
+# preset -> {"file", "ctx"} (llama-server.nix, from aiPresets). A no-switch client (claude-nas) naming a
+# preset that serves the SAME GGUF as the loaded one, with no more context than it has, is served by the
+# loaded one: a session started on reasoner-256k got HTTP 400 once reasoner-256k-cache-mtp (same file,
+# other serving flags) was loaded (2026-10-16).
+SAME_MODEL = json.loads(os.environ.get("GATE_SAME_MODEL", "{}") or "{}")
+
+
+def equivalent(model: str, loaded: str | None) -> bool:
+    a, b = SAME_MODEL.get(model), SAME_MODEL.get(loaded or "")
+    return bool(a and b and a["file"] == b["file"] and b["ctx"] >= a["ctx"])
 
 
 def decide(model: str | None, loaded: str | None, inflight: dict[str, int], last_used: dict[str, float],
@@ -200,6 +210,10 @@ class Gate:
                 else:
                     await self._respond(writer, *unknown_body(path, model, sorted(self.known)))
                     return
+            if (model != self.loaded and headers.get(NO_SWITCH_HEADER, "") not in ("", "0", "false")
+                    and equivalent(model, self.loaded)):
+                body = body.replace(json.dumps(model).encode(), json.dumps(self.loaded).encode(), 1)
+                model = self.loaded
             verdict = await self._admit(model, path, headers, reader)
             if verdict == "gone":
                 writer.close()

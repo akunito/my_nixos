@@ -320,6 +320,7 @@ in
       environment = lib.optionalAttrs router {
         GATE_BACKEND_PORT = toString internalPort;
         GATE_GRACE_SECONDS = toString (cfg.llamaServerSwitchGraceSeconds or 300);
+        GATE_SAME_MODEL = builtins.toJSON (lib.mapAttrs (_: p: { file = p.model; inherit (p) ctx; }) (cfg.aiPresets or { }));
       };
       serviceConfig = {
         ExecStart = if router
