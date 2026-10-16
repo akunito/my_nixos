@@ -358,8 +358,10 @@ in
     # (profiles/NAS_PROD-config.nix); picking one LOADS it on the NAS (--models-max 1 evicts the
     # previous, 5-15 s). Only chat presets here: decider/clef/laya/kev-9b answer /v1/systemone only.
     # contextLimit = the preset's ctx. tailscale0 only.
+    # Claude Code's global context for OpenCode sessions (it does not read ~/.claude on its own).
+    openCodeInstructions = [ "~/.claude/CLAUDE.md" ];
     openCodeExtraProviders = [
-      { id = "nas"; name = "NAS 3090 — llama.cpp router (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1";
+      { id = "nas"; name = "NAS 3090 — llama.cpp router (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1"; timeout = 1800000;
         models = [
           { id = "reasoner-256k";   label = "Qwen3.8 27B abliterated · 256k · KV q4_0";
             contextLimit = 262144; outputLimit = 32768; }
@@ -369,6 +371,8 @@ in
             contextLimit = 262144; outputLimit = 32768; }
           { id = "reasoner-128k-cache-mtp"; label = "Qwen3.8 27B abliterated · 128k · KV q4_0 · MTP (trial)";
             contextLimit = 131072; outputLimit = 32768; }
+          { id = "reasoner-256k-cache-mtp"; label = "Qwen3.8 27B abliterated · 256k · KV q4_0 · MTP (trial)";
+            contextLimit = 262144; outputLimit = 32768; }
           { id = "reasoner-2x128k"; label = "Qwen3.8 27B abliterated · 2 slots × 128k · KV q4_0";
             contextLimit = 131072; outputLimit = 32768; }
           { id = "coder";           label = "Qwen3.6 35B-A3B coder (MoE, fast) · 256k · KV q8_0";

@@ -167,9 +167,24 @@ if m.get("reasoning_content"): print(m["reasoning_content"].strip(), file=sys.st
 print((m.get("content") or "").strip())
 PY
   '';
+  # OpenCode on the same server, on whatever preset is LOADED (same rule as claude-nas): model AND
+  # small_model (titles/summaries) point at it, so no side request names another preset and makes
+  # the gate switch the card. The overlay replaces the rofi one (OPENCODE_CONFIG) for this process
+  # only; providers still come from ~/.config/opencode/opencode.json. No auto-mode classifier in
+  # OpenCode — the reason it exists (2026-10-16: classifier waits were ~35 % of a claude-nas session).
+  opencodeSession = pkgs.writeShellScriptBin "opencode-${name}" ''
+    loaded=$(${curl} -sf --max-time 3 "${url}/gate/status" 2>/dev/null | ${py} -c 'import json,sys
+v=json.load(sys.stdin).get("loaded"); print(v if isinstance(v,str) else "")' 2>/dev/null)
+    m="${name}/''${loaded:-${model}}"
+    ov="''${XDG_RUNTIME_DIR:-/tmp}/opencode-${name}.json"
+    printf '{"model":"%s","small_model":"%s"}\n' "$m" "$m" > "$ov"
+    export OPENCODE_CONFIG="$ov"
+    echo "opencode-${name}: $m" >&2
+    exec opencode "$@"
+  '';
 in
 {
   config = lib.mkIf (url != "") {
-    home.packages = [ session ask ];
+    home.packages = [ session ask ] ++ lib.optional (systemSettings.openCodeExtraProviders or [ ] != [ ]) opencodeSession;
   };
 }

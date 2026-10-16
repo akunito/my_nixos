@@ -106,9 +106,11 @@ def cmd_alternate(a):
     path = f"{OUT}/alternate-{a.preset}-{int(time.time())}.jsonl"
     convs = {"A": [{"role": "user", "content": filler(a.a) + "\n\n" + QUESTION}],
              "B": [{"role": "user", "content": filler(a.b)[::-1][:int(a.b * CHARS_PER_TOKEN)] + "\n\n" + QUESTION}]}
+    if a.c:   # a third prefix, like Claude Code's auto-mode classifier calls (2026-10-16 transcripts)
+        convs["C"] = [{"role": "user", "content": filler(a.c * 2)[-int(a.c * CHARS_PER_TOKEN):] + "\n\n" + QUESTION}]
     total = 0.0
     for turn in range(a.turns):
-        for name in ("A", "B"):
+        for name in convs:
             if turn > 0:
                 convs[name].append({"role": "user", "content": filler(1000 + 37 * turn)[-int(1000 * CHARS_PER_TOKEN):]
                                     + f"\n\nTurn {turn}: continue the analysis with the new material above."})
@@ -164,7 +166,7 @@ def cmd_compare(a):
 ap = argparse.ArgumentParser()
 sp = ap.add_subparsers(dest="cmd", required=True)
 p = sp.add_parser("depth"); p.add_argument("preset"); p.add_argument("--depths", default="0,32000,100000"); p.add_argument("--reps", type=int, default=3); p.add_argument("--n", type=int, default=1024)
-p = sp.add_parser("alternate"); p.add_argument("preset"); p.add_argument("--a", type=int, default=55000); p.add_argument("--b", type=int, default=120000); p.add_argument("--turns", type=int, default=6); p.add_argument("--n", type=int, default=800)
+p = sp.add_parser("alternate"); p.add_argument("preset"); p.add_argument("--a", type=int, default=55000); p.add_argument("--b", type=int, default=120000); p.add_argument("--c", type=int, default=0); p.add_argument("--turns", type=int, default=6); p.add_argument("--n", type=int, default=800)
 p = sp.add_parser("greedy"); p.add_argument("preset"); p.add_argument("--n", type=int, default=400)
 p = sp.add_parser("compare"); p.add_argument("file_a"); p.add_argument("file_b")
 a = ap.parse_args()

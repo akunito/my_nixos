@@ -66,7 +66,9 @@ let
     value = {
       npm = "@ai-sdk/openai-compatible";
       name = p.name or p.id;
-      options.baseURL = p.baseURL;
+      # timeout: a 120k-token prefill on the NAS takes ~150 s and a reasoning turn
+      # can run minutes; the SDK default (300 s) sits too close.
+      options = { baseURL = p.baseURL; } // lib.optionalAttrs (p ? timeout) { inherit (p) timeout; };
       models = mkModels (p.models or [ ]);
     };
   }) extraProviders);
@@ -76,8 +78,14 @@ let
   defaultModel = systemSettings.openCodeDefaultModel or "";
   runtimeConfig = "${config.home.homeDirectory}/${systemSettings.openCodeRuntimeConfigRel or ".local/state/opencode/model.json"}";
 
+  instructions = map (i: if lib.hasPrefix "~/" i then "${config.home.homeDirectory}/${lib.removePrefix "~/" i}" else i)
+    (systemSettings.openCodeInstructions or [ ]);
+
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
+    # Tool output above this is saved to disk and truncated in context (default 51200 B);
+    # the NAS 27B decodes at ~25 tok/s past 85k context, every 10k tokens counts.
+    tool_output = { max_bytes = 32768; max_lines = 1000; };
     provider = {
       ollama = {
         npm = "@ai-sdk/openai-compatible";
@@ -86,7 +94,8 @@ let
         models = modelAttrs;
       };
     } // extraProviderAttrs;
-  } // lib.optionalAttrs (defaultModel != "") { model = defaultModel; };
+  } // lib.optionalAttrs (defaultModel != "") { model = defaultModel; }
+    // lib.optionalAttrs (instructions != [ ]) { inherit instructions; };
 in
 {
   config = lib.mkIf enabled {

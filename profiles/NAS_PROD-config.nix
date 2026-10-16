@@ -99,6 +99,16 @@ in
         short = "R 128k+mtp"; vramEst = "~21 GB"; ctx = 131072; slots = 1; kv = "q4_0";
         extra = reasoner.extra ++ [ "--cache-ram" "16384" "--spec-type" "draft-mtp" "--spec-draft-n-max" "2" ];
       };
+      # MEASURED 2026-10-16 (bench.py, 300 W): 128k-cache-mtp 20.4 GB; acceptance 0.61-0.77;
+      # decode 58.9/57.3/44.4 tok/s at 0/28k/85k vs 40.3/33.4/24.9 on reasoner-256k (+46/+71/+78 %);
+      # prefill 1102/770 vs 1209/829 tok/s (-7..-9 %); 3 alternating conversations: 111 s vs 176 s
+      # after the first turn. Greedy output is NOT token-identical to reasoner-256k (20/20 diverge
+      # at near-ties, char 126-837: batched verification numerics); quality eval pending.
+      reasoner-256k-cache-mtp = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 1×256k · KV q4_0 · cache 16G · MTP (trial)";
+        short = "R 256k+mtp"; vramEst = "~23.3 GB"; ctx = 262144; slots = 1; kv = "q4_0";
+        extra = reasoner.extra ++ [ "--cache-ram" "16384" "--spec-type" "draft-mtp" "--spec-draft-n-max" "2" ];
+      };
       reasoner-2x128k = reasoner // {
         label = "Reasoner Qwen3.8-27B · 2×128k · KV q4_0";
         short = "R 2×128k"; vramEst = "~22 GB"; ctx = 262144; slots = 2; kv = "q4_0";   # -c is the TOTAL, split across slots: -c 131072 -np 2 gave n_ctx 65536 per slot, 19.1 GB (measured 2026-10-14)
