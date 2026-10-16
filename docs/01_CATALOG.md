@@ -512,6 +512,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **user/app/virtualization/virtualization.nix**: Various packages related to virtualization, compatability and sandboxing *Enabled when:* `userSettings.virtualizationEnable == true`
 - **user/app/voxtype/voxtype.nix**: Voxtype - Local voice dictation for Sway *Enabled when:* `userSettings.wm == "sway"`
 - **user/app/waypaper/waypaper.nix**: awww doesn't exist on nixos-25.11 — pin to unstable. *Enabled when:* `Hyper+Shift+B`
+- **user/app/wine-pins/wine-pins.nix**: Pinned Wine / GE-Proton next to the gaming Wine (games-heavy.nix), never shadowing it. *Enabled when:*
+   - `userSettings.winePinsEnable or false`
+   - `userSettings.winePin1Enable or false`
 
 ### Hardware
 
@@ -938,4 +941,5 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/user-modules/unified-dark-theme-portals.md**: **ID:** `user-modules.unified-dark-theme-portals`
 - **docs/user-modules/waypaper.md**: Waypaper GUI wallpaper manager — single source of truth for wallpaper restore in Sway (swww backend)
 - **docs/user-modules/windows11-qxl-setup.md**: Complete guide for setting up QXL display drivers in Windows 11 VMs with SPICE for bidirectional clipboard and dynamic resolution support. Includes troubleshooting for resolution issues and driver installation.
+- **docs/user-modules/wine-pins.md**: Pinned Wine and GE-Proton builds (pins 1-5) installed on DESK next to the gaming Wine without shadowing it, from the flakes akunito/wine-pins (public) and akunito/wine-pin1 (private).
 - **docs/user-modules/xmonad.md**: XMonad tiling window manager module overview, auxiliary tools, and config layout in this repo.

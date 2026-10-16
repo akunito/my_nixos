@@ -933,6 +933,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-2511": {
+      "locked": {
+        "lastModified": 1782847189,
+        "narHash": "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b6018f87da91d19d0ab4cf979885689b469cdd41",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "b6018f87da91d19d0ab4cf979885689b469cdd41",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1785031560,
@@ -961,6 +977,22 @@
         "id": "nixpkgs",
         "ref": "nixos-25.11",
         "type": "indirect"
+      }
+    },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1791734076,
+        "narHash": "sha256-i5qk1kLiit98rRbh1AXmWBNT9QXC/y4l5Wk/u5EdpDQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7fd4004d0511991fff3a0524856a9be09e28c5f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7fd4004d0511991fff3a0524856a9be09e28c5f0",
+        "type": "github"
       }
     },
     "nixpkgs_2": {
@@ -1185,6 +1217,7 @@
         "sine-web-panels": "sine-web-panels",
         "stylix": "stylix",
         "voxtype": "voxtype",
+        "wine-pins": "wine-pins",
         "zen-browser": "zen-browser"
       }
     },
@@ -1482,6 +1515,26 @@
         "owner": "peteonrails",
         "repo": "voxtype",
         "rev": "adf0ea62c2310b90c55febdc6515cca9f264e25a",
+        "type": "github"
+      }
+    },
+    "wine-pins": {
+      "inputs": {
+        "nixpkgs-2511": "nixpkgs-2511",
+        "nixpkgs-unstable": "nixpkgs-unstable"
+      },
+      "locked": {
+        "lastModified": 1792167046,
+        "narHash": "sha256-nDzFx54KXO8XANN2KeQhrQtaRsrpYebYSeQb1/aG9eg=",
+        "owner": "akunito",
+        "repo": "wine-pins",
+        "rev": "aba123293b3c699d05dac87367ea40db2e756b59",
+        "type": "github"
+      },
+      "original": {
+        "owner": "akunito",
+        "repo": "wine-pins",
+        "rev": "aba123293b3c699d05dac87367ea40db2e756b59",
         "type": "github"
       }
     },

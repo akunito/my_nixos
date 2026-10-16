@@ -1475,6 +1475,8 @@
     protongamesEnable = false;
     starcitizenEnable = false;
     GOGlauncherEnable = false;
+    winePinsEnable = false; # Pinned Wine/GE-Proton pins 2-5 next to the gaming Wine (user/app/wine-pins, docs/user-modules/wine-pins.md)
+    winePin1Enable = false; # Pin 1 from the private repo akunito/wine-pin1 (built on first use)
     dolphinEmulatorPrimehackEnable = false;
     steamPackEnable = false;
     rpcs3Enable = false;

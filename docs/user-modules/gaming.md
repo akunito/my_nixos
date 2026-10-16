@@ -58,6 +58,7 @@ user/app/gaming/
 | `GOGlauncherEnable` | user | Heavy sub-flag | Heroic Games Launcher |
 | `starcitizenEnable` | user | Heavy sub-flag | RSI Launcher + kernel tweaks |
 | `vkbasaltEnable` | user | Steam sub-flag | vkBasalt Vulkan post-processing (CAS sharpening). Opt-in per game via `ENABLE_VKBASALT=1` — see `gaming.bg3-linux-modding` |
+| `winePinsEnable` / `winePin1Enable` | user | Independent (no `gamesEnable` gate) | Frozen Wine/GE-Proton pins next to the gaming Wine (`wpinN`, `wineN`, `wpinN-ge`) — see `user-modules.wine-pins` |
 
 ### Profile Examples
 

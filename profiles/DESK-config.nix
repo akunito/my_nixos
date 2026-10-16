@@ -1129,6 +1129,8 @@ in
     gamesEnable = true; # Master gate for gaming submodules
     gamesLightEnable = true; # Light gaming: RetroArch, emulators, light games, pegasus
     protongamesEnable = true; # Heavy gaming: Wine, Bottles, Lutris, Proton
+    winePinsEnable = true; # Pinned Wine/GE-Proton pins 2-5 (wpinN, wineN, wpinN-ge); gaming Wine untouched
+    winePin1Enable = true; # Pin 1 (private repo): Wine staging 10.20 + GE-Proton10-33, frozen
     starcitizenEnable = true; # Enable Star Citizen support and optimizations
     GOGlauncherEnable = true; # Enable Heroic Games Launcher for GOG games
     steamPackEnable = true; # Enable Steam gaming platform

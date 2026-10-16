@@ -16,6 +16,7 @@
               ../../user/app/database/db-credentials.nix # Database credentials for CLI tools (psql, mysql, redis-cli)
             ]
             ++ lib.optional (userSettings.gamesEnable == true) ../../user/app/games/games.nix # Various videogame apps
+            ++ lib.optional ((userSettings.winePinsEnable or false) || (userSettings.winePin1Enable or false)) ../../user/app/wine-pins/wine-pins.nix # Pinned Wine/GE-Proton next to the gaming Wine
             ++ lib.optional (systemSettings.freesmLauncherEnable == true) ../../user/app/games/minecraft-client-mods.nix # AkuCraft client mods pinned to server versions
             ++ lib.optional ((systemSettings.developmentToolsEnable == true) || (systemSettings.developmentToolsMinimalEnable or false)) ../../user/app/development/development.nix # Development tools (IDEs, cloud CLI); the minimal flag brings VS Code + Claude Code only
             ++ lib.optional (userSettings.openCodeEnable == true) ../../user/app/opencode/opencode.nix # OpenCode agent wired to the local GPU
