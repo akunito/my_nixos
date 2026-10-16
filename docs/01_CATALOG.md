@@ -623,6 +623,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/gaming/bg3-linux-modding.md**: Modding Baldur's Gate 3 on NixOS/Proton with Script Extender, vkBasalt CAS and FSR4 upscaling on RDNA4
 - **docs/akunito/gaming/desk-a-w11-dualboot.md**: Runbook para añadir Windows 11 en un NVMe aparte en DESK_A (nixosagadesk, desktop de Aga, AMD RX 9060 XT) sin que Windows toque el bootloader de NixOS — método de aislamiento físico del disco; endurecer W11 para el anti-cheat kernel de LU4; streaming Sunshine(W11)→Moonlight(DESK) para jugar LU4 Black
 - **docs/akunito/gaming/gamescope-lag-bomb.md**: Every game launched through gamescope from Steam became unplayable after roughly
+- **docs/akunito/gaming/l2-vm-test.md**: 2026-10-16 result of the "undisguised Win11 VM" test from the L2 Proton plan — L2 Reborn (Eternal x10) starts and reaches the login screen in the DESK libvirt guest (no Code 1004), Lu4's Active Anticheat refuses with "Virtual machine detected"; how the test was run, evidence, what it means for each track
 - **docs/akunito/gaming/l2reborn-linux-investigation.md**: **Date:** 2026-10-14
 - **docs/akunito/gaming/l2reborn-linux.md**: L2 Reborn and LU4 on NixOS via umu/Proton — everything runs except the kernel anti-cheats (SmartGuard Code 1004; Active Anticheat driver error 11); measurements, logs, staff statements, options
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
@@ -748,6 +749,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/plans/sway-input-broker.md**: sway-apps input - one input-injection API for Claude's hand tests and the e2e suite on Sway: keyboard = a uinput device excluded from keyd and grouped by sway with Diego's keyboard, pointer = a persistent wlr virtual pointer with layout-box coordinates, bindcode sentinel acks instead of sleeps, safety guards.
 - **docs/akunito/plans/sway-waybar-per-monitor-and-zorder.md**: sway-apps grows into the Sway desktop manager - per-monitor Waybar, tray watcher, stacking patch (peek, pin, z-order), editable monitors view with exact-scale picker, window persistence, bring-windows, monitor power-off policies, driven e2e suite
 - **docs/akunito/plans/sway-xwayland-zero-scaling.md**: Status: patch built and verified in a nested sway on 2026-10-13; deployed to DESK the same day (relogin needed). Flag `swayXwaylandZeroScaling` in `lib/defaults.nix`, patches in `patches/`.
+- **docs/akunito/plans/tmux-session-persistence.md**: Que las sesiones de tmux (layout, shells y las sesiones de Claude Code que corren dentro) sobrevivan a una caída del servidor tmux y a un reinicio — guardado por eventos, sidecar con el session-id de Claude por pane y `claude --resume` automático tras el restore
 - **docs/akunito/plans/vivaldi-floating-toggle-bug.md**: While using Vivaldi on the DESK profile under SwayFX, the user *very rarely* sees a window unexpectedly toggle between tiled and floating — the same effect as pressing `hyper+shift+f`. They have to...
 
 ### Akunito / Research
