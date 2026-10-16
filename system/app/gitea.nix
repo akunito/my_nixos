@@ -71,6 +71,20 @@ lib.mkIf (systemSettings.giteaEnable or false) {
       };
       session.COOKIE_SECURE = true;
       security.LOGIN_REMEMBER_DAYS = 30;
+      # Pocket ID login (auth source "pocketid", stored in the DB, created with
+      # `gitea admin auth add-oauth` — see the service doc). Password login stays.
+      # Auto-registration OFF on purpose: Gitea 1.25 creates the account on
+      # first OIDC login without checking DISABLE_REGISTRATION, so every Pocket
+      # ID user (Aga, Misia, Ulfhogg) could get one. Linking instead attaches
+      # the OIDC identity to whoever is signed in, or via the link page after a
+      # one-time password login.
+      oauth2_client = {
+        ENABLE_AUTO_REGISTRATION = false;
+        ACCOUNT_LINKING = "login";
+        USERNAME = "preferred_username";
+        OPENID_CONNECT_SCOPES = "email profile";
+        UPDATE_AVATAR = false;
+      };
       openid = {
         ENABLE_OPENID_SIGNIN = false;
         ENABLE_OPENID_SIGNUP = false;
