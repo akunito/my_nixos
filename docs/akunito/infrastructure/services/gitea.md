@@ -3,7 +3,7 @@ id: infrastructure.services.gitea
 summary: "Private Gitea on VPS_PROD (Tailscale only) — what it is, how to use it, and when to suggest it instead of GitHub"
 tags: [infrastructure, vps, gitea, git, private-repos, tailscale]
 related_files: [system/app/gitea.nix, profiles/VPS_PROD-config.nix, user/app/ssh-hosts.nix]
-date: 2026-10-15
+date: 2026-10-16
 status: published
 ---
 
@@ -21,7 +21,8 @@ Self-hosted git forge on VPS_PROD for private projects. NixOS native service, no
 | Data | `/var/lib/gitea` (repos, LFS, avatars) |
 | Backups | daily pg_dump of `gitea` (database-backup) + restic `services` set (19:30) → NAS |
 | DNS | pfSense alias `gitea` on the `grafana.local` host override → `100.64.0.6` |
-| Admin user | `akunito` (created with `gitea admin user create`) |
+| Admin user | `akunito` (created with `gitea admin user create`); password in `secrets/domains.nix` → `giteaAdminPassword` |
+| SSO | Pocket ID (`auth.akunito.com`), auth source `pocketid`, client "Gitea" — password login kept |
 
 No public hostname and no Cloudflare tunnel, on purpose: it holds private code. Registration is disabled, sign-in is required to see anything, and every repo is forced private (`FORCE_PRIVATE`). Gitea Actions is disabled (no runners). Mail goes through the local Postfix relay as `git@<publicDomain>`.
 
@@ -33,6 +34,14 @@ No public hostname and no Cloudflare tunnel, on purpose: it holds private code. 
 | Flags, nginx vhost `gitea`, db in dump list | `profiles/VPS_PROD-config.nix` |
 | `/var/lib/gitea` in restic | `system/app/restic-backup-vps.nix` |
 | Client SSH block (`git@…:2223`) | `user/app/ssh-hosts.nix` (workstations) |
+
+## Pocket ID login (2026-10-16)
+
+Login page shows a *Sign in with pocketid* button next to the password form; both work. Pocket ID client "Gitea": confidential, PKCE off, callback `https://gitea.local.akunito.com/user/oauth2/pocketid/callback`, id/secret in `secrets/domains.nix` → `giteaOidcClientId` / `giteaOidcClientSecret`.
+
+- Linking only, no auto-registration (`[oauth2_client]` in `system/app/gitea.nix`): the auto-register branch of Gitea 1.25 ignores `DISABLE_REGISTRATION`, so with it on every Pocket ID user (Aga, Misia, Ulfhogg) could create an account. First Pocket ID login of an existing user lands on the link page → sign in once with the local password → linked; from then on the button alone works. Already signed in? *Settings → Security → Link account* does the same.
+- The auth source lives in the Gitea DB, not in Nix. Recreate it (e.g. after a DB restore without it) with: `sudo -u gitea gitea --config /var/lib/gitea/custom/conf/app.ini --work-path /var/lib/gitea admin auth add-oauth --name pocketid --provider openidConnect --key <id> --secret <secret> --auto-discover-url https://auth.akunito.com/.well-known/openid-configuration --scopes "openid email profile"` (feed the secret via stdin, not argv).
+- Giving someone else a Gitea account: create it with `admin user create` (same username as in Pocket ID), then they link on first login.
 
 ## Using it
 
