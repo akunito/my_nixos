@@ -25,6 +25,7 @@
 
     # === Version Control Tools ===
     pkgs-unstable.git-crypt        # Transparent file encryption in git (unstable — preserves current behaviour on stable-system profiles)
+    pkgs.gh                        # GitHub CLI — claude-code.nix only installs it on standalone (headless/VPS) profiles, so desktops (isStandalone=false) need it here too
 
     # === Python Tooling ===
     pkgs-unstable.uv               # Fast Python package installer and runner (uvx)
