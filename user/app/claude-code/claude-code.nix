@@ -408,7 +408,7 @@ in
     ./claude-sync.nix # package, `claude` wrapper, 15-min timer (flag claudeSyncEnable)
     ./projects-workspace.nix # ~/Projects router + settings + .mcp.json (flag claudeProjectsWorkspaceEnable)
     ../rea/rea.nix # REA sandbox launchers (flag reaSandboxEnable; AINF-408)
-    ./local-backend.nix # `claude-nas` + `nas-ask`: Claude Code / one-shot answers on the NAS 3090 llama-server (flag claudeCodeLocalBackendUrl)
+    ./local-backend.nix # `nas-ask` + `opencode-nas` on the NAS 3090 llama-server (flag claudeCodeLocalBackendUrl; claude-nas retired 2026-10-16)
   ];
 
   # Standalone mode: install claude-code + nodejs (for npx/MCP) without full dev IDEs

@@ -688,13 +688,9 @@
     claudeCodeEnable = false; # Lightweight Claude Code only (CLI + settings.json + MCP) — for headless servers like VPS
     claudeCodeGuiEnvEnable = false; # Put the MCP credentials in the SESSION env (environment.d + Plasma env), so a GUI-launched VS Code extension can expand them
     claudeCodeTuiFullscreen = false; # Seed "tui": "fullscreen" into settings.json: Claude owns mouse selection and copies logical lines (tmux/terminal selection copies the wrap breaks)
-    claudeCodeLocalBackendUrl = ""; # Root URL (no /v1) of an Anthropic+OpenAI-compatible llama-server; "" = off. Installs `claude-<name>` (whole session on it) and `<name>-ask` (one-shot, stdin = context) — user/app/claude-code/local-backend.nix
+    claudeCodeLocalBackendUrl = ""; # Root URL (no /v1) of an OpenAI-compatible llama-server; "" = off. Installs `<name>-ask` + `opencode-<name>` (claude-<name> retired 2026-10-16) (one-shot, stdin = context) — user/app/claude-code/local-backend.nix
     claudeCodeLocalBackendName = "nas"; # command suffix/prefix
-    claudeCodeLocalBackendModel = "reasoner-256k"; # model id sent = an aiPresets name (llama-server router mode loads it by name; an unknown name is HTTP 400). Also the haiku alias and the subagent model: Claude Code runs background work (titles, summaries) on haiku, and with --models-max 1 a different name there would evict the main model mid-session
-    claudeCodeLocalBackendAliasOpus = "reasoner-256k"; # what /model "Opus" picks — picking another alias switches the LOADED model on the NAS (5-15 s)
-    claudeCodeLocalBackendAliasSonnet = "reasoner-9b-512k"; # the long-context fast one (Qwen3.5-9B abliterated, 512k via YaRN)
-    claudeCodeLocalBackendAliasFable = "coder"; # Qwen3.6-35B-A3B MoE: fastest of the chat presets
-    claudeCodeLocalBackendCtx = 262144; # fallback for CLAUDE_CODE_MAX_CONTEXT_TOKENS when /props?model= does not answer (NAS asleep)
+    claudeCodeLocalBackendModel = "reasoner-256k"; # fallback preset when nothing is loaded (nas-ask / opencode-nas use the LOADED one)
     claudeProjectsWorkspaceEnable = false; # ~/Projects as ONE Claude workspace: router CLAUDE.md + shared allowlist + .mcp.json one level above the repos
     claudeProjectsWorkspaceDir = "Projects"; # Directory under $HOME that holds the project repositories
     developmentToolsMinimalEnable = false; # VS Code + Claude Code + git-crypt only, without the full dev set (Aga's LAPTOP_A: she uses the Claude Code VS Code extension, not azure-cli or dbeaver)
