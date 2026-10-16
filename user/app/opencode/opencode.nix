@@ -81,8 +81,38 @@ let
   instructions = map (i: if lib.hasPrefix "~/" i then "${config.home.homeDirectory}/${lib.removePrefix "~/" i}" else i)
     (systemSettings.openCodeInstructions or [ ]);
 
+  # Infra steps that need Diego's yes (a plugin can only block, this can ask). Everything else keeps
+  # OpenCode's default; no read/secret rules (private local model, Diego 2026-10-16). Hard rules
+  # (nixos-rebuild, push-before-deploy, ssh -A, commit by path…) are plugins/deploy-guard.js.
+  permission.bash = {
+    "*install.sh* -u*" = "ask";              # -u re-locks flake.lock: only when an update is the intent
+    "*install.sh* -f*" = "ask";
+    "*git push --force*" = "deny";
+    "*git push -f*" = "deny";
+    "*plane-deploy*--yes*" = "ask";          # prod
+    "*plane-deploy*--rollback*" = "ask";
+    "*tailscale down*" = "ask";              # can cut the only path to a remote node
+    "*tailscale up*" = "ask";
+    "*tailscale logout*" = "ask";
+    "*tailscale set*" = "ask";
+    "*headscale*delete*" = "ask";
+    "*headscale*expire*" = "ask";
+    "*systemctl*tailscaled*" = "ask";
+    "*reboot*" = "ask";
+    "*poweroff*" = "ask";
+    "*shutdown*" = "ask";
+    "*systemctl suspend*" = "ask";
+    "*rtcwake*" = "ask";
+    "*zpool destroy*" = "ask";
+    "*zpool export*" = "ask";
+    "*zpool offline*" = "ask";
+    "*zpool detach*" = "ask";
+    "*zfs destroy*" = "ask";
+  };
+
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
+    permission = permission;
     # Tool output above this is saved to disk and truncated in context (default 51200 B);
     # the NAS 27B decodes at ~25 tok/s past 85k context, every 10k tokens counts.
     tool_output = { max_bytes = 32768; max_lines = 1000; };
@@ -117,5 +147,7 @@ in
     # in ~/.local/share/opencode, and only READS this file.
     home.file.".config/opencode/opencode.json".text =
       builtins.toJSON opencodeConfig;
+    # Global plugins dir (loaded for every project): deploy/infra rules, the Claude Code hooks' equivalent.
+    home.file.".config/opencode/plugin/deploy-guard.js".source = ./plugins/deploy-guard.js;
   };
 }
