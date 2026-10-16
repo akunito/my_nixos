@@ -25,6 +25,8 @@ let
         mkdir -p "$(dirname "$root")"
         echo "wine-pin1: first use, building ${winePin1Rev} ..." >&2
         nix build --out-link "$root" '${winePin1Ref}' >&2 || exit 1
+        # Drop the GC roots of earlier revs, or every bump keeps its old Wine alive forever.
+        for old in "$(dirname "$root")"/pin1-*; do [ "$old" = "$root" ] || rm -f "$old"; done
       fi
       exec "$root/bin/${cmd}" "$@"
     '';
