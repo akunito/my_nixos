@@ -84,7 +84,37 @@ let
   # Infra steps that need Diego's yes (a plugin can only block, this can ask). Everything else keeps
   # OpenCode's default; no read/secret rules (private local model, Diego 2026-10-16). Hard rules
   # (nixos-rebuild, push-before-deploy, ssh -A, commit by path…) are plugins/deploy-guard.js.
+  # Diego 2026-10-16: behave like Claude Code's auto mode without its classifier — every tool and
+  # command runs; only destructive ones ask. Nix sorts these keys and "*" sorts first; OpenCode
+  # lets the last matching rule win, so the specific patterns below override it (verified with
+  # `opencode run`: an ask rule still prompts with "*" = allow present).
+  permission.edit = "allow";
+  permission.webfetch = "allow";
+  permission.external_directory = "allow";
   permission.bash = {
+    "*" = "allow";
+    # destructive: deletions, wipes, history rewrites, recursive ownership/mode changes
+    "*rm -r*" = "ask";
+    "*rm -f*" = "ask";
+    "*rm --recursive*" = "ask";
+    "*rmdir*" = "ask";
+    "*find *-delete*" = "ask";
+    "*shred *" = "ask";
+    "*wipefs*" = "ask";
+    "*mkfs*" = "ask";
+    "* dd *" = "ask";
+    "dd *" = "ask";
+    "*truncate *" = "ask";
+    "*git clean -*" = "ask";
+    "*git checkout -- *" = "ask";
+    "*git restore *" = "ask";
+    "*git stash drop*" = "ask";
+    "*git branch -D*" = "ask";
+    "*docker system prune*" = "ask";
+    "*docker volume rm*" = "ask";
+    "*docker volume prune*" = "ask";
+    "*chmod -R*" = "ask";
+    "*chown -R*" = "ask";
     "*install.sh* -u*" = "ask";              # -u re-locks flake.lock: only when an update is the intent
     "*install.sh* -f*" = "ask";
     "*git push --force*" = "deny";
