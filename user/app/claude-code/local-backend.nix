@@ -145,6 +145,12 @@ except Exception: pass' 2>/dev/null)
     PROMPT="$*" CTX="$ctx" SYS="$sys" THINK="$think" ${py} - "${url}" "${model}" <<'PY'
 import json, os, sys, urllib.request
 url, model = sys.argv[1], sys.argv[2]
+# Use whatever is LOADED (same rule as claude-nas): a fixed name evicted a trial preset
+# through the gate's queue once the loaded one idled > 300 s (audit 2026-10-16).
+try:
+    v = json.load(urllib.request.urlopen(url + "/gate/status", timeout=3)).get("loaded")
+    if isinstance(v, str) and v: model = v
+except Exception: pass
 user = os.environ["PROMPT"]
 if os.environ.get("CTX"): user = "<context>\n" + os.environ["CTX"] + "\n</context>\n\n" + user
 body = {"model": model, "stream": False, "max_tokens": 16384,

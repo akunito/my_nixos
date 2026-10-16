@@ -33,8 +33,8 @@ in
     # Qwen3.8-27B abliterated (huihui-ai, Apache-2.0), Unsloth UD-Q4_K_XL 17.4 GB,
     # pre-downloaded by hand (sha256 ebbc66b4…) — no -hf, the file is the model.
     # Thinking mode is Qwen3.8's default; sampling = Qwen's thinking-mode card
-    # values. Port 8090 on tailscale0 only; the backend stops after 15 min idle
-    # and before S3. Plan: docs/akunito/plans/nas-3090-ai-presets.md
+    # values. Port 8090 on tailscale0 only; the backend never unloads on idle (2026-10-14),
+    # only before S3. Plan: docs/akunito/plans/nas-3090-ai-presets.md
     llamaServerEnable = true;
     llamaServerIdleTimeout = "infinity";  # never unload on idle (Diego, 2026-10-14): measured 7.5 W unloaded vs 7.6 W loaded at P8 (30 s avg), 0.04 % CPU, 414 MB RAM — unloading buys nothing while nothing else wants the card. Still stops before S3 (Conflicts=sleep.target); the preset manager (F1) will unload on a preset change
     llamaServerBackend = "docker-cuda";   # MEASURED 2026-10-13: Vulkan/NVIDIA ICD 48 pp / 36 tg tok/s; CUDA image 1326 pp / 40 tg, load 10 s
@@ -82,6 +82,22 @@ in
       reasoner-256k = reasoner // {
         label = "Reasoner Qwen3.8-27B · 1×256k · KV q4_0";
         short = "R 256k"; vramEst = "22.0 GB"; ctx = 262144; slots = 1; kv = "q4_0";
+      };
+      # Throughput trial (docs/akunito/plans/nas-reasoner-throughput.md, 2026-10-16): same model,
+      # reasoning and sampling. -cache: two Claude Code sessions (55k + 120k) evicted each other
+      # from the default 8 GiB RAM prompt cache (a 120k entry + checkpoints = 6.9 GiB) and every
+      # switch re-prefilled 54k/121k tokens (53 s / 152 s, measured 2026-10-15). Never -1 here:
+      # ini.nix reads a "-" value as a flag. -mtp: Qwen3.8's own MTP head (blk.64 nextn, Q6_K in
+      # this GGUF), lossless; KV q4_0 because MTP adds ~1.3-2.5 GB and 128k q8_0 is already 21.1 GB.
+      reasoner-256k-cache = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 1×256k · KV q4_0 · RAM cache 16G (trial)";
+        short = "R 256k+c"; vramEst = "22.0 GB"; ctx = 262144; slots = 1; kv = "q4_0";
+        extra = reasoner.extra ++ [ "--cache-ram" "16384" ];
+      };
+      reasoner-128k-cache-mtp = reasoner // {
+        label = "Reasoner Qwen3.8-27B · 1×128k · KV q4_0 · cache 16G · MTP (trial)";
+        short = "R 128k+mtp"; vramEst = "~21 GB"; ctx = 131072; slots = 1; kv = "q4_0";
+        extra = reasoner.extra ++ [ "--cache-ram" "16384" "--spec-type" "draft-mtp" "--spec-draft-n-max" "2" ];
       };
       reasoner-2x128k = reasoner // {
         label = "Reasoner Qwen3.8-27B · 2×128k · KV q4_0";
@@ -267,6 +283,7 @@ in
     grafanaTelegramChatId = secrets.grafanaTelegramChatId or "";
     infraTelegramDeploysThreadId = secrets.infraTelegramDeploysThreadId or "";
     nasZfsPools = [ "ssdpool" "extpool" ];
+    nasZfsArcMaxBytes = 17179869184;   # 16 GiB (2026-10-16): c_max was 61 GiB uncapped while ARC sat at 14 GiB; leaves room for the reasoner's 16 GiB --cache-ram (plan nas-reasoner-throughput)
     # Every dataset nixos-generate-config puts in fstab (keep in sync with `zfs list`)
     nasZfsMountPoints = [
       "/mnt/ssdpool"

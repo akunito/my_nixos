@@ -16,6 +16,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **profiles/DESK-config.nix**: DESK Profile Configuration
 - **profiles/DESK_A-config.nix**: DESK_A Profile Configuration — Aga's desktop (hostname: nixosagadesk)
+- **profiles/DESK_A_DEV-config.nix**: DESK_A_DEV — unattended dev/test box for winsub (hostname: nixosakudev)
 - **profiles/DESK_VMDESK-config.nix**: DESK_VMDESK Profile Configuration (nixosdesk)
 - **profiles/DESK_W11-config.nix**: DESK_W11 — NixOS-WSL inside Windows 11 on the DESK box (dual boot).
 - **profiles/KOMI_LXC-base-config.nix**: KOMI_LXC Base Profile Configuration
@@ -120,6 +121,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **system/app/nas-services.nix**: NAS-specific services module *Enabled when:*
    - `nasEnabled && config.fsType == "zfs"`
    - `onDemandProjects != [ ]`
+   - `(systemSettings.nasZfsArcMaxBytes or null) != null`
    - `systemSettings.nfsServerEnable or false`
    - `backupAclPaths != [ ]`
    - `p: "'${p}'"`
@@ -224,6 +226,9 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 
 - **system/hardware/amdgpu-suspend-workaround.nix**: AMD GPU suspend/resume workarounds. Three INDEPENDENT mitigations for three *Enabled when:* `99- prefix`
 - **system/hardware/bluetooth.nix**: hardware.bluetooth.enable = true; *Enabled when:* `systemSettings.bluetoothDisableUsbAutosuspend or false`
+- **system/hardware/devbox.nix**: devbox — an unattended development/test box driven over SSH (winsub on DESK_A_DEV). *Enabled when:*
+   - `user != null`
+   - `espUuid != null`
 - **system/hardware/drives.nix**: Enable SSH server to unlock LUKS drives on BOOT *Enabled when:*
    - `systemSettings.bootSSH == true`
    - `systemSettings.disk1_enabled`

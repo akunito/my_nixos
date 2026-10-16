@@ -374,6 +374,21 @@ HEADER
     boot.zfs.extraPools = systemSettings.nasZfsPools or [ "ssdpool" "extpool" ];
     # Don't prompt at boot — we auto-unlock from passphrase file on encrypted root
     boot.zfs.requestEncryptionCredentials = false;
+    # ARC cap (2026-10-16): unset, c_max was 61 GiB on a 62 GB box (measured), and the 3090
+    # reasoner's prompt cache (--cache-ram, plan nas-reasoner-throughput) lives in an
+    # unlimited container whose OOM would kill llama-server mid-answer. Modprobe option for
+    # boot + a oneshot so a switch applies it live (the param is writable at runtime).
+    boot.extraModprobeConfig = lib.mkIf ((systemSettings.nasZfsArcMaxBytes or null) != null) ''
+      options zfs zfs_arc_max=${toString systemSettings.nasZfsArcMaxBytes}
+    '';
+    systemd.services.nas-zfs-arc-max = lib.mkIf ((systemSettings.nasZfsArcMaxBytes or null) != null) {
+      description = "Apply zfs_arc_max at runtime";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "zfs-import.target" ];
+      restartTriggers = [ (toString systemSettings.nasZfsArcMaxBytes) ];
+      serviceConfig = { Type = "oneshot"; RemainAfterExit = true; };
+      script = "echo ${toString systemSettings.nasZfsArcMaxBytes} > /sys/module/zfs/parameters/zfs_arc_max";
+    };
     # REQUIRED for ZFS — generate with: head -c 8 /dev/urandom | od -A none -t x1 | tr -d ' ' | head -c 8
     networking.hostId = systemSettings.nasHostId or "deadbeef";
 
