@@ -9,6 +9,18 @@ paths:
 
 # NixOS Rules
 
+## Unified flake and how changes are applied
+
+```
+flake.nix                    # Unified flake with all profiles and inputs
+├── lib/flake-unified.nix    # Generates nixosConfigurations/darwinConfigurations
+├── lib/flake-base.nix       # Profile builder
+└── profiles/*-config.nix    # Profile configurations
+```
+
+- Apply system changes with `./deploy.sh --profile <PROFILE>` / `install.sh` (`aku sync` wraps it); `.active-profile` holds this machine's profile and the flake's `#system` alias resolves through it (`lib/flake-unified.nix`). Home-Manager-only changes: `./sync-user.sh`. Never bare `nixos-rebuild switch` (wrong `hardware-configuration.nix`; the PreToolUse hook denies it), never manual `systemctl enable/start` for something a module should declare. Darwin: `darwin-rebuild switch --flake .#MACBOOK-KOMI`.
+- Shared modules (`user/`, `lib/`, `system/` but not `system/darwin/`): Linux-only code behind `lib.mkIf (!pkgs.stdenv.isDarwin)` / `lib.optionals`; never comment a package out globally; optional features behind flags (default false, each profile enables). After touching a shared module, test the darwin eval too (`nix eval .#darwinConfigurations.MACBOOK-KOMI.system.drvPath`). Known baseline 2026-10-16: it already fails on `main` with `home-manager.users.komi.programs.nixvim.plugins.conform-nvim.formatOnSave does not exist` (pre-existing, komi-side nixvim option) — a change is fine if the error stays that one.
+
 ## Profile Type Inheritance Hierarchy
 
 ```

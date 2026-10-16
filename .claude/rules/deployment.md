@@ -9,6 +9,8 @@ paths:
 
 # Deployment Rules
 
+This file loads when `deploy.sh`/`install.sh` are read or edited, NOT when they are executed — read it explicitly before a deploy if it is not in context. `sudo nixos-rebuild switch` is forbidden on every machine (wrong `hardware-configuration.nix` → bricked systems; `block-nixos-rebuild.sh` denies it). Commit AND push before any remote deploy: the chain does `git reset --hard origin/main` and destroys unpushed work.
+
 ## Deployment Methods
 
 | Method | Command | Use For |
@@ -48,7 +50,7 @@ The letters do NOT mean "system" and "user" (see `install.sh:44-69`):
 |------|--------|----------|
 | `-s` / `--silent` | No prompts, defaults everywhere | Always for scripted/remote deploys |
 | `-u` / `--update` | **Updates `flake.lock`** (runs `update.sh`) before the rebuild | Only when a flake update is the intent. Never by default: every non-nixpkgs branch input re-locks per machine → source builds |
-| `-d` / `--skip-docker` | Skip docker container handling (keeps containers running) | LXC + VPS + NAS |
+| `-d` / `--skip-docker` | Skip docker container handling (keeps containers running) | LXC + VPS + NAS + DESK_W11 |
 | `-h` / `--skip-hardware` | Skip hardware-config generation (refused if the committed one belongs to another machine) | LXC only (no real hardware) |
 | `-q` / `--quick` | Shorthand for `-d -h` | Backward compatibility |
 | `-n` / `--no-git-update` | Skip the interactive "repository behind remote" update | After `git-crypt unlock`; irrelevant with `-s` (silent already skips it) |
@@ -86,9 +88,14 @@ duplicate work. They are applied on the second run after reboot.
 | **LXC containers** | `-s -d -h` | No docker, no real hardware |
 | **VPS (VPS_PROD)** | `-s -d` | Skip docker, but DO regenerate hardware-config |
 | **NAS (NAS_PROD)** | `-s -d` | Skip docker, DO regenerate hardware-config |
+| **DESK_W11 (NixOS-WSL)** | `-s -d` | No `-h`: the WSL hardware config is regenerated each run |
 | **Laptops/Desktops** | `-s` | Full rebuild including docker and hardware |
 
 Add `-u` to any row only when the task is a flake.lock update.
+
+## DESK_W11 from a Windows-side session (Claude on Windows calling `wsl.exe`)
+
+Launch `install.sh` detached (`setsid -f … < /dev/null`) or `sudo` reads a dead pseudo-TTY and times out after 5 min without ever showing the askpass. The askpass is a **native Windows box** started through interop (`sudoAskpassWindowsNative`, `system/security/windows-password-box.ps1`), because WSLg on this machine paints only the first Linux window of a boot and every later one is an empty surface (measured with AkuWM stopped); zenity is only the fallback when interop is down. AkuWM 0.2.6 also centres WSLg windows on the pointer monitor instead of tiling them (rule `r-wslg`). If `.exe` calls from WSL die with "cannot execute binary file", binfmt lost `WSLInterop`: from PowerShell, `wsl.exe -d NixOS -u root -- sh -c "echo ':WSLInterop:M::MZ::/init:PF' > /proc/sys/fs/binfmt_misc/register"` (declarative since `wsl.interop.register = true`). Exact command: runbook `docs/akunito/infrastructure/desk-w11-wsl.md`, "The restart loop of 2026-10-02". The same text is injected on DESK_W11 by `.claude/hooks/profile-context.sh`.
 
 ## Key Points
 

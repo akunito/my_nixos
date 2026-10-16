@@ -344,13 +344,21 @@ let
       # Order matters: claude-sync pulls the hub first so the lint sees current memory.
       # memory-lint prints MEMORY-LINT WARN lines (index caps, orphans, dead links, project
       # memories in the wrong directory) into the session context; silent when healthy.
+      # profile-context prints the per-machine rules of .claude/context/*.md for $ENV_PROFILE into
+      # every project's session (rootless docker on DESK/X13, rbuild on DESK_W11, komi scoping);
+      # it runs again on compact because the injected text does not survive compaction.
       SessionStart = [
         {
           matcher = "startup|resume|clear|fork";
           hooks =
             lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ]
             ++ [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/memory-lint.sh"; timeout = 10; }
-                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/scope-phrasing-lint.sh"; timeout = 10; } ];
+                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/scope-phrasing-lint.sh"; timeout = 10; }
+                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/profile-context.sh"; timeout = 5; } ];
+        }
+        {
+          matcher = "compact";
+          hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/profile-context.sh"; timeout = 5; } ];
         }
       ];
       # claude-sync: push after every turn; flag unpushed code on exit (hook-start is in SessionStart above)

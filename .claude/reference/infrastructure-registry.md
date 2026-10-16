@@ -6,21 +6,22 @@ Compact lookup for all nodes, services, local projects, and management skills. L
 
 | Node | IP(s) | SSH Command | Profile | Type |
 |------|-------|-------------|---------|------|
-| DESK | 192.168.8.96 | `ssh -A akunito@192.168.8.96` | DESK | workstation |
-| LAPTOP_X13 | 192.168.8.92, 100.64.0.8 | `ssh -A akunito@192.168.8.92` | LAPTOP_X13 | laptop |
-| LAPTOP_YOGA | 192.168.8.101 (wifi), 100.64.0.16 | `ssh -A aga@100.64.0.16` | LAPTOP_YOGA | laptop (Aga) — imports LAPTOP_A, overrides hardware only |
-| LAPTOP_A | 192.168.8.78, 100.64.0.4 | `ssh -A aga@192.168.8.78` | LAPTOP_A | laptop (Aga) |
-| VPS_PROD | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
-| NAS_PROD | 100.64.0.1 (TS, default), 192.168.8.206 (LAN leg enp10s0, DHCP), 192.168.20.200 (VLAN 20 bond0 — only from hosts with their own VLAN 100 leg: DESK, Proxmox) | `ssh -A akunito@100.64.0.1` | NAS_PROD | nas |
+| DESK (`nixosaku`) | 192.168.8.96 | `ssh -A akunito@192.168.8.96` | DESK | workstation |
+| LAPTOP_X13 (`nixosx13aku`) | 192.168.8.92, 100.64.0.8 | `ssh -A akunito@192.168.8.92` | LAPTOP_X13 | laptop |
+| DESK_W11 (`nixosw11aku`) | same box as DESK (never both on); Tailscale node DESK_W11 | from Windows: `wsl.exe -d NixOS` | DESK_W11 | NixOS-WSL inside Windows 11 (user akunito) |
+| LAPTOP_YOGA (`nixosyogaaga`) | 192.168.8.101 (wifi), 100.64.0.16 | `ssh -A aga@100.64.0.16` | LAPTOP_YOGA | laptop (Aga) — imports LAPTOP_A, overrides hardware only |
+| LAPTOP_A (`nixosaga`) | 192.168.8.78, 100.64.0.4 | `ssh -A aga@192.168.8.78` | LAPTOP_A | laptop (Aga) |
+| VPS_PROD (`vps-prod`) | 100.64.0.6, 172.26.5.155 | `ssh -A -p 56777 akunito@100.64.0.6` | VPS_PROD | vps |
+| NAS_PROD (`nas-aku`) | 100.64.0.1 (TS, default), 192.168.8.206 (LAN leg enp10s0, DHCP), 192.168.20.200 (VLAN 20 bond0 — only from hosts with their own VLAN 100 leg: DESK, Proxmox) | `ssh -A akunito@100.64.0.1` | NAS_PROD | nas |
 | pfSense | 192.168.8.1 | `ssh admin@192.168.8.1` | — (FreeBSD) | firewall |
-| KOMI_LXC_database | 192.168.1.10 | `ssh admin@192.168.1.10` | KOMI_LXC_database | lxc |
-| KOMI_LXC_mailer | 192.168.1.11 | `ssh admin@192.168.1.11` | KOMI_LXC_mailer | lxc |
-| KOMI_LXC_monitoring | 192.168.1.12 | `ssh admin@192.168.1.12` | KOMI_LXC_monitoring | lxc |
-| KOMI_LXC_proxy | 192.168.1.13 | `ssh admin@192.168.1.13` | KOMI_LXC_proxy | lxc |
-| KOMI_LXC_tailscale | 192.168.1.14 | `ssh admin@192.168.1.14` | KOMI_LXC_tailscale | lxc |
+| KOMI_LXC_database (`komi-database`) | 192.168.1.10 | `ssh admin@192.168.1.10` | KOMI_LXC_database | lxc |
+| KOMI_LXC_mailer (`komi-mailer`) | 192.168.1.11 | `ssh admin@192.168.1.11` | KOMI_LXC_mailer | lxc |
+| KOMI_LXC_monitoring (`komi-monitoring`) | 192.168.1.12 | `ssh admin@192.168.1.12` | KOMI_LXC_monitoring | lxc |
+| KOMI_LXC_proxy (`komi-proxy`) | 192.168.1.13 | `ssh admin@192.168.1.13` | KOMI_LXC_proxy | lxc |
+| KOMI_LXC_tailscale (`komi-tailscale`) | 192.168.1.14 | `ssh admin@192.168.1.14` | KOMI_LXC_tailscale | lxc |
 | MACBOOK-KOMI | — | — | MACBOOK-KOMI | macbook |
 
-For deploy commands see `deploy-servers.conf` or read `deploy.sh` / `install.sh` (deployment rules auto-load).
+For deploy commands see `deploy-servers.conf` and read `.claude/rules/deployment.md` (it loads when `deploy.sh`/`install.sh` are read or edited, not when they are executed). Users: akunito on DESK/LAPTOP_X13/DESK_W11/VPS_PROD/NAS_PROD (branch `main`), aga on LAPTOP_A/LAPTOP_YOGA (`main`), komi/admin on MACBOOK-KOMI/KOMI_LXC_* (branch `komi`).
 
 ## Multi-Instance Services
 

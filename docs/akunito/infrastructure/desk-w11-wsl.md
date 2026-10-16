@@ -472,10 +472,10 @@ handled by the script below (`powercfg /h off` + `HiberbootEnabled=0`).
 7. Set `wslWindowsUser` in `profiles/DESK_W11-config.nix` to your Windows account
    name, commit, push (`install.sh` resets to `origin/main`). Then the real deploy:
    ```bash
-   ./install.sh ~/.dotfiles DESK_W11 -s -h -d
+   ./install.sh ~/.dotfiles DESK_W11 -s -d
    ```
-   `-h` always: NixOS-WSL supplies the hardware config; regenerating one would
-   break the build. `-d`: docker runs inside WSL, never stop it.
+   No `-h`: the WSL hardware config is regenerated on each run (see the table
+   above and `installCommand` in the profile). `-d`: docker runs inside WSL, never stop it.
 8. Verify:
    ```bash
    echo $ENV_PROFILE                      # DESK_W11
