@@ -177,7 +177,12 @@ PY
 v=json.load(sys.stdin).get("loaded"); print(v if isinstance(v,str) else "")' 2>/dev/null)
     m="${name}/''${loaded:-${model}}"
     ov="''${XDG_RUNTIME_DIR:-/tmp}/opencode-${name}.json"
-    printf '{"model":"%s","small_model":"%s"}\n' "$m" "$m" > "$ov"
+    # Claude Code's auto-memory index for this cwd (slug = path with every non-alphanumeric → "-").
+    # OpenCode already reads the project CLAUDE.md and ~/.claude/skills natively (verified
+    # 2026-10-16); ~/.claude/CLAUDE.md comes from openCodeInstructions.
+    mem="$HOME/.claude/projects/$(printf '%s' "$PWD" | tr -c 'A-Za-z0-9' '-')/memory/MEMORY.md"
+    inst=""; [ -f "$mem" ] && inst=",\"instructions\":[\"$HOME/.claude/CLAUDE.md\",\"$mem\"]"
+    printf '{"model":"%s","small_model":"%s"%s}\n' "$m" "$m" "$inst" > "$ov"
     export OPENCODE_CONFIG="$ov"
     echo "opencode-${name}: $m" >&2
     exec opencode "$@"
