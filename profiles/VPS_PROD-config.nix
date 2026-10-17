@@ -474,6 +474,9 @@ in
       finance    = { port = 8190; maxBodySize = "50M"; };
       # Gitea web UI; maxBodySize for LFS / large pushes over HTTPS.
       gitea      = { port = 3012; maxBodySize = "1G"; };
+      # exam-sim (EXAM-6): ITIL mock-exam simulator, code in github.com/akunito/exam-sim, deployed to
+      # ~/.homelab/exam-sim by that repo's tools/deploy_vps.sh (not part of VPS_services).
+      exam       = { port = 8196; };
       # akucraft-map (BlueMap behind akucraft-web) archived 2026-09-30 with the
       # survival world: NAS gameservers/akucraft-archive (AINF-401).
     };
@@ -627,6 +630,7 @@ in
       # solvearr: Cloudflare solver on 100.64.0.6:8191 (Tailscale-only), used by the AION2 DPS meter's
       # price/leaderboard scrapers — the same bypass the NAS media stack gives Prowlarr. Internal, no proxy vhost.
       { name = "solvearr"; path = "solvearr"; }
+      { name = "exam-sim"; path = "exam-sim"; }
     ];
 
     # ============================================================================
