@@ -89,9 +89,11 @@ class Source:
 
 
 class V4L2Source(Source):
-    # ffmpeg decodes the device stream and re-emits MJPEG at the wanted fps on stdout; frames
-    # are split on JPEG SOI/EOI markers. `input_format` (mjpeg on webcams/most cards) is tried
-    # first and dropped on failure, because UVC devices advertise different pixel formats.
+    # With input_format mjpeg the device already emits JPEG, so ffmpeg runs `-c:v copy` (no decode: at
+    # 1080p30 the decode+fps+re-encode path cost 13.8 % of a core, 4K30 would be ~4x) and THIS thins to
+    # `fps` by wall clock. Other formats go through decode + `-vf fps` + mjpeg encode. Frames are split on
+    # JPEG SOI/EOI markers. `input_format` is tried first and dropped on failure (UVC devices differ).
+    # Elgato 4K X (2026-10-17): the first frames after open are black, so a one-shot grab must skip them.
     def __init__(self, spec):
         super().__init__(spec)
         self.proc = None
@@ -113,7 +115,13 @@ class V4L2Source(Source):
                 cmd += ["-framerate", str(self.spec["framerate"])]
             if self.spec.get("size"):
                 cmd += ["-video_size", self.spec["size"]]
-            cmd += ["-i", dev, "-vf", f"fps={fps}", "-c:v", "mjpeg", "-q:v", "4", "-f", "image2pipe", "-"]
+            copy = fmt == "mjpeg" and self.spec.get("copy", True)
+            if copy:
+                cmd += ["-i", dev, "-c:v", "copy", "-f", "image2pipe", "-"]
+            else:
+                cmd += ["-i", dev, "-vf", f"fps={fps}", "-c:v", "mjpeg", "-q:v", "4", "-f", "image2pipe", "-"]
+            period = 1.0 / fps
+            next_t = 0.0
             log(f"source {self.name}: {' '.join(cmd)}")
             # stderr -> temp file: a never-drained stderr pipe would block ffmpeg once v4l2 warnings fill it.
             # os.read returns what is available; BufferedReader.read(n) would wait for the full n bytes
@@ -145,7 +153,10 @@ class V4L2Source(Source):
                             del buf[:soi]
                         break
                     got_any = True
-                    yield now_ms(), bytes(buf[soi:eoi + 2])
+                    t = time.monotonic()
+                    if not copy or t >= next_t:
+                        next_t = t + period
+                        yield now_ms(), bytes(buf[soi:eoi + 2])
                     del buf[:eoi + 2]
             self._reap()
             errf.seek(0)
@@ -330,7 +341,10 @@ class Hub:
                         break
                     self.stats["source_state"] = "live"
                     if not self.paused:
-                        self._on_frame(w, jpeg)
+                        try:
+                            self._on_frame(w, jpeg)
+                        except Exception as e:  # one bad JPEG must not restart the source
+                            log(f"frame skipped: {e!r}")
             except Exception as e:  # keep the daemon alive, log, retry
                 log(f"capture error: {e!r}")
             finally:

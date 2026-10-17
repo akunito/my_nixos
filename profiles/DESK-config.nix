@@ -842,7 +842,9 @@ in
     };
     captureHubVlmBackend = "desk";
     captureHubSources = [
-      { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
+      # 4K X measured 2026-10-17 with the DSV laptop dock: MJPEG 3840x2160 frame ~600 KB; tesseract psm 3 on it 684 words / 5.1 s vs
+      # 545 words with merged words / 3.7 s at 1920x1080 (card-side scaling). ffmpeg passes the card's JPEG through (copy), no decode.
+      { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "3840x2160"; }
       { name = "screen"; kind = "screen"; output = "DP-1"; }   # 4K Odyssey at full res (profiles downscale via max_side; OCR needs the full 4K)
       { name = "webcam"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }   # same UVC path as the card: test source
       { name = "inbox"; kind = "inbox"; }

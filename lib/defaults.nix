@@ -318,7 +318,8 @@
     captureHubVlmBackend = null;                           # backend active at first start (state.json keeps the last switch); null = first key
     captureHubOcrLanguages = [ "eng" "spa" "pol" ];
     captureHubDefaultProfile = "generic";
-    # sources: { name; kind = "v4l2" | "screen" | "inbox"; device (glob, v4l2); input_format/framerate/size (v4l2); output/scale (screen) }
+    # sources: { name; kind = "v4l2" | "screen" | "inbox"; device (glob, v4l2); input_format/framerate/size/copy (v4l2; copy = pass the
+    # device's own MJPEG through, default true, thinning done by the daemon); output/scale (screen) }
     captureHubSources = [
       { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
       { name = "inbox"; kind = "inbox"; }
@@ -326,7 +327,7 @@
     # profiles: one per project; keys = capture_hub.py PROFILE_DEFAULTS (source, sink, fps, max_side, hash_threshold,
     # keyframe_s, ocr = sparse|document|off, vlm = off|change|demand, vlm_min_interval_s, vlm_prompt, vlm_max_tokens, keep_days)
     captureHubProfiles = {
-      generic = { ocr = "sparse"; vlm = "demand"; };
+      generic = { ocr = "sparse"; vlm = "demand"; max_side = 0; };   # full res: OCR of the Elgato frame downscaled to 1920 was garbage (2026-10-17)
       aion2 = { fps = 2; hash_threshold = 10; ocr = "sparse"; vlm = "demand"; keep_days = 3;
                 vlm_prompt = "This is a frame of the MMORPG Aion 2. Describe the situation: zone, what the player is fighting or doing, open dialogs/quest text, visible HP/MP state and anything that needs attention. Answer in Spanish, briefly."; };
       l2 = { fps = 2; hash_threshold = 10; ocr = "sparse"; vlm = "demand"; keep_days = 3;
