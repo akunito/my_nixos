@@ -292,28 +292,42 @@ let
   '';
 
   # Wraps the tab pills onto extra status lines and stores each window's line in @row (status-format[1..4] show
-  # the windows whose @row matches; line 0 is a blank margin above the bar). Up to 2 pill rows get a blank line
-  # between them (lines 1,3); 3-4 rows drop the gap (lines 1-4) — tmux caps status at 5 lines.
+  # the windows whose @row matches; line 0 is the margin above the bar or, with 3 rows, a pill row). tmux caps status
+  # at 5 lines, so 1-2 rows get margin + a blank line between rows, 3 rows get the blank lines only, 4 rows neither.
   # Pill width = "I:" + name cut at 15 (+…) + 2 caps + 1 separator; #{w:} is display width (#{n:} counts bytes).
   # Runs from hooks on window link/unlink/rename (auto-rename fires window-renamed), client attach/resize, and
   # from the #() in status-format[0] every status-interval.
   tmux-status-rows = pkgs.writeShellScript "tmux-status-rows" ''
     T=${pkgs.tmux}/bin/tmux
     $T list-clients -F '#{client_session} #{client_width}' 2>/dev/null | while read -r s w; do
-      row=1 x=0 ids=() rows=() curs=()
-      while read -r i pw cur; do
-        pw=$((pw + 3))
-        if (( x > 0 && x + pw > w + 1 && row < 4 )); then row=$((row + 1)); x=0; fi
-        x=$((x + pw))
-        ids+=("$i") rows+=("$row") curs+=("$cur")
-      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,xx}}#{window_index}:#{=/15/…:window_name}} #{@row}')
-      gap=0; (( row <= 2 )) && gap=1
+      ids=() w15=() w11=() curs=()
+      while read -r i a b cur; do
+        ids+=("$i") w15+=("$((a + 3))") w11+=("$((b + 3))") curs+=("$cur")
+      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,xx}}#{window_index}:#{=/15/…:window_name}} #{w:#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,xx}}#{window_index}:#{=/11/…:window_name}} #{@row}')
+      layout() {
+        nrows=1; x=0; rows=()
+        local pw; for pw in "$@"; do
+          if (( x > 0 && x + pw > w + 1 && nrows < 4 )); then nrows=$((nrows + 1)); x=0; fi
+          x=$((x + pw)); rows+=("$nrows")
+        done
+      }
+      # Names cut at 15; when that needs more than 2 rows and 11 fits in 2 (@dense, read by the pill formats), use 11:
+      # 2 rows keep both the top margin and the blank line between rows, 3 rows cannot (tmux caps status at 5 lines).
+      layout "''${w15[@]}"; dense=0
+      if (( nrows > 2 )); then
+        layout "''${w11[@]}"
+        if (( nrows <= 2 )); then dense=1; else layout "''${w15[@]}"; fi
+      fi
+      [ "$($T show -qv -t "$s" @dense)" = "$dense" ] || $T set -q -t "$s" @dense "$dense"
+      # Line of each pill row within tmux's 5 status lines: 1 row → margin + line 1; 2 rows → margin, 1, gap, 3;
+      # 3 rows → 0, 2, 4 (gaps between all rows, no top margin — both do not fit); 4 rows → margin + 1-4, no gaps.
+      case $nrows in 1) total=2 ;; 2) total=4 ;; *) total=5 ;; esac
       for k in "''${!ids[@]}"; do
-        line=''${rows[k]}; (( gap )) && line=$((line * 2 - 1))
+        line=''${rows[k]}
+        case $nrows in 2) line=$((line * 2 - 1)) ;; 3) line=$(((line - 1) * 2)) ;; esac
         [ "''${curs[k]}" = "$line" ] || $T set -wq -t "$s:''${ids[k]}" @row "$line"
       done
-      lines=$row; (( gap )) && lines=$((row * 2 - 1))
-      [ "$($T show -qv -t "$s" status)" = "$((lines + 1))" ] || $T set -q -t "$s" status "$((lines + 1))"
+      [ "$($T show -qv -t "$s" status)" = "$total" ] || $T set -q -t "$s" status "$total"
     done
   '';
 
@@ -738,14 +752,14 @@ in
         # #{?…} branch: tmux splits the conditional on it (the ask branch rendered empty, 2026-10-17); red/yellow are fixed
         # hex because this palette's base08/base0A are brown/yellow-green. Hourglass is a fixed yellow: this palette's base0A is yellow-green (#aec795).
         setw -g window-status-separator " "
-        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]#[bold]! #[nobold],#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base05}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
-        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]! ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base00}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]#[bold]! #[nobold],#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base05}]#I:#{?#{==:#{@dense},1},#{=/11/…:window_name},#{=/15/…:window_name}}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]! ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base00}]#I:#{?#{==:#{@dense},1},#{=/11/…:window_name},#{=/15/…:window_name}}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
         # Line 0 is a blank margin between the app and the pills; rows 1-4 hold the windows whose @row matches,
         # assigned by tmux-status-rows. status = rows + 1 is set per session by the same script.
         set -g status 2
         # #() reruns the layout every status-interval: the hooks alone were lost once at runtime (2026-10-14, cause unknown)
         # and every window opened after that sat unassigned on row 1, clipped past the 7th pill. The script prints nothing.
-        set -g status-format[0] "#(${tmux-status-rows})"
+        set -g status-format[0] "#(${tmux-status-rows})#[align=left]#{W:#{?#{==:#{@row},0},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},0},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
         set -g status-format[1] "#[align=left]#{W:#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{||:#{==:#{@row},},#{==:#{@row},1}},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
         set -g status-format[2] "#[align=left]#{W:#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},2},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
         set -g status-format[3] "#[align=left]#{W:#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-format}#[pop-default]#[norange default] ,},#{?#{==:#{@row},3},#[range=window|#{window_index}]#[push-default]#{T:window-status-current-format}#[pop-default]#[norange default] ,}}"
