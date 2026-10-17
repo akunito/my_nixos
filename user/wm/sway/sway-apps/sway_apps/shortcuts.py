@@ -28,6 +28,13 @@ CATEGORIES = ("Apps", "Tools", "Gaming", "Windows", "Workspaces", "Media", "Scre
 TMUX_INCLUDE = paths.TMUX_INCLUDE
 TMUX_CONF = paths.XDG_CONFIG_HOME / "tmux" / "tmux.conf"
 KITTY_CONF = paths.XDG_CONFIG_HOME / "kitty" / "kitty.conf"
+# Display only: nix tmux.conf also binds tables the tool cannot author (copy-mode, emacs keys) —
+# a plain dict lookup raised KeyError and blanked the whole Shortcuts page (2026-10-17).
+_TMUX_TABLE_LABEL = {"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}
+
+
+def tmux_label(table: str, key: str) -> str:
+    return _TMUX_TABLE_LABEL.get(table, f"[{table}] ") + key
 HYPER = ("Mod4", "Control", "Mod1")
 MOD_ALIASES = {
     "hyper": HYPER,
@@ -424,7 +431,7 @@ def doc_markdown(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = N
     rows: list[tuple[str, str, str, str, str]] = []  # category, keys, name, command, owner
     for s in shortcuts:
         cat = s.category or guess_category(s.sway_command() if s.kind != "tmux" else s.command, s.program)
-        keys = s.keys if s.kind != "tmux" else ({"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[s.table] + s.keys)
+        keys = s.keys if s.kind != "tmux" else tmux_label(s.table, s.keys)
         rows.append((cat, keys, s.name, s.sway_command() if s.kind != "tmux" else s.command, "sway-apps" + ("" if s.enabled else " (disabled)")))
     for b in nix:
         if b["command"] not in overridden:
@@ -433,7 +440,7 @@ def doc_markdown(shortcuts: list[Shortcut], nix: list[dict[str, str]] | None = N
     for t in tmux:
         if t["fold"] in tool_tmux:
             continue
-        rows.append(("Terminal", {"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[t["table"]] + t["keys"], "", t["command"], "tmux (nix)"))
+        rows.append(("Terminal", tmux_label(t["table"], t["keys"]), "", t["command"], "tmux (nix)"))
     for k in kitty:
         rows.append(("Terminal", k["keys"], "", k["command"], "kitty (nix)"))
     out = []

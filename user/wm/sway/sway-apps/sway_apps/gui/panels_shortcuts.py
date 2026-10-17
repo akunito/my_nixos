@@ -52,7 +52,7 @@ class ShortcutsPanel(Panel):
 
     @staticmethod
     def _tmux_label(table: str, key: str) -> str:
-        return {"prefix": "Ctrl+O, ", "root": "", "copy-mode-vi": "[copy] "}[table] + key
+        return sc_mod.tmux_label(table, key)
 
     def refresh(self) -> None:
         self.ctl.reload_state()

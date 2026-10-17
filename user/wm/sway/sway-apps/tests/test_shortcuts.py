@@ -233,6 +233,7 @@ class Tmux(unittest.TestCase):
             "bind -n -N popup M-y display-popup -E",
             "bind-key -T copy-mode-vi v send -X begin-selection",
             "bind -T copy-mode-vi -r C-Up send -X scroll-up",
+            "bind -T copy-mode WheelUpPane send -X -N 15 scroll-up",
             "# bind -n C-M-z nope",
             "  bind-key   -T prefix   s   choose-tree",
             "",
@@ -247,8 +248,11 @@ class Tmux(unittest.TestCase):
             ("root", "M-y", "display-popup -E"),
             ("copy-mode-vi", "v", "send -X begin-selection"),
             ("copy-mode-vi", "C-Up", "send -X scroll-up"),
+            ("copy-mode", "WheelUpPane", "send -X -N 15 scroll-up"),
             ("prefix", "s", "choose-tree"),
         ])
+        # tables the tool can't author still get a label (KeyError blanked the Shortcuts page)
+        self.assertEqual([sc.tmux_label(t["table"], t["keys"]) for t in tb[6:9]], ["[copy] v", "[copy] C-Up", "[copy-mode] WheelUpPane"])
         self.assertTrue(all(t["program"] == "tmux" and t["category"] == "Terminal" for t in tb))
         self.assertEqual(tb[4]["fold"], "tmux|root|M-x")
         self.assertEqual(sc.tmux_bindings(d / "missing.conf"), [])
