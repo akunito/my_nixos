@@ -299,6 +299,7 @@ let
             }
           ];
         }
+        { matcher = "AskUserQuestion"; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh ask"; timeout = 3; } ]; }
       ];
 
       PostToolUse = [
@@ -334,9 +335,11 @@ let
               type = "command";
               command = notificationCommand;
             }
-            { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh wait"; timeout = 3; }
           ];
         }
+        # tmux tab icon: red ! while a permission prompt or a question waits for Diego, bell for the idle reminder
+        { matcher = "permission_prompt|elicitation_dialog"; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh ask"; timeout = 3; } ]; }
+        { matcher = "idle_prompt"; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh wait"; timeout = 3; } ]; }
       ];
 
       UserPromptSubmit = [ { matcher = ""; hooks = [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh busy"; timeout = 3; } ]; } ];
@@ -354,7 +357,8 @@ let
             lib.optionals cs.enable [ { type = "command"; command = "${claudeSyncBin} hook-start"; timeout = 60; } ]
             ++ [ { type = "command"; command = "${dotfilesPath}/.claude/hooks/memory-lint.sh"; timeout = 10; }
                  { type = "command"; command = "${dotfilesPath}/.claude/hooks/scope-phrasing-lint.sh"; timeout = 10; }
-                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/profile-context.sh"; timeout = 5; } ];
+                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/profile-context.sh"; timeout = 5; }
+                 { type = "command"; command = "${dotfilesPath}/.claude/hooks/tmux-claude-state.sh start"; timeout = 3; } ];
         }
         {
           matcher = "compact";

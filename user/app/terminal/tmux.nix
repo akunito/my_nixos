@@ -248,7 +248,7 @@ let
         if (( x > 0 && x + pw > w + 1 && row < 4 )); then row=$((row + 1)); x=0; fi
         x=$((x + pw))
         ids+=("$i") rows+=("$row") curs+=("$cur")
-      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,xx}}#{window_index}:#{=/15/…:window_name}} #{@row}')
+      done < <($T list-windows -t "$s" -F '#{window_index} #{w:#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},xx,#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,xx}}#{window_index}:#{=/15/…:window_name}} #{@row}')
       gap=0; (( row <= 2 )) && gap=1
       for k in "''${!ids[@]}"; do
         line=''${rows[k]}; (( gap )) && line=$((line * 2 - 1))
@@ -522,12 +522,14 @@ in
         set -g status-left ""
         set -g status-right ""
         # Each tab is a rounded pill (Nerd Font U+E0B6/U+E0B4 caps), name cut at 15 chars; the active one in the accent colour.
-        # State icon of the active pane: Claude via @claude from .claude/hooks/tmux-claude-state.sh (hourglass busy, bell
-        # needs you, check done; ignored once claude has exited), any other non-shell command = hourglass. tmux-status-rows
-        # measures the same branches. Hourglass is a fixed yellow: this palette's base0A is yellow-green (#aec795).
+        # State icon of the active pane: Claude/OpenCode via @claude from .claude/hooks/tmux-claude-state.sh (hourglass busy,
+        # red ! waiting for a permission or a question, bell idle reminder, check done; ignored once the agent has exited),
+        # any other non-shell command = hourglass. tmux-status-rows measures the same branches. No comma inside #[…] in a
+        # #{?…} branch: tmux splits the conditional on it (the ask branch rendered empty, 2026-10-17); red/yellow are fixed
+        # hex because this palette's base08/base0A are brown/yellow-green. Hourglass is a fixed yellow: this palette's base0A is yellow-green (#aec795).
         setw -g window-status-separator " "
-        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }},#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base05}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
-        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#{?#{&&:#{@claude},#{==:#{pane_current_command},claude}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }},#{?#{m/r:^(zsh|bash|fish|sh|claude)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base00}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-format "#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base05},bg=#${config.lib.stylix.colors.base02}]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]#[bold]! #[nobold],#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base05}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base02},bg=#${config.lib.stylix.colors.base00},nobold]"
+        setw -g window-status-current-format "#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00}]#[fg=#${config.lib.stylix.colors.base00},bg=#${config.lib.stylix.colors.base0D},bold]#{?#{&&:#{@claude},#{m/r:^(claude|opencode)$,#{pane_current_command}}},#{?#{==:#{@claude},busy},#[fg=#e5c07b] ,#{?#{==:#{@claude},ask},#[fg=#e06c75]! ,#{?#{==:#{@claude},wait},#[fg=#${config.lib.stylix.colors.base0B}] ,#[fg=#${config.lib.stylix.colors.base0B}] }}},#{?#{m/r:^(zsh|bash|fish|sh|claude|opencode)$,#{pane_current_command}},,#[fg=#e5c07b] }}#[fg=#${config.lib.stylix.colors.base00}]#I:#{=/15/…:window_name}#[fg=#${config.lib.stylix.colors.base0D},bg=#${config.lib.stylix.colors.base00},nobold]"
         # Line 0 is a blank margin between the app and the pills; rows 1-4 hold the windows whose @row matches,
         # assigned by tmux-status-rows. status = rows + 1 is set per session by the same script.
         set -g status 2

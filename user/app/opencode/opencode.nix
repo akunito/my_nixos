@@ -179,5 +179,7 @@ in
       builtins.toJSON opencodeConfig;
     # Global plugins dir (loaded for every project): deploy/infra rules, the Claude Code hooks' equivalent.
     home.file.".config/opencode/plugin/deploy-guard.js".source = ./plugins/deploy-guard.js;
+    # tmux tab-state icons, same script as Claude Code's hooks (user/app/terminal/tmux.nix pills).
+    home.file.".config/opencode/plugin/tmux-state.js".source = ./plugins/tmux-state.js;
   };
 }
