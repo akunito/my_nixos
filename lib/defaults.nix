@@ -318,14 +318,16 @@
     captureHubVlmBackend = null;                           # backend active at first start (state.json keeps the last switch); null = first key
     captureHubOcrLanguages = [ "eng" "spa" "pol" ];
     captureHubDefaultProfile = "generic";
-    # sources: { name; kind = "v4l2" | "screen" | "inbox"; device (glob, v4l2); input_format/framerate/size/copy (v4l2; copy = pass the
-    # device's own MJPEG through, default true, thinning done by the daemon); output/scale (screen) }
+    # sources: { name; kind = "v4l2" | "screen" | "inbox" | "stream"; device (glob, v4l2); input_format/framerate/size/copy (v4l2; copy = pass the
+    # device's own MJPEG through, default true, thinning done by the daemon); output/scale (screen); url/format/realtime/loop/args (stream = any
+    # ffmpeg input: rtsp/udp/srt/http/file, e.g. a drone or IP camera feed) }
     captureHubSources = [
       { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
       { name = "inbox"; kind = "inbox"; }
     ];
     # profiles: one per project; keys = capture_hub.py PROFILE_DEFAULTS (source, sink, fps, max_side, hash_threshold,
-    # keyframe_s, ocr = sparse|document|off, vlm = off|change|demand, vlm_min_interval_s, vlm_prompt, vlm_max_tokens, keep_days)
+    # keyframe_s, ocr = sparse|document|off, vlm = off|change|demand, vlm_min_interval_s, vlm_prompt, vlm_max_tokens, keep_days,
+    # webhook = URL POSTed per event, webhook_events = [frame text note status])
     captureHubProfiles = {
       generic = { ocr = "sparse"; vlm = "demand"; max_side = 0; };   # full res: OCR of the Elgato frame downscaled to 1920 was garbage (2026-10-17)
       aion2 = { fps = 2; hash_threshold = 10; ocr = "sparse"; vlm = "demand"; keep_days = 3;
@@ -337,6 +339,16 @@
       trading = { fps = 0.5; hash_threshold = 4; max_side = 0; ocr = "document"; vlm = "demand"; keep_days = 30;
                   vlm_prompt = "This is a trading/investing screen. Read the instrument, timeframe, prices, indicators and open positions you can see. Answer in Spanish, numbers exactly as shown."; };
       hermes = { fps = 1; ocr = "sparse"; vlm = "off"; keep_days = 7; };
+      # Capture-only building blocks for other projects (2026-10-17). A project that needs its own prompt/sink/webhook
+      # registers a runtime profile instead (`capture-hub profile-set NAME file.json`, persisted in <data_dir>/profiles.d).
+      presentation = { fps = 1; hash_threshold = 6; keyframe_s = 300; max_side = 0; ocr = "document"; vlm = "change"; vlm_min_interval_s = 30; keep_days = 90;
+                       vlm_prompt = "This is a slide or screen of a presentation. Transcribe the title and summarize the content in 3-5 lines. Answer in Spanish."; };
+      workshop = { fps = 1; hash_threshold = 8; keyframe_s = 300; max_side = 0; ocr = "document"; vlm = "change"; vlm_min_interval_s = 60; keep_days = 90;
+                   vlm_prompt = "This is a live demo in a workshop. Say which tool or screen is shown and what step is being performed, with any command, code or setting visible. Answer in Spanish."; };
+      camera = { fps = 1; hash_threshold = 8; keyframe_s = 600; max_side = 1280; ocr = "off"; vlm = "change"; vlm_min_interval_s = 10; keep_days = 7;
+                 vlm_prompt = "Security camera frame. Answer ONLY with JSON: {\"alert\": true|false, \"what\": \"people, vehicles, animals, smoke, open doors or other notable change, in Spanish\"}."; vlm_max_tokens = 120; };
+      drone = { fps = 5; hash_threshold = 0; keyframe_s = 0; max_side = 1280; ocr = "off"; vlm = "off"; keep_days = 1; };               # keep every frame: the controller reads /live.mjpg or /events
+      "game-train" = { fps = 4; hash_threshold = 0; keyframe_s = 0; max_side = 0; ocr = "off"; vlm = "off"; keep_days = 3; };           # raw dataset for the L2 bot (hash_threshold 0 = no dedupe)
     };
     # --- VRAM peak sampler ---
     # Every VRAM figure taken by hand in this repo is a snapshot of a STATIONARY

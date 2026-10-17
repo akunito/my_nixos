@@ -3,6 +3,11 @@
 # JPEGs + OCR text + optional VLM notes, stored per PROFILE (one directory per project) and
 # served over a small HTTP API for whatever AI consumes them (Claude, Hermes, game-assist).
 # One file on purpose: it is shipped by the nix module as a single script (system/app/capture-hub.nix).
+# Consumer contract (other projects plug in here, see docs/akunito/plans/capture-hub.md "Contrato"):
+#   files   <sink>/sessions/<id>/{events,text,notes}.jsonl + frames/, <sink>/latest.{jpg,txt,note.json}
+#   pull    GET /status /frames /text /notes /latest.* /export?session=
+#   push    GET /events (SSE: frame|text|note|status), GET /live.mjpg (every thinned frame), profile `webhook` (POST per event)
+#   control POST /profile /source /vlm /pause /resume /ask /inbox, PUT /profiles/<name> (runtime profile, persisted)
 #
 # Hot path = one frame every 1/fps s: decode with Pillow draft mode (JPEG DCT downscale, no
 # full decode), 8x8 dHash, Hamming distance against the last KEPT frame. Everything else
@@ -47,6 +52,8 @@ PROFILE_DEFAULTS = {
     "vlm_prompt": "Describe briefly what is on screen. Answer in Spanish.",
     "vlm_max_tokens": 400,
     "keep_days": 7,
+    "webhook": None,         # URL that receives one POST per event (JSON, same shape as /events)
+    "webhook_events": ["text", "note"],
 }
 
 
@@ -102,10 +109,8 @@ class V4L2Source(Source):
         hits = sorted(glob.glob(self.spec["device"]))
         return hits[0] if hits else None
 
-    def frames(self, fps):
-        dev = self.device()
-        if not dev:
-            return
+    def _commands(self, dev, fps):
+        out = []
         attempts = [self.spec.get("input_format"), None] if self.spec.get("input_format") else [None]
         for fmt in attempts:
             cmd = [FFMPEG, "-nostdin", "-hide_banner", "-loglevel", "error", "-f", "v4l2"]
@@ -120,6 +125,14 @@ class V4L2Source(Source):
                 cmd += ["-i", dev, "-c:v", "copy", "-f", "image2pipe", "-"]
             else:
                 cmd += ["-i", dev, "-vf", f"fps={fps}", "-c:v", "mjpeg", "-q:v", "4", "-f", "image2pipe", "-"]
+            out.append((cmd, copy))
+        return out
+
+    def frames(self, fps):
+        dev = self.device()
+        if not dev:
+            return
+        for cmd, copy in self._commands(dev, fps):
             period = 1.0 / fps
             next_t = 0.0
             log(f"source {self.name}: {' '.join(cmd)}")
@@ -186,6 +199,30 @@ class V4L2Source(Source):
         self._reap()
 
 
+class StreamSource(V4L2Source):
+    # Any ffmpeg input URL (rtsp://, udp://, http(s)://, srt://, a file): drone/IP-camera feeds. Decoded and
+    # thinned by ffmpeg (`-vf fps`), low-latency flags for live feeds; `loop = true` + `realtime = true` are
+    # for files (tests / replays). Spec: { url; format? (-f); realtime?; loop?; args? (extra ffmpeg input args) }.
+    def device(self):
+        return self.spec["url"]
+
+    def _commands(self, dev, fps):
+        cmd = [FFMPEG, "-nostdin", "-hide_banner", "-loglevel", "error"]
+        if dev.startswith("rtsp://"):
+            cmd += ["-rtsp_transport", "tcp"]
+        if dev.startswith(("rtsp://", "udp://", "srt://", "rtmp://")):
+            cmd += ["-fflags", "nobuffer", "-flags", "low_delay"]
+        if self.spec.get("format"):
+            cmd += ["-f", self.spec["format"]]
+        if self.spec.get("realtime"):
+            cmd += ["-re"]
+        if self.spec.get("loop"):
+            cmd += ["-stream_loop", "-1"]
+        cmd += list(self.spec.get("args") or [])
+        cmd += ["-i", dev, "-vf", f"fps={fps}", "-c:v", "mjpeg", "-q:v", "4", "-f", "image2pipe", "-"]
+        return [(cmd, False)]
+
+
 class ScreenSource(Source):
     # Wayland screen via grim (needs WAYLAND_DISPLAY -> the user-service variant). grim at 4K
     # takes tens of ms, so fps > 2 is not meaningful here; use the capture card for that.
@@ -234,6 +271,19 @@ class Hub:
         self.inbox_q = DropOldestQueue(maxsize=8)
         self.ocr_q = DropOldestQueue(maxsize=4)
         self.vlm_q = DropOldestQueue(maxsize=1)
+        self.hook_q = DropOldestQueue(maxsize=16)
+        self.subs = []        # SSE clients: DropOldestQueue of event dicts
+        self.live_subs = []   # /live.mjpg clients: DropOldestQueue of raw jpeg bytes (every thinned frame)
+        self.subs_lock = threading.Lock()
+        self.profiles_dir = os.path.join(self.data_dir, "profiles.d")
+        os.makedirs(self.profiles_dir, exist_ok=True)
+        self.runtime_profiles = set()
+        for fp in sorted(glob.glob(os.path.join(self.profiles_dir, "*.json"))):
+            d = self._read_json(fp)
+            if isinstance(d, dict):
+                name = os.path.basename(fp)[:-5]
+                cfg["profiles"][name] = d
+                self.runtime_profiles.add(name)
         self.paused = False
         self.stop = threading.Event()
         self.source = None
@@ -275,6 +325,69 @@ class Hub:
         return sink or os.path.join(self.data_dir, "profiles", name)
 
     # -- profile / source switching (one source active at a time)
+    # -- consumers: SSE subscribers, live frame subscribers, webhooks
+    def subscribe(self, live=False):
+        q = DropOldestQueue(maxsize=2 if live else 64)
+        with self.subs_lock:
+            (self.live_subs if live else self.subs).append(q)
+        return q
+
+    def unsubscribe(self, q):
+        with self.subs_lock:
+            for lst in (self.subs, self.live_subs):
+                if q in lst:
+                    lst.remove(q)
+
+    def publish(self, kind, obj):
+        ev = {"type": kind, "profile": self.profile_name, "session": self.session["id"] if self.session else None, **obj}
+        with self.subs_lock:
+            subs = list(self.subs)
+        for q in subs:
+            q.put_drop(ev)
+        p = self.profile
+        if p and p.get("webhook") and kind in (p.get("webhook_events") or ()):
+            self.hook_q.put_drop((p["webhook"], ev))
+
+    def webhook_loop(self):
+        fails = 0
+        while not self.stop.is_set():
+            try:
+                url, ev = self.hook_q.get(timeout=1.0)
+            except queue.Empty:
+                continue
+            try:
+                req = Request(url, data=json.dumps(ev, ensure_ascii=False).encode(), headers={"Content-Type": "application/json"})
+                with urlopen(req, timeout=10):
+                    pass
+                fails = 0
+            except Exception as e:
+                fails += 1
+                if fails <= 3 or fails % 50 == 0:  # log the first failures, then one in fifty
+                    log(f"webhook {url} failed ({fails}): {e!r}")
+
+    def set_runtime_profile(self, name, spec):
+        bad = [k for k in spec if k not in PROFILE_DEFAULTS]
+        if bad:
+            raise ValueError(f"unknown profile keys {bad}")
+        if spec.get("sink"):
+            spec["sink"] = os.path.expanduser(os.path.expandvars(spec["sink"]))
+        with open(os.path.join(self.profiles_dir, name + ".json.tmp"), "w") as f:
+            json.dump(spec, f, indent=1)
+        os.replace(os.path.join(self.profiles_dir, name + ".json.tmp"), os.path.join(self.profiles_dir, name + ".json"))
+        self.cfg["profiles"][name] = spec
+        self.runtime_profiles.add(name)
+        if name == self.profile_name:
+            self.set_profile(name, self.source_name)
+
+    def del_runtime_profile(self, name):
+        if name not in self.runtime_profiles:
+            raise KeyError(name)
+        if name == self.profile_name:
+            raise ValueError("profile in use")
+        os.remove(os.path.join(self.profiles_dir, name + ".json"))
+        self.runtime_profiles.discard(name)
+        del self.cfg["profiles"][name]
+
     def set_vlm(self, name):
         # Backend = {url, model, extra?}: `extra` is merged into the chat body (Ollama needs
         # reasoning_effort="none"; llama-server needs chat_template_kwargs.enable_thinking=false).
@@ -283,6 +396,8 @@ class Hub:
             self.cfg["vlm"] = {**self.vlm_base, **b}
             self.vlm_name = name
         self._save_state()
+        if self.session:
+            self.publish("status", {"vlm": name})
 
     def set_profile(self, name, source=None):
         if name not in self.cfg["profiles"]:
@@ -297,6 +412,7 @@ class Hub:
             self._save_state()
             self._restart_source()
         log(f"profile={name} source={self.source_name} sink={self.profile_dir()}")
+        self.publish("status", {"source": self.source_name, "sink": self.session["base"]})
 
     def _open_session(self):
         base = self.profile_dir()
@@ -316,6 +432,8 @@ class Hub:
             raise KeyError(name)
         if spec["kind"] == "v4l2":
             return V4L2Source(spec)
+        if spec["kind"] == "stream":
+            return StreamSource(spec)
         if spec["kind"] == "screen":
             return ScreenSource(spec)
         if spec["kind"] == "inbox":
@@ -360,6 +478,11 @@ class Hub:
     def _on_frame(self, w, jpeg):
         self.stats["frames_in"] += 1
         p = self.profile
+        if self.live_subs:
+            with self.subs_lock:
+                live = list(self.live_subs)
+            for q in live:
+                q.put_drop(jpeg)
         im = Image.open(io.BytesIO(jpeg))
         im.draft("L", (160, 160))  # DCT-domain downscale: ~10x cheaper than a full decode
         h = imagehash.dhash(im.convert("L"), hash_size=8)
@@ -386,6 +509,7 @@ class Hub:
         ev = {"w": w, "src": self.source_name, "file": rel, "hash": str(h), "dist": dist, "keyframe": keyframe}
         self._append(os.path.join(self.session["dir"], "events.jsonl"), ev)
         self._latest("latest.jpg", path)
+        self.publish("frame", ev)
         if p["ocr"] != "off" and (w - self.last_ocr_ms) >= p["ocr_min_interval_s"] * 1000:
             self.last_ocr_ms = w
             self.ocr_q.put_drop((w, path, rel, self.session))
@@ -431,6 +555,7 @@ class Hub:
             with open(path[:-4] + ".txt", "w") as f:
                 f.write(text)
             self._append(os.path.join(session["dir"], "text.jsonl"), {"w": w, "file": rel, "text": text})
+            self.publish("text", {"w": w, "file": rel, "text": text})
             with open(os.path.join(session["base"], "latest.txt.tmp"), "w") as f:
                 f.write(text)
             os.replace(os.path.join(session["base"], "latest.txt.tmp"), os.path.join(session["base"], "latest.txt"))
@@ -481,6 +606,7 @@ class Hub:
             self._append(os.path.join(session["dir"], "notes.jsonl"), note)
             with open(os.path.join(session["base"], "latest.note.json"), "w") as f:
                 json.dump(note, f, ensure_ascii=False)
+            self.publish("note", note)
             if reply:
                 reply.put(note)
 
@@ -528,9 +654,54 @@ class Hub:
     def status(self):
         return {"profile": self.profile_name, "source": self.source_name, "paused": self.paused,
                 "session": self.session["id"], "sink": self.session["base"], "stats": self.stats,
-                "profiles": sorted(self.cfg["profiles"]), "sources": [s["name"] for s in self.cfg["sources"]],
+                "profiles": sorted(self.cfg["profiles"]), "runtime_profiles": sorted(self.runtime_profiles),
+                "sources": [s["name"] for s in self.cfg["sources"]], "subscribers": len(self.subs), "live": len(self.live_subs),
                 "vlm": {"name": self.vlm_name, "url": self.cfg["vlm"]["url"], "model": self.cfg["vlm"]["model"],
                         "backends": sorted(self.cfg.get("vlm_backends") or {})}}
+
+    def sessions(self, profile=None):
+        root = os.path.join(self.profile_dir(profile or self.profile_name), "sessions")
+        out = []
+        for sid in sorted(os.listdir(root)) if os.path.isdir(root) else []:
+            meta = self._read_json(os.path.join(root, sid, "meta.json")) or {}
+            out.append({"id": sid, "started_ms": meta.get("started_ms"), "source": meta.get("source")})
+        return out
+
+    def export_md(self, session=None, profile=None):
+        # Session -> one Markdown document: a section per kept frame with its image, OCR text and VLM notes.
+        # Relative image paths, so the file lives next to `frames/` (or a consumer rewrites them).
+        base = self.profile_dir(profile or self.profile_name)
+        sid = session or (self.session["id"] if (profile in (None, self.profile_name)) else None)
+        if not sid:
+            raise KeyError("session")
+        d = os.path.join(base, "sessions", sid)
+        meta = self._read_json(os.path.join(d, "meta.json")) or {}
+        texts, notes = {}, {}
+        for line in self._lines(os.path.join(d, "text.jsonl")):
+            texts[line["file"]] = line["text"]
+        for line in self._lines(os.path.join(d, "notes.jsonl")):
+            notes.setdefault(line["file"], []).append(line)
+        out = [f"# {meta.get('profile', profile)} — {sid}", "",
+               f"host: {meta.get('host')} · source: {meta.get('source')} · started: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime((meta.get('started_ms') or 0) / 1000))}", ""]
+        for ev in self._lines(os.path.join(d, "events.jsonl")):
+            ts = time.strftime("%H:%M:%S", time.localtime(ev["w"] / 1000))
+            out += [f"## {ts}", "", f"![{ts}]({ev['file']})", ""]
+            if ev["file"] in texts:
+                out += ["```text", texts[ev["file"]], "```", ""]
+            for n in notes.get(ev["file"], []):
+                out += [f"> **{n.get('model')}** ({n.get('prompt', '')[:60]}…)", "> " + n["text"].replace("\n", "\n> "), ""]
+        return "\n".join(out)
+
+    def _lines(self, path):
+        try:
+            with open(path) as f:
+                for line in f:
+                    try:
+                        yield json.loads(line)
+                    except ValueError:
+                        continue
+        except OSError:
+            return
 
     def tail(self, fname, since_ms, limit):
         out = []
@@ -583,6 +754,26 @@ def make_handler(hub):
             base = hub.session["base"]
             if u.path == "/status":
                 return self._json(hub.status())
+            if u.path == "/events":
+                return self._sse(q)
+            if u.path == "/live.mjpg":
+                return self._mjpg()
+            if u.path == "/sessions":
+                return self._json(hub.sessions(q.get("profile", [None])[0]))
+            if u.path == "/profiles":
+                return self._json({"profiles": hub.cfg["profiles"], "runtime": sorted(hub.runtime_profiles), "defaults": PROFILE_DEFAULTS})
+            if u.path == "/export":
+                try:
+                    md = hub.export_md(q.get("session", [None])[0], q.get("profile", [None])[0])
+                except (KeyError, OSError) as e:
+                    return self._json({"error": f"no session {e}"}, 404)
+                data = md.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             if u.path == "/latest.jpg":
                 return self._file(os.path.join(base, "latest.jpg"), "image/jpeg")
             if u.path == "/latest.txt":
@@ -600,6 +791,85 @@ def make_handler(hub):
                 if rel.startswith(".."):
                     return self._json({"error": "bad path"}, 400)
                 return self._file(os.path.join(hub.session["dir"], rel), "image/jpeg")
+            return self._json({"error": "unknown"}, 404)
+
+        def _sse(self, q):
+            # Server-sent events: `event: <type>` + `data: <json>`; a comment line every 15 s keeps proxies
+            # and the client alive and is how a gone client is noticed (BrokenPipe on write).
+            want = set((q.get("types", [""])[0] or "").split(",")) - {""}
+            sub = hub.subscribe()
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("X-Accel-Buffering", "no")
+                self.end_headers()
+                self.wfile.write(b": connected\n\n")
+                self.wfile.flush()
+                while not hub.stop.is_set():
+                    try:
+                        ev = sub.get(timeout=15.0)
+                    except queue.Empty:
+                        self.wfile.write(b": ping\n\n")
+                        self.wfile.flush()
+                        continue
+                    if want and ev["type"] not in want:
+                        continue
+                    self.wfile.write(f"event: {ev['type']}\ndata: {json.dumps(ev, ensure_ascii=False)}\n\n".encode())
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                pass
+            finally:
+                hub.unsubscribe(sub)
+
+        def _mjpg(self):
+            # multipart/x-mixed-replace of EVERY thinned frame (not only the kept ones): a controller that
+            # wants continuous vision at the profile fps. Raw bytes from the source, no re-encode.
+            sub = hub.subscribe(live=True)
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                while not hub.stop.is_set():
+                    try:
+                        jpeg = sub.get(timeout=15.0)
+                    except queue.Empty:
+                        continue
+                    self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\nContent-Length: " + str(len(jpeg)).encode() + b"\r\n\r\n")
+                    self.wfile.write(jpeg)
+                    self.wfile.write(b"\r\n")
+                    self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, OSError):
+                pass
+            finally:
+                hub.unsubscribe(sub)
+
+        def do_PUT(self):
+            u = urlparse(self.path)
+            n = int(self.headers.get("Content-Length") or 0)
+            body = self.rfile.read(n) if n else b""
+            if u.path.startswith("/profiles/"):
+                name = u.path[len("/profiles/"):]
+                if not name or "/" in name or name.startswith("."):
+                    return self._json({"error": "bad name"}, 400)
+                try:
+                    hub.set_runtime_profile(name, json.loads(body or b"{}"))
+                except (ValueError, KeyError) as e:
+                    return self._json({"error": str(e)}, 400)
+                return self._json(hub.status())
+            return self._json({"error": "unknown"}, 404)
+
+        def do_DELETE(self):
+            u = urlparse(self.path)
+            if u.path.startswith("/profiles/"):
+                try:
+                    hub.del_runtime_profile(u.path[len("/profiles/"):])
+                except KeyError as e:
+                    return self._json({"error": f"unknown {e}"}, 404)
+                except ValueError as e:
+                    return self._json({"error": str(e)}, 409)
+                return self._json(hub.status())
             return self._json({"error": "unknown"}, 404)
 
         def do_POST(self):
@@ -642,7 +912,7 @@ def make_handler(hub):
 
 def serve(cfg):
     hub = Hub(cfg)
-    for fn in (hub.capture_loop, hub.ocr_loop, hub.vlm_loop, hub.retention_loop, hub.inbox_watch_loop):
+    for fn in (hub.capture_loop, hub.ocr_loop, hub.vlm_loop, hub.retention_loop, hub.inbox_watch_loop, hub.webhook_loop):
         threading.Thread(target=fn, name=fn.__name__, daemon=True).start()
     host, port = cfg["listen"].rsplit(":", 1)
     srv = ThreadingHTTPServer((host, int(port)), make_handler(hub))
@@ -700,8 +970,28 @@ def cli(cfg, argv):
     elif cmd == "push":
         with open(args[0], "rb") as f:
             print(json.dumps(call("POST", "/inbox", f.read(), raw=True)))
+    elif cmd == "sessions":
+        for o in call("GET", "/sessions" + (f"?profile={args[0]}" if args else "")):
+            print(o["id"], o.get("source"))
+    elif cmd == "export":
+        qs = "&".join(x for x in [f"session={args[0]}" if args else "", f"profile={args[1]}" if len(args) > 1 else ""] if x)
+        sys.stdout.write(call("GET", "/export" + ("?" + qs if qs else ""), raw=True).decode())
+    elif cmd == "profile-set":
+        with open(args[1]) as f:
+            spec = json.load(f)
+        print(json.dumps(call("PUT", f"/profiles/{args[0]}", json.dumps(spec).encode())["runtime_profiles"]))
+    elif cmd == "profile-rm":
+        print(json.dumps(call("DELETE", f"/profiles/{args[0]}")["runtime_profiles"]))
+    elif cmd == "events":
+        # Stream to stdout (one JSON per line) until Ctrl-C; TYPES = comma list (frame,text,note,status).
+        req = Request(url + "/events" + (f"?types={args[0]}" if args else ""))
+        with urlopen(req, timeout=3600) as r:
+            for line in r:
+                if line.startswith(b"data: "):
+                    sys.stdout.write(line[6:].decode())
+                    sys.stdout.flush()
     else:
-        print("usage: capture-hub [daemon|status|profile NAME [SOURCE]|source NAME|vlm [BACKEND]|pause|resume|ask QUESTION|latest|text [SINCE_MS]|notes|push FILE.jpg]")
+        print("usage: capture-hub [daemon|status|profile NAME [SOURCE]|source NAME|vlm [BACKEND]|pause|resume|ask QUESTION|latest|text [SINCE_MS]|notes|push FILE.jpg|sessions [PROFILE]|export [SESSION [PROFILE]]|profile-set NAME FILE.json|profile-rm NAME|events [TYPES]]")
         return 2
     return 0
 
