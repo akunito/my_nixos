@@ -64,6 +64,20 @@ without fork, unpushed code on exit, hub unreachable for 6 h while trying.
   quietly; the timer retries; local warning after 6 h.
 - **Machine off for weeks** — fine; first session start pulls everything.
   Sessions older than 365 days will not come back.
+- **Foreign session resumed on DESK_W11 from the in-app `/resume` picker (no fork)**
+  — the wrapper only forks on `-c`/`-r <uuid>`, so W11 appends locally and never
+  pushes (non-owner); the hub keeps the owner's short copy and nothing in
+  `claude-sync status` looks wrong. Recovery from DESK (same box, Windows off):
+  mount C: read-only (`ntfs3`, `/dev/nvme0n1p3`); the distro disk is
+  `Users/diego/AppData/Local/wsl/{b7c2c36e-…}/ext4.vhdx`. `qemu-nbd -r` refuses a
+  VHDX whose log is pending (fast-startup/hibernation), and the log must never be
+  replayed on the real file: expose it through a device-mapper snapshot (ro loop +
+  COW loop, `dmsetup create … snapshot … N 8`), `qemu-nbd -c /dev/nbd0 -f vhdx
+  /dev/mapper/…` replays the log into the COW, then `mount -o ro,norecovery`. Copy
+  `projects/<key>/<uuid>.jsonl` + `<uuid>/`, install them with no session open on
+  that uuid (same uuid, `.owner` unchanged), `claude-sync push`, resume. Done
+  2026-10-14 for SSD-issue (45 MB); procedure in memory
+  `reference_w11_vhdx_session_recovery.md`.
 - **DESK and DESK_W11 are the same box** — never on at once, but they behave
   like two machines: each has its own key, owner tag and `ENV_PROFILE`.
 - **Project keys are paths** — Claude derives `projects/<key>` from the cwd,
