@@ -359,7 +359,7 @@ in
     # previous, 5-15 s). Only chat presets here: decider/clef/laya/kev-9b answer /v1/systemone only.
     # contextLimit = the preset's ctx. tailscale0 only.
     # Claude Code's global context for OpenCode sessions (it does not read ~/.claude on its own).
-    openCodeInstructions = [ "~/.claude/CLAUDE.md" ];
+    openCodeInstructions = [ "~/.claude/CLAUDE.md" "~/.dotfiles/user/app/opencode/instructions.md" ];
     openCodeExtraProviders = [
       { id = "nas"; name = "NAS 3090 — llama.cpp router (Tailscale)"; baseURL = "http://100.64.0.1:8090/v1"; timeout = 1800000;
         models = [
