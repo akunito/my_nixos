@@ -761,6 +761,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 ### Akunito / Research
 
 - **docs/akunito/research/l2-bot-logic.md**: Lógica de bots/asistentes de Lineage 2 open-source (árbol de combate, triage de heal/buff/recharge para soporte Elven Elder, gestión HP/MP/CP/pociones, targeting, retorno a pueblo) y protocolo/cifrado de red L2 (login Blowfish estático→dinámico + RSA, juego XOR dinámico con clave en el primer paquete y contador que avanza) para construir el asistente RPA del plan l2-rpa-testbed; cada afirmación citada al repo+fichero y marcada MEDIDO/INFERIDO
+- **docs/akunito/research/l2net-bot-spec.md**: L2.Net bot logic and control UI, reimplementation spec for the keyboard/mouse + screen bot (l2-vision-bot)
 
 ### Akunito / System-Modules
 
