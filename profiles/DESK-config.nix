@@ -833,6 +833,14 @@ in
     captureHubEnable = true;
     captureHubUserService = true;
     captureHubListen = "127.0.0.1:8095";
+    # VLM backends: `desk` = Ollama qwen3.8-agent (vision, local; 2026-10-17: 36.6 s cold incl. load, 14.7 s warm for 159 tok
+    # because 10.2 of 12.6 GiB fit in VRAM next to the 4K+1440p desktop), `nas` = router reasoner-9b-512k (2.5 s warm) which
+    # SWITCHES the NAS preset and blocks other NAS users — so `desk` is the default and `nas` is an explicit `capture-hub vlm nas`.
+    captureHubVlmBackends = {
+      desk = { url = "http://127.0.0.1:8090"; model = "qwen3.8-agent"; extra = { reasoning_effort = "none"; }; };
+      nas = { url = "http://100.64.0.1:8090"; model = "reasoner-9b-512k"; };
+    };
+    captureHubVlmBackend = "desk";
     captureHubSources = [
       { name = "elgato"; kind = "v4l2"; device = "/dev/v4l/by-id/usb-Elgato*-video-index0"; input_format = "mjpeg"; framerate = 30; size = "1920x1080"; }
       { name = "screen"; kind = "screen"; output = "DP-1"; }   # 4K Odyssey at full res (profiles downscale via max_side; OCR needs the full 4K)

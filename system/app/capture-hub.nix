@@ -39,6 +39,10 @@ let
       timeout = 180;
       max_side = 1280;
     };
+    # Named backends switchable at runtime (`capture-hub vlm NAME`, persisted in state.json); the
+    # `vlm` block above is the base (timeout, max_side) every backend inherits.
+    vlm_backends = cfg.captureHubVlmBackends or { };
+    vlm_backend = cfg.captureHubVlmBackend or null;
     ocr.langs = lib.concatStringsSep "+" (cfg.captureHubOcrLanguages or [ "eng" "spa" "pol" ]);
     sources = cfg.captureHubSources or [ ];
     profiles = cfg.captureHubProfiles or { };

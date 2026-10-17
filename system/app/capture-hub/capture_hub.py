@@ -236,8 +236,13 @@ class Hub:
         self.last_text = ""
         self.stats = {"frames_in": 0, "frames_kept": 0, "ocr": 0, "vlm": 0, "started": now_ms(), "source_state": "idle"}
         state = self._read_json(os.path.join(self.data_dir, "state.json")) or {}
+        self.vlm_name = None
+        self.vlm_base = dict(cfg["vlm"])
         self.set_profile(state.get("profile") or cfg.get("profile") or next(iter(cfg["profiles"])),
                          state.get("source"))
+        backends = cfg.get("vlm_backends") or {}
+        if backends:
+            self.set_vlm(state.get("vlm") if state.get("vlm") in backends else (cfg.get("vlm_backend") or next(iter(backends))))
 
     # -- config helpers
     def _read_json(self, p):
@@ -250,7 +255,7 @@ class Hub:
     def _save_state(self):
         tmp = os.path.join(self.data_dir, "state.json.tmp")
         with open(tmp, "w") as f:
-            json.dump({"profile": self.profile_name, "source": self.source_name}, f)
+            json.dump({"profile": self.profile_name, "source": self.source_name, "vlm": self.vlm_name}, f)
         os.replace(tmp, os.path.join(self.data_dir, "state.json"))
 
     def profile_dir(self, name=None):
@@ -259,6 +264,15 @@ class Hub:
         return sink or os.path.join(self.data_dir, "profiles", name)
 
     # -- profile / source switching (one source active at a time)
+    def set_vlm(self, name):
+        # Backend = {url, model, extra?}: `extra` is merged into the chat body (Ollama needs
+        # reasoning_effort="none"; llama-server needs chat_template_kwargs.enable_thinking=false).
+        b = (self.cfg.get("vlm_backends") or {})[name]
+        with self.lock:
+            self.cfg["vlm"] = {**self.vlm_base, **b}
+            self.vlm_name = name
+        self._save_state()
+
     def set_profile(self, name, source=None):
         if name not in self.cfg["profiles"]:
             raise KeyError(name)
@@ -424,7 +438,8 @@ class Hub:
                 "chat_template_kwargs": {"enable_thinking": False},
                 "messages": [{"role": "user", "content": [
                     {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b64}},
-                    {"type": "text", "text": prompt}]}]}
+                    {"type": "text", "text": prompt}]}],
+                **(v.get("extra") or {})}
         req = Request(v["url"].rstrip("/") + "/v1/chat/completions", data=json.dumps(body).encode(),
                       headers={"Content-Type": "application/json"})
         t0 = time.monotonic()
@@ -500,7 +515,8 @@ class Hub:
         return {"profile": self.profile_name, "source": self.source_name, "paused": self.paused,
                 "session": self.session["id"], "sink": self.session["base"], "stats": self.stats,
                 "profiles": sorted(self.cfg["profiles"]), "sources": [s["name"] for s in self.cfg["sources"]],
-                "vlm": {"url": self.cfg["vlm"]["url"], "model": self.cfg["vlm"]["model"]}}
+                "vlm": {"name": self.vlm_name, "url": self.cfg["vlm"]["url"], "model": self.cfg["vlm"]["model"],
+                        "backends": sorted(self.cfg.get("vlm_backends") or {})}}
 
     def tail(self, fname, since_ms, limit):
         out = []
@@ -584,6 +600,9 @@ def make_handler(hub):
                 if u.path == "/source":
                     hub.set_profile(hub.profile_name, q["name"][0])
                     return self._json(hub.status())
+                if u.path == "/vlm":
+                    hub.set_vlm(q["name"][0])
+                    return self._json(hub.status())
                 if u.path == "/pause":
                     hub.paused = True
                     return self._json(hub.status())
@@ -647,6 +666,9 @@ def cli(cfg, argv):
         print(json.dumps(call("POST", f"/profile?name={args[0]}{extra}"), indent=1, ensure_ascii=False))
     elif cmd == "source":
         print(json.dumps(call("POST", f"/source?name={args[0]}"), indent=1, ensure_ascii=False))
+    elif cmd == "vlm":
+        st = call("POST", f"/vlm?name={args[0]}") if args else call("GET", "/status")
+        print(json.dumps(st["vlm"], indent=1))
     elif cmd in ("pause", "resume"):
         print(json.dumps(call("POST", "/" + cmd)["paused"]))
     elif cmd == "ask":
@@ -665,7 +687,7 @@ def cli(cfg, argv):
         with open(args[0], "rb") as f:
             print(json.dumps(call("POST", "/inbox", f.read(), raw=True)))
     else:
-        print("usage: capture-hub [daemon|status|profile NAME [SOURCE]|source NAME|pause|resume|ask QUESTION|latest|text [SINCE_MS]|notes|push FILE.jpg]")
+        print("usage: capture-hub [daemon|status|profile NAME [SOURCE]|source NAME|vlm [BACKEND]|pause|resume|ask QUESTION|latest|text [SINCE_MS]|notes|push FILE.jpg]")
         return 2
     return 0
 

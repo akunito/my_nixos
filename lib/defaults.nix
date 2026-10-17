@@ -314,6 +314,8 @@
     captureHubListen = "127.0.0.1:8095";                   # HTTP API; a tailscale IP opens the port on tailscale0 only (system variant)
     captureHubVlmUrl = "http://100.64.0.1:8090";           # NAS llama-server (router mode loads captureHubVlmModel on first use)
     captureHubVlmModel = "reasoner-9b-512k";               # Qwen3.5-9B + mmproj: the one vision CHAT preset; clef/decider are decision models (no text)
+    captureHubVlmBackends = { };                           # { name = { url; model; extra = { ... } }; } runtime-switchable (`capture-hub vlm NAME`); empty = the single url/model above
+    captureHubVlmBackend = null;                           # backend active at first start (state.json keeps the last switch); null = first key
     captureHubOcrLanguages = [ "eng" "spa" "pol" ];
     captureHubDefaultProfile = "generic";
     # sources: { name; kind = "v4l2" | "screen" | "inbox"; device (glob, v4l2); input_format/framerate/size (v4l2); output/scale (screen) }
