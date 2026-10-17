@@ -315,6 +315,12 @@ with_lock() { # $1 = -n (skip if busy) or -w (wait) ; rest = command
 
 do_pull() {
   local rc=0
+  # Automatic pulls (wrapper, SessionStart hook) within 2 min of a successful one are skipped: the tmux restore
+  # worker types ten `claude --resume` in a row and each would otherwise wait on the lock for up to 45 s.
+  if [ "${CLAUDE_SYNC_AUTO:-0}" = 1 ]; then
+    local ok; ok=$(cat "$STATE_DIR/last-ok" 2>/dev/null || echo 0)
+    if [ $(( $(date +%s) - ok )) -lt 120 ]; then log "skip pull: last ok $(( $(date +%s) - ok ))s ago"; return 0; fi
+  fi
   if backoff_active; then log "skip pull: auth backoff"; return 1; fi
   probe_hub || { mark_fail; return 1; }
   pull_state || rc=1

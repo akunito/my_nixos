@@ -76,16 +76,46 @@ let
     LS="${pkgs.coreutils}/bin/ls"
     BASENAME="${pkgs.coreutils}/bin/basename"
 
-    LOCK_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
-    LOCK_FILE="$LOCK_DIR/tmux-resurrect-save.lock"
-    STATE_FILE="$LOCK_DIR/tmux-resurrect-save.last"
+    STAT="${pkgs.coreutils}/bin/stat"
+    MKDIR="${pkgs.coreutils}/bin/mkdir"
+    SED="${pkgs.gnused}/bin/sed"
 
-    RES_DIR="$HOME/.tmux/resurrect"
+    # Runtime files carry the socket name so a sandbox server (tmux -L sbx) never blocks the live one.
+    sock="$(''${TMUX:+$BASENAME "''${TMUX%%,*}"})"; sock="''${sock:-default}"
+    LOCK_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+    LOCK_FILE="$LOCK_DIR/tmux-resurrect-save.$sock.lock"
+    STATE_FILE="$LOCK_DIR/tmux-resurrect-save.$sock.last"
+    SHUTDOWN_MARK="$LOCK_DIR/tmux-shutdown-save.$sock"
+    LOG_DIR="''${XDG_CACHE_HOME:-$HOME/.cache}/tmux"; $MKDIR -p "$LOG_DIR" 2>/dev/null || true
+    LOG="$LOG_DIR/resurrect-save.log"
+    log() { printf '%s %s\n' "$($DATE +"%F %T")" "$*" >>"$LOG" 2>/dev/null || true; }
+
+    # @resurrect-dir (sandbox tests set it); same ~/$HOME expansion as resurrect's helpers.sh.
+    RES_DIR="$($TMUX_BIN show-options -gqv @resurrect-dir 2>/dev/null || true)"
+    RES_DIR="$(printf '%s' "''${RES_DIR:-$HOME/.tmux/resurrect}" | $SED "s,\$HOME,$HOME,g; s,\~,$HOME,g")"
     RES_LAST="$RES_DIR/last"
 
     exec 9>"$LOCK_FILE"
-    if ! $FLOCK -n 9; then
+    # ExecStop passes TMUX_SAVE_WAIT: the shutdown save waits for a running timer save instead of being skipped
+    # by -n (then the only save left was one made against a dying server).
+    if [ -n "''${TMUX_SAVE_WAIT:-}" ]; then
+      $FLOCK -w "$TMUX_SAVE_WAIT" 9 || { log "skip: lock busy at shutdown"; exit 0; }
+    elif ! $FLOCK -n 9; then
       exit 0
+    fi
+
+    now0="$($DATE +%s)"
+    # After the ExecStop save nothing may touch 'last' while the server tears down (marker removed by ExecStartPre).
+    if [ -f "$SHUTDOWN_MARK" ] && [ "$(( now0 - $($STAT -c %Y "$SHUTDOWN_MARK") ))" -lt 120 ]; then
+      log "skip: shutdown save $(( now0 - $($STAT -c %Y "$SHUTDOWN_MARK") ))s ago"; exit 0
+    fi
+    # restore.sh is rebuilding panes (set by the pre-restore-all hook, cleared by the resume worker): a save now
+    # would capture half a layout and a sidecar with only the already-resumed panes. restore.sh's new-window etc.
+    # fire the layout hooks, and the 90 s grace below ends as soon as the client-attached wrapper sets
+    # @resurrect-restored (2 s into the boot restore, measured 2026-10-16).
+    restoring="$($TMUX_BIN show-options -gqv @resurrect-restoring 2>/dev/null || true)"
+    if [ -n "$restoring" ] && [ "$restoring" -gt 0 ] 2>/dev/null && [ "$(( now0 - restoring ))" -lt 300 ]; then
+      log "skip: restore in progress"; exit 0
     fi
 
     # Don't save during the boot restore race. A save that fires while resurrect is
@@ -125,6 +155,15 @@ let
 
     $ECHO "$now" > "$STATE_FILE"
 
+    prev_target="$($READLINK "$RES_LAST" 2>/dev/null || true)"
+    prev_panes=0
+    if [ -n "$prev_target" ] && [ -f "$RES_DIR/$prev_target" ]; then
+      prev_panes="$($GREP -cE '^pane' "$RES_DIR/$prev_target" 2>/dev/null || true)"; prev_panes="''${prev_panes:-0}"
+    fi
+    server_age=999999
+    srv_start="$($TMUX_BIN display-message -p -F '#{start_time}' 2>/dev/null || true)"
+    if [ -n "$srv_start" ] && [ "$srv_start" -gt 0 ] 2>/dev/null; then server_age=$(( now0 - srv_start )); fi
+
     rc=0
     "$TMUX_SAVE" "$@" || rc=$?
 
@@ -147,23 +186,42 @@ let
       # (grep already prints the count) and default empty -> 0.
       wins="$($GREP -cE '^window' "$RES_DIR/$new_target" 2>/dev/null || true)"
       wins="''${wins:-0}"
-      if [ "$wins" -eq 0 ]; then
+      # A boot that never restored (terminal launcher created a fresh 1-window session) must not replace the
+      # previous day's 19-pane save: server younger than 10 min + fewer than half the panes → keep the old one.
+      panes="$($GREP -cE '^pane' "$RES_DIR/$new_target" 2>/dev/null || true)"; panes="''${panes:-0}"
+      young_small=0
+      if [ "$server_age" -lt 600 ] && [ "$prev_panes" -gt 0 ] && [ "$(( panes * 2 ))" -lt "$prev_panes" ] \
+         && [ "$new_target" != "$prev_target" ] && [ -f "$RES_DIR/$prev_target" ]; then
+        young_small=1
+        log "refuse: server ''${server_age}s old, $panes panes vs $prev_panes in $prev_target; keeping $prev_target"
+      fi
+      if [ "$wins" -eq 0 ] || [ "$young_small" = 1 ]; then
         good=""
-        for f in $($LS -t "$RES_DIR"/tmux_resurrect_*.txt 2>/dev/null); do
-          [ "$f" = "$RES_DIR/$new_target" ] && continue
-          fw="$($GREP -cE '^window' "$f" 2>/dev/null || true)"
-          fw="''${fw:-0}"
-          if [ "$fw" -gt 0 ]; then
-            good="$f"
-            break
-          fi
-        done
+        if [ "$young_small" = 1 ]; then
+          good="$RES_DIR/$prev_target"
+        else
+          for f in $($LS -t "$RES_DIR"/tmux_resurrect_*.txt 2>/dev/null); do
+            [ "$f" = "$RES_DIR/$new_target" ] && continue
+            fw="$($GREP -cE '^window' "$f" 2>/dev/null || true)"
+            fw="''${fw:-0}"
+            if [ "$fw" -gt 0 ]; then
+              good="$f"
+              break
+            fi
+          done
+        fi
         if [ -n "$good" ]; then
           $LN -sfn "$($BASENAME "$good")" "$RES_LAST"
-          $RM -f "$RES_DIR/$new_target"
+          $RM -f "$RES_DIR/$new_target" "$RES_DIR/$new_target.claude"
         fi
       fi
     fi
+
+    # Sidecars whose save is gone (resurrect's 30-day prune, rollbacks above).
+    for f in "$RES_DIR"/tmux_resurrect_*.txt.claude; do
+      [ -e "$f" ] || continue
+      [ -f "''${f%.claude}" ] || $RM -f "$f"
+    done
 
     exit $rc
   '';
@@ -259,6 +317,138 @@ let
     done
   '';
 
+  # ---- Claude Code session persistence (docs/akunito/plans/tmux-session-persistence.md) ----
+  # Hook-run scripts never write to stdout: tmux shows a run-shell's stdout in view mode on the active pane, which
+  # swallows keystrokes there (measured 2026-10-17). Runtime files carry the socket name (sandbox vs live server).
+
+  # Leading-edge debounce: one save 20 s after the first layout event of a burst (hooks [10], Claude SessionStart).
+  tmux-resurrect-save-debounced = pkgs.writeShellScript "tmux-resurrect-save-debounced" ''
+    exec >/dev/null 2>&1
+    BN=${pkgs.coreutils}/bin/basename
+    sock="$(''${TMUX:+$BN "''${TMUX%%,*}"})"; sock="''${sock:-default}"
+    exec 8>"''${XDG_RUNTIME_DIR:-/tmp}/tmux-save-debounce.$sock.lock"
+    ${pkgs.util-linux}/bin/flock -n 8 || exit 0
+    ${pkgs.coreutils}/bin/sleep 20
+    ${pkgs.util-linux}/bin/flock -u 8
+    exec ${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper quiet
+  '';
+
+  tmux-claude-panes-pre-restore = pkgs.writeShellScript "tmux-claude-panes-pre-restore" ''
+    exec >/dev/null 2>&1
+    ${pkgs.tmux}/bin/tmux set -g @resurrect-restoring "$(${pkgs.coreutils}/bin/date +%s)"
+  '';
+
+  # post-save-all (no args; post-save-layout gets the path but before 'last' is relinked, and an identical dump is
+  # deleted): sidecar <readlink last>.claude, one row per Claude pane: session, window, pane, cwd, session id,
+  # source (hook = @claude_session from tmux-claude-state.sh; registry = ~/.claude/sessions/<pid>.json, undocumented
+  # schema, accepted only for a live claude whose parent is the pane's shell), extra argv (%q) minus resume flags.
+  tmux-claude-panes-save = pkgs.writeShellScript "tmux-claude-panes-save" ''
+    exec >/dev/null 2>&1
+    C=${pkgs.coreutils}/bin; T=${pkgs.tmux}/bin/tmux; JQ=${pkgs.jq}/bin/jq; SED=${pkgs.gnused}/bin/sed
+    GREP=${pkgs.gnugrep}/bin/grep; AWK=${pkgs.gawk}/bin/awk; PGREP=${pkgs.procps}/bin/pgrep
+    RES_DIR="$($T show-options -gqv @resurrect-dir)"
+    RES_DIR="$(printf '%s' "''${RES_DIR:-$HOME/.tmux/resurrect}" | $SED "s,\$HOME,$HOME,g; s,\~,$HOME,g")"
+    target="$($C/readlink "$RES_DIR/last")" || exit 0
+    [ -f "$RES_DIR/$target" ] || exit 0
+    LOG="''${XDG_CACHE_HOME:-$HOME/.cache}/tmux/claude-panes.log"; $C/mkdir -p "$($C/dirname "$LOG")"
+    log() { printf '%s save %s\n' "$($C/date +"%F %T")" "$*" >>"$LOG"; }
+    declare -A REG
+    for f in "$HOME"/.claude/sessions/*.json; do
+      [ -f "$f" ] || continue
+      IFS=$'\t' read -r pid sid tm < <($JQ -r '[(.pid|tostring), .sessionId, (.tmux // "")] | @tsv' "$f") || continue
+      [ -n "$tm" ] && [ -d "/proc/$pid" ] || continue
+      $GREP -q claude "/proc/$pid/cmdline" || continue
+      REG["''${tm##*.}"]="$sid|$($AWK '/^PPid:/{print $2}' "/proc/$pid/status")"
+    done
+    tmp="$RES_DIR/$target.claude.tmp"; : >"$tmp"; n=0
+    while IFS=$'\t' read -r s w p pane_id pane_pid cwd cmd hook_sid; do
+      [ "$cmd" = claude ] || continue
+      sid="$hook_sid"; src=hook
+      if [ -z "$sid" ]; then
+        r="''${REG[$pane_id]:-}"
+        if [ -n "$r" ] && [ "''${r#*|}" = "$pane_pid" ]; then sid="''${r%%|*}"; src=registry; fi
+      fi
+      case "$sid" in ????????-????-????-????-????????????) ;; *) log "skip $s:$w.$p: no session id"; continue ;; esac
+      argv=""; child="$($PGREP -P "$pane_pid" | $C/head -1)"
+      if [ -n "$child" ] && [ -r "/proc/$child/cmdline" ]; then
+        mapfile -d "" -t A < "/proc/$child/cmdline"
+        skip=0; first=1
+        for a in "''${A[@]}"; do
+          if [ "$first" = 1 ]; then first=0; continue; fi
+          if [ "$skip" = 1 ]; then skip=0; continue; fi
+          case "$a" in
+            --resume|-r|--session-id) skip=1; continue ;;
+            --resume=*|--continue|-c|--fork-session) continue ;;
+          esac
+          argv="$argv $(printf '%q' "$a")"
+        done
+      fi
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$s" "$w" "$p" "$cwd" "$sid" "$src" "''${argv# }" >>"$tmp"; n=$((n+1))
+    done < <($T list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_id}	#{pane_pid}	#{pane_current_path}	#{pane_current_command}	#{@claude_session}')
+    $C/mv -f "$tmp" "$RES_DIR/$target.claude"
+    log "$target: $n claude panes"
+    exit 0
+  '';
+
+  # post-restore-all: resume every Claude pane of the sidecar. Forks at once — restore.sh runs inside the kitty
+  # launcher's blocking run-shell. Skips ids that are live (registry or any pane's @claude_session: the memory's
+  # live-restore procedure keeps the originals running), repeated restores of the same 'last' (kitty launcher,
+  # client-attached wrapper and continuum can all call restore.sh), panes that are not yet a shell in the saved cwd
+  # (right after creation a pane reports tmux, then sh, and the server's cwd for ~200 ms). The claude wrapper's
+  # own pull serialises the resumes on claude-sync's lock; do_pull skips when the last pull is <120 s old.
+  tmux-claude-panes-restore = pkgs.writeShellScript "tmux-claude-panes-restore" ''
+    exec >/dev/null 2>&1
+    if [ "''${1:-}" != worker ]; then ${pkgs.util-linux}/bin/setsid -f "$0" worker; exit 0; fi
+    C=${pkgs.coreutils}/bin; T=${pkgs.tmux}/bin/tmux; JQ=${pkgs.jq}/bin/jq; SED=${pkgs.gnused}/bin/sed
+    GREP=${pkgs.gnugrep}/bin/grep
+    LOG="''${XDG_CACHE_HOME:-$HOME/.cache}/tmux/claude-panes.log"; $C/mkdir -p "$($C/dirname "$LOG")"
+    exec >>"$LOG" 2>&1
+    log() { printf '%s restore %s\n' "$($C/date +"%F %T")" "$*"; }
+    finish() { $T set -gu @resurrect-restoring; exit 0; }
+    sock="$(''${TMUX:+$C/basename "''${TMUX%%,*}"})"; sock="''${sock:-default}"
+    exec 9>"''${XDG_RUNTIME_DIR:-/tmp}/tmux-claude-restore.$sock.lock"
+    ${pkgs.util-linux}/bin/flock -n 9 || { log "skip: another worker is running"; exit 0; }
+    RES_DIR="$($T show-options -gqv @resurrect-dir)"
+    RES_DIR="$(printf '%s' "''${RES_DIR:-$HOME/.tmux/resurrect}" | $SED "s,\$HOME,$HOME,g; s,\~,$HOME,g")"
+    target="$($C/readlink "$RES_DIR/last")" || finish
+    if [ "$($T show-options -gqv @claude-panes-restored)" = "$target" ]; then log "skip: $target already restored"; finish; fi
+    $T set -g @claude-panes-restored "$target"
+    side="$RES_DIR/$target.claude"
+    [ -f "$side" ] || { log "no sidecar for $target"; finish; }
+    live=" "
+    for f in "$HOME"/.claude/sessions/*.json; do
+      [ -f "$f" ] || continue
+      IFS=$'\t' read -r pid sid < <($JQ -r '[(.pid|tostring), .sessionId] | @tsv' "$f") || continue
+      if [ -d "/proc/$pid" ] && $GREP -q claude "/proc/$pid/cmdline"; then live="$live$sid "; fi
+    done
+    live="$live$($T list-panes -a -F '#{@claude_session}' | $C/tr '\n' ' ') "
+    n=0
+    while IFS=$'\t' read -r s w p cwd sid src argv; do
+      [[ "$sid" =~ ^[0-9a-f-]{36}$ ]] || { log "skip $s:$w.$p: bad id"; continue; }
+      $C/ls "$HOME"/.claude/projects/*/"$sid".jsonl >/dev/null 2>&1 || { log "skip $s:$w.$p: no transcript for $sid"; continue; }
+      case "$live" in *" $sid "*) log "skip $s:$w.$p: $sid is live"; continue ;; esac
+      tgt="$s:$w.$p"
+      $T display -p -t "$tgt" '#{pane_id}' >/dev/null 2>&1 || { log "skip $tgt: pane missing"; continue; }
+      if [ -n "$($T show -pqv -t "$tgt" @claude_session)" ]; then log "skip $tgt: already has a session"; continue; fi
+      ready=0; cmd=""; path=""
+      for i in $($C/seq 1 15); do
+        cmd="$($T display -p -t "$tgt" '#{pane_current_command}')"; path="$($T display -p -t "$tgt" '#{pane_current_path}')"
+        case "$cmd" in zsh|bash|sh) if [ "$path" = "$cwd" ]; then ready=1; break; fi ;; esac
+        $C/sleep 0.2
+      done
+      [ "$ready" = 1 ] || { log "skip $tgt: not a shell in $cwd (cmd=$cmd path=$path)"; continue; }
+      $T set -p -t "$tgt" @claude_session "$sid"
+      $T clear-history -t "$tgt"
+      $T send-keys -t "$tgt" C-u
+      $T send-keys -t "$tgt" -l "clear; claude --resume $sid''${argv:+ $argv}"
+      $T send-keys -t "$tgt" Enter
+      live="$live$sid "; n=$((n+1)); log "resume $tgt -> $sid ($src)''${argv:+ $argv}"
+      $C/sleep 2
+    done <"$side"
+    log "$target: $n resumed"
+    finish
+  '';
+
   # Ensure a detached bootstrap session exists so continuum's auto-save has a target
   # and the save-wrapper's "skip empty" guard only fires when there are no real sessions.
   # Matches the '__bootstrap' name the restore-wrapper already expects (see below).
@@ -276,8 +466,10 @@ let
     #!/usr/bin/env bash
     TMUX_BIN="${pkgs.tmux}/bin/tmux"
     if "$TMUX_BIN" list-sessions >/dev/null 2>&1; then
-      "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper" quiet || true
+      TMUX_SAVE_WAIT=6 "${tmux-resurrect-save-wrapper}/bin/tmux-resurrect-save-wrapper" quiet || true
     fi
+    # After the save, never before: the wrapper refuses every save for 120 s while the server tears down.
+    "${pkgs.coreutils}/bin/touch" "''${XDG_RUNTIME_DIR:-/tmp}/tmux-shutdown-save.default"
   '';
 
   # Fix broken resurrect 'last' symlink before tmux server starts
@@ -288,13 +480,31 @@ let
     LS="${pkgs.coreutils}/bin/ls"
     LN="${pkgs.coreutils}/bin/ln"
     HEAD="${pkgs.coreutils}/bin/head"
+    TAIL="${pkgs.coreutils}/bin/tail"
     BASENAME="${pkgs.coreutils}/bin/basename"
+    READLINK="${pkgs.coreutils}/bin/readlink"
+    CP="${pkgs.coreutils}/bin/cp"
+    RM="${pkgs.coreutils}/bin/rm"
+    DATE="${pkgs.coreutils}/bin/date"
 
     RES_DIR="$HOME/.tmux/resurrect"
     LAST="$RES_DIR/last"
 
+    # Shutdown marker of the previous server (see tmux-save-on-stop); runs on the on-failure restart too.
+    $RM -f "''${XDG_RUNTIME_DIR:-/tmp}/tmux-shutdown-save.default"
+
     if [ ! -d "$RES_DIR" ]; then
       exit 0
+    fi
+
+    # Boot copy of 'last' + sidecar (keep 5, excluded from pruning): a boot that never restores would otherwise
+    # overwrite them within minutes.
+    bt="$($READLINK "$LAST" 2>/dev/null || true)"
+    if [ -n "$bt" ] && [ -f "$RES_DIR/$bt" ]; then
+      ts="$($DATE +%Y%m%dT%H%M%S)"
+      $CP "$RES_DIR/$bt" "$RES_DIR/boot-$ts.bak" || true
+      if [ -f "$RES_DIR/$bt.claude" ]; then $CP "$RES_DIR/$bt.claude" "$RES_DIR/boot-$ts.bak.claude" || true; fi
+      for old in $($LS -t "$RES_DIR"/boot-*.bak 2>/dev/null | $TAIL -n +6); do $RM -f "$old" "$old.claude"; done
     fi
 
     if [ ! -e "$LAST" ]; then
@@ -596,6 +806,27 @@ in
       # This works with vim-obsession plugin to restore editor state
       set -g @resurrect-strategy-vim 'session'
       set -g @resurrect-strategy-nvim 'session'
+
+      # ---- Claude Code session persistence (docs/akunito/plans/tmux-session-persistence.md) ----
+      # Sidecar <save>.claude on every save, resume in the restored panes after restore.sh. The kitty launcher runs
+      # restore.sh directly (the client-attached wrapper is not on the boot path), so resurrect's own hooks are used.
+      set -g @resurrect-hook-pre-restore-all '${tmux-claude-panes-pre-restore}'
+      set -g @resurrect-hook-post-save-all '${tmux-claude-panes-save}'
+      set -g @resurrect-hook-post-restore-all '${tmux-claude-panes-restore}'
+      set -g @save-debounced '${tmux-resurrect-save-debounced}'
+      # Shell scrollback comes back after a restore (whole history, capped by history-limit; one tar.gz per save).
+      set -g @resurrect-capture-pane-contents 'on'
+      set -g @resurrect-pane-contents-area 'full'
+      # Layout events -> one save 20 s later. Index [10]: [9] holds tmux-status-rows and set-hook replaces per index.
+      # after-kill-window does not exist in 3.6a (window-unlinked fires for it); pane-exited only fires when the
+      # process exits by itself (after-kill-pane covers kill-pane). Measured 2026-10-16.
+      set-hook -g 'after-new-window[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'after-split-window[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'after-kill-pane[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'window-unlinked[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'pane-exited[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'window-renamed[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
+      set-hook -g 'session-created[10]' "run-shell -b '${tmux-resurrect-save-debounced}'"
       
       # SSH session management
       set -g default-command "${pkgs.zsh}/bin/zsh -l"
@@ -640,7 +871,7 @@ in
         # CRITICAL: save before systemd kills tmux on reboot/shutdown. This is what
         # gives reboot-persistence — continuum's auto-save alone is not sufficient.
         ExecStop = [ "${tmux-save-on-stop}/bin/tmux-save-on-stop" ];
-        TimeoutStopSec = "10";
+        TimeoutStopSec = "20";
         KillMode = "mixed";
       };
       Install = {

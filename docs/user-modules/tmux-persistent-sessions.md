@@ -234,6 +234,18 @@ This solution integrates with:
 - **Stylix theming** for consistent appearance
 - **Systemd user services** for reliable startup
 
+## Claude Code sessions and crash coverage (2026-10-17)
+
+Plan and audit trail: `docs/akunito/plans/tmux-session-persistence.md`. Measured on DESK with tmux 3.6a, resurrect 2022-05-01, Claude Code 2.1.296.
+
+- **Sidecar**: every save also writes `~/.tmux/resurrect/<save>.claude` (resurrect hook `post-save-all`, script `tmux-claude-panes-save`): one row per pane running `claude` — session, window, pane, cwd, Claude session id, source (`hook` = `@claude_session` set by `.claude/hooks/tmux-claude-state.sh`, `registry` = `~/.claude/sessions/<pid>.json` cross-check), extra argv. Log: `~/.cache/tmux/claude-panes.log`.
+- **Resume**: after `restore.sh` (hook `post-restore-all`, script `tmux-claude-panes-restore`) a forked worker types `clear; claude --resume <id> <argv>` into each restored pane, 2 s apart, once per `last` file (`@claude-panes-restored`), skipping ids that are live anywhere and panes that are not a shell in the saved cwd. Hot-disable: `tmux set -g @resurrect-hook-post-restore-all ''` — do this before any manual `restore.sh` on a server with live Claude sessions.
+- **Event saves**: hooks `[10]` (`after-new-window`, `after-split-window`, `after-kill-pane`, `window-unlinked`, `pane-exited`, `window-renamed`, `session-created`) and Claude's SessionStart run `tmux-resurrect-save-debounced`: one save 20 s after the first event of a burst. The 5-min timer stays as the fallback. A save costs ~1.4 s with scrollback capture (`@resurrect-capture-pane-contents on`, area `full`, one `pane_contents.tar.gz` overwritten per save).
+- **Guards in the save wrapper**: no save while `@resurrect-restoring` is set (pre-restore hook, cleared by the worker), none for 120 s after the shutdown marker `$XDG_RUNTIME_DIR/tmux-shutdown-save.<socket>` (written by `ExecStop` after its save, which now waits for the lock with `TMUX_SAVE_WAIT=6`; `ExecStartPre` removes it), and a server younger than 10 min may not replace `last` with a save holding fewer than half its panes (`~/.cache/tmux/resurrect-save.log`). `ExecStartPre` also copies `last` + sidecar to `boot-<ts>.bak` (keeps 5). Runtime files carry the socket name so a `tmux -L sbx` sandbox never blocks the live server.
+- **Launchers**: the alacritty launcher ignores `__bootstrap` when deciding to restore; before this only kitty restored at boot.
+- **Rollback on the live server** (a reverted config does not unset hooks): `for h in after-new-window after-split-window after-kill-pane window-unlinked pane-exited window-renamed session-created; do tmux set-hook -gu "${h}[10]"; done; tmux set -gu @resurrect-hook-pre-restore-all; tmux set -gu @resurrect-hook-post-save-all; tmux set -gu @resurrect-hook-post-restore-all; tmux set -gu @save-debounced`.
+- **Sandbox test recipe**: `tmux -L sbx -f <conf with @resurrect-dir=/tmp/x/res, the @resurrect-* options, the resurrect.tmux run-shell and the [10] hooks, no continuum>`; set `@resurrect-restored 1` to skip the 90 s grace; start `claude` in a pane, wait 25 s for the debounced save, `kill-server`, start again with `new -d -s __bootstrap 'sleep infinity'`, `run-shell <restore.sh>`. A session without a transcript (no message sent yet) is skipped by design.
+
 ## Related Documentation
 
 - [Tmux Module Documentation](tmux.md) - General tmux configuration

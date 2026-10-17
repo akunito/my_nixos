@@ -60,7 +60,9 @@ let
 
     # CRITICAL: Trigger manual restore if no sessions exist and continuum is enabled.
     # This prevents a deadlock where continuum waits for a client attach, but we wait for sessions.
-    if [ -z "$($TMUX list-sessions 2>/dev/null)" ] && [ "$CONTINUUM" = "on" ] && [ -n "$RES_RESTORE" ]; then
+    # __bootstrap (ExecStartPost of tmux-server.service) is not a real session: with it counted, this launcher never
+    # restored and a boot without kitty got a fresh 1-window session that the next save then made 'last' (2026-10-16).
+    if [ -z "$($TMUX list-sessions -F '#S' 2>/dev/null | $SED '/^__bootstrap$/d')" ] && [ "$CONTINUUM" = "on" ] && [ -n "$RES_RESTORE" ]; then
       log "triggering manual restore via $RES_RESTORE"
       $TMUX run-shell "$RES_RESTORE"
     fi
