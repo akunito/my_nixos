@@ -631,6 +631,7 @@ Prefer routing via `docs/00_ROUTER.md`, then consult this file if you need the f
 - **docs/akunito/gaming/l2reborn-linux.md**: L2 Reborn and LU4 on NixOS via umu/Proton — everything runs except the kernel anti-cheats (SmartGuard Code 1004; Active Anticheat driver error 11); measurements, logs, staff statements, options
 - **docs/akunito/gaming/lorerim-survival-mods.md**: Guide for adding deep survival mechanics to LoreRim via Frostfall + Campfire + Hunterborn + Scarcity.
 - **docs/akunito/gaming/skyrim-linux-setup.md**: Complete guide for modded Skyrim (LoreRim) on NixOS/Linux with ENB, Gamescope, and AMD GPU performance tuning
+- **docs/akunito/gaming/star-citizen.md**: Star Citizen on DESK — both installs removed 2026-10-17, where the saved config lives and how to reinstall
 
 ### Akunito / Hardware
 
